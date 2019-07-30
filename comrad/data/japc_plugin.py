@@ -1,10 +1,10 @@
 import logging
 import pyjapc
+import datetime
 import numpy as np
 from pydm.data_plugins import plugin
-from PyQt5 import QtCore
-from PyQt5.QtCore import Qt
-from typing import Any, Optional
+from qtpy.QtCore import Qt, QObject, Slot, Signal
+from typing import Any, Optional, Union
 from collections import namedtuple
 
 # Unfortunately, we cannot import
@@ -15,8 +15,8 @@ from collections import namedtuple
 class channel:
     class PyDMChannel:
 
-        value_signal: Optional[QtCore.pyqtBoundSignal]
-        value_slot: Optional[QtCore.pyqtSlot]
+        value_signal: Optional[Signal]
+        value_slot: Optional[Slot]
 
         def connect(self):
             pass
@@ -28,8 +28,21 @@ class channel:
 class _JapcService(pyjapc.PyJapc):
     """Singleton instance to avoid RBAC login for multiple Japc connections."""
 
-    def __init__(self, *args, **kwargs):
-        super(_JapcService, self).__init__(*args, **kwargs)
+    def __init__(self,
+                 selector: str,
+                 incaAcceleratorName: str,
+                 noSet: bool = False,
+                 timeZone: Union[str, datetime.tzinfo] = 'utc',
+                 logLevel: int = None,
+                 *args,
+                 **kwargs):
+        super().__init__(selector=selector,
+                         incaAcceleratorName=incaAcceleratorName,
+                         noSet=noSet,
+                         timeZone=timeZone,
+                         logLevel=logLevel,
+                         *args,
+                         **kwargs)
         self._loggedIn: bool = False
 
     def try_rbac_login(self):
@@ -51,17 +64,17 @@ class _JapcService(pyjapc.PyJapc):
 
     def rbacLogout(self):
         if self._loggedIn:
-            super(_JapcService, self).rbacLogout()
+            super().rbacLogout()
             self._loggedIn = False
 
     def setParam(self, *args, **kwargs):
         if not self._loggedIn:
             self.log.warning('Cannot set param because RBAC was not passed previously')
         else:
-            super(_JapcService, self).setParam(*args, **kwargs)
+            super().setParam(*args, **kwargs)
 
     def stopSubscriptions(self, parameterName: str = None, selector: str = None):
-        super(_JapcService, self).stopSubscriptions(parameterName=parameterName, selector=selector)
+        super().stopSubscriptions(parameterName=parameterName, selector=selector)
         if not self._subscriptionHandleDict:
             self.log.info(f'Last subscription was removed from JAPC. Logging out.')
             self.rbacLogout()
@@ -94,12 +107,15 @@ class _JapcConnection(plugin.PyDMConnection):
     """ PyDM adaptation for JAPC protocol. """
 
     # Superclass does not implement signal for bool values
-    new_value_signal = QtCore.pyqtSignal([float], [int], [str], [np.ndarray], [bool])
+    new_value_signal = Signal([float], [int], [str], [np.ndarray], [bool])
 
-    def __init__(self, channel: channel.PyDMChannel, *args, **kwargs):
-        super(_JapcConnection, self).__init__(channel,
-                                              *args,
-                                              **kwargs)
+    def __init__(self, channel: channel.PyDMChannel, address: str, protocol: str = None, parent: QObject = None, *args, **kwargs):
+        super().__init__(channel=channel,
+                         address=address,
+                         protocol=protocol,
+                         parent=parent,
+                         *args,
+                         **kwargs)
         logging.basicConfig()
         self.log: logging.Logger = logging.getLogger(__package__)
         self.log.setLevel(logging.DEBUG)
@@ -124,7 +140,7 @@ class _JapcConnection(plugin.PyDMConnection):
             except TypeError:
                 pass
 
-        super(_JapcConnection, self).add_listener(channel)
+        super().add_listener(channel)
 
         if channel.value_signal is not None:
             self.log.info(f'Adding write callback for {self.address}')
@@ -134,7 +150,7 @@ class _JapcConnection(plugin.PyDMConnection):
             self.connected = self._connect_to_japc()
             self._send_connection_state(self.connected)
             if self.connected:
-                self.log.info(f'japc://{self.address} connected!')
+                self.log.info(f'{self.protocol}://{self.address} connected!')
         else:
             # Artificially emit a single value to allow the UI update once because subscription
             # is not initiated here, thus we are not getting initial values
@@ -147,7 +163,7 @@ class _JapcConnection(plugin.PyDMConnection):
     def remove_listener(self, channel: channel.PyDMChannel, destroying=False):
         # Superclass does not implement signal for bool values
         if not destroying:
-            self.log.info(f'Removing one of the listeners for japc://{self.address}')
+            self.log.info(f'Removing one of the listeners for {self.protocol}://{self.address}')
             if channel.value_slot is not None:
                 try:
                     self.new_value_signal[bool].disconnect(channel.value_slot)
@@ -156,8 +172,8 @@ class _JapcConnection(plugin.PyDMConnection):
             if channel.value_signal is not None:
                 channel.value_signal.disconnect(self._on_value_updated)
         else:
-            self.log.info(f'Removing a listener for japc://{self.address} and destroying channel connection')
-        super(_JapcConnection, self).remove_listener(channel=channel,
+            self.log.info(f'Removing a listener for {self.protocol}://{self.address} and destroying channel connection')
+        super().remove_listener(channel=channel,
                                                      destroying=destroying)
 
     def close(self):
@@ -165,14 +181,14 @@ class _JapcConnection(plugin.PyDMConnection):
             self.log.info(f'Stopping JAPC subscriptions for {self.address}')
             get_japc().stopSubscriptions(parameterName=self._device_prop,
                                          selector=self._selector)
-        super(_JapcConnection, self).close()
+        super().close()
 
     def _on_async_get(self, initial_value: Any):
         self._send_connection_state(self.connected)
         self._on_value_received(parameterName=self._device_prop, value=initial_value)
-        self.log.info(f'Added one more listener to japc://{self.address}')
+        self.log.info(f'Added one more listener to {self.protocol}://{self.address}')
 
-    def _connect_write_slots(self, signal: QtCore.pyqtBoundSignal):
+    def _connect_write_slots(self, signal: Signal):
         try:
             signal[str].connect(slot=self._on_value_updated, type=Qt.QueuedConnection)
         except TypeError:
@@ -229,8 +245,9 @@ class _JapcConnection(plugin.PyDMConnection):
         except Exception as e:
             self.log.error(f'Unexpected error while subscribing to {self.address}'
                            '. Please verify the parameters and make sure the address is in the form'
-                           '\'japc://device/property#field@selector\' or \'japc://device/prop#field\' or'
-                           f'\'japc://device/property\'. Underlying problem: {str(e)}')
+                           f'\'{self.protocol}://device/property#field@selector\' or'
+                           f'\'{self.protocol}://device/prop#field\' or'
+                           f'\'{self.protocol}://device/property\'. Underlying problem: {str(e)}')
             return False
 
         return True
