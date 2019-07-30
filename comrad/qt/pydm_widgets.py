@@ -24,8 +24,6 @@ from pydm.widgets.byte import PyDMByteIndicator
 from pydm.widgets.checkbox import PyDMCheckbox
 from pydm.widgets.tab_bar import PyDMTabWidget
 from qtpy.QtWidgets import QWidget
-from qtpy.QtGui import QIcon
-from typing import Union
 from .value_transform import ValueTransformer
 
 
@@ -65,8 +63,20 @@ class CScatterPlot(PyDMScatterPlot):
     pass
 
 
-class CByteIndicator(PyDMByteIndicator):
-    pass
+class CByteIndicator(ValueTransformer, PyDMByteIndicator):
+
+    def __init__(self, parent: QWidget = None, init_channel: str = None, **kwargs):
+        """
+        Widget for graphical representation of bits from an integer number
+        with support for Channels from CS.
+
+        Args:
+            parent: The parent widget for the indicator.
+            init_channel: The channel to be used by the widget.
+            **kwargs: Any future extras that need to be passed down to PyDM.
+        """
+        ValueTransformer.__init__(self)
+        PyDMByteIndicator.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
 
 
 class CCheckBox(ValueTransformer, PyDMCheckbox):
@@ -76,7 +86,7 @@ class CCheckBox(ValueTransformer, PyDMCheckbox):
         A QCheckbox with support for Channels from the control system.
 
         Args:
-            parent: The parent widget for the label.
+            parent: The parent widget for the checkbox.
             init_channel: The channel to be used by the widget.
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
@@ -88,67 +98,76 @@ class CEmbeddedDisplay(PyDMEmbeddedDisplay):
     pass
 
 
-class CEnumButton(PyDMEnumButton):
-    pass
+class CEnumButton(ValueTransformer, PyDMEnumButton):
+
+    def __init__(self, parent: QWidget = None, init_channel: str = None, **kwargs):
+        """
+        A QWidget that renders buttons for every option of Enum Items.
+        For now three types of buttons can be rendered:
+        - Push Button
+        - Radio Button
+
+        Signals:
+         - send_value_signal: Emitted when the user changes the value.
+
+        Args:
+            parent: The parent widget for the button.
+            init_channel: The channel to be used by the widget.
+            **kwargs: Any future extras that need to be passed down to PyDM.
+        """
+        ValueTransformer.__init__(self)
+        PyDMEnumButton.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
 
 
-class CEnumComboBox(PyDMEnumComboBox):
-    pass
+class CEnumComboBox(ValueTransformer, PyDMEnumComboBox):
+
+    def __init__(self, parent: QWidget = None, init_channel: str = None, **kwargs):
+        """
+        A QComboBox with support for Channels from the control system.
+
+        Signals:
+         - send_value_signal: Emitted when the user changes the value.
+         - activated: Emitted when the user chooses an item in the combobox.
+         - currentIndexChanged: Emitted when the index is changed in the combobox.
+         - highlighted: Emitted when an item in the combobox popup list is highlighted by the user.
+
+        Args:
+            parent: The parent widget for the combobox.
+            init_channel: The channel to be used by the widget.
+            **kwargs: Any future extras that need to be passed down to PyDM.
+        """
+        ValueTransformer.__init__(self)
+        PyDMEnumComboBox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
 
 
 class CImageView(PyDMImageView):
     pass
 
 
-class CLineEdit(PyDMLineEdit):
-    pass
+class CLineEdit(ValueTransformer, PyDMLineEdit):
+
+    def __init__(self, parent: QWidget = None, init_channel: str = None, **kwargs):
+        """
+
+        A QLineEdit (writable text field) with support for CS Channels.
+        This widget offers an unit conversion menu when users Right Click
+        into it.
+
+        Args:
+            parent: The parent widget for the line edit.
+            init_channel: The channel to be used by the widget.
+            **kwargs: Any future extras that need to be passed down to PyDM.
+        """
+        ValueTransformer.__init__(self)
+        PyDMLineEdit.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
 
 
 class CLogDisplay(PyDMLogDisplay):
     pass
 
 
-class CPushButton(ValueTransformer, PyDMPushButton):
-
-    def __init__(self,
-                 parent: QWidget = None,
-                 label: str = None,
-                 icon: QIcon = None,
-                 pressValue: Union[int, float, str] = None,
-                 relative: bool = False,
-                 init_channel: str = None,
-                 **kwargs):
-        """
-        Basic push-button to send a fixed value.
-
-        The `CPushButton` is meant to hold a specific value, and send that value
-        to a channel when it is clicked, much like the MessageButton does in EDM.
-        The `CPushButton` works in two different modes of operation, first, a
-        fixed value can be given to the `.pressValue` attribute, whenever the
-        button is clicked a signal containing this value will be sent to the
-        connected channel. This is the default behavior of the button. However, if
-        the `.relativeChange` is set to True, the fixed value will be added
-        to the current value of the channel. This means that the button will
-        increment a channel by a fixed amount with every click, a consistent
-        relative move.
-
-        Args:
-            parent: The parent widget for the label.
-            label: String to place on button.
-            icon: An Icon to display on the button.
-            pressValue: Value to be sent when the button is clicked.
-            relative: Choice to have the button perform a relative put, instead of always setting to an absolute value.
-            init_channel: ID of channel to manipulate.
-            **kwargs: Any future extras that need to be passed down to PyDM.
-        """
-        ValueTransformer.__init__(self)
-        PyDMPushButton.__init__(self, parent=parent,
-                                label=label,
-                                icon=icon,
-                                pressValue=pressValue,
-                                relative=relative,
-                                init_channel=init_channel,
-                                **kwargs)
+class CPushButton(PyDMPushButton):
+    pass
 
 
 class CRelatedDisplayButton(PyDMRelatedDisplayButton):
@@ -159,16 +178,52 @@ class CShellCommand(PyDMShellCommand):
     pass
 
 
-class CSlider(PyDMSlider):
-    pass
+class CSlider(ValueTransformer, PyDMSlider):
+
+    def __init__(self, parent: QWidget = None, init_channel: str = None, **kwargs):
+        """
+        A QSlider with support for Channels and more from the control system.
+
+        Args:
+            parent: The parent widget for the slider.
+            init_channel: The channel to be used by the widget.
+            **kwargs: Any future extras that need to be passed down to PyDM.
+        """
+        ValueTransformer.__init__(self)
+        PyDMSlider.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
 
 
-class CSpinBox(PyDMSpinbox):
-    pass
+class CSpinBox(ValueTransformer, PyDMSpinbox):
+
+    def __init__(self, parent: QWidget = None, init_channel: str = None, **kwargs):
+        """
+        A QDoubleSpinBox with support for Channels and more from the control system.
+
+        Args:
+            parent: The parent widget for the spinbox.
+            init_channel: The channel to be used by the widget.
+            **kwargs: Any future extras that need to be passed down to PyDM.
+        """
+        ValueTransformer.__init__(self)
+        PyDMSpinbox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
 
 
-class CScaleIndicator(PyDMScaleIndicator):
-    pass
+class CScaleIndicator(ValueTransformer, PyDMScaleIndicator):
+
+    def __init__(self, parent: QWidget = None, init_channel: str = None, **kwargs):
+        """
+        A bar-shaped indicator for scalar value with support for Channels and
+        more from the control system.
+        Configurable features include indicator type (bar/pointer), scale tick
+        marks and orientation (horizontal/vertical).
+
+        Args:
+            parent: The parent widget for the indicator.
+            init_channel: The channel to be used by the widget.
+            **kwargs: Any future extras that need to be passed down to PyDM.
+        """
+        ValueTransformer.__init__(self)
+        PyDMScaleIndicator.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
 
 
 class CTemplateRepeater(PyDMTemplateRepeater):
