@@ -262,6 +262,42 @@ class JapcPlugin(plugin.PyDMPlugin):
     connection_class = _JapcConnection
 
 
+class Rda3Plugin(plugin.PyDMPlugin):
+    """
+    PyDM data plugin that handles communications with the channels on "rda3://" scheme.
+    """
+
+    protocol = 'rda3'
+    connection_class = _JapcConnection
+
+
+class Rda2Plugin(plugin.PyDMPlugin):
+    """
+    PyDM data plugin that handles communications with the channels on "rda://" scheme.
+    """
+
+    protocol = 'rda'
+    connection_class = _JapcConnection
+
+
+class TgmPlugin(plugin.PyDMPlugin):
+    """
+    PyDM data plugin that handles communications with the channels on "tgm://" scheme.
+    """
+
+    protocol = 'tgm'
+    connection_class = _JapcConnection
+
+
+class NoPlugin(plugin.PyDMPlugin):
+    """
+    PyDM data plugin that handles communications with the channels on "no://" scheme.
+    """
+
+    protocol = 'no'
+    connection_class = _JapcConnection
+
+
 _DevicePropertySplitModel = namedtuple('_DevicePropertySplitModel', 'address selector')
 
 
