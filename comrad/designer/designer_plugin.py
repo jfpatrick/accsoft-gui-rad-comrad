@@ -38,7 +38,11 @@ def icon(name: str) -> QIcon:
 
 # Buttons
 Checkbox = qtplugin_factory(CCheckBox, group=_CERN_GROUP_BUTTONS, icon=icon('checkbox'), extensions=_BASE_EXTENSIONS, on_widget_create=lambda w: w.setText('RAD CheckBox'))
-EnumButton = qtplugin_factory(CEnumButton, group=_CERN_GROUP_BUTTONS, icon=icon('enum_btn'), extensions=_BASE_EXTENSIONS)
+
+def enum_btn_init(w: CEnumButton):
+    w.items = ['RAD Item 1', 'RAD Item 2', 'RAD Item ...']
+
+EnumButton = qtplugin_factory(CEnumButton, group=_CERN_GROUP_BUTTONS, icon=icon('enum_btn'), extensions=_BASE_EXTENSIONS, on_widget_create=enum_btn_init)
 PushButton = qtplugin_factory(CPushButton, group=_CERN_GROUP_BUTTONS, icon=icon('push_btn'), extensions=_BASE_EXTENSIONS, on_widget_create=lambda w: w.setText('RAD PushButton'))
 RelatedDisplayButton = qtplugin_factory(CRelatedDisplayButton, group=_CERN_GROUP_BUTTONS, icon=icon('related_display'), extensions=_BASE_EXTENSIONS)
 ShellCommand = qtplugin_factory(CShellCommand, group=_CERN_GROUP_BUTTONS, icon=icon('shell_cmd'), extensions=_BASE_EXTENSIONS)
