@@ -37,9 +37,9 @@ def icon(name: str) -> QIcon:
 
 
 # Buttons
-Checkbox = qtplugin_factory(CCheckBox, group=_CERN_GROUP_BUTTONS, icon=icon('checkbox'), extensions=_BASE_EXTENSIONS)
+Checkbox = qtplugin_factory(CCheckBox, group=_CERN_GROUP_BUTTONS, icon=icon('checkbox'), extensions=_BASE_EXTENSIONS, on_widget_create=lambda w: w.setText('RAD CheckBox'))
 EnumButton = qtplugin_factory(CEnumButton, group=_CERN_GROUP_BUTTONS, icon=icon('enum_btn'), extensions=_BASE_EXTENSIONS)
-PushButton = qtplugin_factory(CPushButton, group=_CERN_GROUP_BUTTONS, icon=icon('push_btn'), extensions=_BASE_EXTENSIONS)
+PushButton = qtplugin_factory(CPushButton, group=_CERN_GROUP_BUTTONS, icon=icon('push_btn'), extensions=_BASE_EXTENSIONS, on_widget_create=lambda w: w.setText('RAD PushButton'))
 RelatedDisplayButton = qtplugin_factory(CRelatedDisplayButton, group=_CERN_GROUP_BUTTONS, icon=icon('related_display'), extensions=_BASE_EXTENSIONS)
 ShellCommand = qtplugin_factory(CShellCommand, group=_CERN_GROUP_BUTTONS, icon=icon('shell_cmd'), extensions=_BASE_EXTENSIONS)
 
@@ -57,7 +57,7 @@ Slider = qtplugin_factory(CSlider, group=_CERN_GROUP_INPUT, icon=icon('slider'),
 Spinbox = qtplugin_factory(CSpinBox, group=_CERN_GROUP_INPUT, icon=icon('spinbox'), extensions=_BASE_EXTENSIONS)
 
 # Display Widgets
-Label = qtplugin_factory(CLabel, group=_CERN_GROUP_DISPLAY, icon=icon('label'), extensions=_BASE_EXTENSIONS)
+Label = qtplugin_factory(CLabel, group=_CERN_GROUP_DISPLAY, icon=icon('label'), extensions=_BASE_EXTENSIONS, on_widget_create=lambda w: w.setText('RAD TextLabel'))
 ByteIndicator = qtplugin_factory(CByteIndicator, group=_CERN_GROUP_DISPLAY, icon=icon('byte_indicator'), extensions=_BASE_EXTENSIONS)
 ImageView = qtplugin_factory(CImageView, group=_CERN_GROUP_DISPLAY, icon=icon('image_view'), extensions=_BASE_EXTENSIONS)
 LogDisplay = qtplugin_factory(CLogDisplay, group=_CERN_GROUP_DISPLAY, icon=icon('log_viewer'), extensions=_BASE_EXTENSIONS)

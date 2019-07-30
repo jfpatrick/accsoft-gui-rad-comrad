@@ -1,5 +1,6 @@
-from typing import Type, List
+from typing import Type, List, Callable
 from qtpy.QtGui import QIcon
+from qtpy.QtWidgets import QWidget
 from pydm.widgets.qtplugin_extensions import RulesExtension
 from pydm.widgets.qtplugin_base import PyDMDesignerPlugin
 
@@ -7,11 +8,15 @@ def qtplugin_factory(cls: Type,
                      is_container: bool = False,
                      icon: QIcon = None,
                      group: str = 'ComRAD Widgets',
+                     on_widget_create: Callable[[QWidget], None] = None,
                      extensions: List[RulesExtension] = None):
     """
     Helper function to create a generic PyDMDesignerPlugin class.
 
-    It is similar to pydm.widgets.qtplugin_base.qtplugin_factory, but adds a different docstring.
+    It is similar to pydm.widgets.qtplugin_base.qtplugin_factory, but adds additional features:
+     - specifies different docstring
+     - allows specifying an icon that is visible in Qt Designer
+     - allows modifying the widget on creation in Qt Designer (useful for setting initial text)
 
     Args:
         cls: Widget class.
@@ -31,5 +36,11 @@ def qtplugin_factory(cls: Type,
 
         def icon(self):
             return self._icon or super().icon()
+
+        def createWidget(self, parent: QWidget) -> QWidget:
+            widget: QWidget = super().createWidget(parent)
+            if on_widget_create is not None:
+                on_widget_create(widget)
+            return widget
 
     return Plugin

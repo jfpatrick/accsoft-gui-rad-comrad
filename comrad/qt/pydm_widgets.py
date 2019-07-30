@@ -24,33 +24,13 @@ from pydm.widgets.byte import PyDMByteIndicator
 from pydm.widgets.checkbox import PyDMCheckbox
 from pydm.widgets.tab_bar import PyDMTabWidget
 
-from qtpy.QtWidgets import QWidget
-from qtpy.QtGui import QIcon
-from typing import Union
-
 
 class CWaveFormTable(PyDMWaveformTable):
     pass
 
 
 class CLabel(PyDMLabel):
-
-    def __init__(self, parent: QWidget = None, init_channel: str = None, **kwargs):
-        """
-        A QLabel with support for setting the text via a CS Channel, or
-        through the Rules system.
-
-        **Note!:** If a CLabel is configured to use a Channel, and also with a rule
-        which changes the 'Text' property, the behavior is undefined.  Use either
-        the Channel *or* a text rule, but not both.
-
-        Args:
-            parent: The parent widget for the label.
-            init_channel: The channel to be used by the widget.
-            **kwargs: Any future extras that need to be passed down to PyDM.
-        """
-        super().__init__(parent=parent, init_channel=init_channel, **kwargs)
-        self.setText('RAD TextLabel')
+    pass
 
 
 class CTimePlot(PyDMTimePlot):
@@ -70,18 +50,7 @@ class CByteIndicator(PyDMByteIndicator):
 
 
 class CCheckBox(PyDMCheckbox):
-
-    def __init__(self, parent: QWidget = None, init_channel: str = None, **kwargs):
-        """
-        A QCheckbox with support for Channels from the control system.
-
-        Args:
-            parent: The parent widget for the label.
-            init_channel: The channel to be used by the widget.
-            **kwargs: Any future extras that need to be passed down to PyDM.
-        """
-        super().__init__(parent=parent, init_channel=init_channel, **kwargs)
-        self.setText('RAD CheckBox')
+    pass
 
 
 class CEmbeddedDisplay(PyDMEmbeddedDisplay):
@@ -109,46 +78,7 @@ class CLogDisplay(PyDMLogDisplay):
 
 
 class CPushButton(PyDMPushButton):
-
-    def __init__(self,
-                 parent : QWidget = None,
-                 label: str = None,
-                 icon: QIcon = None,
-                 pressValue: Union[int, float, str] = None,
-                 relative: bool = False,
-                 init_channel: str = None,
-                 **kwargs):
-        """
-        Basic push-button to send a fixed value.
-
-        The `CPushButton` is meant to hold a specific value, and send that value
-        to a channel when it is clicked, much like the MessageButton does in EDM.
-        The `CPushButton` works in two different modes of operation, first, a
-        fixed value can be given to the `.pressValue` attribute, whenever the
-        button is clicked a signal containing this value will be sent to the
-        connected channel. This is the default behavior of the button. However, if
-        the `.relativeChange` is set to True, the fixed value will be added
-        to the current value of the channel. This means that the button will
-        increment a channel by a fixed amount with every click, a consistent
-        relative move.
-
-        Args:
-            parent: The parent widget for the label.
-            label: String to place on button.
-            icon: An Icon to display on the button.
-            pressValue: Value to be sent when the button is clicked.
-            relative: Choice to have the button perform a relative put, instead of always setting to an absolute value.
-            init_channel: ID of channel to manipulate.
-            **kwargs: Any future extras that need to be passed down to PyDM.
-        """
-        super().__init__(parent=parent,
-                         label=label,
-                         icon=icon,
-                         pressValue=pressValue,
-                         relative=relative,
-                         init_channel=init_channel,
-                         **kwargs)
-        self.setText('RAD PushButton')
+    pass
 
 
 class CRelatedDisplayButton(PyDMRelatedDisplayButton):
