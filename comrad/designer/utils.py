@@ -43,4 +43,15 @@ def qtplugin_factory(cls: Type,
                 on_widget_create(widget)
             return widget
 
+        def domXml(self):
+            """
+            XML Description of the widget's properties.
+
+            This one has tooltip removed compared to PyDM.
+            """
+            return (
+                "<widget class=\"{0}\" name=\"{0}\">\n"
+                "</widget>\n"
+            ).format(self.name())
+
     return Plugin
