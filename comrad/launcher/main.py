@@ -25,7 +25,10 @@ def _run_cmd(cmd: str, env: Dict[str, Any], **kwargs: Dict[str, Any]):
     sys_args = list(sys.argv)
     sys_args.pop(0)
     args = [cmd] + sys_args
-    return subprocess.run(args=args, shell=False,  env=dict(os.environ, **env), check=True, **kwargs)
+    try:
+        return subprocess.run(args=args, shell=False, env=dict(os.environ, **env), check=True, **kwargs)
+    except subprocess.CalledProcessError as e:
+        exit(e.returncode)
 
 
 def designer():
