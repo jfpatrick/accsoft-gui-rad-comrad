@@ -23,6 +23,7 @@ from pydm.widgets.enum_combo_box import PyDMEnumComboBox
 from pydm.widgets.byte import PyDMByteIndicator
 from pydm.widgets.checkbox import PyDMCheckbox
 from pydm.widgets.tab_bar import PyDMTabWidget
+from pydm.widgets.frame import PyDMFrame
 from qtpy.QtWidgets import QWidget
 from .value_transform import ValueTransformer
 
@@ -60,6 +61,9 @@ class CWaveFormPlot(PyDMWaveformPlot):
 
 
 class CScatterPlot(PyDMScatterPlot):
+    pass
+
+class CFrame(PyDMFrame):
     pass
 
 

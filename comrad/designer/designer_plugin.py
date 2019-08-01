@@ -51,6 +51,7 @@ ShellCommand = qtplugin_factory(CShellCommand, group=_CERN_GROUP_BUTTONS, icon=i
 WaveformTable = qtplugin_factory(CWaveFormTable, group=_CERN_GROUP_ITEM_VIEWS, icon=icon('waveform_table'), extensions=_BASE_EXTENSIONS)
 
 # Containers
+Frame = qtplugin_factory(CFrame, group=_CERN_GROUP_CONTAINER, icon=icon('frame'), is_container=True, extensions=_BASE_EXTENSIONS)
 EmbeddedDisplay = qtplugin_factory(CEmbeddedDisplay, group=_CERN_GROUP_CONTAINER, icon=icon('embedded_display'), extensions=_BASE_EXTENSIONS)
 TemplateRepeater = qtplugin_factory(CTemplateRepeater, group=_CERN_GROUP_CONTAINER, icon=icon('template_repeater'), extensions=_BASE_EXTENSIONS)
 
