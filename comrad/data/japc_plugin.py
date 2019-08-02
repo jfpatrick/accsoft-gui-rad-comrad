@@ -2,7 +2,7 @@ import logging
 import pyjapc
 import datetime
 import numpy as np
-from pydm.data_plugins import plugin
+from pydm.data_plugins import plugin, is_read_only
 from qtpy.QtCore import Qt, QObject, Slot, Signal
 from typing import Any, Optional, Union
 from collections import namedtuple
@@ -156,9 +156,12 @@ class _JapcConnection(plugin.PyDMConnection):
             # is not initiated here, thus we are not getting initial values
             get_japc().getParam(parameterName=self._device_prop, onValueReceived=self._on_async_get, **self._japc_additional_args)
 
-        # Allow write to all widgets by default. Write permissions are defined in CCDB,
-        # which pyjapc does not have access to, so we can't know if a property is writable at the moment
-        self.write_access_signal.emit(True)
+        if is_read_only():
+            self.write_access_signal.emit(False)
+        else:
+            # Allow write to all widgets by default. Write permissions are defined in CCDB,
+            # which pyjapc does not have access to, so we can't know if a property is writable at the moment
+            self.write_access_signal.emit(True)
 
     def remove_listener(self, channel: channel.PyDMChannel, destroying=False):
         # Superclass does not implement signal for bool values
