@@ -1,6 +1,12 @@
-print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
-      '*** Welcome to ComRAD Designer! ***\n'
-      '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+import comrad
+
+print('\n\n'
+      ' ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+      ' *** Welcome to ComRAD Designer! ***\n'
+      ' ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+      f' Version: {comrad.__version__}\n'
+      f' Support: {comrad.__author__}\n'
+      ' Project page: https://wikis.cern.ch/display/ACCPY/Rapid+Application+Development\n'
       '\n')
 
 from typing import List
@@ -24,6 +30,7 @@ _COMRAD_GROUP_INPUT = 'Input Widgets' #'ComRAD Input Widgets'
 _COMRAD_GROUP_PLOT = 'Charts' #'ComRAD Plot Widgets'
 _COMRAD_GROUP_BUTTONS = 'Buttons'
 _COMRAD_GROUP_ITEM_VIEWS = 'Item Widgets (Item-Based)'
+_COMRAD_GROUP_VIRTUAL = 'Invisible Widgets'
 
 
 def icon(name: str) -> QIcon:
@@ -75,6 +82,9 @@ WaveformPlot = qtplugin_factory(CWaveFormPlot, group=_COMRAD_GROUP_PLOT, icon=ic
                                                                                    RulesExtension])
 ScatterPlot = qtplugin_factory(CScatterPlot, group=_COMRAD_GROUP_PLOT, icon=icon('scatter_plot'), extensions=[ScatterCurveEditorExtension,
                                                                                  RulesExtension])
+
+# Invisible
+VirtualGenerator = qtplugin_factory(CVirtualPropertyGenerator, group=_COMRAD_GROUP_VIRTUAL, icon=icon('calc'))
 
 # Tab Widget plugin
 class TabWidgetPlugin(PyDMTabWidgetPlugin):
