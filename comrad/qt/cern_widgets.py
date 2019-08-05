@@ -1,7 +1,6 @@
 import logging
 import numpy as np
-from functools import partial
-from typing import List, Dict, Optional, Set
+from typing import List, Optional, Set, Any
 from pydm.widgets import qtplugin_extensions
 from pydm.widgets.base import PyDMWidget
 from pydm.widgets.channel import PyDMChannel
@@ -61,7 +60,6 @@ class CVirtualPropertyGenerator(QWidget, PyDMWidget, GeneratorTrigger):
         if not is_qt_designer():
             # Trigger connection creation
             self.inputChannels = init_channels
-        # TODO: Expose properties that in Qt Designer it's possible to use signal-slot connection to subscribe to it
 
     @Property('QStringList')
     def inputChannels(self) -> List[str]:
@@ -92,7 +90,9 @@ class CVirtualPropertyGenerator(QWidget, PyDMWidget, GeneratorTrigger):
         # Remove old connections
         channel_objs = self.channels()
         if channel_objs:
-            for channel in [c for c in self.channels() if c.address in channels_to_remove]:
+            for channel in channel_objs:
+                if channel.address not in channels_to_remove:
+                    continue
                 channel.disconnect()
                 self._channels.remove(channel)
 
@@ -109,10 +109,7 @@ class CVirtualPropertyGenerator(QWidget, PyDMWidget, GeneratorTrigger):
             # This could be a generalized approach to put into PyDMWidget,
             # currently it relies only on a single widget presence, but if changed to
             # work with multiple ones, this code could be reused from the base class...
-            # FIXME: Add slot with channel id here so that we can keep track in trigger table
-            receiver = partial(self.channel_value_changed, channel_id=addr)
-            channel = PyDMChannel(address=addr, value_slot=receiver)
-            # channel = PyDMChannel(address=addr, value_slot=self.channelValueChanged)
+            channel = PyDMChannel(address=addr, value_slot=self.channelValueChanged)
             channel.connect()
             self._channels.append(channel)
 
@@ -121,7 +118,21 @@ class CVirtualPropertyGenerator(QWidget, PyDMWidget, GeneratorTrigger):
     @Slot(str)
     @Slot(bool)
     @Slot(np.ndarray)
-    def channel_value_changed(self, new_val, channel_id):
+    def channelValueChanged(self, new_val: Any):
+        """
+        Callback when a new value arrives on any of the inputChannels.
+
+        Args:
+            new_val: New value.
+        """
+
+        # This is the way to identify the channel, instead of initially used functools.partial,
+        # which results in reference cycle
+        conn = self.sender()
+        if conn is None:
+            return
+        channel_id = conn.address
+
         if self._trigger_type == self.GeneratorTrigger.Any:
             self._values[channel_id] = new_val
             self._trigger_update()
