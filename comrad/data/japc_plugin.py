@@ -176,8 +176,7 @@ class _JapcConnection(plugin.PyDMConnection):
                 channel.value_signal.disconnect(self._on_value_updated)
         else:
             self.log.info(f'Removing a listener for {self.protocol}://{self.address} and destroying channel connection')
-        super().remove_listener(channel=channel,
-                                                     destroying=destroying)
+        super().remove_listener(channel=channel, destroying=destroying)
 
     def close(self):
         if self.connected:
