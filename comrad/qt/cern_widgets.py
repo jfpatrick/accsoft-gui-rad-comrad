@@ -7,7 +7,8 @@ from pydm.widgets.base import PyDMWidget
 from pydm.widgets.channel import PyDMChannel
 from pydm.utilities import is_qt_designer
 from qtpy.QtWidgets import QWidget
-from qtpy.QtCore import Property, Slot, Q_ENUM
+from qtpy.QtCore import Property, Signal, Slot, Q_ENUM
+from .value_transform import run_transformation
 #from accsoft_gui_pyqt_widgets import *
 
 
@@ -31,6 +32,9 @@ class GeneratorTrigger:
 class CVirtualPropertyGenerator(QWidget, PyDMWidget, GeneratorTrigger):
     Q_ENUM(GeneratorTrigger)
     GeneratorTrigger = GeneratorTrigger
+
+    # Emitted when the user changes the value.
+    updateTriggered = Signal([int], [float], [str], [bool], [np.ndarray])
 
     def __init__(self, parent: QWidget = None, init_channels: List[str] = []):
         """
@@ -120,7 +124,7 @@ class CVirtualPropertyGenerator(QWidget, PyDMWidget, GeneratorTrigger):
     def channel_value_changed(self, new_val, channel_id):
         if self._trigger_type == self.GeneratorTrigger.Any:
             self._values[channel_id] = new_val
-            self.trigger_update()
+            self._trigger_update()
             return
 
         if self._trigger_type == self.GeneratorTrigger.AggregatedFirst and channel_id not in self._obsolete_values:
@@ -136,10 +140,7 @@ class CVirtualPropertyGenerator(QWidget, PyDMWidget, GeneratorTrigger):
         # Now empty
         if not self._obsolete_values:
             self._obsolete_values = set(self._channel_ids)
-            self.trigger_update()
-
-    def trigger_update(self):
-        print(f'{hash(self)} Update with {self._values}')
+            self._trigger_update()
 
     @Property(GeneratorTrigger)
     def generatorTrigger(self):
@@ -174,7 +175,7 @@ class CVirtualPropertyGenerator(QWidget, PyDMWidget, GeneratorTrigger):
             self._trigger_type = new_type
 
     @Property(str)
-    def generatorLogic(self) -> str:
+    def valueTransformation(self) -> str:
         """
         Python code snippet, similar to valueTransformation in C-Widgets. But rather than acting on a single value,
         this snippet allows accessing multiple channels, defined in inputChannels, and composing a new value
@@ -185,8 +186,8 @@ class CVirtualPropertyGenerator(QWidget, PyDMWidget, GeneratorTrigger):
         """
         return self._generator
 
-    @generatorLogic.setter
-    def generatorLogic(self, new_val: str):
+    @valueTransformation.setter
+    def valueTransformation(self, new_val: str):
         """
         Reset generator code snippet.
 
@@ -220,3 +221,16 @@ class CVirtualPropertyGenerator(QWidget, PyDMWidget, GeneratorTrigger):
     def alarmSensitiveContent(self, ch):
         logger.info(f'alarmSensitiveContent property is disabled for the {type(self).__name__} widget.')
         return
+
+    def _trigger_update(self):
+        if not self.valueTransformation:
+            return
+
+        result = run_transformation(self.valueTransformation, globals={'values': self._values})
+        if result is None:
+            # With None, it will be impossible to determine the signal override, therefore we simply don't send it
+            return
+        try:
+            self.updateTriggered[type(result)].emit(result)
+        except KeyError:
+            pass
