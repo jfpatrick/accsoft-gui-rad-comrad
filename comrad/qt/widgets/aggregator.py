@@ -4,8 +4,8 @@ from typing import List, Dict, Optional, Set, Any
 from pydm.widgets.base import PyDMWidget
 from pydm.widgets.channel import PyDMChannel
 from pydm.utilities import is_qt_designer
-from qtpy.QtWidgets import QWidget
-from qtpy.QtCore import Property, Signal, Slot, Q_ENUM
+from qtpy.QtWidgets import QWidget, QFrame, QVBoxLayout, QLabel
+from qtpy.QtCore import Property, Signal, Slot, Q_ENUM, Qt
 from ..value_transform import run_transformation
 
 
@@ -48,9 +48,13 @@ class CValueAggregator(QWidget, PyDMWidget, GeneratorTrigger):
         # in _values
         self._obsolete_values: Optional[Set] = None
 
-        if not is_qt_designer():
+        if is_qt_designer():
+            self._setup_ui_for_designer()
+        else:
             # Trigger connection creation
             self.inputChannels = init_channels
+            # Should be invisible in runtime
+            self.hide()
 
     @Property('QStringList')
     def inputChannels(self) -> List[str]:
@@ -237,6 +241,22 @@ class CValueAggregator(QWidget, PyDMWidget, GeneratorTrigger):
         logger.info(f'alarmSensitiveContent property is disabled for the {type(self).__name__} widget.')
         return
 
+    @Property('QSize', designable=False)
+    def minimumSize(self):
+        return super().minimumSize()
+
+    @Property('QSize', designable=False)
+    def maximumSize(self):
+        return super().maximumSize()
+
+    @Property('QSize', designable=False)
+    def baseSize(self):
+        return super().baseSize()
+
+    @Property('QSize', designable=False)
+    def sizeIncrement(self):
+        return super().sizeIncrement()
+
     def _trigger_update(self):
         if (not self.valueTransformation
                 or is_qt_designer()): # Avoid code evaluation in Designer,
@@ -251,3 +271,27 @@ class CValueAggregator(QWidget, PyDMWidget, GeneratorTrigger):
             self.updateTriggered[type(result)].emit(result)
         except KeyError:
             pass
+
+    def _setup_ui_for_designer(self):
+        """Improves visibility of the widget in Designer"""
+        width = 40
+        height = 25
+        frame = QFrame(self)
+        frame.setFrameShape(QFrame.Box)
+        frame.setFrameShadow(QFrame.Sunken)
+        frame.resize(width, height)
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+        layout.addChildWidget(frame)
+        self.setMinimumWidth(width)
+        self.setMinimumHeight(height)
+        self.setMaximumWidth(width)
+        self.setMaximumHeight(height)
+        self.resize(width, height)
+        layout = QVBoxLayout()
+        frame.setLayout(layout)
+        label = QLabel()
+        label.setText('%')
+        label.resize(width, height)
+        label.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+        layout.addChildWidget(label)
