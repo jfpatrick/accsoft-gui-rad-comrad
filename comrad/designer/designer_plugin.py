@@ -49,11 +49,15 @@ Checkbox = qtplugin_factory(CCheckBox, group=_COMRAD_GROUP_BUTTONS, icon=icon('c
 def enum_btn_init(w: CEnumButton):
     w.items = ['RAD Item 1', 'RAD Item 2', 'RAD Item ...']
 
+def toggle_btn_init(w: CToggleButton):
+    w.setUncheckedText('RAD Toggle Released')
+    w.setCheckedText('RAD Toggle Pressed')
 
 EnumButton = qtplugin_factory(CEnumButton, group=_COMRAD_GROUP_BUTTONS, icon=icon('enum_btn'), extensions=_BASE_EXTENSIONS, on_widget_create=enum_btn_init)
 PushButton = qtplugin_factory(CPushButton, group=_COMRAD_GROUP_BUTTONS, icon=icon('push_btn'), extensions=_BASE_EXTENSIONS, on_widget_create=lambda w: w.setText('RAD PushButton'))
 RelatedDisplayButton = qtplugin_factory(CRelatedDisplayButton, group=_COMRAD_GROUP_BUTTONS, icon=icon('related_display'), extensions=_BASE_EXTENSIONS)
 ShellCommand = qtplugin_factory(CShellCommand, group=_COMRAD_GROUP_BUTTONS, icon=icon('shell_cmd'), extensions=_BASE_EXTENSIONS)
+ToggleButton = qtplugin_factory(CToggleButton, group=_COMRAD_GROUP_BUTTONS, icon=icon('toggle'), extensions=_BASE_EXTENSIONS, on_widget_create=toggle_btn_init)
 
 # Item Widgets
 WaveformTable = qtplugin_factory(CWaveFormTable, group=_COMRAD_GROUP_ITEM_VIEWS, icon=icon('waveform_table'), extensions=_BASE_EXTENSIONS)
@@ -84,7 +88,7 @@ ScatterPlot = qtplugin_factory(CScatterPlot, group=_COMRAD_GROUP_PLOT, icon=icon
                                                                                  RulesExtension])
 
 # Invisible
-VirtualGenerator = qtplugin_factory(CVirtualPropertyGenerator, group=_COMRAD_GROUP_VIRTUAL, icon=icon('calc'))
+ValueAggregator = qtplugin_factory(CValueAggregator, group=_COMRAD_GROUP_VIRTUAL, icon=icon('calc'))
 
 # Tab Widget plugin
 class TabWidgetPlugin(PyDMTabWidgetPlugin):
