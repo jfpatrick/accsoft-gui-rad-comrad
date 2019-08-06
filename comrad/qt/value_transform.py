@@ -1,6 +1,7 @@
 import logging
 import traceback
 from qtpy.QtCore import Property
+from pydm.utilities import is_qt_designer
 from typing import Any, Dict
 
 
@@ -31,7 +32,11 @@ class ValueTransformer:
         Args:
             new_val: The new value from the channel. The type depends on the channel.
         """
-        val = _transform_value(new_val, transformation=self._value_transform) if self._value_transform else new_val
+        if is_qt_designer():
+            val = new_val  # Avoid code evaluation in Designer, as it can produce unnecessary errors with broken code
+        else:
+            val = (_transform_value(new_val, transformation=self._value_transform)
+                   if self._value_transform else new_val)
         super().value_changed(val)
 
 

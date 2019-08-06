@@ -1,6 +1,6 @@
 import logging
 import numpy as np
-from typing import List, Optional, Set, Any
+from typing import List, Dict, Optional, Set, Any
 from pydm.widgets import qtplugin_extensions
 from pydm.widgets.base import PyDMWidget
 from pydm.widgets.channel import PyDMChannel
@@ -45,14 +45,15 @@ class CVirtualPropertyGenerator(QWidget, PyDMWidget, GeneratorTrigger):
         """
         QWidget.__init__(self, parent)
         PyDMWidget.__init__(self)
-        self._channel_ids = []
+        self._channel_ids: List[str] = []
         self._generator = ''
+        self._active: bool = True
         # This type defines how often an update is fired and when cached values get overwritten
         self._trigger_type = self.GeneratorTrigger.Any
 
         # This table contains cached values of the channels that can be accessed from the generator logic.
         # Keys are channel addresses and values are cached values
-        self._values = {}
+        self._values: Dict[str, Any] = {}
         # This contains channels ids that have not yet updated their values and have not cached them
         # in _values
         self._obsolete_values: Optional[Set] = None
@@ -153,6 +154,19 @@ class CVirtualPropertyGenerator(QWidget, PyDMWidget, GeneratorTrigger):
             self._obsolete_values = set(self._channel_ids)
             self._trigger_update()
 
+    @Slot(bool)
+    def setActive(self, val):
+        if val != self._active:
+            self._active = val
+            channels: List[PyDMChannel] = self.channels()
+            for ch in channels:
+                if ch is None:
+                    continue
+                if val:
+                    ch.connect()
+                else:
+                    ch.disconnect()
+
     @Property(GeneratorTrigger)
     def generatorTrigger(self):
         """
@@ -234,7 +248,9 @@ class CVirtualPropertyGenerator(QWidget, PyDMWidget, GeneratorTrigger):
         return
 
     def _trigger_update(self):
-        if not self.valueTransformation:
+        if (not self.valueTransformation
+                or is_qt_designer()): # Avoid code evaluation in Designer,
+                                      # as it can produce unnecessary errors with broken code
             return
 
         result = run_transformation(self.valueTransformation, globals={'values': self._values})
