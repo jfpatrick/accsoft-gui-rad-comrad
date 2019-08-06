@@ -45,6 +45,7 @@ setup(
     ],
     include_package_data=True,
     package_data={
+        'comrad': 'comrad/*.qss',
         'comrad.qt': 'comrad/qt/*.ui',
         'comrad.tools': 'comrad/tools/*.ui',
         'comrad.designer.icons': 'comrad/designer/icons/*.ico',
