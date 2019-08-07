@@ -3,7 +3,7 @@ import pyjapc
 import datetime
 import numpy as np
 from pydm.data_plugins import plugin, is_read_only
-from qtpy.QtCore import Qt, QObject, Slot, Signal
+from qtpy.QtCore import Qt, QObject, Slot, Signal, QVariant
 from typing import Any, Optional, Union
 from collections import namedtuple
 
@@ -107,7 +107,7 @@ class _JapcConnection(plugin.PyDMConnection):
     """ PyDM adaptation for JAPC protocol. """
 
     # Superclass does not implement signal for bool values
-    new_value_signal = Signal([float], [int], [str], [np.ndarray], [bool])
+    new_value_signal = Signal([float], [int], [str], [np.ndarray], [bool], [QVariant], [list])
 
     def __init__(self, channel: channel.PyDMChannel, address: str, protocol: str = None, parent: QObject = None, *args, **kwargs):
         super().__init__(channel=channel,
@@ -137,6 +137,14 @@ class _JapcConnection(plugin.PyDMConnection):
         if channel.value_slot is not None:
             try:
                 self.new_value_signal[bool].connect(channel.value_slot, Qt.QueuedConnection)
+            except TypeError:
+                pass
+            try:
+                self.new_value_signal[list].connect(channel.value_slot, Qt.QueuedConnection)
+            except TypeError:
+                pass
+            try:
+                self.new_value_signal[QVariant].connect(channel.value_slot, Qt.QueuedConnection)
             except TypeError:
                 pass
 
@@ -172,12 +180,19 @@ class _JapcConnection(plugin.PyDMConnection):
                     self.new_value_signal[bool].disconnect(channel.value_slot)
                 except TypeError:
                     pass
+                try:
+                    self.new_value_signal[QVariant].disconnect(channel.value_slot)
+                except TypeError:
+                    pass
+                try:
+                    self.new_value_signal[list].disconnect(channel.value_slot)
+                except TypeError:
+                    pass
             if channel.value_signal is not None:
                 channel.value_signal.disconnect(self._on_value_updated)
         else:
             self.log.info(f'Removing a listener for {self.protocol}://{self.address} and destroying channel connection')
-        super().remove_listener(channel=channel,
-                                                     destroying=destroying)
+        super().remove_listener(channel=channel, destroying=destroying)
 
     def close(self):
         if self.connected:

@@ -2,6 +2,7 @@
 # convention as native ComRAD widgets. This is both useful for consistency in Qt Designer widget list
 # and when instantiating them from code.
 
+import numpy as np
 from pydm.widgets.waveformtable import PyDMWaveformTable
 from pydm.widgets.scale import PyDMScaleIndicator
 from pydm.widgets.timeplot import PyDMTimePlot
@@ -25,7 +26,9 @@ from pydm.widgets.checkbox import PyDMCheckbox
 from pydm.widgets.tab_bar import PyDMTabWidget
 from pydm.widgets.frame import PyDMFrame
 from qtpy.QtWidgets import QWidget
+from qtpy.QtCore import Slot
 from .value_transform import ValueTransformer
+from typing import List, Tuple, Union
 
 
 class CWaveFormTable(PyDMWaveformTable):
@@ -81,6 +84,40 @@ class CByteIndicator(ValueTransformer, PyDMByteIndicator):
         """
         ValueTransformer.__init__(self)
         PyDMByteIndicator.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
+
+    @Slot(list)
+    @Slot(bool)
+    @Slot(int)
+    @Slot(float)
+    @Slot(str)
+    @Slot(np.ndarray)
+    def channelValueChanged(self, new_val: Union[bool, int, List[Tuple[int, str]]]):
+        """
+        Slot that accepts types, not natively supported by PyDM
+        list: Currently, PyJAPC is expected to convert EnumItemSet into List[Tuple[code, name]].
+        bool: Indicator fails to display a single bool value
+
+        PyDMByteIndicator expects int value. So we construct int from the bit mask expressed by the list.
+
+        Args:
+            new_val: Incoming value.
+        """
+        if isinstance(new_val, np.ndarray):
+            bit_mask = 0
+            row_length, = new_val.shape()
+            for (x, y), el in np.ndenumerate(new_val):
+                if int(el) != 0:
+                    idx = x * row_length + y
+                    bit_mask |= 1 << idx
+            PyDMByteIndicator.channelValueChanged(self, bit_mask)
+        elif isinstance(new_val, list):
+            bit_mask = 0
+            for val, _ in new_val:
+                bit_mask |= val
+            PyDMByteIndicator.channelValueChanged(self, bit_mask)
+        else:
+            # Fallback to the original Byte indicator
+            PyDMByteIndicator.channelValueChanged(self, int(new_val))
 
 
 class CCheckBox(ValueTransformer, PyDMCheckbox):
