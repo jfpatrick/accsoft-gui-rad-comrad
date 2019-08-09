@@ -6,7 +6,7 @@ from pydm.widgets.channel import PyDMChannel
 from pydm.utilities import is_qt_designer
 from qtpy.QtWidgets import QWidget, QFrame, QVBoxLayout, QLabel
 from qtpy.QtCore import Property, Signal, Slot, Q_ENUM, Qt
-from ..value_transform import run_transformation, ValueTransformationBase
+from ..value_transform import ValueTransformationBase
 
 
 logger = logging.getLogger(__name__)
@@ -241,12 +241,11 @@ class CValueAggregator(QWidget, PyDMWidget, ValueTransformationBase, GeneratorTr
                                       # as it can produce unnecessary errors with broken code
             return
 
-        code = self.cached_value_transformation()
-        if not code:
-            # Empty code, no need to do anything
+        transform = self.cached_value_transformation()
+        if not transform:
             return
 
-        result = run_transformation(code, globals={'values': self._values})
+        result = transform(values=self._values)
         if result is None:
             # With None, it will be impossible to determine the signal override, therefore we simply don't send it
             return
