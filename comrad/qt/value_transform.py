@@ -1,5 +1,6 @@
 import logging
 import traceback
+import re
 from qtpy.QtCore import Property
 from pydm.utilities import is_qt_designer, macro
 from typing import Any, Dict
@@ -145,13 +146,15 @@ def run_transformation(transformation: str, globals: Dict[str, Any] = globals(),
     Returns:
         A single resulting value.
     """
-    # For scripts that do not run code by default but rather expose functions,
-    # pretend we are running them as the main target
-    globals['__name__'] = '__main__'
     try:
         # We set to the same reference, for subclasses, that will rely on the same reference
         def returning_exec(code, globals=globals, locals=locals):
+            code = re.sub(r'\_\_name\_\_\ *==\ *(\'(\'{2})?|\"(\"{2})?)\_\_main\_\_(\'(\'{2})?|\"(\"{2})?)', 'True', code)
             indented_code = code.replace('\n', '\n    ')
+            # For scripts that do not run code by default but rather expose functions,
+            # pretend we are running them as the main target. However, if we simply change __name__ to '__main__',
+            # imported packages will also see the same, which is not how it should be. Therefore we just
+            # substitute all comparisons in the code against the '__main__' to True.
             wrapped_code = f"""
 global _return_val
 def my_func():
