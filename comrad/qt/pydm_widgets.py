@@ -51,8 +51,8 @@ class CLabel(ValueTransformer, PyDMLabel):
             init_channel: The channel to be used by the widget.
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
-        ValueTransformer.__init__(self)
         PyDMLabel.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
+        ValueTransformer.__init__(self)
 
 
 class CTimePlot(PyDMTimePlot):
@@ -82,8 +82,8 @@ class CByteIndicator(ValueTransformer, PyDMByteIndicator):
             init_channel: The channel to be used by the widget.
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
-        ValueTransformer.__init__(self)
         PyDMByteIndicator.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
+        ValueTransformer.__init__(self)
 
     @Slot(list)
     @Slot(bool)
@@ -131,8 +131,8 @@ class CCheckBox(ValueTransformer, PyDMCheckbox):
             init_channel: The channel to be used by the widget.
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
-        ValueTransformer.__init__(self)
         PyDMCheckbox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
+        ValueTransformer.__init__(self)
 
 
 class CEmbeddedDisplay(PyDMEmbeddedDisplay):
@@ -156,8 +156,8 @@ class CEnumButton(ValueTransformer, PyDMEnumButton):
             init_channel: The channel to be used by the widget.
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
-        ValueTransformer.__init__(self)
         PyDMEnumButton.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
+        ValueTransformer.__init__(self)
 
 
 class CEnumComboBox(ValueTransformer, PyDMEnumComboBox):
@@ -177,8 +177,8 @@ class CEnumComboBox(ValueTransformer, PyDMEnumComboBox):
             init_channel: The channel to be used by the widget.
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
-        ValueTransformer.__init__(self)
         PyDMEnumComboBox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
+        ValueTransformer.__init__(self)
 
 
 class CImageView(PyDMImageView):
@@ -230,8 +230,8 @@ class CSlider(ValueTransformer, PyDMSlider):
             init_channel: The channel to be used by the widget.
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
-        ValueTransformer.__init__(self)
         PyDMSlider.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
+        ValueTransformer.__init__(self)
 
 
 class CSpinBox(ValueTransformer, PyDMSpinbox):
@@ -245,8 +245,8 @@ class CSpinBox(ValueTransformer, PyDMSpinbox):
             init_channel: The channel to be used by the widget.
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
-        ValueTransformer.__init__(self)
         PyDMSpinbox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
+        ValueTransformer.__init__(self)
 
 
 class CScaleIndicator(ValueTransformer, PyDMScaleIndicator):
@@ -263,8 +263,8 @@ class CScaleIndicator(ValueTransformer, PyDMScaleIndicator):
             init_channel: The channel to be used by the widget.
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
-        ValueTransformer.__init__(self)
         PyDMScaleIndicator.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
+        ValueTransformer.__init__(self)
 
 
 class CTemplateRepeater(PyDMTemplateRepeater):

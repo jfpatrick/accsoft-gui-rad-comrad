@@ -6,7 +6,7 @@ from pydm.widgets.channel import PyDMChannel
 from pydm.utilities import is_qt_designer
 from qtpy.QtWidgets import QWidget, QFrame, QVBoxLayout, QLabel
 from qtpy.QtCore import Property, Signal, Slot, Q_ENUM, Qt
-from ..value_transform import run_transformation
+from ..value_transform import run_transformation, ValueTransformationBase
 
 
 logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ class GeneratorTrigger:
     AggregatedFirst = 2
 
 
-class CValueAggregator(QWidget, PyDMWidget, GeneratorTrigger):
+class CValueAggregator(QWidget, PyDMWidget, ValueTransformationBase, GeneratorTrigger):
     Q_ENUM(GeneratorTrigger)
     GeneratorTrigger = GeneratorTrigger
 
@@ -35,8 +35,8 @@ class CValueAggregator(QWidget, PyDMWidget, GeneratorTrigger):
         """
         QWidget.__init__(self, parent)
         PyDMWidget.__init__(self)
+        ValueTransformationBase.__init__(self)
         self._channel_ids: List[str] = []
-        self._generator = ''
         self._active: bool = True
         # This type defines how often an update is fired and when cached values get overwritten
         self._trigger_type = self.GeneratorTrigger.Any
@@ -193,28 +193,6 @@ class CValueAggregator(QWidget, PyDMWidget, GeneratorTrigger):
                 self._obsolete_values = set(self._channel_ids)
             self._trigger_type = new_type
 
-    @Property(str)
-    def valueTransformation(self) -> str:
-        """
-        Python code snippet, similar to valueTransformation in C-Widgets. But rather than acting on a single value,
-        this snippet allows accessing multiple channels, defined in inputChannels, and composing a new value
-        to be placed into the output slot.
-
-        Returns:
-            Code snippet
-        """
-        return self._generator
-
-    @valueTransformation.setter
-    def valueTransformation(self, new_val: str):
-        """
-        Reset generator code snippet.
-
-        Args:
-            new_val: New Python code snippet.
-        """
-        self._generator = new_val
-
     @Property(str, designable=False)
     def channel(self):
         return
@@ -258,12 +236,17 @@ class CValueAggregator(QWidget, PyDMWidget, GeneratorTrigger):
         return super().sizeIncrement()
 
     def _trigger_update(self):
-        if (not self.valueTransformation
+        if ((not self.valueTransformation and not self.snippetFilename)
                 or is_qt_designer()): # Avoid code evaluation in Designer,
                                       # as it can produce unnecessary errors with broken code
             return
 
-        result = run_transformation(self.valueTransformation, globals={'values': self._values})
+        code = self.cached_value_transformation()
+        if not code:
+            # Empty code, no need to do anything
+            return
+
+        result = run_transformation(code, globals={'values': self._values})
         if result is None:
             # With None, it will be impossible to determine the signal override, therefore we simply don't send it
             return

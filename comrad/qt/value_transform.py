@@ -3,26 +3,73 @@ import traceback
 from qtpy.QtCore import Property
 from pydm.utilities import is_qt_designer
 from typing import Any, Dict
+from .file_tracking import FileTracking
 
 
 logger = logging.getLogger(__name__)
 
 
-class ValueTransformer:
+class ValueTransformationBase(FileTracking):
 
     def __init__(self):
+        super().__init__()
         self._value_transform = ''
+        self._value_transform_parsed = ''
+        self._value_transform_filename = None
 
     @Property(str)
     def valueTransformation(self):
+        """
+        Python code snippet to transform the incoming value(s) before displaying it.
+
+        Returns:
+            Code snippet
+        """
         return self._value_transform
 
     @valueTransformation.setter
     def valueTransformation(self, new_formatter):
+        """
+        Reset generator code snippet.
+
+        Args:
+            new_val: New Python code snippet.
+        """
         if self._value_transform != str(new_formatter):
             self._value_transform = str(new_formatter)
             self.value_changed(self.value)
 
+    @Property(str)
+    def snippetFilename(self) -> str:
+        """
+        Path to the file that contains Python snippet for transformation. If valueTransformation is defined,
+        it will override the code coming from this file.
+
+        Returns:
+            Filename of the Python file.
+        """
+        return self._value_transform_filename
+
+    @snippetFilename.setter
+    def snippetFilename(self, new_val: str):
+        """
+        Sets the path to the Python file.
+
+        Args:
+            new_val: Filename of the Python code.
+        """
+        self._value_transform_filename = new_val
+
+    def cached_value_transformation(self):
+        if not self._value_transform_parsed:
+            if self.valueTransformation:
+                self._value_transform_parsed = self.substituted_string(self.valueTransformation)
+            else:
+                self._value_transform_parsed = self.open_file(self.snippetFilename)
+        return self._value_transform_parsed
+
+
+class ValueTransformer(ValueTransformationBase):
 
     def value_changed(self, new_val: Any) -> None:
         """
@@ -35,8 +82,8 @@ class ValueTransformer:
         if is_qt_designer():
             val = new_val  # Avoid code evaluation in Designer, as it can produce unnecessary errors with broken code
         else:
-            val = (_transform_value(new_val, transformation=self._value_transform)
-                   if self._value_transform else new_val)
+            code = self.cached_value_transformation()
+            val = _transform_value(new_val, transformation=code) if code else new_val
         super().value_changed(val)
 
 
