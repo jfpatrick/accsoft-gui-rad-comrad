@@ -1,7 +1,7 @@
 import logging
 import traceback
 from qtpy.QtCore import Property
-from pydm.utilities import is_qt_designer
+from pydm.utilities import is_qt_designer, macro
 from typing import Any, Dict
 from .file_tracking import FileTracking
 
@@ -15,6 +15,7 @@ class ValueTransformationBase(FileTracking):
         super().__init__()
         self._value_transform = ''
         self._value_transform_parsed = ''
+        self._value_transform_macros = None
         self._value_transform_filename = None
 
     @Property(str)
@@ -60,7 +61,44 @@ class ValueTransformationBase(FileTracking):
         """
         self._value_transform_filename = new_val
 
-    def cached_value_transformation(self):
+    @Property(str)
+    def macros(self) -> str:
+        """
+        Similar to the macros of PyDMEmbeddedDisplay and PyDMRelatedDisplayButton,
+        this is will substitute variables in the value transformation code,
+        either defined with the inline snippet, or coming from a file.
+
+        Returns:
+            JSON-formatted string containing macro variables.
+        """
+        if self._value_transform_macros is None:
+            return ''
+        return self._value_transform_macros
+
+    @macros.setter
+    def macros(self, new_macros: str):
+        """
+            JSON-formatted string containing macro variables.
+
+        Args:
+            new_macros: new string.
+        """
+        self._value_transform_macros = str(new_macros)
+
+    def parsed_macros(self):
+        m = super().parsed_macros()
+        m.update(macro.parse_macro_string(self.macros))
+        return m
+
+    def cached_value_transformation(self) -> str:
+        """
+        When called for the first time, it will attempt to access inline code snippet
+        or if one is undefined, then it will try to load a Python file, defined by the
+        snippetFilename.
+
+        Returns:
+            Value transformation code with substituted macros.
+        """
         if not self._value_transform_parsed:
             if self.valueTransformation:
                 self._value_transform_parsed = self.substituted_string(self.valueTransformation)
@@ -107,6 +145,9 @@ def run_transformation(transformation: str, globals: Dict[str, Any] = globals(),
     Returns:
         A single resulting value.
     """
+    # For scripts that do not run code by default but rather expose functions,
+    # pretend we are running them as the main target
+    globals['__name__'] = '__main__'
     try:
         # We set to the same reference, for subclasses, that will rely on the same reference
         def returning_exec(code, globals=globals, locals=locals):
