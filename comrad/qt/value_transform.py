@@ -4,7 +4,7 @@ import re
 import os
 from qtpy.QtCore import Property
 from pydm.utilities import is_qt_designer, macro
-from typing import Any, Dict, Callable, Optional
+from typing import Any, Callable, Optional
 from .file_tracking import FileTracking
 
 
@@ -23,8 +23,7 @@ class ValueTransformationBase(FileTracking):
         self._value_transform_macros = None
         self._value_transform_filename = None
 
-    @Property(str)
-    def valueTransformation(self):
+    def getValueTransformation(self):
         """
         Python code snippet to transform the incoming value(s) before displaying it.
 
@@ -33,8 +32,7 @@ class ValueTransformationBase(FileTracking):
         """
         return self._value_transform
 
-    @valueTransformation.setter
-    def valueTransformation(self, new_formatter):
+    def setValueTransformation(self, new_formatter: str):
         """
         Reset generator code snippet.
 
@@ -42,6 +40,8 @@ class ValueTransformationBase(FileTracking):
             new_val: New Python code snippet.
         """
         self._value_transform = str(new_formatter)
+
+    valueTransformation = Property(str, getValueTransformation, setValueTransformation)
 
     @Property(str)
     def snippetFilename(self) -> str:
@@ -117,20 +117,18 @@ class ValueTransformationBase(FileTracking):
 
 class ValueTransformer(ValueTransformationBase):
 
-    @Property(str)
-    def valueTransformation(self):
-        return super().valueTransformation
+    def getValueTransformation(self) -> str:
+        return ValueTransformationBase.getValueTransformation(self)
 
-    @valueTransformation.setter
-    def valueTransformation(self, new_formatter):
+    def setValueTransformation(self, new_formatter: str):
         """
         Reset generator code snippet.
 
         Args:
             new_val: New Python code snippet.
         """
-        if self.valueTransformation != str(new_formatter):
-            super().valueTransformation = str(new_formatter)
+        if self.getValueTransformation() != str(new_formatter):
+            ValueTransformationBase.setValueTransformation(self, str(new_formatter))
             self.value_changed(self.value)
 
     def value_changed(self, new_val: Any) -> None:
@@ -145,7 +143,7 @@ class ValueTransformer(ValueTransformationBase):
             val = new_val  # Avoid code evaluation in Designer, as it can produce unnecessary errors with broken code
         else:
             transform = self.cached_value_transformation()
-            val = transform(new_val=new_val) if transform else new_val
+            val = transform(new_val=new_val, widget=self) if transform else new_val
         super().value_changed(val)
 
 
@@ -193,7 +191,10 @@ __builtins__['output'] = {output_func_name}
         global_vars.update(inputs)
         try:
             exec(wrapped_code, global_vars, {})
-            return global_vars[return_var]  # This variable should have been set within wrapped_code
+            try:
+                return global_vars[return_var]  # This variable should have been set within wrapped_code
+            except KeyError:
+                return None
         except BaseException as e:
             last_stack_trace = traceback.format_exc().split('\n')[-3]
             logger.exception(f'ERROR: Exception occurred while running a transformation.\n'

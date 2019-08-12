@@ -54,6 +54,15 @@ class CLabel(ValueTransformer, PyDMLabel):
         PyDMLabel.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformer.__init__(self)
 
+    def setNum(self, new_val: Union[float, int]):
+        """
+        Callback transforms the directly set numeric value through the valueTransformation code before displaying it in a
+        standard way.
+
+        Args:
+            new_val: The new value from the channel. The type depends on the channel.
+        """
+        self.value_changed(new_val)
 
 class CTimePlot(PyDMTimePlot):
     pass
