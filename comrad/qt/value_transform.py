@@ -160,24 +160,28 @@ def create_transformation_function(transformation: str) -> TransformCallable:
     # imported packages will also see the same, which is not how it should be. Therefore we just
     # substitute all comparisons in the code against the '__main__' to True.
     code = re.sub(r'\_\_name\_\_\ *==\ *(\'(\'{2})?|\"(\"{2})?)\_\_main\_\_(\'(\'{2})?|\"(\"{2})?)', 'True', transformation)
-    indented_code = code.replace('\n', '\n    ')
+    # indented_code = code.replace('\n', '\n    ')
     return_var = '__comrad_return_var__'
-    wrapper_func_name = '__comrad_code_wrapper__'
+    output_func_name = '__comrad_output_func__'
 
     # We wrap the code inside a dummy function so that user can use "return" statement in the code.
     wrapped_code = f"""
-def {wrapper_func_name}():
-    {indented_code}
+{return_var} = None
 
-{return_var} = {wrapper_func_name}()
+def {output_func_name}(val):
+    global {return_var}
+    {return_var} = val
+    
+__builtins__['output'] = {output_func_name}
+{code}
 """
-    print(f'Running code:\n\n{wrapped_code}\n\n')
+
     def resulting_func(global_vars: Dict[str, Any] = globals(), local_vars: Dict[str, Any] = {}, **inputs) -> Any:
         global_vars = global_vars.copy() # Make sure to copy to not modify globals visible in the rest of the app
         global_vars.update(inputs)
         try:
             exec(wrapped_code, global_vars, local_vars)
-            return local_vars[return_var]  # This variable should have been set within wrapped_code
+            return global_vars[return_var]  # This variable should have been set within wrapped_code
         except BaseException as e:
             last_stack_trace = traceback.format_exc().split('\n')[-3]
             logger.exception(f'ERROR: Exception occurred while running a transformation.\n'
