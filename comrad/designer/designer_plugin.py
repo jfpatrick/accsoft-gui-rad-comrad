@@ -86,6 +86,7 @@ WaveformPlot = qtplugin_factory(CWaveFormPlot, group=_COMRAD_GROUP_PLOT, icon=ic
                                                                                    RulesExtension])
 ScatterPlot = qtplugin_factory(CScatterPlot, group=_COMRAD_GROUP_PLOT, icon=icon('scatter_plot'), extensions=[ScatterCurveEditorExtension,
                                                                                  RulesExtension])
+AccPlot = qtplugin_factory(CAccPlot, group=_COMRAD_GROUP_PLOT, icon=icon('scatter_plot'), extensions=_BASE_EXTENSIONS)
 
 # Invisible
 ValueAggregator = qtplugin_factory(CValueAggregator, group=_COMRAD_GROUP_VIRTUAL, icon=icon('calc'))
