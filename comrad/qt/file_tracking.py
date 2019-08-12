@@ -11,9 +11,9 @@ class FileTracking:
             self.base_path = self.app.directory_stack[-1]
             self.base_macros = self.app.macro_stack[-1]
 
-    def open_file(self, filename: str) -> str:
+    def relative_path(self, filename: str) -> str:
         """
-        Opens the file and parses macros inside.
+        Finds the full path to the Python snippet.
 
         Args:
             filename: Filename of the Python snippet.
@@ -25,7 +25,21 @@ class FileTracking:
             return ''
         path = os.path.expanduser(os.path.expandvars(filename))
         file_path = os.path.join(self.base_path, path) if self.base_path else path
-        return macro.substitute_in_file(file_path=file_path, macros=self.parsed_macros()).getvalue()
+        return file_path
+
+    def open_file(self, full_path: str) -> str:
+        """
+        Opens the file and parses macros inside.
+
+        Args:
+            full_path: Absolute path to the Python snippet.
+
+        Returns:
+            Parsed contents of the file with substituted macros.
+        """
+        if not full_path:
+            return ''
+        return macro.substitute_in_file(file_path=full_path, macros=self.parsed_macros()).getvalue()
 
     def parsed_macros(self):
         """

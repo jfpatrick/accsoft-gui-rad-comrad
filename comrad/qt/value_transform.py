@@ -1,6 +1,7 @@
 import logging
 import traceback
 import re
+import os
 from qtpy.QtCore import Property
 from pydm.utilities import is_qt_designer, macro
 from typing import Any, Dict, Callable, Optional
@@ -10,15 +11,15 @@ from .file_tracking import FileTracking
 logger = logging.getLogger(__name__)
 
 
-TransformCallable = Callable[[Dict[str, Any], Optional[Dict[str, Any]], Optional[Dict[str, Any]]], Any]
-
-
 class ValueTransformationBase(FileTracking):
+    """ Caveats:
+        If you are using macros template in the imported modules, it will produce SyntaxError. Wrap it in strings.
+    """
 
     def __init__(self):
         super().__init__()
         self._value_transform = ''
-        self._value_transform_fn: TransformCallable = None
+        self._value_transform_fn: Callable = None
         self._value_transform_macros = None
         self._value_transform_filename = None
 
@@ -92,7 +93,7 @@ class ValueTransformationBase(FileTracking):
         m.update(macro.parse_macro_string(self.macros))
         return m
 
-    def cached_value_transformation(self) -> Optional[TransformCallable]:
+    def cached_value_transformation(self) -> Optional[Callable]:
         """
         When called for the first time, it will attempt to access inline code snippet
         or if one is undefined, then it will try to load a Python file, defined by the
@@ -104,10 +105,13 @@ class ValueTransformationBase(FileTracking):
         if not self._value_transform_fn:
             if self.valueTransformation:
                 parsed_code = self.substituted_string(self.valueTransformation)
+                file = None
             else:
-                parsed_code = self.open_file(self.snippetFilename)
+                file = self.relative_path(self.snippetFilename)
+                parsed_code = self.open_file(file)
+                file = os.path.abspath(file)
             if parsed_code:
-                self._value_transform_fn = create_transformation_function(parsed_code)
+                self._value_transform_fn = create_transformation_function(parsed_code, file=file)
         return self._value_transform_fn
 
 
@@ -145,12 +149,13 @@ class ValueTransformer(ValueTransformationBase):
         super().value_changed(val)
 
 
-def create_transformation_function(transformation: str) -> TransformCallable:
+def create_transformation_function(transformation: str, file: str = None) -> Callable:
     """
     Creates a function used to transform incoming value(s) into a single output value.
 
     Args:
         transformation: Python snippet.
+        file: Path to the Python executable file to be set in __file__ variable.
 
     Returns:
         Function that can transform incoming values (passed as keyword args and are embedded into globals)
@@ -160,12 +165,11 @@ def create_transformation_function(transformation: str) -> TransformCallable:
     # imported packages will also see the same, which is not how it should be. Therefore we just
     # substitute all comparisons in the code against the '__main__' to True.
     code = re.sub(r'\_\_name\_\_\ *==\ *(\'(\'{2})?|\"(\"{2})?)\_\_main\_\_(\'(\'{2})?|\"(\"{2})?)', 'True', transformation)
-    # indented_code = code.replace('\n', '\n    ')
+
     return_var = '__comrad_return_var__'
-    output_func_name = '__comrad_output_func__'
 
     # We wrap the code inside a dummy function so that user can use "return" statement in the code.
-    wrapped_code = f"""
+    wrapped_code = """
 {return_var} = None
 
 def {output_func_name}(val):
@@ -174,17 +178,25 @@ def {output_func_name}(val):
     
 __builtins__['output'] = {output_func_name}
 {code}
-"""
+""".format(output_func_name='__comrad_output_func__', return_var=return_var, code=code)
+    global_base = globals().copy()
+    if file:
+        global_base['__file__'] = file
+    del global_base['macro']
+    del global_base['ValueTransformationBase']
+    del global_base['FileTracking']
+    del global_base['ValueTransformer']
+    del global_base['create_transformation_function']
 
-    def resulting_func(global_vars: Dict[str, Any] = globals(), local_vars: Dict[str, Any] = {}, **inputs) -> Any:
-        global_vars = global_vars.copy() # Make sure to copy to not modify globals visible in the rest of the app
+    def __comrad_dcode_wrapper__(**inputs) -> Any:
+        global_vars = global_base.copy() # Make sure to copy to not modify globals visible in the rest of the app
         global_vars.update(inputs)
         try:
-            exec(wrapped_code, global_vars, local_vars)
+            exec(wrapped_code, global_vars, {})
             return global_vars[return_var]  # This variable should have been set within wrapped_code
         except BaseException as e:
             last_stack_trace = traceback.format_exc().split('\n')[-3]
             logger.exception(f'ERROR: Exception occurred while running a transformation.\n'
                              f'{last_stack_trace}\n{e.__class__.__name__}: {str(e)}')
 
-    return resulting_func
+    return __comrad_dcode_wrapper__
