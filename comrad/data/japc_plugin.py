@@ -120,10 +120,11 @@ class _JapcConnection(plugin.PyDMConnection):
         self.log: logging.Logger = logging.getLogger(__package__)
         self.log.setLevel(logging.DEBUG)
 
-        self._device_prop = self.address
+        self._device_prop = self.address[1:] if self.address.startswith('/') else self.address
+
         self._selector = None
         self._japc_additional_args = {}
-        parsed_addr = split_device_property(self.address)
+        parsed_addr = split_device_property(self._device_prop)
         if parsed_addr.selector:
             self._device_prop = parsed_addr.address
             self._japc_additional_args['timingSelectorOverride'] = self._selector = parsed_addr.selector
