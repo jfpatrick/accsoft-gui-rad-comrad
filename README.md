@@ -18,6 +18,9 @@ It allows for easy integration between CO control system and Qt GUI framework to
   - [Code coverage](#code-coverage)
 - [Development](#development)
   - [Package hierarchy](#package-hierarchy)
+  - [Building documentation](#building-documentation)
+    - [Confluence](#confluence)
+    - [Self-hosted web](#self-hosted-web)
   - [Uploading package to CO package index](#uploading-package-to-co-package-index)
 
 # Description
@@ -141,6 +144,39 @@ Considering that you have installed the package from source, navigate to the roo
 ```bash
 pip install -e .[all]
 ```
+
+## Building documentation
+
+Use sphinx to build the docs:
+```bash
+cd docs
+```
+
+### Confluence
+
+Prefered way, would be to build the documentation for confluence. We want to keep all the documentation in the same place.
+To build new version of docs for confluence, simply run
+
+```bash
+make confluence
+```
+
+and enter confluence password.
+
+>
+If you want to upload the docs with a different confluence user that default, locate variable `confluence_server_user` in
+`docs/source/conf.py` and change it to your confluence user.
+>
+
+### Self-hosted web
+
+To build a HTML documentation, run
+
+```bash
+make html
+```
+
+and locate the index page in `docs/build/index.html`.
 
 ## Uploading package to CO package index
 Make sure that you have tools installed
