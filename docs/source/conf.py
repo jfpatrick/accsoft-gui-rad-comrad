@@ -1,5 +1,6 @@
 from comrad import __version__, __author__
 from datetime import datetime
+import os
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -39,6 +40,7 @@ version = __version__
 extensions = [
     'recommonmark', # Enable Markdown source files along with reStructuredText
     'sphinx_rtd_theme', # Read-the-docs theme
+    'sphinxcontrib.confluencebuilder',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -73,3 +75,12 @@ source_suffix = {
     '.rst': 'restructuredtext',
     '.md': 'markdown',
 }
+
+# Configure building docs for Confluence
+confluence_publish = True
+confluence_space_name = 'DEV' # TODO: Change space to Accpy
+confluence_parent_page = 'BE-CO PyDM evaluation' # TODO: Change the parent page
+confluence_server_url = 'https://wikis.cern.ch/'
+confluence_server_user = 'isinkare'
+confluence_ask_password = True
+confluence_disable_ssl_validation = True  # Because CERN uses its own CA. Providing them both does not really help
