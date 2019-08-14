@@ -4,7 +4,7 @@ print('\n\n'
       ' ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
       ' *** Welcome to ComRAD Designer! ***\n'
       ' ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
-      f' Version: {comrad.__version__}\n'
+      f' ComRAD widgets version: {comrad.__version__}\n'
       f' Support: {comrad.__author__}\n'
       ' Project page: https://wikis.cern.ch/display/ACCPY/Rapid+Application+Development\n'
       '\n')

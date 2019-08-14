@@ -29,25 +29,18 @@ with open(path.join(curr_dir, 'README.md'), 'r') as f:
 with open(path.join(curr_dir, 'requirements.txt'), 'r') as f:
     requirements = read_req(f)
 
-try:
-    with open(path.join(curr_dir, 'test-requirements.txt'), 'r') as f:
-        test_requirements = read_req(f)
-except FileNotFoundError:
-    # This is meant to be installed only from source, therefore pip installation is not supposed
-    # to find this file
-    test_requirements = []
+def read_extras_req(filename: str):
+    try:
+        with open(path.join(curr_dir, filename), 'r') as f:
+            return read_req(f)
+    except FileNotFoundError:
+        # This is meant to be installed only from source, therefore pip installation is not supposed
+        # to find this file
+        return []
 
-try:
-    with open(path.join(curr_dir, 'dev-requirements.txt'), 'r') as f:
-        dev_requirements = read_req(f)
-except FileNotFoundError:
-    # This is meant to be installed only from source, therefore pip installation is not supposed
-    # to find this file
-    dev_requirements = []
-
-print(test_requirements)
-print(dev_requirements)
-print(requirements)
+test_requirements = read_extras_req('test-requirements.txt')
+docs_requirements = read_extras_req('docs-requirements.txt')
+dev_requirements = read_extras_req('dev-requirements.txt')
 
 setup(
     name='comrad',
@@ -58,7 +51,7 @@ setup(
     author='Ivan Sinkarenko',
     author_email='ivan.sinkarenko@cern.ch',
     url='https://wikis.cern.ch/display/ACCPY/Rapid+Application+Development',
-    packages=find_packages(exclude='examples'),
+    packages=find_packages(),
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: X11 Applications :: Qt',
@@ -80,8 +73,9 @@ setup(
     },
     extras_require={
         'test': test_requirements,
+        'docs': docs_requirements,
         'dev': dev_requirements,
-        'all': requirements + dev_requirements + test_requirements,
+        'all': requirements + dev_requirements + test_requirements + docs_requirements,
     },
     platforms=['centos7'],
     test_suite='tests',
