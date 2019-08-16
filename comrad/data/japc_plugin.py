@@ -12,17 +12,16 @@ from collections import namedtuple
 # from pydm.widgets.channel import PyDMChannel
 # because it crashes with error "unable to import is_qt_designer"
 # We need this import purely for typings. Therefore, we make a local stub
-class channel:
-    class PyDMChannel:
+class PyDMChannel:
 
-        value_signal: Optional[Signal]
-        value_slot: Optional[Slot]
+    value_signal: Optional[Signal]
+    value_slot: Optional[Slot]
 
-        def connect(self):
-            pass
+    def connect(self):
+        pass
 
-        def disconnect(self, destroying=False):
-            pass
+    def disconnect(self, destroying=False):
+        pass
 
 
 class _JapcService(pyjapc.PyJapc):
@@ -109,7 +108,7 @@ class _JapcConnection(plugin.PyDMConnection):
     # Superclass does not implement signal for bool values
     new_value_signal = Signal([float], [int], [str], [np.ndarray], [bool], [QVariant], [list])
 
-    def __init__(self, channel: channel.PyDMChannel, address: str, protocol: str = None, parent: QObject = None, *args, **kwargs):
+    def __init__(self, channel: PyDMChannel, address: str, protocol: str = None, parent: QObject = None, *args, **kwargs):
         super().__init__(channel=channel,
                          address=address,
                          protocol=protocol,
@@ -131,7 +130,7 @@ class _JapcConnection(plugin.PyDMConnection):
 
         self.add_listener(channel)
 
-    def add_listener(self, channel: channel.PyDMChannel):
+    def add_listener(self, channel: PyDMChannel):
         is_first_connection: bool = self.listener_count == 0
 
         # Superclass does not implement signal for bool values
@@ -172,7 +171,7 @@ class _JapcConnection(plugin.PyDMConnection):
             # which pyjapc does not have access to, so we can't know if a property is writable at the moment
             self.write_access_signal.emit(True)
 
-    def remove_listener(self, channel: channel.PyDMChannel, destroying=False):
+    def remove_listener(self, channel: PyDMChannel, destroying=False):
         # Superclass does not implement signal for bool values
         if not destroying:
             self.log.info(f'Removing one of the listeners for {self.protocol}://{self.address}')
