@@ -2,7 +2,8 @@ import logging
 import pyjapc
 import datetime
 import numpy as np
-from pydm.data_plugins import plugin, is_read_only
+from pydm.data_plugins import is_read_only
+from pydm.data_plugins.plugin import PyDMPlugin, PyDMConnection
 from qtpy.QtCore import Qt, QObject, Slot, Signal, QVariant
 from typing import Any, Optional, Union
 from collections import namedtuple
@@ -102,7 +103,7 @@ def get_japc() -> _JapcService:
     return _japc
 
 
-class _JapcConnection(plugin.PyDMConnection):
+class _JapcConnection(PyDMConnection):
     """ PyDM adaptation for JAPC protocol. """
 
     # Superclass does not implement signal for bool values
@@ -271,7 +272,7 @@ class _JapcConnection(plugin.PyDMConnection):
         return True
 
 
-class JapcPlugin(plugin.PyDMPlugin):
+class JapcPlugin(PyDMPlugin):
     """
     PyDM data plugin that handles communications with the channels on "japc://" scheme.
     """
@@ -280,7 +281,7 @@ class JapcPlugin(plugin.PyDMPlugin):
     connection_class = _JapcConnection
 
 
-class Rda3Plugin(plugin.PyDMPlugin):
+class Rda3Plugin(PyDMPlugin):
     """
     PyDM data plugin that handles communications with the channels on "rda3://" scheme.
     """
@@ -289,7 +290,7 @@ class Rda3Plugin(plugin.PyDMPlugin):
     connection_class = _JapcConnection
 
 
-class Rda2Plugin(plugin.PyDMPlugin):
+class Rda2Plugin(PyDMPlugin):
     """
     PyDM data plugin that handles communications with the channels on "rda://" scheme.
     """
@@ -298,7 +299,7 @@ class Rda2Plugin(plugin.PyDMPlugin):
     connection_class = _JapcConnection
 
 
-class TgmPlugin(plugin.PyDMPlugin):
+class TgmPlugin(PyDMPlugin):
     """
     PyDM data plugin that handles communications with the channels on "tgm://" scheme.
     """
@@ -307,7 +308,7 @@ class TgmPlugin(plugin.PyDMPlugin):
     connection_class = _JapcConnection
 
 
-class NoPlugin(plugin.PyDMPlugin):
+class NoPlugin(PyDMPlugin):
     """
     PyDM data plugin that handles communications with the channels on "no://" scheme.
     """
