@@ -2,4 +2,4 @@ pyjapc>=2.0.5&&<3
 pydm>=1.7.3&&<2
 numpy>=1.16.4&&<2
 QtPy>=1.7&&<2
--e git+https://gitlab.cern.ch/acc-co/accsoft/gui/accsoft-gui-pyqt-widgets.git@feature/ACCPY-263_designer_plotitem_slot#egg=accsoft_gui_pyqt_widgets
+-e git+https://gitlab.cern.ch/acc-co/accsoft/gui/accsoft-gui-pyqt-widgets.git@develop#egg=accsoft_gui_pyqt_widgets
