@@ -9,11 +9,18 @@ import importlib.util
 import importlib.machinery
 from qtpy import uic
 from qtpy.QtCore import Qt
+from qtpy.QtGui import QColor
 from qtpy.QtWidgets import (QMainWindow, QApplication, QTreeWidgetItem, QTreeWidget, QStackedWidget,
-                            QTextEdit, QLabel, QPushButton, QGroupBox, QSizePolicy, QVBoxLayout)
+                            QAbstractScrollArea, QTextEdit, QLabel, QPushButton, QGroupBox, QSizePolicy, QVBoxLayout)
 from comrad import __version__, __author__
 from pydm.widgets.template_repeater import FlowLayout
 from typing import List, Optional
+
+try:
+    from PyQt5.Qsci import QsciScintilla, QsciLexerPython
+    QSCI_AVAILABLE = True
+except ImportError:
+    QSCI_AVAILABLE = False
 
 
 # Notify the kernel that we are not going to handle SIGINT
@@ -40,7 +47,7 @@ class ExamplesWindow(QMainWindow):
         # For IDE support, assign types to dynamically created items from the *.ui file
         self.example_details: QStackedWidget = None
         self.examples_tree: QTreeWidget = None
-        self.example_code_browser: QTextEdit = None
+        self.example_code_browser: QAbstractScrollArea = None
         self.example_code: QGroupBox = None
         self.example_code_stack: QStackedWidget = None
         self.example_desc_label: QLabel = None
@@ -49,6 +56,13 @@ class ExamplesWindow(QMainWindow):
         self.example_designer_btn: QPushButton = None
 
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'main.ui'), self)
+
+        # If QScintilla is available, dismantle simple editor and place it instead
+        if QSCI_AVAILABLE:
+            par = self.example_code_browser.parentWidget()
+            self.example_code_browser.deleteLater()
+            self.example_code_browser = self.create_scintilla_editor()
+            par.layout().addWidget(self.example_code_browser)
 
         self.example_file_layout = FlowLayout()
         layout: QVBoxLayout = self.example_code.layout()
@@ -248,6 +262,22 @@ class ExamplesWindow(QMainWindow):
             return subprocess.run(args=args, shell=False, check=True)
         except subprocess.CalledProcessError as e:
             logger.error(f'{app} has failed: {str(e)}')
+
+    def create_scintilla_editor(self):
+        editor = QsciScintilla()
+        lexer = QsciLexerPython(editor)
+        editor.setLexer(lexer)
+        editor.setIndentationsUseTabs(False)
+        editor.setIndentationGuides(True)
+        editor.setTabWidth(4)
+        editor.setEolMode(QsciScintilla.EolUnix)
+        editor.setCaretLineVisible(False)
+        editor.setMargins(1)
+        editor.setMarginType(0, QsciScintilla.NumberMargin)
+        editor.setMarginWidth(0, 40)
+        editor.setUtf8(True)
+        editor.setReadOnly(True)
+        return editor
 
 
 def run():
