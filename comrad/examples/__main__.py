@@ -2,14 +2,17 @@ import os
 import signal
 import logging
 import types
+import glob
+import itertools
 import importlib
 import importlib.util
 import importlib.machinery
 from qtpy import uic
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (QMainWindow, QApplication, QTreeWidgetItem, QTreeWidget, QStackedWidget,
-                            QTextBrowser, QLabel, QPushButton, QFrame)
+                            QTextEdit, QLabel, QPushButton, QGroupBox, QSizePolicy, QVBoxLayout)
 from comrad import __version__, __author__
+from pydm.widgets.template_repeater import FlowLayout
 from typing import List, Optional
 
 
@@ -21,29 +24,40 @@ logging.basicConfig()
 logger = logging.getLogger(__file__)
 
 
-EXAMPLE_ENTRYPOINT = '__init__.py'
+EXAMPLE_CONFIG = '__init__.py'
 EXAMPLE_DETAILS_INTRO_PAGE = 0
 EXAMPLE_DETAILS_DETAILS_PAGE = 1
+
+EXAMPLE_DETAILS_UI_PAGE = 1
+EXAMPLE_DETAILS_PY_PAGE = 0
 
 
 class ExamplesWindow(QMainWindow):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        uic.loadUi(os.path.join(os.path.dirname(__file__), 'main.ui'), self)
 
         # For IDE support, assign types to dynamically created items from the *.ui file
-        self.example_details: QStackedWidget
-        self.examples_tree: QTreeWidget
-        self.example_code_browser: QTextBrowser
-        self.example_code: QFrame
-        self.example_desc_label: QLabel
-        self.example_title_label: QLabel
-        self.example_run_btn: QPushButton
+        self.example_details: QStackedWidget = None
+        self.examples_tree: QTreeWidget = None
+        self.example_code_browser: QTextEdit = None
+        self.example_code: QGroupBox = None
+        self.example_code_stack: QStackedWidget = None
+        self.example_desc_label: QLabel = None
+        self.example_title_label: QLabel = None
+        self.example_run_btn: QPushButton = None
+        self.example_designer_btn: QPushButton = None
 
-        size_policy = self.example_code.sizePolicy()
-        size_policy.setRetainSizeWhenHidden(True)
-        self.example_code.setSizePolicy(size_policy)
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'main.ui'), self)
+
+        self.example_file_layout = FlowLayout()
+        layout: QVBoxLayout = self.example_code.layout()
+        layout.insertLayout(0, self.example_file_layout)
+        self.example_code.setLayout(layout)
+
+        self._selected_example_path: str = None
+        self._selected_example_entrypoint: str = None
+        self._selected_source_file: str = None
 
         self.example_details.setCurrentIndex(EXAMPLE_DETAILS_INTRO_PAGE)
 
@@ -55,7 +69,7 @@ class ExamplesWindow(QMainWindow):
         curr_dir = os.path.dirname(__file__)
         for root, dirs, files in os.walk(curr_dir):
             logger.debug(f'Entering {root}')
-            is_exec = EXAMPLE_ENTRYPOINT in files
+            is_exec = EXAMPLE_CONFIG in files
             if root != curr_dir and is_exec:
                 example_paths.append(root)
                 logger.debug(f'Example {root} is executable. Will stop here.')
@@ -84,12 +98,23 @@ class ExamplesWindow(QMainWindow):
 
         self.examples_tree.itemActivated.connect(self.on_example_selected)
         self.examples_tree.itemClicked.connect(self.on_example_selected)
+        self.example_run_btn.clicked.connect(self.run_example)
+        self.example_designer_btn.clicked.connect(self.open_designer_file)
         self.show()
 
     def show_about(self):
         dialog = uic.loadUi(os.path.join(os.path.dirname(__file__), 'about.ui'))
         dialog.version_label.setText(str(__version__))
-        dialog.support_label.setText(__author__)
+
+        # Parse email to create a link
+        import re
+        match = re.match(pattern='([^<]*)(<([^>]*)>)', string=__author__)
+        support = match.group(1).strip()
+        if len(match.groups()) > 2:
+            email = match.group(3)
+            support += f' &lt;<a href="mailto:{email}">{email}</a>&gt;'
+
+        dialog.support_label.setText(support)
         dialog.exec_()
 
     def on_example_selected(self, item: QTreeWidgetItem, _: int):
@@ -109,10 +134,16 @@ class ExamplesWindow(QMainWindow):
 
         path_dirs.reverse()
         example_path = os.path.join(os.path.dirname(__file__), *path_dirs)
-        example_mod = self.load_example(basedir=example_path, name=name)
-        self.display_example(example_mod)
 
-    def display_example(self, module: types.ModuleType):
+        if self._selected_example_path == example_path:
+            # Already selected. Do nothing
+            return
+
+        self._selected_example_path = example_path
+        example_mod = self.load_example(basedir=example_path, name=name)
+        self.display_example(module=example_mod, basedir=example_path)
+
+    def display_example(self, module: types.ModuleType, basedir: os.PathLike):
         try:
             example_entrypoint: str = module.entrypoint
             example_title: str = module.title
@@ -120,26 +151,48 @@ class ExamplesWindow(QMainWindow):
         except AttributeError as e:
             logger.warning(f'Cannot display example - config file is incomplete: {str(e)}')
             return
-        example_code: Optional[str]
-        try:
-            example_code = module.source_code
-        except AttributeError:
-            example_code = None
 
+        self._selected_example_entrypoint = example_entrypoint
         self.example_title_label.setText(example_title)
         self.example_desc_label.setText(example_description)
-        self.example_code.setHidden(not example_code)
-        if example_code:
-            self.example_code_browser.setText(example_code)
 
         self.example_details.setCurrentIndex(EXAMPLE_DETAILS_DETAILS_PAGE)
 
-    def load_example(self, basedir: str, name: str) -> Optional[types.ModuleType]:
+        files: List[str] = list(itertools.chain.from_iterable([glob.glob(os.path.join(basedir, f'*.{ext}'))
+                                                               for ext in ['py', 'ui']]))
+        files = [os.path.relpath(path=p, start=basedir) for p in files]
+        files.remove(EXAMPLE_CONFIG)
+
+        self.set_file_buttons(files)
+
+    def set_file_buttons(self, names: List[str]):
+        for i in range(self.example_file_layout.count()):
+            item = self.example_file_layout.itemAt(0)
+            self.example_file_layout.removeItem(item)
+            item.widget().deleteLater()
+
+        first_btn = None
+        for name in names:
+            btn = QPushButton()
+            btn.setText(name)
+            btn.setCheckable(True)
+            policy = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+            btn.setSizePolicy(policy)
+            btn.clicked.connect(self.display_file)
+            self.example_file_layout.addWidget(btn)
+            if first_btn is None:
+                first_btn = btn
+
+        # Trigger display of the first file
+        if first_btn:
+            first_btn.click()
+
+    def load_example(self, basedir: os.PathLike, name: str) -> Optional[types.ModuleType]:
         if not os.path.isdir(basedir):
             logger.warning(f'Cannot display example from {basedir} - not a directory')
             return
 
-        config = os.path.join(basedir, EXAMPLE_ENTRYPOINT)
+        config = os.path.join(basedir, EXAMPLE_CONFIG)
         if not os.path.exists(config) or not os.path.isfile(config):
             logger.warning(f'Cannot display example from {basedir} - cannot find entry point')
             return
@@ -153,6 +206,48 @@ class ExamplesWindow(QMainWindow):
             logger.warning(f'Cannot import example from {basedir}: {str(e)}')
             return
         return mod
+
+    def run_example(self):
+        if not self._selected_example_entrypoint or not self._selected_example_path:
+            logger.warning(f'Won\'t run example. Entrypoint is undefined.')
+            return
+
+        self.run_external_app(app='comrun',
+                              file_path=os.path.join(self._selected_example_path, self._selected_example_entrypoint))
+
+    def open_designer_file(self):
+        if not self._selected_source_file or not self._selected_example_path:
+            logger.warning(f'Won\'t open UI file. Path information missing.')
+            return
+        self.run_external_app(app='comrad_designer',
+                              file_path=os.path.join(self._selected_example_path, self._selected_source_file))
+
+    def display_file(self):
+        btn: QPushButton = self.sender()
+
+        for i in range(self.example_file_layout.count()):
+            push: QPushButton = self.example_file_layout.itemAt(i).widget()
+            push.setChecked(push == btn)
+
+        filename = btn.text()
+        file_path = os.path.join(self._selected_example_path, filename)
+
+        _, ext = os.path.splitext(filename)
+        if ext == '.py':
+            with open(file_path) as f:
+                self.example_code_browser.setText(f.read())
+            self.example_code_stack.setCurrentIndex(EXAMPLE_DETAILS_PY_PAGE)
+        elif ext == '.ui':
+            self.example_code_stack.setCurrentIndex(EXAMPLE_DETAILS_UI_PAGE)
+        self._selected_source_file = filename
+
+    def run_external_app(self, app: str, file_path: os.PathLike):
+        import subprocess
+        args = [app, file_path]
+        try:
+            return subprocess.run(args=args, shell=False, check=True)
+        except subprocess.CalledProcessError as e:
+            logger.error(f'{app} has failed: {str(e)}')
 
 
 def run():
