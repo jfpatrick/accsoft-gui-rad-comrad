@@ -39,7 +39,11 @@ EXAMPLE_DETAILS_UI_PAGE = 1
 EXAMPLE_DETAILS_PY_PAGE = 0
 
 
+curr_dir = os.path.dirname(__file__)
+
+
 class ExamplesWindow(QMainWindow):
+    """Main window of the examples launcher."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -61,7 +65,7 @@ class ExamplesWindow(QMainWindow):
         if QSCI_AVAILABLE:
             par = self.example_code_browser.parentWidget()
             self.example_code_browser.deleteLater()
-            self.example_code_browser = self.create_scintilla_editor()
+            self.example_code_browser = self._create_scintilla_editor()
             par.layout().addWidget(self.example_code_browser)
 
         self.example_file_layout = FlowLayout()
@@ -75,12 +79,51 @@ class ExamplesWindow(QMainWindow):
 
         self.example_details.setCurrentIndex(EXAMPLE_DETAILS_INTRO_PAGE)
 
-        self.actionAbout.triggered.connect(self.show_about)
+        self.actionAbout.triggered.connect(self._show_about)
         self.actionExit.triggered.connect(self.close)
 
+        self._populate_examples_tree_widget(self._find_runnable_examples())
+
+        self.examples_tree.itemActivated.connect(self._on_example_selected)
+        self.examples_tree.itemClicked.connect(self._on_example_selected)
+        self.example_run_btn.clicked.connect(self._run_example)
+        self.example_designer_btn.clicked.connect(self._open_designer_file)
+        self.show()
+
+    def _show_about(self):
+        """
+        Opens 'About' dialog.
+
+        The information shown in the dialog is parsed from the 'comrad' package.
+        In addition, email of the author is parsed to create a clickable link for support.
+        """
+        dialog = uic.loadUi(os.path.join(os.path.dirname(__file__), 'about.ui'))
+        dialog.version_label.setText(str(__version__))
+
+        # Parse email to create a link
+        import re
+        match = re.match(pattern='([^<]*)(<([^>]*)>)', string=__author__)
+        support = match.group(1).strip()
+        if len(match.groups()) > 2:
+            email = match.group(3)
+            support += f' &lt;<a href="mailto:{email}">{email}</a>&gt;'
+
+        dialog.support_label.setText(support)
+        dialog.exec_()
+
+    def _find_runnable_examples(self) -> List[str]:
+        """
+        Crawls the examples folder trying to locate subdirectories that can be runnable examples.
+
+        A runnable example is any subdirectory that has __init__.py file inside.
+        The crawling is done recursively, but subdirectories of runnable examples are not crawled
+        because they might contain code that is not supposed to be top-level examples.
+
+        Returns:
+            list of absolute paths to runnable examples.
+        """
         excludes = set(['_', '.'])
         example_paths: List[str] = []
-        curr_dir = os.path.dirname(__file__)
         for root, dirs, files in os.walk(curr_dir):
             logger.debug(f'Entering {root}')
             is_exec = EXAMPLE_CONFIG in files
@@ -94,7 +137,18 @@ class ExamplesWindow(QMainWindow):
 
         formatted = "\n".join(example_paths)
         logger.debug(f'Located examples in dirs:\n{formatted}')
+        return example_paths
 
+    def _populate_examples_tree_widget(self, example_paths: List[str]):
+        """
+        Populates sidebar with the runnable examples.
+
+        The tree will reflect directory structure, meaning that examples can be scoped
+        under directories that are not runnable examples themselves.
+
+        Args:
+            example_paths: list of absolute paths to the runnable examples.
+        """
         for path in example_paths:
             relative = os.path.relpath(path, curr_dir)
             dirs = relative.split(os.path.sep)
@@ -110,28 +164,13 @@ class ExamplesWindow(QMainWindow):
                     curr_subtree = QTreeWidgetItem(parent_subtree, [name])
                 parent_subtree = curr_subtree
 
-        self.examples_tree.itemActivated.connect(self.on_example_selected)
-        self.examples_tree.itemClicked.connect(self.on_example_selected)
-        self.example_run_btn.clicked.connect(self.run_example)
-        self.example_designer_btn.clicked.connect(self.open_designer_file)
-        self.show()
+    def _on_example_selected(self, item: QTreeWidgetItem):
+        """
+        Slot for the sidebar example tree item to get selected by the user.
 
-    def show_about(self):
-        dialog = uic.loadUi(os.path.join(os.path.dirname(__file__), 'about.ui'))
-        dialog.version_label.setText(str(__version__))
-
-        # Parse email to create a link
-        import re
-        match = re.match(pattern='([^<]*)(<([^>]*)>)', string=__author__)
-        support = match.group(1).strip()
-        if len(match.groups()) > 2:
-            email = match.group(3)
-            support += f' &lt;<a href="mailto:{email}">{email}</a>&gt;'
-
-        dialog.support_label.setText(support)
-        dialog.exec_()
-
-    def on_example_selected(self, item: QTreeWidgetItem, _: int):
+        Args:
+            item: tree item that has been selected.
+        """
         name = item.data(0, Qt.DisplayRole)
         # Allow selecting only leaf items
         if item.childCount() > 0:
@@ -154,10 +193,21 @@ class ExamplesWindow(QMainWindow):
             return
 
         self._selected_example_path = example_path
-        example_mod = self.load_example(basedir=example_path, name=name)
-        self.display_example(module=example_mod, basedir=example_path)
+        example_mod = self._module_from_example(basedir=example_path, name=name)
+        if example_mod:
+            self._set_example_details(module=example_mod, basedir=example_path)
 
-    def display_example(self, module: types.ModuleType, basedir: os.PathLike):
+    def _set_example_details(self, module: types.ModuleType, basedir: os.PathLike):
+        """
+        Populates the details view (right-hand side of the window) with information about the
+        selected example.
+
+        It parses the configuration file of the module that should have been located before.
+
+        Args:
+            module: loaded Python module that represents the package with example contents.
+            basedir: absolute path to the example.
+        """
         try:
             example_entrypoint: str = module.entrypoint
             example_title: str = module.title
@@ -177,9 +227,16 @@ class ExamplesWindow(QMainWindow):
         files = [os.path.relpath(path=p, start=basedir) for p in files]
         files.remove(EXAMPLE_CONFIG)
 
-        self.set_file_buttons(names=files, selected=example_entrypoint)
+        self._set_file_buttons(names=files, selected=example_entrypoint)
 
-    def set_file_buttons(self, names: List[str], selected: str):
+    def _set_file_buttons(self, names: List[str], selected: str):
+        """
+        Dynamically creates toggle buttons to select files contained by the example directory.
+
+        Args:
+            names: names of the files to create buttons for.
+            selected: name of the selected file by default.
+        """
         for i in range(self.example_file_layout.count()):
             item = self.example_file_layout.itemAt(0)
             self.example_file_layout.removeItem(item)
@@ -192,7 +249,7 @@ class ExamplesWindow(QMainWindow):
             btn.setCheckable(True)
             policy = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
             btn.setSizePolicy(policy)
-            btn.clicked.connect(self.display_file)
+            btn.clicked.connect(self._file_selected)
             self.example_file_layout.addWidget(btn)
             if name == selected:
                 selected_btn = btn
@@ -201,7 +258,17 @@ class ExamplesWindow(QMainWindow):
         if selected_btn:
             selected_btn.click()
 
-    def load_example(self, basedir: os.PathLike, name: str) -> Optional[types.ModuleType]:
+    def _module_from_example(self, basedir: os.PathLike, name: str) -> Optional[types.ModuleType]:
+        """
+        Resolves the Python module from the directory of the example.
+
+        Args:
+            basedir: Absolute path to the example.
+            name: Name of the example to be set for the module.
+
+        Returns:
+            Python module or None if failed to load.
+        """
         if not os.path.isdir(basedir):
             logger.warning(f'Cannot display example from {basedir} - not a directory')
             return
@@ -221,22 +288,25 @@ class ExamplesWindow(QMainWindow):
             return
         return mod
 
-    def run_example(self):
+    def _run_example(self):
+        """Opens runtime application for the example."""
         if not self._selected_example_entrypoint or not self._selected_example_path:
             logger.warning(f'Won\'t run example. Entrypoint is undefined.')
             return
 
-        self.run_external_app(app='comrun',
-                              file_path=os.path.join(self._selected_example_path, self._selected_example_entrypoint))
+        self._run_external_app(app='comrun',
+                               file_path=os.path.join(self._selected_example_path, self._selected_example_entrypoint))
 
-    def open_designer_file(self):
+    def _open_designer_file(self):
+        """Opens *.ui file in Qt Designer"""
         if not self._selected_source_file or not self._selected_example_path:
             logger.warning(f'Won\'t open UI file. Path information missing.')
             return
-        self.run_external_app(app='comrad_designer',
-                              file_path=os.path.join(self._selected_example_path, self._selected_source_file))
+        self._run_external_app(app='comrad_designer',
+                               file_path=os.path.join(self._selected_example_path, self._selected_source_file))
 
-    def display_file(self):
+    def _file_selected(self):
+        """Callback to adjust the UI when a file button is pressed."""
         btn: QPushButton = self.sender()
 
         for i in range(self.example_file_layout.count()):
@@ -255,7 +325,14 @@ class ExamplesWindow(QMainWindow):
             self.example_code_stack.setCurrentIndex(EXAMPLE_DETAILS_UI_PAGE)
         self._selected_source_file = filename
 
-    def run_external_app(self, app: str, file_path: os.PathLike):
+    def _run_external_app(self, app: str, file_path: os.PathLike):
+        """
+        Generic method to run an external application with the file as its first argument.
+
+        Args:
+            app: executable name.
+            file_path: absolute path to the file.
+        """
         import subprocess
         args = [app, file_path]
         try:
@@ -263,7 +340,8 @@ class ExamplesWindow(QMainWindow):
         except subprocess.CalledProcessError as e:
             logger.error(f'{app} has failed: {str(e)}')
 
-    def create_scintilla_editor(self):
+    def _create_scintilla_editor(self):
+        """Creates the enhanced code-browser if the library exists."""
         editor = QsciScintilla()
         lexer = QsciLexerPython(editor)
         editor.setLexer(lexer)
@@ -283,6 +361,8 @@ class ExamplesWindow(QMainWindow):
 
 def run():
     import sys
+    # TODO: Use argparse
+    # TODO: Parse entrypoints from setup.py
     if '--debug' in sys.argv:
         logger.setLevel(logging.DEBUG)
     app = QApplication(sys.argv)
