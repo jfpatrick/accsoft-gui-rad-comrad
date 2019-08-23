@@ -177,15 +177,15 @@ class ExamplesWindow(QMainWindow):
         files = [os.path.relpath(path=p, start=basedir) for p in files]
         files.remove(EXAMPLE_CONFIG)
 
-        self.set_file_buttons(files)
+        self.set_file_buttons(names=files, selected=example_entrypoint)
 
-    def set_file_buttons(self, names: List[str]):
+    def set_file_buttons(self, names: List[str], selected: str):
         for i in range(self.example_file_layout.count()):
             item = self.example_file_layout.itemAt(0)
             self.example_file_layout.removeItem(item)
             item.widget().deleteLater()
 
-        first_btn = None
+        selected_btn = None
         for name in names:
             btn = QPushButton()
             btn.setText(name)
@@ -194,12 +194,12 @@ class ExamplesWindow(QMainWindow):
             btn.setSizePolicy(policy)
             btn.clicked.connect(self.display_file)
             self.example_file_layout.addWidget(btn)
-            if first_btn is None:
-                first_btn = btn
+            if name == selected:
+                selected_btn = btn
 
-        # Trigger display of the first file
-        if first_btn:
-            first_btn.click()
+        # Trigger display of the main file
+        if selected_btn:
+            selected_btn.click()
 
     def load_example(self, basedir: os.PathLike, name: str) -> Optional[types.ModuleType]:
         if not os.path.isdir(basedir):
