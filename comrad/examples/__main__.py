@@ -11,7 +11,7 @@ from qtpy import uic
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QColor
 from qtpy.QtWidgets import (QMainWindow, QApplication, QTreeWidgetItem, QTreeWidget, QStackedWidget,
-                            QAbstractScrollArea, QTextEdit, QLabel, QPushButton, QGroupBox, QSizePolicy, QVBoxLayout)
+                            QAbstractScrollArea, QLabel, QPushButton, QGroupBox, QSizePolicy, QVBoxLayout)
 from comrad import __version__, __author__
 from pydm.widgets.template_repeater import FlowLayout
 from typing import List, Optional
@@ -271,7 +271,8 @@ class ExamplesWindow(QMainWindow):
         editor.setIndentationGuides(True)
         editor.setTabWidth(4)
         editor.setEolMode(QsciScintilla.EolUnix)
-        editor.setCaretLineVisible(False)
+        editor.setCaretLineVisible(True)
+        editor.setCaretLineBackgroundColor(QColor('#efefef'))
         editor.setMargins(1)
         editor.setMarginType(0, QsciScintilla.NumberMargin)
         editor.setMarginWidth(0, 40)
