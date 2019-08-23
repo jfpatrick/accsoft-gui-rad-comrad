@@ -2,6 +2,7 @@ import os
 import signal
 import logging
 import types
+import argparse
 import glob
 import itertools
 import importlib
@@ -361,9 +362,19 @@ class ExamplesWindow(QMainWindow):
 
 def run():
     import sys
-    # TODO: Use argparse
     # TODO: Parse entrypoints from setup.py
-    if '--debug' in sys.argv:
+    parser = argparse.ArgumentParser(prog='python -m comrad.examples',
+                                     description='Interactive ComRAD example browser')
+    parser.add_argument('-V', '--version',
+                        action='version',
+                        version=f'comrad {__version__}')
+    parser.add_argument('--debug',
+                        help='enable debug output of this example launcher',
+                        dest='debug',
+                        action='store_true')
+    parser.set_defaults(debug=False)
+    args = parser.parse_args()
+    if args.debug:
         logger.setLevel(logging.DEBUG)
     app = QApplication(sys.argv)
     _ = ExamplesWindow()
