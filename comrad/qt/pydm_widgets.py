@@ -208,8 +208,8 @@ class CLineEdit(ValueTransformer, PyDMLineEdit):
             init_channel: The channel to be used by the widget.
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
-        ValueTransformer.__init__(self)
         PyDMLineEdit.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
+        ValueTransformer.__init__(self)
 
 
 class CLogDisplay(PyDMLogDisplay):
