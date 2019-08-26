@@ -14,8 +14,9 @@ from qtpy.QtGui import QColor
 from qtpy.QtWidgets import (QMainWindow, QApplication, QTreeWidgetItem, QTreeWidget, QStackedWidget,
                             QAbstractScrollArea, QLabel, QPushButton, QGroupBox, QSizePolicy, QVBoxLayout)
 from comrad import __version__, __author__
-from pydm.widgets.template_repeater import FlowLayout
-from typing import List, Optional
+# from pydm.widgets.template_repeater import FlowLayout
+from .flow import FlowLayout
+from typing import List, Optional, Dict, Any
 
 try:
     from PyQt5.Qsci import QsciScintilla, QsciLexerPython
@@ -77,6 +78,7 @@ class ExamplesWindow(QMainWindow):
         self._selected_example_path: str = None
         self._selected_example_entrypoint: str = None
         self._selected_source_file: str = None
+        self._selected_example_japc_generator: str = None
 
         self.example_details.setCurrentIndex(EXAMPLE_DETAILS_INTRO_PAGE)
 
@@ -209,6 +211,7 @@ class ExamplesWindow(QMainWindow):
             module: loaded Python module that represents the package with example contents.
             basedir: absolute path to the example.
         """
+        example_fgen: Optional[str]
         try:
             example_entrypoint: str = module.entrypoint
             example_title: str = module.title
@@ -216,7 +219,15 @@ class ExamplesWindow(QMainWindow):
         except AttributeError as e:
             logger.warning(f'Cannot display example - config file is incomplete: {str(e)}')
             return
+        try:
+            example_fgen = module.japc_generator
+        except AttributeError:
+            example_fgen = None
 
+        self._selected_example_japc_generator = (
+            f'{self._absolute_module_id(rel_module=module, basedir=basedir)}.{example_fgen}'
+            if example_fgen else None
+        )
         self._selected_example_entrypoint = example_entrypoint
         self.example_title_label.setText(example_title)
         self.example_desc_label.setText(example_description)
@@ -259,6 +270,26 @@ class ExamplesWindow(QMainWindow):
         if selected_btn:
             selected_btn.click()
 
+    def _absolute_module_id(self, rel_module: types.ModuleType, basedir: os.PathLike) -> str:
+        """
+        Constructs the absolute module identifier.
+
+        Because we are importing via importlib, the resulting identifier will be relative and will not
+        include paths to the examples module itself.
+
+        Args:
+            rel_module: Child module to construct the identifier for.
+            basedir: Absolute path to the module
+
+        Returns:
+            Absolute identifier.
+        """
+        curr_mod = __loader__.name.strip(__name__).strip('.') # Removes trailing '.__main__'
+        rel_path = os.path.relpath(basedir, curr_dir)
+        components = rel_path.split(os.sep)
+        rel_mod = '.'.join(components)
+        return f'{curr_mod}.{rel_mod}'
+
     def _module_from_example(self, basedir: os.PathLike, name: str) -> Optional[types.ModuleType]:
         """
         Resolves the Python module from the directory of the example.
@@ -296,7 +327,8 @@ class ExamplesWindow(QMainWindow):
             return
 
         self._run_external_app(app='comrun',
-                               file_path=os.path.join(self._selected_example_path, self._selected_example_entrypoint))
+                               file_path=os.path.join(self._selected_example_path, self._selected_example_entrypoint),
+                               env=dict(PYJAPC_SIMULATION_INIT=(self._selected_example_japc_generator or '')))
 
     def _open_designer_file(self):
         """Opens *.ui file in Qt Designer"""
@@ -326,7 +358,7 @@ class ExamplesWindow(QMainWindow):
             self.example_code_stack.setCurrentIndex(EXAMPLE_DETAILS_UI_PAGE)
         self._selected_source_file = filename
 
-    def _run_external_app(self, app: str, file_path: os.PathLike):
+    def _run_external_app(self, app: str, file_path: os.PathLike, env: Dict[str, Any] = {}):
         """
         Generic method to run an external application with the file as its first argument.
 
@@ -334,10 +366,14 @@ class ExamplesWindow(QMainWindow):
             app: executable name.
             file_path: absolute path to the file.
         """
-        import subprocess
         args = [app, file_path]
+        env = dict(os.environ, **env)
+        python_path = env.get('PYTHONPATH', '')
+        env['PYTHONPATH'] = f'{curr_dir}:{python_path}'
+
+        import subprocess
         try:
-            return subprocess.run(args=args, shell=False, check=True)
+            return subprocess.run(args=args, shell=False, env=env, check=True)
         except subprocess.CalledProcessError as e:
             logger.error(f'{app} has failed: {str(e)}')
 
