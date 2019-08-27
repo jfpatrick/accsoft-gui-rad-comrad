@@ -85,7 +85,9 @@ class ExamplesWindow(QMainWindow):
         self.actionAbout.triggered.connect(self._show_about)
         self.actionExit.triggered.connect(self.close)
 
-        self._populate_examples_tree_widget(self._find_runnable_examples())
+        examples = self._find_runnable_examples()
+        examples.sort()
+        self._populate_examples_tree_widget(examples)
 
         self.examples_tree.itemActivated.connect(self._on_example_selected)
         self.examples_tree.itemClicked.connect(self._on_example_selected)
@@ -156,7 +158,8 @@ class ExamplesWindow(QMainWindow):
             relative = os.path.relpath(path, curr_dir)
             dirs = relative.split(os.path.sep)
             parent_subtree: QTreeWidgetItem = self.examples_tree.invisibleRootItem()
-            for name in dirs:
+            for dir in dirs:
+                name = self._pretty_name(dir)
                 curr_subtree: QTreeWidgetItem = None
                 for idx in range(parent_subtree.childCount()):
                     child = parent_subtree.child(idx)
@@ -164,8 +167,27 @@ class ExamplesWindow(QMainWindow):
                         curr_subtree = child
                         break
                 if not curr_subtree:
-                    curr_subtree = QTreeWidgetItem(parent_subtree, [name])
+                    curr_subtree = QTreeWidgetItem(parent_subtree, [name, dir])
                 parent_subtree = curr_subtree
+
+    def _pretty_name(self, name: str) -> str:
+        """
+        Converts the snake-cased directory name of an example into a human-readable
+        format.
+
+        Args:
+            name: Original name.
+
+        Returns:
+            Beautified name.
+        """
+        components = name.split('_')
+        try:
+            if components[0].isdigit():
+                components[0] += '.'
+            return ' '.join(components).title()
+        except IndexError:
+            return name
 
     def _on_example_selected(self, item: QTreeWidgetItem):
         """
@@ -174,7 +196,7 @@ class ExamplesWindow(QMainWindow):
         Args:
             item: tree item that has been selected.
         """
-        name = item.data(0, Qt.DisplayRole)
+        name = item.data(1, Qt.DisplayRole)  # Fetch the second column, which is the original dir name
         # Allow selecting only leaf items
         if item.childCount() > 0:
             logger.debug(f'Ignoring selection of {name} - not a leaf element')
@@ -183,7 +205,7 @@ class ExamplesWindow(QMainWindow):
         path_dirs = []
         while True:
             par = curr_item.parent()
-            path_dirs.append(curr_item.data(0, Qt.DisplayRole))
+            path_dirs.append(curr_item.data(1, Qt.DisplayRole)) # Fetch the second column, which is the original dir name
             if not par:
                 break
             curr_item = par
