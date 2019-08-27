@@ -16,7 +16,7 @@ from qtpy.QtWidgets import (QMainWindow, QApplication, QTreeWidgetItem, QTreeWid
 from comrad import __version__, __author__
 # from pydm.widgets.template_repeater import FlowLayout
 from .flow import FlowLayout
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 
 try:
     from PyQt5.Qsci import QsciScintilla, QsciLexerPython
@@ -159,21 +159,26 @@ class ExamplesWindow(QMainWindow):
             dirs = relative.split(os.path.sep)
             parent_subtree: QTreeWidgetItem = self.examples_tree.invisibleRootItem()
             for dir in dirs:
-                name = self._pretty_name(dir)
+                name, dig = self._tree_info(dir)
                 curr_subtree: QTreeWidgetItem = None
                 for idx in range(parent_subtree.childCount()):
                     child = parent_subtree.child(idx)
-                    if child.text(0) == name:
+                    if child.text(1) == dir:
                         curr_subtree = child
                         break
                 if not curr_subtree:
-                    curr_subtree = QTreeWidgetItem(parent_subtree, [name, dir])
+                    par_dig = parent_subtree.data(2, Qt.DisplayRole)
+                    if par_dig:
+                        dig = f'{par_dig}.{dig}'
+                    if dig:
+                        name = f'{dig}. {name}'
+                    curr_subtree = QTreeWidgetItem(parent_subtree, [name, dir, dig])
                 parent_subtree = curr_subtree
 
-    def _pretty_name(self, name: str) -> str:
+    def _tree_info(self, name: str) -> Tuple[str, Optional[str]]:
         """
         Converts the snake-cased directory name of an example into a human-readable
-        format.
+        format. It also adds a complementary ordinal number to assist content numbering.
 
         Args:
             name: Original name.
@@ -183,11 +188,15 @@ class ExamplesWindow(QMainWindow):
         """
         components = name.split('_')
         try:
-            if components[0].isdigit():
-                components[0] += '.'
-            return ' '.join(components).title()
+            dig = components[0]
         except IndexError:
-            return name
+            return name, None
+        if dig.isdigit():
+            components.remove(components[0])
+        else:
+            dig = None
+
+        return ' '.join(components).title(), dig
 
     def _on_example_selected(self, item: QTreeWidgetItem):
         """
