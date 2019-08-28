@@ -7,3 +7,4 @@ description = 'This example shows how to create a composite UI, which reuses par
               'to be used with 2 devices, that emit Acquisition#IntVal numeric field once a second.'
 
 entrypoint = 'app.ui'
+japc_generator = 'japc_device:create_device'
