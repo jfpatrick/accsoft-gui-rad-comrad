@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>291</width>
-    <height>110</height>
+    <width>294</width>
+    <height>87</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,25 +15,12 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QLabel" name="label_2">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
+    <widget class="CCheckBox" name="CCheckBox">
      <property name="text">
-      <string>Try adjusting text below (press enter to apply changes)</string>
+      <string>Click me!</string>
      </property>
-     <property name="wordWrap">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="CLineEdit" name="CLineEdit">
      <property name="channel" stdset="0">
-      <string notr="true">japc:///DemoDevice/Settings#Demo</string>
+      <string notr="true">japc:///DemoDevice/Settings#BoolVal</string>
      </property>
     </widget>
    </item>
@@ -42,14 +29,14 @@
      <item row="0" column="0">
       <widget class="QLabel" name="label">
        <property name="text">
-        <string>Entered value:</string>
+        <string>Checked flag:</string>
        </property>
       </widget>
      </item>
      <item row="0" column="1">
       <widget class="CLabel" name="CLabel">
        <property name="channel" stdset="0">
-        <string notr="true">japc:///DemoDevice/Settings#Demo</string>
+        <string notr="true">japc:///DemoDevice/Settings#BoolVal</string>
        </property>
       </widget>
      </item>
@@ -64,13 +51,13 @@
    <header>pydm.widgets.label</header>
   </customwidget>
   <customwidget>
-   <class>PyDMLineEdit</class>
-   <extends>QLineEdit</extends>
-   <header>pydm.widgets.line_edit</header>
+   <class>PyDMCheckbox</class>
+   <extends>QCheckBox</extends>
+   <header>pydm.widgets.checkbox</header>
   </customwidget>
   <customwidget>
-   <class>CLineEdit</class>
-   <extends>PyDMLineEdit</extends>
+   <class>CCheckBox</class>
+   <extends>PyDMCheckbox</extends>
    <header>comrad.qt.pydm_widgets</header>
   </customwidget>
   <customwidget>

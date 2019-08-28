@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>291</width>
-    <height>110</height>
+    <width>257</width>
+    <height>124</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,13 +17,13 @@
    <item>
     <widget class="QLabel" name="label_2">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+      <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
      <property name="text">
-      <string>Try adjusting text below (press enter to apply changes)</string>
+      <string>Try adjusting the value below! (press enter to apply changes)</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -31,9 +31,27 @@
     </widget>
    </item>
    <item>
-    <widget class="CLineEdit" name="CLineEdit">
+    <widget class="CSpinBox" name="CSpinBox">
+     <property name="decimals">
+      <number>2</number>
+     </property>
+     <property name="maximum">
+      <double>1.000000000000000</double>
+     </property>
+     <property name="singleStep">
+      <double>0.100000000000000</double>
+     </property>
+     <property name="precision" stdset="0">
+      <number>2</number>
+     </property>
+     <property name="precisionFromPV" stdset="0">
+      <bool>false</bool>
+     </property>
      <property name="channel" stdset="0">
-      <string notr="true">japc:///DemoDevice/Settings#Demo</string>
+      <string notr="true">japc:///DemoDevice/Settings#FloatVal</string>
+     </property>
+     <property name="showStepExponent" stdset="0">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -42,14 +60,23 @@
      <item row="0" column="0">
       <widget class="QLabel" name="label">
        <property name="text">
-        <string>Entered value:</string>
+        <string>Registered value:</string>
        </property>
       </widget>
      </item>
      <item row="0" column="1">
       <widget class="CLabel" name="CLabel">
+       <property name="precision" stdset="0">
+        <number>2</number>
+       </property>
+       <property name="precisionFromPV" stdset="0">
+        <bool>false</bool>
+       </property>
        <property name="channel" stdset="0">
-        <string notr="true">japc:///DemoDevice/Settings#Demo</string>
+        <string notr="true">japc:///DemoDevice/Settings#FloatVal</string>
+       </property>
+       <property name="displayFormat" stdset="0">
+        <enum>PyDMLabel::Decimal</enum>
        </property>
       </widget>
      </item>
@@ -64,13 +91,13 @@
    <header>pydm.widgets.label</header>
   </customwidget>
   <customwidget>
-   <class>PyDMLineEdit</class>
-   <extends>QLineEdit</extends>
-   <header>pydm.widgets.line_edit</header>
+   <class>PyDMSpinbox</class>
+   <extends>QDoubleSpinBox</extends>
+   <header>pydm.widgets.spinbox</header>
   </customwidget>
   <customwidget>
-   <class>CLineEdit</class>
-   <extends>PyDMLineEdit</extends>
+   <class>CSpinBox</class>
+   <extends>PyDMSpinbox</extends>
    <header>comrad.qt.pydm_widgets</header>
   </customwidget>
   <customwidget>
