@@ -20,7 +20,7 @@ class DemoDevice(Device):
     def __init__(self):
         super().__init__(name='DemoDevice', device_properties=(
             Setting(name='Settings', fields=(
-                FieldType(name='Demo', datatype='str', initial_value='Hello world!'),
+                FieldType(name='Demo', datatype='str', initial_value='Initial value'),
             )),
         ))
 
