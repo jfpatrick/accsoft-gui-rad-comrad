@@ -286,7 +286,7 @@ class ExamplesWindow(QMainWindow):
         self.example_details.setCurrentIndex(EXAMPLE_DETAILS_DETAILS_PAGE)
 
         files: List[str] = list(itertools.chain.from_iterable([glob.glob(os.path.join(basedir, f'*.{ext}'))
-                                                               for ext in ['py', 'ui']]))
+                                                               for ext in ['py', 'ui', 'json']]))
         files = [os.path.relpath(path=p, start=basedir) for p in files]
         files.remove(EXAMPLE_CONFIG)
 
@@ -401,7 +401,7 @@ class ExamplesWindow(QMainWindow):
         file_path = os.path.join(self._selected_example_path, filename)
 
         _, ext = os.path.splitext(filename)
-        if ext == '.py':
+        if ext == '.py' or ext == '.json':
             with open(file_path) as f:
                 self.example_code_browser.setText(f.read())
             self.example_code_stack.setCurrentIndex(EXAMPLE_DETAILS_PY_PAGE)
@@ -431,6 +431,8 @@ class ExamplesWindow(QMainWindow):
     def _create_scintilla_editor(self):
         """Creates the enhanced code-browser if the library exists."""
         editor = QsciScintilla()
+        # Python lexer should cover all our use-cases: Python code + JSON
+        # (which looks like a subset of Python lists/dictionaries)
         lexer = QsciLexerPython(editor)
         editor.setLexer(lexer)
         editor.setIndentationsUseTabs(False)
