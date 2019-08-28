@@ -86,7 +86,27 @@ class ExamplesWindow(QMainWindow):
         self.actionExit.triggered.connect(self.close)
 
         examples = self._find_runnable_examples()
-        examples.sort()
+
+        def replace_digits(orig: str) -> str:
+            """
+            Sorts the strings preferring 1.10 to fall after 1.1 which is not achieved by
+            default ASCII sorting which prefers 0 as the lower char code.
+            Args:
+                sample1: string to compare.
+
+            Returns:
+                Replaced string
+
+            """
+            import re
+
+            # Replaces a digit by the corresponding amount of letters that are low in the ASCII table
+            replace_num = lambda match: int(match.group(0)) * 'Z'
+            return re.sub(pattern=r'\d+',
+                          repl=replace_num,
+                          string=orig)
+
+        examples.sort(key=replace_digits, reverse=True)
         self._populate_examples_tree_widget(examples)
 
         self.examples_tree.itemActivated.connect(self._on_example_selected)
