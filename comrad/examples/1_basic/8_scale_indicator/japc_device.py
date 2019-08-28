@@ -15,25 +15,35 @@ from papc.simulator.trig import RepeatedTimer
 
 class DemoDevice(Device):
     """
-    Demo device produces "Tick"/"Tock" string values every second
-    on a 'Acquistion#Demo' field.
+    Demo device that exposes a single readable field 'Acquisition#Demo'.
+
+    This field produces a numeric value that bounces in range 0.0-1.0
+    with 0.01 increments.
     """
-    frequency = 1
+    frequency = 30
 
     def __init__(self):
+        self._val: float = 0.0
+        self._grow: bool = True
         super().__init__(name='DemoDevice', device_properties=(
             Acquisition(name='Acquisition', fields=(
-                FieldType(name='Demo', datatype='str', initial_value='Tick'),
+                FieldType(name='Demo', datatype='float', initial_value=self._val),
             )),
         ))
-        self._is_tick = True
         self._timer = RepeatedTimer(1 / self.frequency, self.time_tick)
 
     def time_tick(self):
         """Callback on timer fire."""
-        val = 'Tick' if self._is_tick else 'Tock'
-        self.set_state({'Acquisition#Demo': val}, '')
-        self._is_tick = not self._is_tick
+        if self._val > 0.99:
+            self._grow = False
+        elif self._val < 0.01:
+            self._grow = True
+
+        if self._grow:
+            self._val += 0.01
+        else:
+            self._val -= 0.01
+        self.set_state({'Acquisition#Demo': self._val}, '')
 
 
 def create_device():

@@ -14,7 +14,7 @@ from papc.fieldtype import FieldType
 
 class DemoDevice(Device):
     """
-    Demo device that exposes a single writable setting 'Settings#Demo'.
+    Demo device that exposes a single writable setting 'Settings#FloatVal'.
     """
 
     def __init__(self):
