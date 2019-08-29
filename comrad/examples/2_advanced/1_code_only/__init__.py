@@ -1,4 +1,4 @@
-title = 'Basic CLabel example fully in code'
+title = 'CLabel example implemented fully in code'
 description = 'This example shows how to create a display without Qt Designer files. The display features a ' \
               'single ComRAD label and connect it to a field of a device. Device named "DemoDevice" has a ' \
               'single property "Acquisition" with a single string field "Demo", which toggles Tick-Tock ' \
