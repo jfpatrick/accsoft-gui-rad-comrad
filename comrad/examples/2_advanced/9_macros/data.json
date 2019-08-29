@@ -1,0 +1,5 @@
+[{
+  "addr": "DemoDevice/Acquisition#ChannelA"
+}, {
+  "addr": "DemoDevice/Acquisition#ChannelB"
+}]
