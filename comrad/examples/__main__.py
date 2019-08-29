@@ -9,13 +9,11 @@ import importlib
 import importlib.util
 import importlib.machinery
 from qtpy import uic
-from qtpy.QtCore import Qt
-from qtpy.QtGui import QColor
-from qtpy.QtWidgets import (QMainWindow, QApplication, QTreeWidgetItem, QTreeWidget, QStackedWidget,
-                            QAbstractScrollArea, QLabel, QPushButton, QGroupBox, QSizePolicy, QVBoxLayout)
+from qtpy.QtCore import Qt, Signal
+from qtpy.QtGui import QColor, QShowEvent
+from qtpy.QtWidgets import (QMainWindow, QApplication, QTreeWidgetItem, QTreeWidget, QStackedWidget, QTabWidget,
+                            QAbstractScrollArea, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit)
 from comrad import __version__, __author__
-# from pydm.widgets.template_repeater import FlowLayout
-from .flow import FlowLayout
 from typing import List, Optional, Dict, Any, Tuple
 
 try:
@@ -27,7 +25,6 @@ except ImportError:
 
 # Notify the kernel that we are not going to handle SIGINT
 signal.signal(signal.SIGINT, signal.SIG_DFL)
-
 
 logging.basicConfig()
 logger = logging.getLogger(__file__)
@@ -53,31 +50,15 @@ class ExamplesWindow(QMainWindow):
         # For IDE support, assign types to dynamically created items from the *.ui file
         self.example_details: QStackedWidget = None
         self.examples_tree: QTreeWidget = None
-        self.example_code_browser: QAbstractScrollArea = None
-        self.example_code: QGroupBox = None
-        self.example_code_stack: QStackedWidget = None
         self.example_desc_label: QLabel = None
         self.example_title_label: QLabel = None
         self.example_run_btn: QPushButton = None
-        self.example_designer_btn: QPushButton = None
+        self.tabs: QTabWidget = None
 
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'main.ui'), self)
 
-        # If QScintilla is available, dismantle simple editor and place it instead
-        if QSCI_AVAILABLE:
-            par = self.example_code_browser.parentWidget()
-            self.example_code_browser.deleteLater()
-            self.example_code_browser = self._create_scintilla_editor()
-            par.layout().addWidget(self.example_code_browser)
-
-        self.example_file_layout = FlowLayout()
-        layout: QVBoxLayout = self.example_code.layout()
-        layout.insertLayout(0, self.example_file_layout)
-        self.example_code.setLayout(layout)
-
         self._selected_example_path: str = None
         self._selected_example_entrypoint: str = None
-        self._selected_source_file: str = None
         self._selected_example_japc_generator: str = None
 
         self.example_details.setCurrentIndex(EXAMPLE_DETAILS_INTRO_PAGE)
@@ -95,7 +76,7 @@ class ExamplesWindow(QMainWindow):
                 sample1: string to compare.
 
             Returns:
-                Replaced string
+                replaced string
 
             """
             import re
@@ -112,7 +93,6 @@ class ExamplesWindow(QMainWindow):
         self.examples_tree.itemActivated.connect(self._on_example_selected)
         self.examples_tree.itemClicked.connect(self._on_example_selected)
         self.example_run_btn.clicked.connect(self._run_example)
-        self.example_designer_btn.clicked.connect(self._open_designer_file)
         self.show()
 
     def _show_about(self):
@@ -201,10 +181,10 @@ class ExamplesWindow(QMainWindow):
         format. It also adds a complementary ordinal number to assist content numbering.
 
         Args:
-            name: Original name.
+            name: original name.
 
         Returns:
-            Beautified name.
+            beautified name.
         """
         components = name.split('_')
         try:
@@ -276,7 +256,7 @@ class ExamplesWindow(QMainWindow):
             example_fgen = None
 
         self._selected_example_japc_generator = (
-            f'{self._absolute_module_id(rel_module=module, basedir=basedir)}.{example_fgen}'
+            f'{self._absolute_module_id(basedir=basedir)}.{example_fgen}'
             if example_fgen else None
         )
         self._selected_example_entrypoint = example_entrypoint
@@ -287,41 +267,38 @@ class ExamplesWindow(QMainWindow):
 
         files: List[str] = list(itertools.chain.from_iterable([glob.glob(os.path.join(basedir, f'*.{ext}'))
                                                                for ext in ['py', 'ui', 'json']]))
-        files = [os.path.relpath(path=p, start=basedir) for p in files]
-        files.remove(EXAMPLE_CONFIG)
+        files.remove(os.path.join(basedir, EXAMPLE_CONFIG))
 
-        self._set_file_buttons(names=files, selected=example_entrypoint)
+        self._create_file_tabs(file_paths=files, selected=example_entrypoint, basedir=basedir)
 
-    def _set_file_buttons(self, names: List[str], selected: str):
+    def _create_file_tabs(self, file_paths: List[str], selected: str, basedir: os.PathLike):
         """
-        Dynamically creates toggle buttons to select files contained by the example directory.
+        Dynamically creates tabs to select files contained by the example directory.
 
         Args:
-            names: names of the files to create buttons for.
+            file_paths: paths of the files to create tabs for.
             selected: name of the selected file by default.
+            basedir: absolute path to the module.
         """
-        for i in range(self.example_file_layout.count()):
-            item = self.example_file_layout.itemAt(0)
-            self.example_file_layout.removeItem(item)
-            item.widget().deleteLater()
+        for _ in range(self.tabs.count()):
+            self.tabs.removeTab(0)
 
-        selected_btn = None
-        for name in names:
-            btn = QPushButton()
-            btn.setText(name)
-            btn.setCheckable(True)
-            policy = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-            btn.setSizePolicy(policy)
-            btn.clicked.connect(self._file_selected)
-            self.example_file_layout.addWidget(btn)
-            if name == selected:
-                selected_btn = btn
+        for file_path in file_paths:
+            widget: QWidget
+            filename = os.path.relpath(path=file_path, start=basedir)
+            _, ext = os.path.splitext(filename)
+            if ext == '.py' or ext == '.json':
+                widget = EditorTab(file_path, self.tabs)
+            elif ext == '.ui':
+                tab = DesignerTab(file_path, self.tabs)
+                tab.designer_opened.connect(self._open_designer_file)
+                widget = tab
+            self.tabs.addTab(widget, filename)
+            if filename == selected:
+                # Trigger display of the main file
+                self.tabs.setCurrentWidget(widget)
 
-        # Trigger display of the main file
-        if selected_btn:
-            selected_btn.click()
-
-    def _absolute_module_id(self, rel_module: types.ModuleType, basedir: os.PathLike) -> str:
+    def _absolute_module_id(self, basedir: os.PathLike) -> str:
         """
         Constructs the absolute module identifier.
 
@@ -329,11 +306,10 @@ class ExamplesWindow(QMainWindow):
         include paths to the examples module itself.
 
         Args:
-            rel_module: Child module to construct the identifier for.
-            basedir: Absolute path to the module
+            basedir: absolute path to the module
 
         Returns:
-            Absolute identifier.
+            absolute identifier.
         """
         curr_mod = __loader__.name.strip(__name__).strip('.') # Removes trailing '.__main__'
         rel_path = os.path.relpath(basedir, curr_dir)
@@ -346,8 +322,8 @@ class ExamplesWindow(QMainWindow):
         Resolves the Python module from the directory of the example.
 
         Args:
-            basedir: Absolute path to the example.
-            name: Name of the example to be set for the module.
+            basedir: absolute path to the example.
+            name: name of the example to be set for the module.
 
         Returns:
             Python module or None if failed to load.
@@ -381,33 +357,9 @@ class ExamplesWindow(QMainWindow):
                                file_path=os.path.join(self._selected_example_path, self._selected_example_entrypoint),
                                env=dict(PYJAPC_SIMULATION_INIT=(self._selected_example_japc_generator or '')))
 
-    def _open_designer_file(self):
+    def _open_designer_file(self, file_path: os.PathLike):
         """Opens *.ui file in Qt Designer"""
-        if not self._selected_source_file or not self._selected_example_path:
-            logger.warning(f'Won\'t open UI file. Path information missing.')
-            return
-        self._run_external_app(app='comrad_designer',
-                               file_path=os.path.join(self._selected_example_path, self._selected_source_file))
-
-    def _file_selected(self):
-        """Callback to adjust the UI when a file button is pressed."""
-        btn: QPushButton = self.sender()
-
-        for i in range(self.example_file_layout.count()):
-            push: QPushButton = self.example_file_layout.itemAt(i).widget()
-            push.setChecked(push == btn)
-
-        filename = btn.text()
-        file_path = os.path.join(self._selected_example_path, filename)
-
-        _, ext = os.path.splitext(filename)
-        if ext == '.py' or ext == '.json':
-            with open(file_path) as f:
-                self.example_code_browser.setText(f.read())
-            self.example_code_stack.setCurrentIndex(EXAMPLE_DETAILS_PY_PAGE)
-        elif ext == '.ui':
-            self.example_code_stack.setCurrentIndex(EXAMPLE_DETAILS_UI_PAGE)
-        self._selected_source_file = filename
+        self._run_external_app(app='comrad_designer', file_path=file_path)
 
     def _run_external_app(self, app: str, file_path: os.PathLike, env: Dict[str, Any] = {}):
         """
@@ -428,25 +380,80 @@ class ExamplesWindow(QMainWindow):
         except subprocess.CalledProcessError as e:
             logger.error(f'{app} has failed: {str(e)}')
 
-    def _create_scintilla_editor(self):
-        """Creates the enhanced code-browser if the library exists."""
-        editor = QsciScintilla()
-        # Python lexer should cover all our use-cases: Python code + JSON
-        # (which looks like a subset of Python lists/dictionaries)
-        lexer = QsciLexerPython(editor)
-        editor.setLexer(lexer)
-        editor.setIndentationsUseTabs(False)
-        editor.setIndentationGuides(True)
-        editor.setTabWidth(4)
-        editor.setEolMode(QsciScintilla.EolUnix)
-        editor.setCaretLineVisible(True)
-        editor.setCaretLineBackgroundColor(QColor('#efefef'))
-        editor.setMargins(1)
-        editor.setMarginType(0, QsciScintilla.NumberMargin)
-        editor.setMarginWidth(0, 40)
-        editor.setUtf8(True)
-        editor.setReadOnly(True)
-        return editor
+
+class DesignerTab(QWidget):
+    """Page for the Qt Designer view in the example details."""
+
+    designer_opened = Signal([str])
+
+    def __init__(self, file_path: os.PathLike, parent: QWidget = None, *args):
+        super().__init__(parent, *args)
+        self._file_path = file_path
+        self.designer_btn: Optional[QPushButton] = None
+
+    def _btn_clicked(self):
+        """Forwards the signal adding path information"""
+        self.designer_opened.emit(self._file_path)
+
+    def showEvent(self, event: QShowEvent) -> None:
+        """Creates code editor when shown for the first time."""
+        super().showEvent(event)
+
+        if self.designer_btn is not None:
+            return
+
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'ui_details.ui'), self)
+        self.designer_btn.clicked.connect(self._btn_clicked)
+
+
+class EditorTab(QWidget):
+    """Page for the text file editor in the example details."""
+
+    def __init__(self, file_path: os.PathLike, parent: QWidget = None, *args):
+        super().__init__(parent, *args)
+        self._file_path = file_path
+        self.code_viewer: Optional[QAbstractScrollArea] = None
+
+    def showEvent(self, event: QShowEvent) -> None:
+        """Creates code editor when shown for the first time."""
+        super().showEvent(event)
+
+        # Not a first show event
+        if self.code_viewer is not None:
+            return
+
+        if QSCI_AVAILABLE:
+            editor = QsciScintilla()
+            # Python lexer should cover all our use-cases: Python code + JSON
+            # (which looks like a subset of Python lists/dictionaries)
+            lexer = QsciLexerPython(editor)
+            editor.setLexer(lexer)
+            editor.setIndentationsUseTabs(False)
+            editor.setIndentationGuides(True)
+            editor.setTabWidth(4)
+            editor.setEolMode(QsciScintilla.EolUnix)
+            editor.setCaretLineVisible(True)
+            editor.setCaretLineBackgroundColor(QColor('#efefef'))
+            editor.setMargins(1)
+            editor.setMarginType(0, QsciScintilla.NumberMargin)
+            editor.setMarginWidth(0, 40)
+            editor.setUtf8(True)
+            editor.setReadOnly(True)
+            self.code_viewer = editor
+        else:
+            editor = QTextEdit()
+            editor.setUndoRedoEnabled(False)
+            editor.setReadOnly(True)
+            editor.setAcceptRichText(False)
+            self.code_viewer = editor
+
+        with open(self._file_path) as f:
+            self.code_viewer.setText(f.read())
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.code_viewer)
+        layout.setContentsMargins(0, 0, 0, 1)
+        self.setLayout(layout)
 
 
 def run():
