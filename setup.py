@@ -1,9 +1,17 @@
 #!/usr/bin/env python
 import versioneer
 import re
-from setuptools import setup, find_packages
+from setuptools import setup, PEP420PackageFinder
 from os import path
 from typing import List
+
+
+# We use implicit packages (PEP420) that are not obliged
+# to have __init__.py. Default implementation of setuptools.find_packages will
+# expect that file to exist and thus skip everything else. We need a tailored
+# version.
+find_packages = PEP420PackageFinder.find
+
 
 curr_dir = path.abspath(path.dirname(__file__))
 
@@ -42,6 +50,9 @@ test_requirements = read_extras_req('test-requirements.txt')
 docs_requirements = read_extras_req('docs-requirements.txt')
 dev_requirements = read_extras_req('dev-requirements.txt')
 
+# Note include_package_data must be set to False, otherwise setuptools
+# will consider only CVS/Svn tracked non-code files
+# More info: https://stackoverflow.com/a/23936405
 setup(
     name='comrad',
     version=versioneer.get_version(),
@@ -51,19 +62,14 @@ setup(
     author='Ivan Sinkarenko',
     author_email='ivan.sinkarenko@cern.ch',
     url='https://wikis.cern.ch/display/ACCPY/Rapid+Application+Development',
-    packages=find_packages(),
+    packages=find_packages(exclude=('build*', 'dist*', 'docs*', 'tests', '*.egg-info')),
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: X11 Applications :: Qt',
         'Operating System :: POSIX :: Linux',
     ],
-    include_package_data=True,
     package_data={
-        'comrad': 'comrad/*.qss',
-        'comrad.qt': 'comrad/qt/*.ui',
-        'comrad.examples': 'comrad/examples/*.ui',
-        'comrad.tools': 'comrad/tools/*.ui',
-        'comrad.designer.icons': 'comrad/designer/icons/*.ico',
+        '': ['*.ui', '*.ico', '*.png', '*.qss', '*.json'],
     },
     install_requires=requirements,
     entry_points={
