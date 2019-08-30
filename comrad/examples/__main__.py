@@ -3,8 +3,6 @@ import signal
 import logging
 import types
 import argparse
-import glob
-import itertools
 import importlib
 import importlib.util
 import importlib.machinery
@@ -265,11 +263,23 @@ class ExamplesWindow(QMainWindow):
 
         self.example_details.setCurrentIndex(EXAMPLE_DETAILS_DETAILS_PAGE)
 
-        files: List[str] = list(itertools.chain.from_iterable([glob.glob(os.path.join(basedir, f'*.{ext}'))
-                                                               for ext in ['py', 'ui', 'json']]))
-        files.remove(os.path.join(basedir, EXAMPLE_CONFIG))
+        bundle_files: List[str] = []
 
-        self._create_file_tabs(file_paths=files, selected=example_entrypoint, basedir=basedir)
+        def is_file_allowed(file: os.PathLike) -> bool:
+            _, ext = os.path.splitext(file)
+            return ext in ['.py', '.ui', '.json']
+
+        for root, dirs, files in os.walk(basedir):
+            try:
+                dirs.remove('__pycache__')
+            except ValueError:
+                pass
+            if root == basedir:
+                files.remove(EXAMPLE_CONFIG)
+            files = filter(is_file_allowed, files)
+            bundle_files.extend(os.path.join(root, f) for f in files)
+
+        self._create_file_tabs(file_paths=bundle_files, selected=example_entrypoint, basedir=basedir)
 
     def _create_file_tabs(self, file_paths: List[str], selected: str, basedir: os.PathLike):
         """
