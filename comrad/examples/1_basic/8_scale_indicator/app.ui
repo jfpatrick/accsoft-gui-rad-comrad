@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>300</width>
+    <height>105</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="CScaleIndicator" name="CScaleIndicator">
+     <property name="precision" stdset="0">
+      <number>2</number>
+     </property>
+     <property name="precisionFromPV" stdset="0">
+      <bool>false</bool>
+     </property>
+     <property name="channel" stdset="0">
+      <string notr="true">japc:///DemoDevice/Acquisition#Demo</string>
+     </property>
+     <property name="showTicks" stdset="0">
+      <bool>false</bool>
+     </property>
+     <property name="limitsFromChannel" stdset="0">
+      <bool>false</bool>
+     </property>
+     <property name="userUpperLimit" stdset="0">
+      <double>1.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PyDMScaleIndicator</class>
+   <extends>QFrame</extends>
+   <header>pydm.widgets.scale</header>
+  </customwidget>
+  <customwidget>
+   <class>CScaleIndicator</class>
+   <extends>PyDMScaleIndicator</extends>
+   <header>comrad.qt.pydm_widgets</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

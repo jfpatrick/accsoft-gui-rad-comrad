@@ -3,6 +3,7 @@ import numpy as np
 from typing import List, Dict, Optional, Set, Any
 from pydm.widgets.base import PyDMWidget
 from pydm.widgets.channel import PyDMChannel
+from pydm.data_plugins.plugin import PyDMConnection
 from pydm.utilities import is_qt_designer
 from qtpy.QtWidgets import QWidget, QFrame, QVBoxLayout, QLabel
 from qtpy.QtCore import Property, Signal, Slot, Q_ENUM, Qt
@@ -123,10 +124,14 @@ class CValueAggregator(QWidget, PyDMWidget, ValueTransformationBase, GeneratorTr
 
         # This is the way to identify the channel, instead of initially used functools.partial,
         # which results in reference cycle
-        conn = self.sender()
+        conn: Optional[PyDMConnection] = self.sender()
         if conn is None:
             return
-        channel_id = conn.address
+        channel_id: str = conn.address
+        if channel_id.startswith('/'):
+            # Because PyDM does not natively support /// notation of JAPC, leading slash is left
+            # in the address. We need to remove it to not confuse the user.
+            channel_id = channel_id[1:]
 
         if self._trigger_type == self.GeneratorTrigger.Any:
             self._values[channel_id] = new_val

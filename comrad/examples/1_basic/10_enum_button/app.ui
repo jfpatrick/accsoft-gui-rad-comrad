@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>245</width>
+    <height>275</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="CEnumButton" name="CEnumButton">
+     <property name="channel" stdset="0">
+      <string notr="true">japc:///DemoDevice/Settings#IntVal</string>
+     </property>
+     <property name="items" stdset="0">
+      <stringlist>
+       <string>Alpha (index 0)</string>
+       <string>Bravo (index 1)</string>
+       <string>Charlie (index 2)</string>
+       <string>Delta (index 3)</string>
+       <string>Echo (index 4)</string>
+      </stringlist>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QFormLayout" name="formLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Received index:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="CLabel" name="CLabel">
+       <property name="channel" stdset="0">
+        <string notr="true">japc:///DemoDevice/Settings#IntVal</string>
+       </property>
+       <property name="displayFormat" stdset="0">
+        <enum>PyDMLabel::Decimal</enum>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PyDMLabel</class>
+   <extends>QLabel</extends>
+   <header>pydm.widgets.label</header>
+  </customwidget>
+  <customwidget>
+   <class>PyDMEnumButton</class>
+   <extends>QWidget</extends>
+   <header>pydm.widgets.enum_button</header>
+  </customwidget>
+  <customwidget>
+   <class>CEnumButton</class>
+   <extends>PyDMEnumButton</extends>
+   <header>comrad.qt.pydm_widgets</header>
+  </customwidget>
+  <customwidget>
+   <class>CLabel</class>
+   <extends>PyDMLabel</extends>
+   <header>comrad.qt.pydm_widgets</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

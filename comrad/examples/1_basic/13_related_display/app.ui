@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>229</width>
+    <height>119</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Same window:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="CRelatedDisplayButton" name="CRelatedDisplayButton">
+     <property name="text">
+      <string>Click me!</string>
+     </property>
+     <property name="filenames" stdset="0">
+      <stringlist>
+       <string>second.ui</string>
+      </stringlist>
+     </property>
+     <property name="titles" stdset="0">
+      <stringlist>
+       <string>Secondary Display</string>
+      </stringlist>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>New window:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="CRelatedDisplayButton" name="CRelatedDisplayButton_2">
+     <property name="text">
+      <string>Click me too!</string>
+     </property>
+     <property name="filenames" stdset="0">
+      <stringlist>
+       <string>second.ui</string>
+      </stringlist>
+     </property>
+     <property name="titles" stdset="0">
+      <stringlist>
+       <string>Secondary display</string>
+      </stringlist>
+     </property>
+     <property name="openInNewWindow" stdset="0">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PyDMRelatedDisplayButton</class>
+   <extends>QPushButton</extends>
+   <header>pydm.widgets.related_display_button</header>
+  </customwidget>
+  <customwidget>
+   <class>CRelatedDisplayButton</class>
+   <extends>PyDMRelatedDisplayButton</extends>
+   <header>comrad.qt.pydm_widgets</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

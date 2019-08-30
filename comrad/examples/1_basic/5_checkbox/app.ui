@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>294</width>
+    <height>87</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="CCheckBox" name="CCheckBox">
+     <property name="text">
+      <string>Click me!</string>
+     </property>
+     <property name="channel" stdset="0">
+      <string notr="true">japc:///DemoDevice/Settings#BoolVal</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QFormLayout" name="formLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Checked flag:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="CLabel" name="CLabel">
+       <property name="channel" stdset="0">
+        <string notr="true">japc:///DemoDevice/Settings#BoolVal</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PyDMLabel</class>
+   <extends>QLabel</extends>
+   <header>pydm.widgets.label</header>
+  </customwidget>
+  <customwidget>
+   <class>PyDMCheckbox</class>
+   <extends>QCheckBox</extends>
+   <header>pydm.widgets.checkbox</header>
+  </customwidget>
+  <customwidget>
+   <class>CCheckBox</class>
+   <extends>PyDMCheckbox</extends>
+   <header>comrad.qt.pydm_widgets</header>
+  </customwidget>
+  <customwidget>
+   <class>CLabel</class>
+   <extends>PyDMLabel</extends>
+   <header>comrad.qt.pydm_widgets</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

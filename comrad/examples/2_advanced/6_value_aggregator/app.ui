@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>627</width>
+    <height>208</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>The data in both halves is identical. The only difference is how Python code accesses the values (see CValueAggregator's valueTransformation property)</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QGroupBox" name="groupBox">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>130</height>
+        </size>
+       </property>
+       <property name="baseSize">
+        <size>
+         <width>0</width>
+         <height>90</height>
+        </size>
+       </property>
+       <property name="title">
+        <string>Accessing by key</string>
+       </property>
+       <layout class="QFormLayout" name="formLayout_2">
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_4">
+          <property name="text">
+           <string>Channel A:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_5">
+          <property name="text">
+           <string>Channel B:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="CLabel" name="CLabel_2">
+          <property name="channel" stdset="0">
+           <string notr="true">japc:///DemoDevice/Acquisition#ChannelB</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="CLabel" name="CLabel">
+          <property name="channel" stdset="0">
+           <string notr="true">japc:///DemoDevice/Acquisition#ChannelA</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_6">
+          <property name="text">
+           <string>Result:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>TextLabel</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="CValueAggregator" name="CValueAggregator">
+          <property name="valueTransformation">
+           <string notr="true">try:
+    val_a = values['DemoDevice/Acquisition#ChannelA']
+    val_b = values['DemoDevice/Acquisition#ChannelB']
+    output(val_a + val_b)
+except KeyError:
+    output(0)</string>
+          </property>
+          <property name="inputChannels" stdset="0">
+           <stringlist>
+            <string>japc:///DemoDevice/Acquisition#ChannelA</string>
+            <string>japc:///DemoDevice/Acquisition#ChannelB</string>
+           </stringlist>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="groupBox_2">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>130</height>
+        </size>
+       </property>
+       <property name="title">
+        <string>Combining everything</string>
+       </property>
+       <layout class="QFormLayout" name="formLayout">
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_7">
+          <property name="text">
+           <string>Channel A:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="CLabel" name="CLabel_3">
+          <property name="channel" stdset="0">
+           <string notr="true">japc:///DemoDevice/Acquisition#ChannelA</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_8">
+          <property name="text">
+           <string>Channel B:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="CLabel" name="CLabel_4">
+          <property name="channel" stdset="0">
+           <string notr="true">japc:///DemoDevice/Acquisition#ChannelB</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_9">
+          <property name="text">
+           <string>Result:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>TextLabel</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="CValueAggregator" name="CValueAggregator_2">
+          <property name="valueTransformation">
+           <string notr="true">output(sum(values.values()))</string>
+          </property>
+          <property name="inputChannels" stdset="0">
+           <stringlist>
+            <string>japc:///DemoDevice/Acquisition#ChannelA</string>
+            <string>japc:///DemoDevice/Acquisition#ChannelB</string>
+           </stringlist>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PyDMLabel</class>
+   <extends>QLabel</extends>
+   <header>pydm.widgets.label</header>
+  </customwidget>
+  <customwidget>
+   <class>CLabel</class>
+   <extends>PyDMLabel</extends>
+   <header>comrad.qt.pydm_widgets</header>
+  </customwidget>
+  <customwidget>
+   <class>CValueAggregator</class>
+   <extends>QWidget</extends>
+   <header>comrad.qt.widgets.aggregator</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>CValueAggregator</sender>
+   <signal>updateTriggered(int)</signal>
+   <receiver>label</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>310</x>
+     <y>135</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>138</x>
+     <y>150</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>CValueAggregator_2</sender>
+   <signal>updateTriggered(int)</signal>
+   <receiver>label_2</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>356</x>
+     <y>135</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>604</x>
+     <y>158</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
