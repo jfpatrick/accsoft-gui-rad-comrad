@@ -28,7 +28,7 @@ from pydm.widgets.frame import PyDMFrame
 from qtpy.QtWidgets import QWidget
 from qtpy.QtCore import Slot
 from .value_transform import ValueTransformer
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Optional
 
 
 class CWaveFormTable(PyDMWaveformTable):
@@ -37,7 +37,7 @@ class CWaveFormTable(PyDMWaveformTable):
 
 class CLabel(ValueTransformer, PyDMLabel):
 
-    def __init__(self, parent: QWidget = None, init_channel: str = None, **kwargs):
+    def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
         A QLabel with support for setting the text via a CS Channel, or
         through the Rules system.
@@ -83,7 +83,7 @@ class CFrame(PyDMFrame):
 
 class CByteIndicator(ValueTransformer, PyDMByteIndicator):
 
-    def __init__(self, parent: QWidget = None, init_channel: str = None, **kwargs):
+    def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
         Widget for graphical representation of bits from an integer number
         with support for Channels from CS.
@@ -133,7 +133,7 @@ class CByteIndicator(ValueTransformer, PyDMByteIndicator):
 
 class CCheckBox(ValueTransformer, PyDMCheckbox):
 
-    def __init__(self, parent: QWidget = None, init_channel: str = None, **kwargs):
+    def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
         A QCheckbox with support for Channels from the control system.
 
@@ -152,7 +152,7 @@ class CEmbeddedDisplay(PyDMEmbeddedDisplay):
 
 class CEnumButton(ValueTransformer, PyDMEnumButton):
 
-    def __init__(self, parent: QWidget = None, init_channel: str = None, **kwargs):
+    def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
         A QWidget that renders buttons for every option of Enum Items.
         For now three types of buttons can be rendered:
@@ -173,7 +173,7 @@ class CEnumButton(ValueTransformer, PyDMEnumButton):
 
 class CEnumComboBox(ValueTransformer, PyDMEnumComboBox):
 
-    def __init__(self, parent: QWidget = None, init_channel: str = None, **kwargs):
+    def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
         A QComboBox with support for Channels from the control system.
 
@@ -198,7 +198,7 @@ class CImageView(PyDMImageView):
 
 class CLineEdit(ValueTransformer, PyDMLineEdit):
 
-    def __init__(self, parent: QWidget = None, init_channel: str = None, **kwargs):
+    def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
 
         A QLineEdit (writable text field) with support for CS Channels.
@@ -232,7 +232,7 @@ class CShellCommand(PyDMShellCommand):
 
 class CSlider(ValueTransformer, PyDMSlider):
 
-    def __init__(self, parent: QWidget = None, init_channel: str = None, **kwargs):
+    def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
         A QSlider with support for Channels and more from the control system.
 
@@ -247,7 +247,7 @@ class CSlider(ValueTransformer, PyDMSlider):
 
 class CSpinBox(ValueTransformer, PyDMSpinbox):
 
-    def __init__(self, parent: QWidget = None, init_channel: str = None, **kwargs):
+    def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
         A QDoubleSpinBox with support for Channels and more from the control system.
 
@@ -262,7 +262,7 @@ class CSpinBox(ValueTransformer, PyDMSpinbox):
 
 class CScaleIndicator(ValueTransformer, PyDMScaleIndicator):
 
-    def __init__(self, parent: QWidget = None, init_channel: str = None, **kwargs):
+    def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
         A bar-shaped indicator for scalar value with support for Channels and
         more from the control system.

@@ -1,11 +1,14 @@
 # Placeholder for user defined entries. If you would like to extend this file, please put your entries in this section.
 .idea
 .venv
+.pyre
 __pycache__
 *.log
 *.egg-info
 .coverage
 htmlcov
+.pytest_cache
+.mypy_cache
 
 # End of placeholder for user defined entries
 

@@ -2,7 +2,7 @@
 Utilities for Qt Designer intergation.
 """
 
-from typing import Type, List, Callable
+from typing import Type, List, Callable, Optional
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QWidget
 from pydm.widgets.qtplugin_extensions import RulesExtension
@@ -13,8 +13,8 @@ def qtplugin_factory(cls: Type,
                      is_container: bool = False,
                      icon: QIcon = None,
                      group: str = 'ComRAD Widgets',
-                     on_widget_create: Callable[[QWidget], None] = None,
-                     extensions: List[RulesExtension] = None):
+                     on_widget_create: Optional[Callable[[QWidget], None]] = None,
+                     extensions: Optional[List[RulesExtension]] = None):
     """
     Helper function to create a generic PyDMDesignerPlugin class.
 

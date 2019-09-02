@@ -26,7 +26,7 @@ class CValueAggregator(QWidget, PyDMWidget, ValueTransformationBase, GeneratorTr
     # Emitted when the user changes the value.
     updateTriggered = Signal([int], [float], [str], [bool], [np.ndarray])
 
-    def __init__(self, parent: QWidget = None, init_channels: List[str] = None):
+    def __init__(self, parent: Optional[QWidget] = None, init_channels: Optional[List[str]] = None):
         """
         Widget that allows defining logic to expose a new value calculated on the fly.
 
@@ -47,13 +47,13 @@ class CValueAggregator(QWidget, PyDMWidget, ValueTransformationBase, GeneratorTr
         self._values: Dict[str, Any] = {}
         # This contains channels ids that have not yet updated their values and have not cached them
         # in _values
-        self._obsolete_values: Optional[Set] = None
+        self._obsolete_values: Optional[Set[str]] = None
 
         if is_qt_designer():
             self._setup_ui_for_designer()
         else:
             # Trigger connection creation
-            self.inputChannels = init_channels or []
+            self.inputChannels = init_channels or []  # type: ignore
             # Should be invisible in runtime
             self.hide()
 
@@ -67,7 +67,7 @@ class CValueAggregator(QWidget, PyDMWidget, ValueTransformationBase, GeneratorTr
         """
         return self._channel_ids
 
-    @inputChannels.setter
+    @inputChannels.setter  # type: ignore
     def inputChannels(self, channels: List[str]):
         """
         Channel setter exposed to Qt Designer.
@@ -97,7 +97,7 @@ class CValueAggregator(QWidget, PyDMWidget, ValueTransformationBase, GeneratorTr
             self._values.clear()
             self._obsolete_values = None
         else:
-            self._values = dict(self._channel_ids)
+            self._values = dict.fromkeys(seq=self._channel_ids, value=None)
             self._obsolete_values = set(self._channel_ids)
 
         # Add new connections
@@ -138,15 +138,17 @@ class CValueAggregator(QWidget, PyDMWidget, ValueTransformationBase, GeneratorTr
             self._trigger_update()
             return
 
-        if self._trigger_type == self.GeneratorTrigger.AggregatedFirst and channel_id not in self._obsolete_values:
+        if self._trigger_type == self.GeneratorTrigger.AggregatedFirst and (not self._obsolete_values
+                                                                            or channel_id not in self._obsolete_values):
             return
 
         # Common logic for AggregatedFirst and AggregatedLast from here on
         self._values[channel_id] = new_val
-        try:
-            self._obsolete_values.remove(channel_id)
-        except KeyError:
-            pass
+        if self._obsolete_values:
+            try:
+                self._obsolete_values.remove(channel_id)
+            except KeyError:
+                pass
 
         # Now empty
         if not self._obsolete_values:
@@ -180,7 +182,7 @@ class CValueAggregator(QWidget, PyDMWidget, ValueTransformationBase, GeneratorTr
         """
         return self._trigger_type
 
-    @generatorTrigger.setter
+    @generatorTrigger.setter  # type: ignore
     def generatorTrigger(self, new_type: int):
         """
         Update for the generator trigger type.
@@ -202,7 +204,7 @@ class CValueAggregator(QWidget, PyDMWidget, ValueTransformationBase, GeneratorTr
     def channel(self):
         return
 
-    @channel.setter
+    @channel.setter  # type: ignore
     def channel(self, ch):
         return
 
@@ -210,7 +212,7 @@ class CValueAggregator(QWidget, PyDMWidget, ValueTransformationBase, GeneratorTr
     def alarmSensitiveBorder(self):
         return
 
-    @alarmSensitiveBorder.setter
+    @alarmSensitiveBorder.setter  # type: ignore
     def alarmSensitiveBorder(self, ch):
         logger.info(f'alarmSensitiveBorder property is disabled for the {type(self).__name__} widget.')
         return
@@ -219,7 +221,7 @@ class CValueAggregator(QWidget, PyDMWidget, ValueTransformationBase, GeneratorTr
     def alarmSensitiveContent(self):
         return
 
-    @alarmSensitiveContent.setter
+    @alarmSensitiveContent.setter  # type: ignore
     def alarmSensitiveContent(self, ch):
         logger.info(f'alarmSensitiveContent property is disabled for the {type(self).__name__} widget.')
         return

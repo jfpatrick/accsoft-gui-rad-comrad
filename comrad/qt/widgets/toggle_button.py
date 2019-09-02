@@ -1,5 +1,5 @@
 import logging
-from typing import Union
+from typing import Union, Optional
 from pydm.widgets.pushbutton import PyDMPushButton
 from qtpy.QtCore import Property, Signal
 from qtpy.QtWidgets import QWidget
@@ -14,12 +14,12 @@ class CToggleButton(PyDMPushButton):
     inverseToggled = Signal([bool])
 
     def __init__(self,
-                 parent: QWidget = None,
-                 label: str = None,
-                 icon: QIcon = None,
-                 pressValue: Union[int, float, str] = None,
+                 parent: Optional[QWidget] = None,
+                 label: Optional[str] = None,
+                 icon: Optional[QIcon] = None,
+                 pressValue: Union[int, float, str, None] = None,
                  relative: bool = False,
-                 init_channel: str = None, **kwargs):
+                 init_channel: Optional[str] = None, **kwargs):
         """
         A toggle-button that brings some extra convenience features.
 

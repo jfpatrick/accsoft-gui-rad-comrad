@@ -3,7 +3,7 @@ import versioneer
 import re
 from setuptools import setup, PEP420PackageFinder
 from os import path
-from typing import List
+from typing import List, TextIO
 
 
 # We use implicit packages (PEP420) that are not obliged
@@ -16,7 +16,7 @@ find_packages = PEP420PackageFinder.find
 curr_dir = path.abspath(path.dirname(__file__))
 
 
-def read_req(f: str) -> List[str]:
+def read_req(f: TextIO) -> List[str]:
     res = []
     for line in f.read().split('\n'):
         if not line.startswith('-e'):

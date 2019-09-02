@@ -54,7 +54,7 @@ class ValueTransformationBase(FileTracking):
         """
         return self._value_transform_filename
 
-    @snippetFilename.setter
+    @snippetFilename.setter  # type: ignore
     def snippetFilename(self, new_val: str):
         """
         Sets the path to the Python file.
@@ -78,7 +78,7 @@ class ValueTransformationBase(FileTracking):
             return ''
         return self._value_transform_macros
 
-    @macros.setter
+    @macros.setter  # type: ignore
     def macros(self, new_macros: str):
         """
             JSON-formatted string containing macro variables.
@@ -129,7 +129,7 @@ class ValueTransformer(ValueTransformationBase):
         """
         if self.getValueTransformation() != str(new_formatter):
             ValueTransformationBase.setValueTransformation(self, str(new_formatter))
-            self.value_changed(self.value)
+            self.value_changed(self.value)  # type: ignore   # This is coming from PyDMWidget
 
     def value_changed(self, new_val: Any) -> None:
         """
@@ -144,10 +144,10 @@ class ValueTransformer(ValueTransformationBase):
         else:
             transform = self.cached_value_transformation()
             val = transform(new_val=new_val, widget=self) if transform else new_val
-        super().value_changed(val)
+        super().value_changed(val)  # type: ignore
 
 
-def create_transformation_function(transformation: str, file: str = None) -> Callable:
+def create_transformation_function(transformation: str, file: Optional[os.PathLike] = None) -> Callable:
     """
     Creates a function used to transform incoming value(s) into a single output value.
 
@@ -162,7 +162,9 @@ def create_transformation_function(transformation: str, file: str = None) -> Cal
     # pretend we are running them as the main target. However, if we simply change __name__ to '__main__',
     # imported packages will also see the same, which is not how it should be. Therefore we just
     # substitute all comparisons in the code against the '__main__' to True.
-    code = re.sub(r'\_\_name\_\_\ *==\ *(\'(\'{2})?|\"(\"{2})?)\_\_main\_\_(\'(\'{2})?|\"(\"{2})?)', 'True', transformation)
+    code = re.sub(pattern=r'\_\_name\_\_\ *==\ *(\'(\'{2})?|\"(\"{2})?)\_\_main\_\_(\'(\'{2})?|\"(\"{2})?)',
+                  repl='True',
+                  string=transformation)
 
     return_var = '__comrad_return_var__'
 

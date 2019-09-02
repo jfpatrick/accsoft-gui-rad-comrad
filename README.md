@@ -17,6 +17,7 @@ It allows for easy integration between CO control system and Qt GUI framework to
 - [Test](#test)
   - [Code coverage](#code-coverage)
 - [Development](#development)
+  - [Linting](#linting)
   - [Package hierarchy](#package-hierarchy)
   - [Building documentation](#building-documentation)
     - [Confluence](#confluence)
@@ -131,6 +132,31 @@ coverage run --source rad -m py.test && coverage html
 >
 
 # Development
+
+## Linting
+
+ComRAD is integrated with several linting utilities:
+
+- pylint
+- flake8
+- mypy
+
+You would run each of them separately (from repository root).
+
+For pylint (this currently does not lint tests):
+```bash
+pylint comrad
+```
+
+For flake8:
+```bash
+flake8
+```
+
+For mypy:
+```bash
+mypy .
+```
 
 ## Package hierarchy
 

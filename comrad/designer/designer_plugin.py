@@ -2,7 +2,7 @@
 Plugins for Qt Designer that are visible ComRAD widgets.
 """
 import os
-from typing import List
+from typing import List, Optional
 from qtpy.QtGui import QIcon, QPixmap
 from pydm.widgets.tab_bar_qtplugin import TabWidgetPlugin as PyDMTabWidgetPlugin
 from pydm.widgets.qtplugin_extensions import (RulesExtension, WaveformCurveEditorExtension,
@@ -49,7 +49,7 @@ def _icon(name: str) -> QIcon:
 
 
 # Buttons
-Checkbox = qtplugin_factory(CCheckBox, group=_COMRAD_GROUP_BUTTONS, icon=_icon('checkbox'), extensions=_BASE_EXTENSIONS, on_widget_create=lambda w: w.setText('RAD CheckBox'))
+Checkbox = qtplugin_factory(CCheckBox, group=_COMRAD_GROUP_BUTTONS, icon=_icon('checkbox'), extensions=_BASE_EXTENSIONS, on_widget_create=lambda widget: widget.setText('RAD CheckBox'))
 
 
 def _enum_btn_init(widget: CEnumButton):
@@ -105,7 +105,7 @@ class TabWidgetPlugin(PyDMTabWidgetPlugin):
     """Qt Designer Plugin for CTabWidget"""
     TabClass = CTabWidget
 
-    def __init__(self, extensions: List[RulesExtension] = None):
+    def __init__(self, extensions: Optional[List[RulesExtension]] = None):
         # Overrides the hardcoded gorup of TabWidgetPlugin to the custom one
         # This needs to be done via init, because event with the change to PyDMTabWidgetPlugin,
         # group appeared to be unchanged.

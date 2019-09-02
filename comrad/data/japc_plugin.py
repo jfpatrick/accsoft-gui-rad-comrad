@@ -34,7 +34,7 @@ class _JapcService(pyjapc.PyJapc):
                  incaAcceleratorName: str,
                  noSet: bool = False,
                  timeZone: Union[str, datetime.tzinfo] = 'utc',
-                 logLevel: int = None,
+                 logLevel: Optional[int] = None,
                  *args,
                  **kwargs):
         super().__init__(selector=selector,
@@ -74,7 +74,7 @@ class _JapcService(pyjapc.PyJapc):
         else:
             super().setParam(*args, **kwargs)
 
-    def stopSubscriptions(self, parameterName: str = None, selector: str = None):
+    def stopSubscriptions(self, parameterName: Optional[str] = None, selector: Optional[str] = None):
         super().stopSubscriptions(parameterName=parameterName, selector=selector)
         if not self._subscriptionHandleDict:
             self.log.info(f'Last subscription was removed from JAPC. Logging out.')
@@ -110,7 +110,7 @@ class _JapcConnection(PyDMConnection):
     # Superclass does not implement signal for bool values
     new_value_signal = Signal([float], [int], [str], [np.ndarray], [bool], [QVariant], [list])
 
-    def __init__(self, channel: PyDMChannel, address: str, protocol: str = None, parent: QObject = None, *args, **kwargs):
+    def __init__(self, channel: PyDMChannel, address: str, protocol: Optional[str] = None, parent: Optional[QObject] = None, *args, **kwargs):
         super().__init__(channel=channel,
                          address=address,
                          protocol=protocol,
@@ -119,11 +119,10 @@ class _JapcConnection(PyDMConnection):
                          **kwargs)
         logging.basicConfig()
         self.log: logging.Logger = logging.getLogger(__package__)
-        self.log.setLevel(logging.DEBUG)
 
         self._device_prop = self.address[1:] if self.address.startswith('/') else self.address
 
-        self._selector = None
+        self._selector: Optional[str] = None
         self._japc_additional_args = {}
         parsed_addr = split_device_property(self._device_prop)
         if parsed_addr.selector:
@@ -173,7 +172,7 @@ class _JapcConnection(PyDMConnection):
             # which pyjapc does not have access to, so we can't know if a property is writable at the moment
             self.write_access_signal.emit(True)
 
-    def remove_listener(self, channel: PyDMChannel, destroying=False):
+    def remove_listener(self, channel: PyDMChannel, destroying: bool = False):
         # Superclass does not implement signal for bool values
         if not destroying:
             self.log.info(f'Removing one of the listeners for {self.protocol}://{self.address}')
