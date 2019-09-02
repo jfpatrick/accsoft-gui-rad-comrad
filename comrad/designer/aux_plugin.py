@@ -1,37 +1,39 @@
-# We need original PyDMPlugins to be loaded into Qt Designer for the sake of correct inheritance resolution
-# but we don't want to include them into Widget Box, therefore, Qt Designer is expected to have customization
-# that hides this special group
-# The reason, how this inclusion affects the workflow, have a look at the *.ui file, that includes, e.g. a single CLabel
-# widget. If PyDMLabel is not included, you will see in the bottom of the file the following structure:
-# <customwidgets>
-#  <customwidget>
-#   <class>CLabel</class>
-#   <extends>QLabel</extends>
-#   <header>comrad.qt.pydm_widgets</header>
-#  </customwidget>
-# </customwidgets>
-#
-# This can cause problems, when PyDM specific features are used, e.g. Enums, which will produce something like
-# PyDMLabel::ENUM_VALUE in *.ui file. When loading such a file, UI loader will crash saying that PyDMLabel C++ class
-# is not found.
-# We need to tell it that this class comes from Python. When both PyDMLabel and CLabel are included amongst plugins,
-# it results in the following structure:
-# <customwidgets>
-#  <customwidget>
-#   <class>CLabel</class>
-#   <extends>PyDMLabel</extends>
-#   <header>comrad.qt.pydm_widgets</header>
-#  </customwidget>
-#  <customwidget>
-#   <class>PyDMLabel</class>
-#   <extends>QLabel</extends>
-#   <header>pydm.widgets.label</header>
-#  </customwidget>
-# </customwidgets>
-#
-# Information is not lost, and UI loader will correctly resolve symbols.
-# As a way of hiding these auxiliary widgets from the user, we group them in a specific category that is not displayed
-# in widget box
+"""
+We need original PyDMPlugins to be loaded into Qt Designer for the sake of correct inheritance resolution
+but we don't want to include them into Widget Box, therefore, Qt Designer is expected to have customization
+that hides this special group
+The reason, how this inclusion affects the workflow, have a look at the *.ui file, that includes, e.g. a single CLabel
+widget. If PyDMLabel is not included, you will see in the bottom of the file the following structure:
+<customwidgets>
+ <customwidget>
+  <class>CLabel</class>
+  <extends>QLabel</extends>
+  <header>comrad.qt.pydm_widgets</header>
+ </customwidget>
+</customwidgets>
+
+This can cause problems, when PyDM specific features are used, e.g. Enums, which will produce something like
+PyDMLabel::ENUM_VALUE in *.ui file. When loading such a file, UI loader will crash saying that PyDMLabel C++ class
+is not found.
+We need to tell it that this class comes from Python. When both PyDMLabel and CLabel are included amongst plugins,
+it results in the following structure:
+<customwidgets>
+ <customwidget>
+  <class>CLabel</class>
+  <extends>PyDMLabel</extends>
+  <header>comrad.qt.pydm_widgets</header>
+  </customwidget>
+ <customwidget>
+  <class>PyDMLabel</class>
+  <extends>QLabel</extends>
+  <header>pydm.widgets.label</header>
+ </customwidget>
+</customwidgets>
+
+Information is not lost, and UI loader will correctly resolve symbols.
+As a way of hiding these auxiliary widgets from the user, we group them in a specific category that is not displayed
+in widget box.
+"""
 from comrad.qt.pydm_widgets import (PyDMLabel, PyDMCheckbox, PyDMEnumButton, PyDMPushButton, PyDMRelatedDisplayButton,
                                     PyDMShellCommand, PyDMWaveformTable, PyDMFrame, PyDMEmbeddedDisplay,
                                     PyDMTemplateRepeater, PyDMEnumComboBox, PyDMLineEdit, PyDMSlider, PyDMSpinbox,
@@ -47,6 +49,7 @@ from comrad.designer.utils import qtplugin_factory
 _COMRAD_GROUP_HIDDEN_ITEMS = '[invisible]'
 
 
+# pylint: disable=invalid-name
 PyDMLabel_ = qtplugin_factory(PyDMLabel, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 PyDMCheckbox_ = qtplugin_factory(PyDMCheckbox, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 PyDMEnumButton_ = qtplugin_factory(PyDMEnumButton, group=_COMRAD_GROUP_HIDDEN_ITEMS)

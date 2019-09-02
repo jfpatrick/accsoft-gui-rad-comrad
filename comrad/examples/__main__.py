@@ -1,3 +1,8 @@
+"""
+ComRAD Examples browser is a tool to browse through sources and run interactive examples
+how to use ComRAD ecosystem.
+"""
+
 import os
 import signal
 import logging
@@ -6,19 +11,19 @@ import argparse
 import importlib
 import importlib.util
 import importlib.machinery
+from typing import List, Optional, Dict, Any, Tuple
 from qtpy import uic
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QColor, QShowEvent
 from qtpy.QtWidgets import (QMainWindow, QApplication, QTreeWidgetItem, QTreeWidget, QStackedWidget, QTabWidget,
                             QAbstractScrollArea, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit)
 from comrad import __version__, __author__
-from typing import List, Optional, Dict, Any, Tuple
 
 try:
     from PyQt5.Qsci import QsciScintilla, QsciLexerPython
-    QSCI_AVAILABLE = True
+    _QSCI_AVAILABLE = True
 except ImportError:
-    QSCI_AVAILABLE = False
+    _QSCI_AVAILABLE = False
 
 
 # Notify the kernel that we are not going to handle SIGINT
@@ -28,15 +33,15 @@ logging.basicConfig()
 logger = logging.getLogger(__file__)
 
 
-EXAMPLE_CONFIG = '__init__.py'
-EXAMPLE_DETAILS_INTRO_PAGE = 0
-EXAMPLE_DETAILS_DETAILS_PAGE = 1
+_EXAMPLE_CONFIG = '__init__.py'
+_EXAMPLE_DETAILS_INTRO_PAGE = 0
+_EXAMPLE_DETAILS_DETAILS_PAGE = 1
 
-EXAMPLE_DETAILS_UI_PAGE = 1
-EXAMPLE_DETAILS_PY_PAGE = 0
+_EXAMPLE_DETAILS_UI_PAGE = 1
+_EXAMPLE_DETAILS_PY_PAGE = 0
 
 
-curr_dir = os.path.dirname(__file__)
+_CURR_DIR = os.path.dirname(__file__)
 
 
 class ExamplesWindow(QMainWindow):
@@ -59,12 +64,12 @@ class ExamplesWindow(QMainWindow):
         self._selected_example_entrypoint: str = None
         self._selected_example_japc_generator: str = None
 
-        self.example_details.setCurrentIndex(EXAMPLE_DETAILS_INTRO_PAGE)
+        self.example_details.setCurrentIndex(_EXAMPLE_DETAILS_INTRO_PAGE)
 
         self.actionAbout.triggered.connect(self._show_about)
         self.actionExit.triggered.connect(self.close)
 
-        examples = self._find_runnable_examples()
+        examples = ExamplesWindow._find_runnable_examples()
 
         def replace_digits(orig: str) -> str:
             """
@@ -93,7 +98,7 @@ class ExamplesWindow(QMainWindow):
         self.example_run_btn.clicked.connect(self._run_example)
         self.show()
 
-    def _show_about(self):
+    def _show_about(self):  # pylint: disable=no-self-use   # It has to be instance method, as it is connected as a slot
         """
         Opens 'About' dialog.
 
@@ -114,7 +119,8 @@ class ExamplesWindow(QMainWindow):
         dialog.support_label.setText(support)
         dialog.exec_()
 
-    def _find_runnable_examples(self) -> List[str]:
+    @staticmethod
+    def _find_runnable_examples() -> List[str]:
         """
         Crawls the examples folder trying to locate subdirectories that can be runnable examples.
 
@@ -127,10 +133,10 @@ class ExamplesWindow(QMainWindow):
         """
         excludes = {'_', '.'}
         example_paths: List[str] = []
-        for root, dirs, files in os.walk(curr_dir):
+        for root, dirs, files in os.walk(_CURR_DIR):
             logger.debug(f'Entering {root}')
-            is_exec = EXAMPLE_CONFIG in files
-            if root != curr_dir and is_exec:
+            is_exec = _EXAMPLE_CONFIG in files
+            if root != _CURR_DIR and is_exec:
                 example_paths.append(root)
                 logger.debug(f'Example {root} is executable. Will stop here.')
                 dirs[:] = []  # Do not go deeper, as it might simply contain submodules
@@ -153,15 +159,15 @@ class ExamplesWindow(QMainWindow):
             example_paths: list of absolute paths to the runnable examples.
         """
         for path in example_paths:
-            relative = os.path.relpath(path, curr_dir)
+            relative = os.path.relpath(path, _CURR_DIR)
             dirs = relative.split(os.path.sep)
             parent_subtree: QTreeWidgetItem = self.examples_tree.invisibleRootItem()
-            for dir in dirs:
-                name, dig = self._tree_info(dir)
+            for directory in dirs:
+                name, dig = ExamplesWindow._tree_info(directory)
                 curr_subtree: QTreeWidgetItem = None
                 for idx in range(parent_subtree.childCount()):
                     child = parent_subtree.child(idx)
-                    if child.text(1) == dir:
+                    if child.text(1) == directory:
                         curr_subtree = child
                         break
                 if not curr_subtree:
@@ -170,10 +176,11 @@ class ExamplesWindow(QMainWindow):
                         dig = f'{par_dig}.{dig}'
                     if dig:
                         name = f'{dig}. {name}'
-                    curr_subtree = QTreeWidgetItem(parent_subtree, [name, dir, dig])
+                    curr_subtree = QTreeWidgetItem(parent_subtree, [name, directory, dig])
                 parent_subtree = curr_subtree
 
-    def _tree_info(self, name: str) -> Tuple[str, Optional[str]]:
+    @staticmethod
+    def _tree_info(name: str) -> Tuple[str, Optional[str]]:
         """
         Converts the snake-cased directory name of an example into a human-readable
         format. It also adds a complementary ordinal number to assist content numbering.
@@ -225,7 +232,7 @@ class ExamplesWindow(QMainWindow):
             return
 
         self._selected_example_path = example_path
-        example_mod = self._module_from_example(basedir=example_path, name=name)
+        example_mod = ExamplesWindow._module_from_example(basedir=example_path, name=name)
         if example_mod:
             self._set_example_details(module=example_mod, basedir=example_path)
 
@@ -245,8 +252,8 @@ class ExamplesWindow(QMainWindow):
             example_entrypoint: str = module.entrypoint
             example_title: str = module.title
             example_description: str = module.description
-        except AttributeError as e:
-            logger.warning(f'Cannot display example - config file is incomplete: {str(e)}')
+        except AttributeError as ex:
+            logger.warning(f'Cannot display example - config file is incomplete: {str(ex)}')
             return
         try:
             example_fgen = module.japc_generator
@@ -254,14 +261,14 @@ class ExamplesWindow(QMainWindow):
             example_fgen = None
 
         self._selected_example_japc_generator = (
-            f'{self._absolute_module_id(basedir=basedir)}.{example_fgen}'
+            f'{ExamplesWindow._absolute_module_id(basedir=basedir)}.{example_fgen}'
             if example_fgen else None
         )
         self._selected_example_entrypoint = example_entrypoint
         self.example_title_label.setText(example_title)
         self.example_desc_label.setText(example_description)
 
-        self.example_details.setCurrentIndex(EXAMPLE_DETAILS_DETAILS_PAGE)
+        self.example_details.setCurrentIndex(_EXAMPLE_DETAILS_DETAILS_PAGE)
 
         bundle_files: List[str] = []
 
@@ -275,7 +282,7 @@ class ExamplesWindow(QMainWindow):
             except ValueError:
                 pass
             if root == basedir:
-                files.remove(EXAMPLE_CONFIG)
+                files.remove(_EXAMPLE_CONFIG)
             files = filter(is_file_allowed, files)
             bundle_files.extend(os.path.join(root, f) for f in files)
 
@@ -297,18 +304,19 @@ class ExamplesWindow(QMainWindow):
             widget: QWidget
             filename = os.path.relpath(path=file_path, start=basedir)
             _, ext = os.path.splitext(filename)
-            if ext == '.py' or ext == '.json':
+            if ext in ('.py', '.json'):
                 widget = EditorTab(file_path, self.tabs)
             elif ext == '.ui':
                 tab = DesignerTab(file_path, self.tabs)
-                tab.designer_opened.connect(self._open_designer_file)
+                tab.designer_opened.connect(ExamplesWindow._open_designer_file)
                 widget = tab
             self.tabs.addTab(widget, filename)
             if filename == selected:
                 # Trigger display of the main file
                 self.tabs.setCurrentWidget(widget)
 
-    def _absolute_module_id(self, basedir: os.PathLike) -> str:
+    @staticmethod
+    def _absolute_module_id(basedir: os.PathLike) -> str:
         """
         Constructs the absolute module identifier.
 
@@ -322,12 +330,13 @@ class ExamplesWindow(QMainWindow):
             absolute identifier.
         """
         curr_mod = __loader__.name.strip(__name__).strip('.')  # Removes trailing '.__main__'
-        rel_path = os.path.relpath(basedir, curr_dir)
+        rel_path = os.path.relpath(basedir, _CURR_DIR)
         components = rel_path.split(os.sep)
         rel_mod = '.'.join(components)
         return f'{curr_mod}.{rel_mod}'
 
-    def _module_from_example(self, basedir: os.PathLike, name: str) -> Optional[types.ModuleType]:
+    @staticmethod
+    def _module_from_example(basedir: os.PathLike, name: str) -> Optional[types.ModuleType]:
         """
         Resolves the Python module from the directory of the example.
 
@@ -340,21 +349,21 @@ class ExamplesWindow(QMainWindow):
         """
         if not os.path.isdir(basedir):
             logger.warning(f'Cannot display example from {basedir} - not a directory')
-            return
+            return None
 
-        config = os.path.join(basedir, EXAMPLE_CONFIG)
+        config = os.path.join(basedir, _EXAMPLE_CONFIG)
         if not os.path.exists(config) or not os.path.isfile(config):
             logger.warning(f'Cannot display example from {basedir} - cannot find entry point')
-            return
+            return None
 
         spec: importlib.machinery.ModuleSpec = importlib.util.spec_from_file_location(name=name, location=config)
         mod: types.ModuleType = importlib.util.module_from_spec(spec)
         loader: importlib.machinery.SourceFileLoader = spec.loader
         try:
             loader.exec_module(mod)
-        except ImportError as e:
-            logger.warning(f'Cannot import example from {basedir}: {str(e)}')
-            return
+        except ImportError as ex:
+            logger.warning(f'Cannot import example from {basedir}: {str(ex)}')
+            return None
         return mod
 
     def _run_example(self):
@@ -363,15 +372,18 @@ class ExamplesWindow(QMainWindow):
             logger.warning(f"Won't run example. Entrypoint is undefined.")
             return
 
-        self._run_external_app(app='comrun',
-                               file_path=os.path.join(self._selected_example_path, self._selected_example_entrypoint),
-                               env={'PYJAPC_SIMULATION_INIT': self._selected_example_japc_generator or ''})
+        ExamplesWindow._run_external_app(app='comrun',
+                                         file_path=os.path.join(self._selected_example_path,
+                                                                self._selected_example_entrypoint),
+                                         env={'PYJAPC_SIMULATION_INIT': self._selected_example_japc_generator or ''})
 
-    def _open_designer_file(self, file_path: os.PathLike):
+    @staticmethod
+    def _open_designer_file(file_path: os.PathLike):
         """Opens *.ui file in Qt Designer"""
-        self._run_external_app(app='comrad_designer', file_path=file_path)
+        ExamplesWindow._run_external_app(app='comrad_designer', file_path=file_path)
 
-    def _run_external_app(self, app: str, file_path: os.PathLike, env: Dict[str, Any] = None):
+    @staticmethod
+    def _run_external_app(app: str, file_path: os.PathLike, env: Dict[str, Any] = None):
         """
         Generic method to run an external application with the file as its first argument.
 
@@ -382,13 +394,13 @@ class ExamplesWindow(QMainWindow):
         args = [app, file_path]
         env = dict(os.environ, **env) if env else os.environ.copy()
         python_path = env.get('PYTHONPATH', '')
-        env['PYTHONPATH'] = f'{curr_dir}:{python_path}'
+        env['PYTHONPATH'] = f'{_CURR_DIR}:{python_path}'
 
         import subprocess
         try:
             return subprocess.run(args=args, shell=False, env=env, check=True)
-        except subprocess.CalledProcessError as e:
-            logger.error(f'{app} has failed: {str(e)}')
+        except subprocess.CalledProcessError as ex:
+            logger.error(f'{app} has failed: {str(ex)}')
 
 
 class DesignerTab(QWidget):
@@ -396,7 +408,7 @@ class DesignerTab(QWidget):
 
     designer_opened = Signal([str])
 
-    def __init__(self, file_path: os.PathLike, parent: QWidget = None, *args):
+    def __init__(self, file_path: os.PathLike, *args, parent: QWidget = None):
         super().__init__(parent, *args)
         self._file_path = file_path
         self.designer_btn: Optional[QPushButton] = None
@@ -419,7 +431,7 @@ class DesignerTab(QWidget):
 class EditorTab(QWidget):
     """Page for the text file editor in the example details."""
 
-    def __init__(self, file_path: os.PathLike, parent: QWidget = None, *args):
+    def __init__(self, file_path: os.PathLike, *args, parent: QWidget = None):
         super().__init__(parent, *args)
         self._file_path = file_path
         self.code_viewer: Optional[QAbstractScrollArea] = None
@@ -432,7 +444,7 @@ class EditorTab(QWidget):
         if self.code_viewer is not None:
             return
 
-        if QSCI_AVAILABLE:
+        if _QSCI_AVAILABLE:
             editor = QsciScintilla()
             # Python lexer should cover all our use-cases: Python code + JSON
             # (which looks like a subset of Python lists/dictionaries)
@@ -467,6 +479,7 @@ class EditorTab(QWidget):
 
 
 def run():
+    """Run the examples browser."""
     import sys
     # TODO: Parse entry points from setup.py
     parser = argparse.ArgumentParser(prog='python -m comrad.examples',

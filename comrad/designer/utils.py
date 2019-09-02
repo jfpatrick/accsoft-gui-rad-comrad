@@ -1,3 +1,7 @@
+"""
+Utilities for Qt Designer intergation.
+"""
+
 from typing import Type, List, Callable
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QWidget
@@ -28,6 +32,7 @@ def qtplugin_factory(cls: Type,
     Returns:
         New plugin wrapper class.
     """
+    # pylint: disable=missing-docstring
     class Plugin(PyDMDesignerPlugin):
         __doc__ = 'ComRAD Designer plugin for {}'.format(cls.__name__)
 
