@@ -173,7 +173,7 @@ def create_transformation_function(transformation: str, file: str = None) -> Cal
 def {output_func_name}(val):
     global {return_var}
     {return_var} = val
-    
+
 __builtins__['output'] = {output_func_name}
 {code}
 """.format(output_func_name='__comrad_output_func__', return_var=return_var, code=code)
@@ -187,7 +187,7 @@ __builtins__['output'] = {output_func_name}
     del global_base['create_transformation_function']
 
     def __comrad_dcode_wrapper__(**inputs) -> Any:
-        global_vars = global_base.copy() # Make sure to copy to not modify globals visible in the rest of the app
+        global_vars = global_base.copy()  # Make sure to copy to not modify globals visible in the rest of the app
         global_vars.update(inputs)
         try:
             exec(wrapped_code, global_vars, {})

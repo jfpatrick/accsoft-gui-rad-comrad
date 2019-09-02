@@ -26,7 +26,7 @@ class CValueAggregator(QWidget, PyDMWidget, ValueTransformationBase, GeneratorTr
     # Emitted when the user changes the value.
     updateTriggered = Signal([int], [float], [str], [bool], [np.ndarray])
 
-    def __init__(self, parent: QWidget = None, init_channels: List[str] = []):
+    def __init__(self, parent: QWidget = None, init_channels: List[str] = None):
         """
         Widget that allows defining logic to expose a new value calculated on the fly.
 
@@ -53,7 +53,7 @@ class CValueAggregator(QWidget, PyDMWidget, ValueTransformationBase, GeneratorTr
             self._setup_ui_for_designer()
         else:
             # Trigger connection creation
-            self.inputChannels = init_channels
+            self.inputChannels = init_channels or []
             # Should be invisible in runtime
             self.hide()
 
@@ -242,8 +242,8 @@ class CValueAggregator(QWidget, PyDMWidget, ValueTransformationBase, GeneratorTr
 
     def _trigger_update(self):
         if ((not self.valueTransformation and not self.snippetFilename)
-                or is_qt_designer()): # Avoid code evaluation in Designer,
-                                      # as it can produce unnecessary errors with broken code
+                or is_qt_designer()):
+            # Avoid code evaluation in Designer, as it can produce unnecessary errors with broken code
             return
 
         transform = self.cached_value_transformation()

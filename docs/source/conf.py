@@ -1,6 +1,5 @@
 from comrad import __version__, __author__
 from datetime import datetime
-import os
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -38,8 +37,8 @@ version = __version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'recommonmark', # Enable Markdown source files along with reStructuredText
-    'sphinx_rtd_theme', # Read-the-docs theme
+    'recommonmark',  # Enable Markdown source files along with reStructuredText
+    'sphinx_rtd_theme',  # Read-the-docs theme
     'sphinxcontrib.confluencebuilder',
 ]
 
@@ -67,8 +66,8 @@ html_static_path = ['_static']
 html_short_title = f'{project} v{__version__}'
 html_title = f'{html_short_title} docs'
 
-#html_logo # TODO: Put comrad logo here
-#html_favicon # TODO: Put comrad logo here
+# html_logo # TODO: Put comrad logo here
+# html_favicon # TODO: Put comrad logo here
 
 # Enable Markdown source files along with reStructuredText
 source_suffix = {
@@ -78,8 +77,8 @@ source_suffix = {
 
 # Configure building docs for Confluence
 confluence_publish = True
-confluence_space_name = 'DEV' # TODO: Change space to Accpy
-confluence_parent_page = 'BE-CO PyDM evaluation' # TODO: Change the parent page
+confluence_space_name = 'DEV'  # TODO: Change space to Accpy
+confluence_parent_page = 'BE-CO PyDM evaluation'  # TODO: Change the parent page
 confluence_server_url = 'https://wikis.cern.ch/'
 confluence_server_user = 'isinkare'
 confluence_ask_password = True

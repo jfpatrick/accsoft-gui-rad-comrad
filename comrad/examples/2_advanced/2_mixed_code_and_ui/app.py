@@ -1,5 +1,6 @@
 from pydm import Display
 
+
 class DemoDisplay(Display):
 
     def __init__(self, *args, **kwargs):

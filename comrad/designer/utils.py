@@ -4,6 +4,7 @@ from qtpy.QtWidgets import QWidget
 from pydm.widgets.qtplugin_extensions import RulesExtension
 from pydm.widgets.qtplugin_base import PyDMDesignerPlugin
 
+
 def qtplugin_factory(cls: Type,
                      is_container: bool = False,
                      icon: QIcon = None,
@@ -28,7 +29,7 @@ def qtplugin_factory(cls: Type,
         New plugin wrapper class.
     """
     class Plugin(PyDMDesignerPlugin):
-        __doc__ = "ComRAD Designer plugin for {}".format(cls.__name__)
+        __doc__ = 'ComRAD Designer plugin for {}'.format(cls.__name__)
 
         def __init__(self):
             super(Plugin, self).__init__(cls, is_container, group, extensions)
@@ -50,8 +51,8 @@ def qtplugin_factory(cls: Type,
             This one has tooltip removed compared to PyDM.
             """
             return (
-                "<widget class=\"{0}\" name=\"{0}\">\n"
-                "</widget>\n"
+                '<widget class="{0}" name="{0}">\n'
+                '</widget>\n'
             ).format(self.name())
 
     return Plugin

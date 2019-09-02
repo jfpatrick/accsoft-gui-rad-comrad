@@ -6,6 +6,7 @@ import random
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(name='my_log_name')
 
+
 class DemoDisplay(Display):
 
     def __init__(self, *args, **kwargs):

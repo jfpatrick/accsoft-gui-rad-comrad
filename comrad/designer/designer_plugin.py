@@ -1,5 +1,7 @@
 import comrad
 
+# flake8: noqa: E402 module level import not at top of file
+
 print('\n\n'
       ' ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
       ' *** Welcome to ComRAD Designer! ***\n'
@@ -9,10 +11,13 @@ print('\n\n'
       ' Project page: https://wikis.cern.ch/display/ACCPY/Rapid+Application+Development\n'
       '\n')
 
-from typing import List
 from qtpy.QtGui import QIcon, QPixmap
-from comrad.qt.cern_widgets import *
-from comrad.qt.pydm_widgets import *
+from comrad.qt.cern_widgets import CToggleButton, CAccPlot, CValueAggregator
+from comrad.qt.pydm_widgets import (CScatterPlot, CTabWidget, CTimePlot, CScaleIndicator, CLogDisplay, CImageView,
+                                    CEnumComboBox, CSlider, CSpinBox, CLabel, CByteIndicator, CWaveFormPlot, CLineEdit,
+                                    CTemplateRepeater, CFrame, CEmbeddedDisplay, CShellCommand, CRelatedDisplayButton,
+                                    CPushButton, CEnumButton, CWaveFormTable, CCheckBox)
+from typing import List
 import os
 
 from pydm.widgets.qtplugin_extensions import (RulesExtension, WaveformCurveEditorExtension,
@@ -24,10 +29,10 @@ from comrad.designer.utils import qtplugin_factory
 _BASE_EXTENSIONS = [RulesExtension]
 
 # Currently the groups are made so that new widgets blend into the standard PyQt widgets
-_COMRAD_GROUP_CONTAINER = 'Containers' #'ComRAD Container Widgets'
-_COMRAD_GROUP_DISPLAY = 'Display Widgets' #'ComRAD Display Widgets'
-_COMRAD_GROUP_INPUT = 'Input Widgets' #'ComRAD Input Widgets'
-_COMRAD_GROUP_PLOT = 'Charts' #'ComRAD Plot Widgets'
+_COMRAD_GROUP_CONTAINER = 'Containers'  # 'ComRAD Container Widgets'
+_COMRAD_GROUP_DISPLAY = 'Display Widgets'  # 'ComRAD Display Widgets'
+_COMRAD_GROUP_INPUT = 'Input Widgets'  # 'ComRAD Input Widgets'
+_COMRAD_GROUP_PLOT = 'Charts'  # 'ComRAD Plot Widgets'
 _COMRAD_GROUP_BUTTONS = 'Buttons'
 _COMRAD_GROUP_ITEM_VIEWS = 'Item Widgets (Item-Based)'
 _COMRAD_GROUP_VIRTUAL = 'Invisible Widgets'
@@ -46,12 +51,15 @@ def icon(name: str) -> QIcon:
 # Buttons
 Checkbox = qtplugin_factory(CCheckBox, group=_COMRAD_GROUP_BUTTONS, icon=icon('checkbox'), extensions=_BASE_EXTENSIONS, on_widget_create=lambda w: w.setText('RAD CheckBox'))
 
+
 def enum_btn_init(w: CEnumButton):
     w.items = ['RAD Item 1', 'RAD Item 2', 'RAD Item ...']
+
 
 def toggle_btn_init(w: CToggleButton):
     w.setUncheckedText('RAD Toggle Released')
     w.setCheckedText('RAD Toggle Pressed')
+
 
 EnumButton = qtplugin_factory(CEnumButton, group=_COMRAD_GROUP_BUTTONS, icon=icon('enum_btn'), extensions=_BASE_EXTENSIONS, on_widget_create=enum_btn_init)
 PushButton = qtplugin_factory(CPushButton, group=_COMRAD_GROUP_BUTTONS, icon=icon('push_btn'), extensions=_BASE_EXTENSIONS, on_widget_create=lambda w: w.setText('RAD PushButton'))
@@ -83,13 +91,14 @@ ScaleIndicator = qtplugin_factory(CScaleIndicator, group=_COMRAD_GROUP_DISPLAY, 
 # Charts
 TimePlot = qtplugin_factory(CTimePlot, group=_COMRAD_GROUP_PLOT, icon=icon('time_plot'), extensions=[TimeCurveEditorExtension, RulesExtension])
 WaveformPlot = qtplugin_factory(CWaveFormPlot, group=_COMRAD_GROUP_PLOT, icon=icon('waveform_plot'), extensions=[WaveformCurveEditorExtension,
-                                                                                   RulesExtension])
+                                                                                                                 RulesExtension])
 ScatterPlot = qtplugin_factory(CScatterPlot, group=_COMRAD_GROUP_PLOT, icon=icon('scatter_plot'), extensions=[ScatterCurveEditorExtension,
-                                                                                 RulesExtension])
+                                                                                                              RulesExtension])
 AccPlot = qtplugin_factory(CAccPlot, group=_COMRAD_GROUP_PLOT, icon=icon('scatter_plot'), extensions=_BASE_EXTENSIONS)
 
 # Invisible
 ValueAggregator = qtplugin_factory(CValueAggregator, group=_COMRAD_GROUP_VIRTUAL, icon=icon('calc'))
+
 
 # Tab Widget plugin
 class TabWidgetPlugin(PyDMTabWidgetPlugin):
@@ -105,6 +114,7 @@ class TabWidgetPlugin(PyDMTabWidgetPlugin):
 
     def icon(self):
         return icon('tab_widget')
+
 
 TabWidget = TabWidgetPlugin(extensions=_BASE_EXTENSIONS)
 

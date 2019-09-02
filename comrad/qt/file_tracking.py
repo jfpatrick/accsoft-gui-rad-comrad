@@ -2,6 +2,7 @@ import os
 from string import Template
 from pydm.utilities import is_pydm_app, macro
 
+
 class FileTracking:
 
     def __init__(self):

@@ -8,6 +8,7 @@ from qtpy.QtCore import Qt, QObject, Slot, Signal, QVariant
 from typing import Any, Optional, Union
 from collections import namedtuple
 
+
 # Unfortunately, we cannot import
 # from pydm.widgets import channel OR
 # from pydm.widgets.channel import PyDMChannel
@@ -230,7 +231,7 @@ class _JapcConnection(PyDMConnection):
             pass
 
     def _on_value_received(self, parameterName: str, value: Any, headerInfo=None):
-        del parameterName, headerInfo # Unused argument (https://google.github.io/styleguide/pyguide.html#214-decision)
+        del parameterName, headerInfo  # Unused argument (https://google.github.io/styleguide/pyguide.html#214-decision)
 
         try:
             self.new_value_signal[type(value)].emit(value)
@@ -264,9 +265,9 @@ class _JapcConnection(PyDMConnection):
         except Exception as e:
             self.log.error(f'Unexpected error while subscribing to {self.address}'
                            '. Please verify the parameters and make sure the address is in the form'
-                           f'\'{self.protocol}://device/property#field@selector\' or'
-                           f'\'{self.protocol}://device/prop#field\' or'
-                           f'\'{self.protocol}://device/property\'. Underlying problem: {str(e)}')
+                           f"'{self.protocol}://device/property#field@selector' or"
+                           f"'{self.protocol}://device/prop#field' or"
+                           f"'{self.protocol}://device/property'. Underlying problem: {str(e)}")
             return False
 
         return True

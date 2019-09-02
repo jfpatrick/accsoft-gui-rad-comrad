@@ -32,6 +32,12 @@
 # Information is not lost, and UI loader will correctly resolve symbols.
 # As a way of hiding these auxiliary widgets from the user, we group them in a specific category that is not displayed
 # in widget box
+from comrad.qt.pydm_widgets import (PyDMLabel, PyDMCheckbox, PyDMEnumButton, PyDMPushButton, PyDMRelatedDisplayButton,
+                                    PyDMShellCommand, PyDMWaveformTable, PyDMFrame, PyDMEmbeddedDisplay,
+                                    PyDMTemplateRepeater, PyDMEnumComboBox, PyDMLineEdit, PyDMSlider, PyDMSpinbox,
+                                    PyDMByteIndicator, PyDMImageView, PyDMLogDisplay, PyDMScaleIndicator, PyDMTimePlot,
+                                    PyDMWaveformPlot, PyDMScatterPlot, PyDMTabWidget)
+from comrad.designer.utils import qtplugin_factory
 
 
 # This is a special category name hardcoded into Qt Designer (not by me, but by Qt)
@@ -40,8 +46,6 @@
 # Declared on line 70 and used on lines 613, 630
 _COMRAD_GROUP_HIDDEN_ITEMS = '[invisible]'
 
-from comrad.qt.pydm_widgets import *
-from comrad.designer.utils import qtplugin_factory
 
 PyDMLabel_ = qtplugin_factory(PyDMLabel, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 PyDMCheckbox_ = qtplugin_factory(PyDMCheckbox, group=_COMRAD_GROUP_HIDDEN_ITEMS)

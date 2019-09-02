@@ -49,5 +49,5 @@ class DemoDevice(Device):
 def create_device():
     """Entrypoint for the example to start simulating data flow."""
     d = DemoDevice()
-    d.time_tick() # Trigger the first/initial tick (gives us nicer values).
+    d.time_tick()  # Trigger the first/initial tick (gives us nicer values).
     return System(devices=[d])

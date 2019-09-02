@@ -32,7 +32,7 @@ class DemoDevice(Device):
             timing_selectors=(
                 'PSB.USER.TOF',
                 'PSB.USER.AD',
-            )
+            ),
         )
         self._primary_cycle_cnt = 0
         self._secondary_cycle_cnt = 0

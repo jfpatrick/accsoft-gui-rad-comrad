@@ -1,6 +1,7 @@
 # This file is run automatically because the containing directory is added to the PYTHONPATH
 import os
 
+
 # Setup hooks to replace PyJapc with Papc
 def replace_pyjapc(fgen):
     import importlib

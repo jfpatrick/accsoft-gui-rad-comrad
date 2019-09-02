@@ -15,6 +15,7 @@ find_packages = PEP420PackageFinder.find
 
 curr_dir = path.abspath(path.dirname(__file__))
 
+
 def read_req(f: str) -> List[str]:
     res = []
     for line in f.read().split('\n'):
@@ -23,7 +24,7 @@ def read_req(f: str) -> List[str]:
             continue
 
         # Rearrange dev packages into the format understandable by setup()
-        m = re.match('-e\ +((git\+(https?|ssh|git|krb5).*\.git([^#]*)?)(#egg=(.+)))', line)
+        m = re.match(r'-e\ +((git\+(https?|ssh|git|krb5).*\.git([^#]*)?)(#egg=(.+)))', line)
         if m:
             addr = m.group(1)
             egg = m.group(6)
@@ -37,6 +38,7 @@ with open(path.join(curr_dir, 'README.md'), 'r') as f:
 with open(path.join(curr_dir, 'requirements.txt'), 'r') as f:
     requirements = read_req(f)
 
+
 def read_extras_req(filename: str):
     try:
         with open(path.join(curr_dir, filename), 'r') as f:
@@ -45,6 +47,7 @@ def read_extras_req(filename: str):
         # This is meant to be installed only from source, therefore pip installation is not supposed
         # to find this file
         return []
+
 
 test_requirements = read_extras_req('test-requirements.txt')
 docs_requirements = read_extras_req('docs-requirements.txt')

@@ -1,7 +1,6 @@
 from comrad.data import japc_plugin
 import pytest
 from unittest import mock
-from PyQt5 import QtCore
 
 
 def test_japc_singleton():
@@ -12,22 +11,22 @@ def test_japc_singleton():
 
 def test_rbac_login_succeeds_by_location(mocker):
     japc = japc_plugin._JapcService(selector='', incaAcceleratorName=None)
-    assert japc._loggedIn == False
+    assert japc._loggedIn is False
     with mocker.patch.object(japc, 'rbacLogin'):
         japc.try_rbac_login()
-        assert japc._loggedIn == True
+        assert japc._loggedIn is True
         japc.rbacLogin.assert_called_once_with()
 
 
 def test_rbac_login_only_once(mocker):
     japc = japc_plugin._JapcService(selector='', incaAcceleratorName=None)
-    assert japc._loggedIn == False
+    assert japc._loggedIn is False
     with mocker.patch.object(japc, 'rbacLogin'):
         japc.try_rbac_login()
         japc.try_rbac_login()
         japc.try_rbac_login()
         japc.try_rbac_login()
-        assert japc._loggedIn == True
+        assert japc._loggedIn is True
         japc.rbacLogin.assert_called_once_with()
 
 
@@ -39,7 +38,7 @@ def test_rbac_logout_only_once(mocked_super):
     japc.rbacLogout()
     japc.rbacLogout()
     japc.rbacLogout()
-    assert japc._loggedIn == False
+    assert japc._loggedIn is False
     mocked_super.assert_called_once_with()
 
 
@@ -49,23 +48,23 @@ def test_rbac_login_succeeds_with_dialog(mocker):
             raise UserWarning('mock exception')
 
     japc = japc_plugin._JapcService(selector='', incaAcceleratorName=None)
-    assert japc._loggedIn == False
+    assert japc._loggedIn is False
 
     with mocker.patch.object(japc, 'rbacLogin', side_effect=fake_login):
         japc.try_rbac_login()
-        assert japc._loggedIn == True
+        assert japc._loggedIn is True
         japc.rbacLogin.assert_has_calls([mock.call(), mock.call(loginDialog=True)])
 
 
 def test_rbac_fails(mocker):
     japc = japc_plugin._JapcService(selector='', incaAcceleratorName=None)
-    assert japc._loggedIn == False
+    assert japc._loggedIn is False
 
     with mocker.patch.object(japc, 'rbacLogin', side_effect=UserWarning('mock exception')):
         with pytest.raises(UserWarning) as excinfo:
             japc.try_rbac_login()
         assert str(excinfo.value) == 'mock exception'
-        assert japc._loggedIn == False
+        assert japc._loggedIn is False
         japc.rbacLogin.assert_has_calls([mock.call(), mock.call(loginDialog=True)])
 
 
@@ -131,9 +130,8 @@ def test_remove_listener_disconnects_slots(mocked_channel, mocker):
     japc = japc_plugin.get_japc()
     with mocker.patch.object(japc, 'stopSubscriptions'):
         with mocker.patch.object(mocked_channel.value_signal, 'connect'):
-            connection = japc_plugin._JapcConnection(channel=mocked_channel, address='test_addr')
+            _ = japc_plugin._JapcConnection(channel=mocked_channel, address='test_addr')
             mocked_channel.value_signal.connect.assert_called_once()
-
 
 
 @mock.patch('pydm.widgets.channel.PyDMChannel')

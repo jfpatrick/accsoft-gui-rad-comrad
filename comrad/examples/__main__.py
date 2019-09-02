@@ -125,7 +125,7 @@ class ExamplesWindow(QMainWindow):
         Returns:
             list of absolute paths to runnable examples.
         """
-        excludes = set(['_', '.'])
+        excludes = {'_', '.'}
         example_paths: List[str] = []
         for root, dirs, files in os.walk(curr_dir):
             logger.debug(f'Entering {root}')
@@ -133,12 +133,12 @@ class ExamplesWindow(QMainWindow):
             if root != curr_dir and is_exec:
                 example_paths.append(root)
                 logger.debug(f'Example {root} is executable. Will stop here.')
-                dirs[:] = [] # Do not go deeper, as it might simply contain submodules
+                dirs[:] = []  # Do not go deeper, as it might simply contain submodules
             else:
                 dirs[:] = [d for d in dirs if d[0] not in excludes]
                 logger.debug(f'Will crawl child dirs: {dirs}')
 
-        formatted = "\n".join(example_paths)
+        formatted = '\n'.join(example_paths)
         logger.debug(f'Located examples in dirs:\n{formatted}')
         return example_paths
 
@@ -212,7 +212,7 @@ class ExamplesWindow(QMainWindow):
         path_dirs = []
         while True:
             par = curr_item.parent()
-            path_dirs.append(curr_item.data(1, Qt.DisplayRole)) # Fetch the second column, which is the original dir name
+            path_dirs.append(curr_item.data(1, Qt.DisplayRole))  # Fetch the second column, which is the original dir name
             if not par:
                 break
             curr_item = par
@@ -321,7 +321,7 @@ class ExamplesWindow(QMainWindow):
         Returns:
             absolute identifier.
         """
-        curr_mod = __loader__.name.strip(__name__).strip('.') # Removes trailing '.__main__'
+        curr_mod = __loader__.name.strip(__name__).strip('.')  # Removes trailing '.__main__'
         rel_path = os.path.relpath(basedir, curr_dir)
         components = rel_path.split(os.sep)
         rel_mod = '.'.join(components)
@@ -348,7 +348,7 @@ class ExamplesWindow(QMainWindow):
             return
 
         spec: importlib.machinery.ModuleSpec = importlib.util.spec_from_file_location(name=name, location=config)
-        mod: types.ModuleType  = importlib.util.module_from_spec(spec)
+        mod: types.ModuleType = importlib.util.module_from_spec(spec)
         loader: importlib.machinery.SourceFileLoader = spec.loader
         try:
             loader.exec_module(mod)
@@ -360,18 +360,18 @@ class ExamplesWindow(QMainWindow):
     def _run_example(self):
         """Opens runtime application for the example."""
         if not self._selected_example_entrypoint or not self._selected_example_path:
-            logger.warning(f'Won\'t run example. Entrypoint is undefined.')
+            logger.warning(f"Won't run example. Entrypoint is undefined.")
             return
 
         self._run_external_app(app='comrun',
                                file_path=os.path.join(self._selected_example_path, self._selected_example_entrypoint),
-                               env=dict(PYJAPC_SIMULATION_INIT=(self._selected_example_japc_generator or '')))
+                               env={'PYJAPC_SIMULATION_INIT': self._selected_example_japc_generator or ''})
 
     def _open_designer_file(self, file_path: os.PathLike):
         """Opens *.ui file in Qt Designer"""
         self._run_external_app(app='comrad_designer', file_path=file_path)
 
-    def _run_external_app(self, app: str, file_path: os.PathLike, env: Dict[str, Any] = {}):
+    def _run_external_app(self, app: str, file_path: os.PathLike, env: Dict[str, Any] = None):
         """
         Generic method to run an external application with the file as its first argument.
 
@@ -380,7 +380,7 @@ class ExamplesWindow(QMainWindow):
             file_path: absolute path to the file.
         """
         args = [app, file_path]
-        env = dict(os.environ, **env)
+        env = dict(os.environ, **env) if env else os.environ.copy()
         python_path = env.get('PYTHONPATH', '')
         env['PYTHONPATH'] = f'{curr_dir}:{python_path}'
 
@@ -468,7 +468,7 @@ class EditorTab(QWidget):
 
 def run():
     import sys
-    # TODO: Parse entrypoints from setup.py
+    # TODO: Parse entry points from setup.py
     parser = argparse.ArgumentParser(prog='python -m comrad.examples',
                                      description='Interactive ComRAD example browser')
     parser.add_argument('-V', '--version',

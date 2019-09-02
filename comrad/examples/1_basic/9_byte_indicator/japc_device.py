@@ -11,8 +11,6 @@ from papc.system import System
 from papc.deviceproperty import Acquisition
 from papc.fieldtype import FieldType
 from papc.simulator.trig import RepeatedTimer
-from typing import List, Tuple
-import random
 
 
 class DemoDevice(Device):
@@ -54,12 +52,12 @@ class DemoDevice(Device):
         self.set_state(new_values={
             'Acquisition#IntVal': self._int_val,
             'Acquisition#BitEnumValNum': self._bit_enum_val,
-            'Acquisition#BitEnumVal': new_list
+            'Acquisition#BitEnumVal': new_list,
         }, timing_selector='')
 
 
 def create_device():
     """Entrypoint for the example to start simulating data flow."""
     d = DemoDevice()
-    d.time_tick() # Trigger the first/initial tick (gives us nicer values).
+    d.time_tick()  # Trigger the first/initial tick (gives us nicer values).
     return System(devices=[d])

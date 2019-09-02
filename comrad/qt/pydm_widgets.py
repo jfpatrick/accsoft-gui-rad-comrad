@@ -64,6 +64,7 @@ class CLabel(ValueTransformer, PyDMLabel):
         """
         self.value_changed(new_val)
 
+
 class CTimePlot(PyDMTimePlot):
     pass
 
@@ -74,6 +75,7 @@ class CWaveFormPlot(PyDMWaveformPlot):
 
 class CScatterPlot(PyDMScatterPlot):
     pass
+
 
 class CFrame(PyDMFrame):
     pass

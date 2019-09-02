@@ -40,14 +40,17 @@ def designer():
     """Runs Qt Designer with the environment preset to activate RAD features and locate extra plugins."""
     import comrad.designer
     path_to_plugins = os.path.abspath(os.path.dirname(comrad.designer.__file__))
-    _run_cmd(cmd='designer', env=dict(PYQTDESIGNERPATH=path_to_plugins, QT_DESIGNER_RAD_EXTRAS='1'))
+    _run_cmd(cmd='designer', env={'PYQTDESIGNERPATH': path_to_plugins,
+                                  'QT_DESIGNER_RAD_EXTRAS': '1'})
 
 
 def pydm():
     """Runs 'pydm' command with the environment preset to locate plugins and tools from ComRAD package."""
-    envs = dict(PYDM_DATA_PLUGINS_PATH=os.path.join(_PKG_PATH, 'data'),
-                PYDM_DEFAULT_PROTOCOL='japc',
-                PYDM_TOOLS_PATH=os.path.join(_PKG_PATH, 'tools'))
+    envs = {
+        'PYDM_DATA_PLUGINS_PATH': os.path.join(_PKG_PATH, 'data'),
+        'PYDM_DEFAULT_PROTOCOL': 'japc',
+        'PYDM_TOOLS_PATH': os.path.join(_PKG_PATH, 'tools'),
+    }
 
     args = sys.argv
     if _DARK_FLAG in args:

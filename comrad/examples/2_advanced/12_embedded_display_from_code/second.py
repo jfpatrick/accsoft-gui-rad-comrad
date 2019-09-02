@@ -1,6 +1,7 @@
 from pydm import Display
 from qtpy.QtWidgets import QHBoxLayout, QLabel
 
+
 class SecondaryDisplay(Display):
 
     def __init__(self, *args, **kwargs):

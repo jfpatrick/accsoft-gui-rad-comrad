@@ -1,8 +1,11 @@
 import pyqtgraph as pg
-from .widgets import *
 from accsoft_gui_pyqt_widgets import graph as accgraph
 from pydm.widgets.base import PyDMPrimitiveWidget
 from qtpy.QtWidgets import QWidget
+from typing import Optional, Dict
+
+# flake8: noqa: E401,E403
+from .widgets import *
 
 
 # For the future, if we implement other types of Qt Designer extensions

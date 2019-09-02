@@ -2,6 +2,7 @@ from pydm import Display
 from qtpy.QtWidgets import QVBoxLayout
 from comrad import CLabel
 
+
 class DemoDisplay(Display):
 
     def __init__(self, *args, **kwargs):

@@ -2,4 +2,4 @@
 
 from imported import decorate
 
-output(decorate(new_val))
+output(decorate(new_val))  # noqa: F821

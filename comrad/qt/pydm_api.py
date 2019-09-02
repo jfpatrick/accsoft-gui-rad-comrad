@@ -1,5 +1,6 @@
 from pydm import Display as PyDMDisplay
 
+
 class CDisplay(PyDMDisplay):
     """Display is your dashboard and/or window unit.
 

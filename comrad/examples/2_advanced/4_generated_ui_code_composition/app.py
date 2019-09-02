@@ -1,6 +1,7 @@
 from pydm import Display
 from generated import Ui_Form
 
+
 class DemoDisplay(Display):
 
     def __init__(self, *args, **kwargs):
