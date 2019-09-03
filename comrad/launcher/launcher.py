@@ -7,7 +7,6 @@ import logging
 import os
 import sys
 from typing import Optional
-from pydm.application import PyDMApplication
 from pydm.utilities.macro import parse_macro_string
 from comrad import __version__, CApplication
 from comrad.examples.__main__ import populate_parser as populate_examples_parser, run_browser as run_examples_browser

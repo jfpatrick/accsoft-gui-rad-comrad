@@ -1,13 +1,13 @@
 """
 Plugins for Qt Designer that are visible ComRAD widgets.
 """
-import os
+import functools
 from typing import List, Optional
-from qtpy.QtGui import QIcon, QPixmap
 from pydm.widgets.tab_bar_qtplugin import TabWidgetPlugin as PyDMTabWidgetPlugin
 from pydm.widgets.qtplugin_extensions import (RulesExtension, WaveformCurveEditorExtension,
                                               TimeCurveEditorExtension,
                                               ScatterCurveEditorExtension)
+from comrad.utils import icon
 from comrad.designer.utils import qtplugin_factory
 from comrad.qt.cern_widgets import CToggleButton, CAccPlot, CValueAggregator
 from comrad.qt.pydm_widgets import (CScatterPlot, CTabWidget, CTimePlot, CScaleIndicator, CLogDisplay, CImageView,
@@ -15,6 +15,9 @@ from comrad.qt.pydm_widgets import (CScatterPlot, CTabWidget, CTimePlot, CScaleI
                                     CTemplateRepeater, CFrame, CEmbeddedDisplay, CShellCommand, CRelatedDisplayButton,
                                     CPushButton, CEnumButton, CWaveFormTable, CCheckBox)
 import comrad
+
+
+load_icon = functools.partial(icon, file_path=__file__)  # pylint: disable=invalid-name
 
 
 print('\n\n'
@@ -38,18 +41,8 @@ _COMRAD_GROUP_ITEM_VIEWS = 'Item Widgets (Item-Based)'
 _COMRAD_GROUP_VIRTUAL = 'Invisible Widgets'
 
 
-def _icon(name: str) -> QIcon:
-    curr_dir = os.path.abspath(os.path.dirname(__file__))
-    icon_path = os.path.join(curr_dir, 'icons', f'{name}.ico')
-
-    if not os.path.isfile(icon_path):
-        print(f'Warning: Icon "{name}" cannot be found at {str(icon_path)}')
-    pixmap = QPixmap(icon_path)
-    return QIcon(pixmap)
-
-
 # Buttons
-Checkbox = qtplugin_factory(CCheckBox, group=_COMRAD_GROUP_BUTTONS, icon=_icon('checkbox'), extensions=_BASE_EXTENSIONS, on_widget_create=lambda widget: widget.setText('RAD CheckBox'))
+Checkbox = qtplugin_factory(CCheckBox, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('checkbox'), extensions=_BASE_EXTENSIONS, on_widget_create=lambda widget: widget.setText('RAD CheckBox'))
 
 
 def _enum_btn_init(widget: CEnumButton):
@@ -61,43 +54,43 @@ def _toggle_btn_init(widget: CToggleButton):
     widget.setCheckedText('RAD Toggle Pressed')
 
 
-EnumButton = qtplugin_factory(CEnumButton, group=_COMRAD_GROUP_BUTTONS, icon=_icon('enum_btn'), extensions=_BASE_EXTENSIONS, on_widget_create=_enum_btn_init)
-PushButton = qtplugin_factory(CPushButton, group=_COMRAD_GROUP_BUTTONS, icon=_icon('push_btn'), extensions=_BASE_EXTENSIONS, on_widget_create=lambda w: w.setText('RAD PushButton'))
-RelatedDisplayButton = qtplugin_factory(CRelatedDisplayButton, group=_COMRAD_GROUP_BUTTONS, icon=_icon('related_display'), extensions=_BASE_EXTENSIONS)
-ShellCommand = qtplugin_factory(CShellCommand, group=_COMRAD_GROUP_BUTTONS, icon=_icon('shell_cmd'), extensions=_BASE_EXTENSIONS)
-ToggleButton = qtplugin_factory(CToggleButton, group=_COMRAD_GROUP_BUTTONS, icon=_icon('toggle'), extensions=_BASE_EXTENSIONS, on_widget_create=_toggle_btn_init)
+EnumButton = qtplugin_factory(CEnumButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('enum_btn'), extensions=_BASE_EXTENSIONS, on_widget_create=_enum_btn_init)
+PushButton = qtplugin_factory(CPushButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('push_btn'), extensions=_BASE_EXTENSIONS, on_widget_create=lambda w: w.setText('RAD PushButton'))
+RelatedDisplayButton = qtplugin_factory(CRelatedDisplayButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('related_display'), extensions=_BASE_EXTENSIONS)
+ShellCommand = qtplugin_factory(CShellCommand, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('shell_cmd'), extensions=_BASE_EXTENSIONS)
+ToggleButton = qtplugin_factory(CToggleButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('toggle'), extensions=_BASE_EXTENSIONS, on_widget_create=_toggle_btn_init)
 
 # Item Widgets
-WaveformTable = qtplugin_factory(CWaveFormTable, group=_COMRAD_GROUP_ITEM_VIEWS, icon=_icon('waveform_table'), extensions=_BASE_EXTENSIONS)
+WaveformTable = qtplugin_factory(CWaveFormTable, group=_COMRAD_GROUP_ITEM_VIEWS, icon=load_icon('waveform_table'), extensions=_BASE_EXTENSIONS)
 
 # Containers
-Frame = qtplugin_factory(CFrame, group=_COMRAD_GROUP_CONTAINER, icon=_icon('frame'), is_container=True, extensions=_BASE_EXTENSIONS)
-EmbeddedDisplay = qtplugin_factory(CEmbeddedDisplay, group=_COMRAD_GROUP_CONTAINER, icon=_icon('embedded_display'), extensions=_BASE_EXTENSIONS)
-TemplateRepeater = qtplugin_factory(CTemplateRepeater, group=_COMRAD_GROUP_CONTAINER, icon=_icon('template_repeater'), extensions=_BASE_EXTENSIONS)
+Frame = qtplugin_factory(CFrame, group=_COMRAD_GROUP_CONTAINER, icon=load_icon('frame'), is_container=True, extensions=_BASE_EXTENSIONS)
+EmbeddedDisplay = qtplugin_factory(CEmbeddedDisplay, group=_COMRAD_GROUP_CONTAINER, icon=load_icon('embedded_display'), extensions=_BASE_EXTENSIONS)
+TemplateRepeater = qtplugin_factory(CTemplateRepeater, group=_COMRAD_GROUP_CONTAINER, icon=load_icon('template_repeater'), extensions=_BASE_EXTENSIONS)
 
 # Input Widgets
-EnumComboBox = qtplugin_factory(CEnumComboBox, group=_COMRAD_GROUP_INPUT, icon=_icon('combobox'), extensions=_BASE_EXTENSIONS)
-LineEdit = qtplugin_factory(CLineEdit, group=_COMRAD_GROUP_INPUT, icon=_icon('line_edit'), extensions=_BASE_EXTENSIONS)
-Slider = qtplugin_factory(CSlider, group=_COMRAD_GROUP_INPUT, icon=_icon('slider'), extensions=_BASE_EXTENSIONS)
-Spinbox = qtplugin_factory(CSpinBox, group=_COMRAD_GROUP_INPUT, icon=_icon('spinbox'), extensions=_BASE_EXTENSIONS)
+EnumComboBox = qtplugin_factory(CEnumComboBox, group=_COMRAD_GROUP_INPUT, icon=load_icon('combobox'), extensions=_BASE_EXTENSIONS)
+LineEdit = qtplugin_factory(CLineEdit, group=_COMRAD_GROUP_INPUT, icon=load_icon('line_edit'), extensions=_BASE_EXTENSIONS)
+Slider = qtplugin_factory(CSlider, group=_COMRAD_GROUP_INPUT, icon=load_icon('slider'), extensions=_BASE_EXTENSIONS)
+Spinbox = qtplugin_factory(CSpinBox, group=_COMRAD_GROUP_INPUT, icon=load_icon('spinbox'), extensions=_BASE_EXTENSIONS)
 
 # Display Widgets
-Label = qtplugin_factory(CLabel, group=_COMRAD_GROUP_DISPLAY, icon=_icon('label'), extensions=_BASE_EXTENSIONS, on_widget_create=lambda w: w.setText('RAD TextLabel'))
-ByteIndicator = qtplugin_factory(CByteIndicator, group=_COMRAD_GROUP_DISPLAY, icon=_icon('byte_indicator'), extensions=_BASE_EXTENSIONS)
-ImageView = qtplugin_factory(CImageView, group=_COMRAD_GROUP_DISPLAY, icon=_icon('image_view'), extensions=_BASE_EXTENSIONS)
-LogDisplay = qtplugin_factory(CLogDisplay, group=_COMRAD_GROUP_DISPLAY, icon=_icon('log_viewer'), extensions=_BASE_EXTENSIONS)
-ScaleIndicator = qtplugin_factory(CScaleIndicator, group=_COMRAD_GROUP_DISPLAY, icon=_icon('scale_indicator'), extensions=_BASE_EXTENSIONS)
+Label = qtplugin_factory(CLabel, group=_COMRAD_GROUP_DISPLAY, icon=load_icon('label'), extensions=_BASE_EXTENSIONS, on_widget_create=lambda w: w.setText('RAD TextLabel'))
+ByteIndicator = qtplugin_factory(CByteIndicator, group=_COMRAD_GROUP_DISPLAY, icon=load_icon('byte_indicator'), extensions=_BASE_EXTENSIONS)
+ImageView = qtplugin_factory(CImageView, group=_COMRAD_GROUP_DISPLAY, icon=load_icon('image_view'), extensions=_BASE_EXTENSIONS)
+LogDisplay = qtplugin_factory(CLogDisplay, group=_COMRAD_GROUP_DISPLAY, icon=load_icon('log_viewer'), extensions=_BASE_EXTENSIONS)
+ScaleIndicator = qtplugin_factory(CScaleIndicator, group=_COMRAD_GROUP_DISPLAY, icon=load_icon('scale_indicator'), extensions=_BASE_EXTENSIONS)
 
 # Charts
-TimePlot = qtplugin_factory(CTimePlot, group=_COMRAD_GROUP_PLOT, icon=_icon('time_plot'), extensions=[TimeCurveEditorExtension, RulesExtension])
-WaveformPlot = qtplugin_factory(CWaveFormPlot, group=_COMRAD_GROUP_PLOT, icon=_icon('waveform_plot'), extensions=[WaveformCurveEditorExtension,
-                                                                                                                  RulesExtension])
-ScatterPlot = qtplugin_factory(CScatterPlot, group=_COMRAD_GROUP_PLOT, icon=_icon('scatter_plot'), extensions=[ScatterCurveEditorExtension,
-                                                                                                               RulesExtension])
-AccPlot = qtplugin_factory(CAccPlot, group=_COMRAD_GROUP_PLOT, icon=_icon('scatter_plot'), extensions=_BASE_EXTENSIONS)
+TimePlot = qtplugin_factory(CTimePlot, group=_COMRAD_GROUP_PLOT, icon=load_icon('time_plot'), extensions=[TimeCurveEditorExtension, RulesExtension])
+WaveformPlot = qtplugin_factory(CWaveFormPlot, group=_COMRAD_GROUP_PLOT, icon=load_icon('waveform_plot'), extensions=[WaveformCurveEditorExtension,
+                                                                                                                      RulesExtension])
+ScatterPlot = qtplugin_factory(CScatterPlot, group=_COMRAD_GROUP_PLOT, icon=load_icon('scatter_plot'), extensions=[ScatterCurveEditorExtension,
+                                                                                                                   RulesExtension])
+AccPlot = qtplugin_factory(CAccPlot, group=_COMRAD_GROUP_PLOT, icon=load_icon('scatter_plot'), extensions=_BASE_EXTENSIONS)
 
 # Invisible
-ValueAggregator = qtplugin_factory(CValueAggregator, group=_COMRAD_GROUP_VIRTUAL, icon=_icon('calc'))
+ValueAggregator = qtplugin_factory(CValueAggregator, group=_COMRAD_GROUP_VIRTUAL, icon=load_icon('calc'))
 
 
 # Tab Widget plugin
@@ -113,7 +106,7 @@ class TabWidgetPlugin(PyDMTabWidgetPlugin):
         self._group = _COMRAD_GROUP_CONTAINER
 
     def icon(self):
-        return _icon('tab_widget')
+        return load_icon('tab_widget')
 
 
 TabWidget = TabWidgetPlugin(extensions=_BASE_EXTENSIONS)  # pylint: disable=invalid-name
