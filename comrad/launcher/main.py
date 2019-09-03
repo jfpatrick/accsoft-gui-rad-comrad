@@ -5,12 +5,10 @@ from typing import Any, Dict, List
 
 __all__ = [
     'designer',
-    'pydm',
 ]
 
 
 _PKG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-_DARK_FLAG = '--dark-mode'
 
 
 def _run_cmd(cmd: str, env: Dict[str, Any], args: List[str] = sys.argv, **kwargs: Dict[str, Any]):
@@ -42,21 +40,3 @@ def designer():
     path_to_plugins = os.path.abspath(os.path.dirname(comrad.designer.__file__))
     _run_cmd(cmd='designer', env={'PYQTDESIGNERPATH': path_to_plugins,
                                   'QT_DESIGNER_RAD_EXTRAS': '1'})
-
-
-def pydm():
-    """Runs 'pydm' command with the environment preset to locate plugins and tools from ComRAD package."""
-    envs = {
-        'PYDM_DATA_PLUGINS_PATH': os.path.join(_PKG_PATH, 'data'),
-        'PYDM_DEFAULT_PROTOCOL': 'japc',
-        'PYDM_TOOLS_PATH': os.path.join(_PKG_PATH, 'tools'),
-    }
-
-    args = sys.argv
-    if _DARK_FLAG in args:
-        envs['PYDM_STYLESHEET'] = os.path.join(_PKG_PATH, 'dark.qss')
-        args.remove(_DARK_FLAG)
-
-    # The available environment variables are listed in the docs:
-    # http://slaclab.github.io/pydm/configuration.html
-    _run_cmd(cmd='pydm', env=envs, args=args)

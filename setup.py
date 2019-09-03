@@ -78,7 +78,7 @@ setup(
     entry_points={
         'gui_scripts': [
             'comrad_designer=comrad.launcher.main:designer',
-            'comrun=comrad.launcher.main:pydm',
+            'comrun=comrad.launcher.comrad:run',
         ],
     },
     extras_require={
