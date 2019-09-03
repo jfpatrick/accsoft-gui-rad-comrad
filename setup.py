@@ -77,8 +77,7 @@ setup(
     install_requires=requirements,
     entry_points={
         'gui_scripts': [
-            'comrad_designer=comrad.launcher.main:designer',
-            'comrun=comrad.launcher.comrad:run',
+            'comrad=comrad.launcher.launcher:run',
         ],
     },
     extras_require={

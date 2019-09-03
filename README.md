@@ -70,28 +70,33 @@ pip install .
 ```
 
 # Usage
+
+To find out the usage of ComRAD, use the help commadn:
+```bash
+comrad -h
+```
 ## Edit UI in ComRAD Designer
 
 Run the command
 ```bash
-comrad_designer
+comrad designer
 ```
 
 or
 
 ```bash
-comrad_designer my_interface.ui
+comrad designer my_interface.ui
 ```
 
 ## Run the application
 
 Run the command
 ```bash
-comrun my_interface.ui
+comad run my_interface.ui
 ```
 or
 ```bash
-comrun my_app.py
+comad run my_app.py
 ```
 
 # Test
