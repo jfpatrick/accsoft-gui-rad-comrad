@@ -69,6 +69,29 @@ cd accsoft-gui-rad-comrad
 pip install .
 ```
 
+## Setup auto-completion
+
+ComRAD takes advantage of `argcomplete` - an auto-completion assistant. To have auto-completion enabled for
+`comrad` commands, you need to activate it.
+
+1. If you are **not** using virtual environments and have installed comrad globally, you can use global
+activation - in this case the auto-completion will be available in every terminal session
+([More info](https://github.com/kislyuk/argcomplete#activating-global-completion)):
+```bash
+activate-global-python-argcomplete
+```
+
+2. If you are using virtual environments, `argcomplete` will likely be installed there. What's more important,
+`comrad` will be installed inside virtual environment. Thus, even if you had global activation, it would not
+find it. Hence, you need to activate auto-completion every time. Most conveniently it's done by augmenting
+`activate` script:
+```bash
+echo 'eval "$(register-python-argcomplete comrad)"' >> venv/bin/activate
+```
+
+3. Regardless, you can modify your `~/.bashrc` script to run this activations for the new session, if you
+desire so.
+
 # Usage
 
 To find out the usage of ComRAD, use the help commadn:

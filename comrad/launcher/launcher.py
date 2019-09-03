@@ -1,4 +1,8 @@
+#!/usr/bin/env python
+# PYTHON_ARGCOMPLETE_OK
+# Feature to enable argcomplete when it looks into this file
 import argparse
+import argcomplete
 import logging
 import os
 import sys
@@ -9,8 +13,74 @@ from comrad import __version__
 from comrad.examples.__main__ import populate_parser as populate_examples_parser, run_browser as run_examples_browser
 
 
-logging.basicConfig()
-logger = logging.getLogger('')
+def run():
+    """Run ComRAD application and parse command-line arguments."""
+    logo = """
+
+   ██████╗ ██████╗ ███╗   ███╗██████╗  █████╗ ██████╗
+  ██╔════╝██╔═══██╗████╗ ████║██╔══██╗██╔══██╗██╔══██╗
+  ██║     ██║   ██║██╔████╔██║██████╔╝███████║██║  ██║
+  ██║     ██║   ██║██║╚██╔╝██║██╔══██╗██╔══██║██║  ██║
+  ╚██████╗╚██████╔╝██║ ╚═╝ ██║██║  ██║██║  ██║██████╔╝
+   ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝
+    """
+    common_parser_args = {
+        'add_help': False,  # Will be added manually (with consistent formatting)
+        'formatter_class': argparse.RawDescriptionHelpFormatter,
+    }
+    parser = argparse.ArgumentParser(description=f'{logo}\n\n'
+                                                 f'  ComRAD (CO Multi-purpose Rapid Application Development '
+                                                 f'environment)\n\n'
+                                                 f'  ComRAD framework seeks to streamline development of operational\n'
+                                                 f'  applications for operators of CERN accelerators and machine design\n'
+                                                 f'  experts. It offers a set of tools to develop and run applications\n'
+                                                 f'  without the need to be an expert in software engineering domain.',
+                                     **common_parser_args)
+
+    parser.add_argument('-V', '--version',
+                        action='version',
+                        version=f'ComRAD {__version__}',
+                        help="Show ComRAD's version number and exit.")
+    _install_help(parser)
+
+    subparsers = parser.add_subparsers(dest='cmd')
+    app_parser = subparsers.add_parser('run',
+                                       help='Launch main ComRAD application.',
+                                       description='  This command launch the client application with ComRAD environment.\n'
+                                                   '  It is the starting point for runtime applications that have been\n'
+                                                   '  developed with ComRAD tools and rely on control system marshalling\n'
+                                                   '  logic and other conveniences provided by ComRAD.',
+                                       **common_parser_args)
+    _run_subcommand(app_parser)
+
+    designer_parser = subparsers.add_parser('designer',
+                                            help='Launch ComRAD Designer.',
+                                            description='  This command launches ComRAD Designer - a modified version\n'
+                                                        '  of Qt Designer that can be used to develop ComRAD applications\n'
+                                                        '  in a WYSIWYG (What-You-See-Is-What-You-Get) mode.',
+                                            **common_parser_args)
+    __designer_subcommand(designer_parser)
+
+    examples_parser = subparsers.add_parser('examples',
+                                            help='Launch ComRAD interactive examples browser.',
+                                            description='  This command launches an interactive examples browser that\n'
+                                                        '  you can use to get familiar with available widgets in ComRAD\n'
+                                                        '  devtools and best practices.',
+                                            **common_parser_args)
+    _examples_subcommand(examples_parser)
+
+    # If run for auto-completion discovery, execution will stop here
+    argcomplete.autocomplete(parser)
+
+    args = parser.parse_args()
+    if args.cmd == 'run':
+        _run_comrad(args)
+    elif args.cmd == 'examples':
+        run_examples_browser(args)
+    elif args.cmd == 'designer':
+        _run_designer(args)
+    else:
+        parser.print_help()
 
 
 _PKG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -124,71 +194,8 @@ def __designer_subcommand(parser: argparse.ArgumentParser):
                           help='Enable internal dynamic properties.')
 
 
-def run():
-    """Run ComRAD application and parse command-line arguments."""
-    logo = """
-
-   ██████╗ ██████╗ ███╗   ███╗██████╗  █████╗ ██████╗
-  ██╔════╝██╔═══██╗████╗ ████║██╔══██╗██╔══██╗██╔══██╗
-  ██║     ██║   ██║██╔████╔██║██████╔╝███████║██║  ██║
-  ██║     ██║   ██║██║╚██╔╝██║██╔══██╗██╔══██║██║  ██║
-  ╚██████╗╚██████╔╝██║ ╚═╝ ██║██║  ██║██║  ██║██████╔╝
-   ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝
-    """
-    common_parser_args = {
-        'add_help': False,  # Will be added manually (with consistent formatting)
-        'formatter_class': argparse.RawDescriptionHelpFormatter,
-    }
-    parser = argparse.ArgumentParser(description=f'{logo}\n\n'
-                                                 f'  ComRAD (CO Multi-purpose Rapid Application Development '
-                                                 f'environment)\n\n'
-                                                 f'  ComRAD framework seeks to streamline development of operational\n'
-                                                 f'  applications for operators of CERN accelerators and machine design\n'
-                                                 f'  experts. It offers a set of tools to develop and run applications\n'
-                                                 f'  without the need to be an expert in software engineering domain.',
-                                     **common_parser_args)
-
-    parser.add_argument('-V', '--version',
-                        action='version',
-                        version=f'ComRAD {__version__}',
-                        help="Show ComRAD's version number and exit.")
-    _install_help(parser)
-
-    subparsers = parser.add_subparsers(dest='cmd')
-    app_parser = subparsers.add_parser('run',
-                                       help='Launch main ComRAD application.',
-                                       description='  This command launch the client application with ComRAD environment.\n'
-                                                   '  It is the starting point for runtime applications that have been\n'
-                                                   '  developed with ComRAD tools and rely on control system marshalling\n'
-                                                   '  logic and other conveniences provided by ComRAD.',
-                                       **common_parser_args)
-    _run_subcommand(app_parser)
-
-    designer_parser = subparsers.add_parser('designer',
-                                            help='Launch ComRAD Designer.',
-                                            description='  This command launches ComRAD Designer - a modified version\n'
-                                                        '  of Qt Designer that can be used to develop ComRAD applications\n'
-                                                        '  in a WYSIWYG (What-You-See-Is-What-You-Get) mode.',
-                                            **common_parser_args)
-    __designer_subcommand(designer_parser)
-
-    examples_parser = subparsers.add_parser('examples',
-                                            help='Launch ComRAD interactive examples browser.',
-                                            description='  This command launches an interactive examples browser that\n'
-                                                        '  you can use to get familiar with available widgets in ComRAD\n'
-                                                        '  devtools and best practices.',
-                                            **common_parser_args)
-    _examples_subcommand(examples_parser)
-
-    args = parser.parse_args()
-    if args.cmd == 'run':
-        _run_comrad(args)
-    elif args.cmd == 'examples':
-        run_examples_browser(args)
-    elif args.cmd == 'designer':
-        _run_designer(args)
-    else:
-        parser.print_help()
+logging.basicConfig()
+logger = logging.getLogger('')
 
 
 def _run_comrad(args: argparse.Namespace):
@@ -224,7 +231,3 @@ def _run_designer(args: argparse.Namespace):
                  client=args.client,
                  resource_dir=args.resourcedir,
                  enable_internal_props=args.enableinternaldynamicproperties)
-
-
-if __name__ == '__main__':
-    run()
