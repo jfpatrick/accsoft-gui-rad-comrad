@@ -9,7 +9,7 @@ import sys
 from typing import Optional
 from pydm.application import PyDMApplication
 from pydm.utilities.macro import parse_macro_string
-from comrad import __version__
+from comrad import __version__, CApplication
 from comrad.examples.__main__ import populate_parser as populate_examples_parser, run_browser as run_examples_browser
 
 
@@ -210,16 +210,16 @@ def _run_comrad(args: argparse.Namespace):
     os.environ['PYDM_TOOLS_PATH'] = _relative('tools')
     os.environ['PYDM_DEFAULT_PROTOCOL'] = 'japc'
 
-    app = PyDMApplication(ui_file=args.display_file,
-                          command_line_args=args.display_args,
-                          perfmon=args.perfmon,
-                          hide_nav_bar=args.hide_nav_bar,
-                          hide_menu_bar=args.hide_menu_bar,
-                          hide_status_bar=args.hide_status_bar,
-                          fullscreen=args.fullscreen,
-                          read_only=args.read_only,
-                          macros=macros,
-                          stylesheet_path=stylesheet)
+    app = CApplication(ui_file=args.display_file,
+                       command_line_args=args.display_args,
+                       perfmon=args.perfmon,
+                       hide_nav_bar=args.hide_nav_bar,
+                       hide_menu_bar=args.hide_menu_bar,
+                       hide_status_bar=args.hide_status_bar,
+                       fullscreen=args.fullscreen,
+                       read_only=args.read_only,
+                       macros=macros,
+                       stylesheet_path=stylesheet)
     sys.exit(app.exec_())
 
 
