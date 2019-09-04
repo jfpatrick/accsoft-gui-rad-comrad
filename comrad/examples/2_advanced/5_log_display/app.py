@@ -3,8 +3,8 @@ from qtpy.QtCore import QTimer
 import logging
 import random
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(name='my_log_name')
+
+logger = logging.getLogger('test.app')
 
 
 class DemoDisplay(Display):

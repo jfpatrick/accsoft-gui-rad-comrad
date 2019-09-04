@@ -26,8 +26,8 @@ except ImportError:
     _QSCI_AVAILABLE = False
 
 
-logging.basicConfig()
-logger = logging.getLogger(__file__)
+logging.basicConfig()  # Because can be run as a standalone module
+logger = logging.getLogger(__name__)
 
 
 _EXAMPLE_CONFIG = '__init__.py'
@@ -489,8 +489,9 @@ def run_browser(args: argparse.Namespace):
         args: parsed command line arguments
     """
     import sys
-    if args.debug:
-        logger.setLevel(logging.DEBUG)
+    # Set explicitly because root one is NOTSET
+    # When used from ComRAD main entry point
+    logging.getLogger('').setLevel(logging.DEBUG if args.debug else logging.WARNING)
     app_args = ['ComRAD examples']
     app_args.extend(sys.argv)
     app = QApplication(app_args)

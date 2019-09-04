@@ -12,6 +12,9 @@ from comrad import __version__, CApplication
 from comrad.examples.__main__ import populate_parser as populate_examples_parser, run_browser as run_examples_browser
 
 
+logging.basicConfig()
+
+
 def run():
     """Run ComRAD application and parse command-line arguments."""
     logo = """
@@ -193,15 +196,22 @@ def __designer_subcommand(parser: argparse.ArgumentParser):
                           help='Enable internal dynamic properties.')
 
 
-logging.basicConfig()
-logger = logging.getLogger('')
-
-
 def _run_comrad(args: argparse.Namespace):
     macros = parse_macro_string(args.macro) if args.macro is not None else None
 
     if args.log_level:
-        logger.setLevel(args.log_level)
+        level_name: str = args.log_level.upper()
+        level: Optional[int]
+        logger = logging.getLogger('')
+        try:
+            level = getattr(logging, level_name)
+        except AttributeError as ex:
+            logger.exception(f'Invalid logging level specified ("{level_name}"): {str(ex)}')
+            level = None
+
+        if level:
+            # Redefine the level of the root logger
+            logger.setLevel(level)
 
     stylesheet: Optional[str] = _relative('dark.qss') if args.dark_mode else args.stylesheet
 

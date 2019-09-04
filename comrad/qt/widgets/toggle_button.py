@@ -6,7 +6,7 @@ from qtpy.QtWidgets import QWidget
 from qtpy.QtGui import QIcon
 
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class CToggleButton(PyDMPushButton):

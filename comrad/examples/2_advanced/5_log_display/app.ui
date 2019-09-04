@@ -20,7 +20,7 @@
       <enum>PyDMLogDisplay::WARNING</enum>
      </property>
      <property name="logName" stdset="0">
-      <string>my_log_name</string>
+      <string>test.app</string>
      </property>
     </widget>
    </item>
