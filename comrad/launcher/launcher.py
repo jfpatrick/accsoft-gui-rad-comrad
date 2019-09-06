@@ -149,8 +149,22 @@ def _run_subcommand(parser: argparse.ArgumentParser):
                                   help='Use predefined stylesheet with the dark theme for the application. '
                                        '(This option will override --stylesheet flag).')
 
+    plugin_group = parser.add_argument_group('Extensions')
+    plugin_group.add_argument('--nav-plugin-path',
+                              metavar='PATH',
+                              help='Specify the full path to a directory containing toolbar ComRAD plugins.',
+                              default=None)
+    plugin_group.add_argument('--status-plugin-path',
+                              metavar='PATH',
+                              help='Specify the full path to a directory containing status bar ComRAD plugins.',
+                              default=None)
+    plugin_group.add_argument('--menu-plugin-path',
+                              metavar='PATH',
+                              help='Specify the full path to a directory containing menu bar ComRAD plugins.',
+                              default=None)
+
     debug_group = parser.add_argument_group('Debugging')
-    debug_group.add_argument('--log_level',
+    debug_group.add_argument('--log-level',
                              help='Configure level of log display (default: INFO).',
                              choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
                              default='INFO')
@@ -228,6 +242,9 @@ def _run_comrad(args: argparse.Namespace):
                        fullscreen=args.fullscreen,
                        read_only=args.read_only,
                        macros=macros,
+                       nav_bar_plugin_path=args.nav_plugin_path,
+                       status_bar_plugin_path=args.status_plugin_path,
+                       menu_bar_plugin_path=args.menu_plugin_path,
                        stylesheet_path=stylesheet)
     sys.exit(app.exec_())
 

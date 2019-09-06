@@ -29,6 +29,9 @@ class CApplication(PyDMApplication):
                  read_only: bool = False,
                  macros: Optional[Dict[str, str]] = None,
                  use_main_window: bool = True,
+                 nav_bar_plugin_path: Optional[str] = None,
+                 status_bar_plugin_path: Optional[str] = None,
+                 menu_bar_plugin_path: Optional[str] = None,
                  stylesheet_path: Optional[str] = None,
                  fullscreen: bool = False):
         """
@@ -54,6 +57,12 @@ class CApplication(PyDMApplication):
             macros: A dictionary of macro variables to be forwarded to the display class being loaded.
             use_main_window: If ui_file is note given, this parameter controls whether or not to
                 create a PyDMMainWindow in the initialization (Default is True).
+            nav_bar_plugin_path: Path to the directory with navigation bar (toolbar) plugins. This path has
+                can be augmented by COMRAD_TOOLBAR_PLUGIN_PATH environment variable.
+            status_bar_plugin_path: Path to the directory with status bar plugins. This path has
+                can be augmented by COMRAD_STATUSBAR_PLUGIN_PATH environment variable.
+            menu_bar_plugin_path: Path to the directory with main menu plugins. This path has
+                can be augmented by COMRAD_MENUBAR_PLUGIN_PATH environment variable.
             stylesheet_path: Path to the *.qss file styling application and widgets.
             fullscreen: Whether or not to launch PyDM in a full screen mode.
         """
@@ -75,11 +84,15 @@ class CApplication(PyDMApplication):
         self._plugins_menu: Optional[QMenu] = None
         self.setWindowIcon(icon('app', file_path=__file__))
         self.main_window.setWindowTitle('ComRAD Main Window')
-        self._load_toolbar_plugins()
+        self._load_toolbar_plugins(nav_bar_plugin_path)
         # TODO: Add exit menu item
 
-    def _load_toolbar_plugins(self):
+    def _load_toolbar_plugins(self, extras: Optional[str]):
         all_plugin_paths = os.path.join(os.path.dirname(__file__), 'toolbar')
+
+        if extras:
+            all_plugin_paths = f'{extras}:{all_plugin_paths}'
+
         extra_plugin_paths: str = ''
         try:
             extra_plugin_paths = os.environ['COMRAD_TOOLBAR_PLUGIN_PATH']
