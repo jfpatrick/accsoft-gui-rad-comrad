@@ -9,20 +9,20 @@ class CPlugin(metaclass=abc.ABCMeta):
     pass
 
 
-class CToolbarPluginPosition(Enum):
-    """Position of the plugin's widget/button in the toolbar."""
+class CPluginPosition(Enum):
+    """Position of the plugin's widget/button in the toolbar/statusbar."""
 
     LEFT = 0
-    """Positioned on the left items will follow standard navigation buttons but will be aligned left after them."""
+    """Positioned on the left items will follow standard items but will be aligned left after them."""
 
     RIGHT = 1
     """Positioned on the right items will be sticking to the right edge of the application."""
 
 
-class CToolbarPlugin(metaclass=abc.ABCMeta):
+class CPositionalPlugin(metaclass=abc.ABCMeta):
     """Base class for ComRAD toolbar plugins."""
 
-    position: CToolbarPluginPosition = CToolbarPluginPosition.LEFT
+    position: CPluginPosition = CPluginPosition.LEFT
     """Whether plugin should be positioned following the navigation buttons or on the far right"""
 
 
@@ -46,12 +46,12 @@ class CActionPlugin(CPlugin, metaclass=abc.ABCMeta):
         pass
 
 
-class CToolbarActionPlugin(CActionPlugin, CToolbarPlugin, metaclass=abc.ABCMeta):
+class CToolbarActionPlugin(CActionPlugin, CPositionalPlugin, metaclass=abc.ABCMeta):
     """Base class for action-based ComRAD toolbar plugins."""
     pass
 
 
-class CToolbarWidgetPlugin(CPlugin, CToolbarPlugin, metaclass=abc.ABCMeta):
+class CWidgetPlugin(CPlugin, CPositionalPlugin, metaclass=abc.ABCMeta):
     """Base class for ComRAD plugins that render as widgets."""
 
     @abc.abstractmethod
@@ -78,3 +78,16 @@ class CMenuBarPlugin(CPlugin, metaclass=abc.ABCMeta):
 
         If it's a QAction, then a simple item will be created, otherwise a submenu will be created."""
         pass
+
+
+class CStatusBarPlugin(CWidgetPlugin, metaclass=abc.ABCMeta):
+    """Base class for ComRAD status bar plugins."""
+
+    is_permanent: bool = False
+    """Type of the widget (normal/permanent).
+    
+    For explanation of types, refer to the official docs: https://doc.qt.io/qt-5/qstatusbar.html#details.
+    
+    Also, widgets are aligned based on their type. Permanent widgets will be placed on the right hand side from
+    temporary ones to minimize the likelihood of overlapping with temporary messages. This will override the preference
+    defined by `position` property."""

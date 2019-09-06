@@ -1,14 +1,14 @@
 import os
 import logging
-from typing import Optional, List, Dict, Iterable, Type, Union, cast
+from typing import Optional, List, Dict, Iterable, Type, Union, cast, Tuple
 from qtpy.QtWidgets import QAction, QMenu, QSpacerItem, QSizePolicy, QWidget, QHBoxLayout
 from qtpy.QtCore import Qt, QObject
 from pydm.application import PyDMApplication
 from pydm.main_window import PyDMMainWindow
 from comrad.utils import icon
 from .frame_plugins import load_plugins_from_path
-from .plugin import (CToolbarActionPlugin, CActionPlugin, CToolbarWidgetPlugin, CToolbarPlugin,
-                     CToolbarPluginPosition, CPlugin, CMenuBarPlugin)
+from .plugin import (CToolbarActionPlugin, CActionPlugin, CWidgetPlugin, CPositionalPlugin,
+                     CPluginPosition, CPlugin, CMenuBarPlugin, CStatusBarPlugin)
 
 
 logger = logging.getLogger(__name__)
@@ -88,13 +88,14 @@ class CApplication(PyDMApplication):
 
         self._stored_plugins.extend(self._load_toolbar_plugins(nav_bar_plugin_path) or [])
         self._stored_plugins.extend(self._load_menubar_plugins(menu_bar_plugin_path) or [])
+        self._stored_plugins.extend(self._load_status_bar_plugins(status_bar_plugin_path) or [])
         # TODO: Add exit menu item
 
     def _load_toolbar_plugins(self, cmd_line_paths: Optional[str]) -> Optional[List[CPlugin]]:
         toolbar_plugins = CApplication._load_plugins(env_var_path_key='COMRAD_TOOLBAR_PLUGIN_PATH',
                                                      cmd_line_paths=cmd_line_paths,
                                                      shipped_plugin_path='toolbar',
-                                                     base_type=CToolbarPlugin)
+                                                     base_type=CPositionalPlugin)
         if not toolbar_plugins:
             return None
 
@@ -107,7 +108,7 @@ class CApplication(PyDMApplication):
         stored_plugins: List[CPlugin] = []
 
         for plugin_type in toolbar_plugins.values():
-            plugin: Union[CToolbarActionPlugin, CToolbarWidgetPlugin]
+            plugin: Union[CToolbarActionPlugin, CWidgetPlugin]
             if issubclass(plugin_type, CActionPlugin):
                 action_plugin = cast(CToolbarActionPlugin, plugin_type())
                 item = QAction(self.main_window)
@@ -122,26 +123,27 @@ class CApplication(PyDMApplication):
                 stored_plugins.append(action_plugin)
                 plugin = action_plugin
             else:
-                widget_plugin = cast(CToolbarWidgetPlugin, plugin_type())
+                widget_plugin = cast(CWidgetPlugin, plugin_type())
                 item = widget_plugin.create_widget()
                 stored_plugins.append(widget_plugin)
                 plugin = widget_plugin
 
-            (toolbar_left if cast(CToolbarPlugin, plugin).position == CToolbarPluginPosition.LEFT
+            (toolbar_left if cast(CPositionalPlugin, plugin).position == CPluginPosition.LEFT
              else toolbar_right).append(item)
 
         if toolbar_actions:
             menu = self._get_or_create_menu(name=('Plugins', 'Toolbar'))
             menu.addActions(toolbar_actions)
 
-        def _add_to_nav_bar(item: Union[QWidget, QAction]):
-            if isinstance(item, QWidget):
-                self.main_window.ui.navbar.addWidget(item)
-            elif isinstance(item, QAction):
-                self.main_window.ui.navbar.addAction(item)
+        def _add_to_nav_bar(items: Iterable[Union[QWidget, QAction]]):
+            nav_bar = self.main_window.ui.navbar
+            for item in items:
+                if isinstance(item, QWidget):
+                    nav_bar.addWidget(item)
+                elif isinstance(item, QAction):
+                    nav_bar.addAction(item)
 
-        for item in toolbar_left:
-            _add_to_nav_bar(item)
+        _add_to_nav_bar(toolbar_left)
 
         # Add spacer to compress toolbar items when possible
         spacer = QWidget()
@@ -150,8 +152,7 @@ class CApplication(PyDMApplication):
         layout.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Preferred))
         self.main_window.ui.navbar.addWidget(spacer)
 
-        for item in toolbar_right:
-            _add_to_nav_bar(item)
+        _add_to_nav_bar(toolbar_right)
 
         return stored_plugins
 
@@ -211,6 +212,42 @@ class CApplication(PyDMApplication):
                                  f'({type(item).__name__}). Must be either QAction or QMenu.')
                 continue
             stored_plugins.append(plugin)
+
+        return stored_plugins
+
+    def _load_status_bar_plugins(self, cmd_line_paths: Optional[str]) -> Optional[List[CPlugin]]:
+        status_bar_plugins = CApplication._load_plugins(env_var_path_key='COMRAD_STATUSBAR_PLUGIN_PATH',
+                                                        cmd_line_paths=cmd_line_paths,
+                                                        shipped_plugin_path='statusbar',
+                                                        base_type=CStatusBarPlugin)
+        if not status_bar_plugins:
+            return None
+
+        status_bar_left: List[Tuple[QWidget, bool]] = []  # Items preceding spacer
+        status_bar_right: List[Tuple[QWidget, bool]] = []  # Items succeeding spacer
+
+        stored_plugins: List[CPlugin] = []
+        for plugin_type in status_bar_plugins.values():
+            plugin = cast(CStatusBarPlugin, plugin_type())
+            widget = plugin.create_widget()
+            item = (widget, plugin.is_permanent)
+            (status_bar_left if plugin.position == CPluginPosition.LEFT else status_bar_right).append(item)
+            stored_plugins.append(plugin)
+
+        def _add_status_widgets(items: Iterable[Tuple[QWidget, bool]]):
+            status_bar = self.main_window.statusBar()
+            for widget, is_permanent in items:
+                if is_permanent:
+                    status_bar.addPermanentWidget(widget)
+                else:
+                    status_bar.addWidget(widget)
+
+        _add_status_widgets(status_bar_left)
+
+        # Add a spacer separating widgets (by just setting a high stretch)
+        self.main_window.statusBar().addWidget(QWidget(), 9999)
+
+        _add_status_widgets(status_bar_right)
 
         return stored_plugins
 
