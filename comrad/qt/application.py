@@ -1,6 +1,17 @@
-from typing import Optional, List, Dict
+import os
+import logging
+from typing import Optional, List, Dict, Iterable, Type, Union, cast
+from qtpy.QtWidgets import QAction, QMenu, QSpacerItem, QSizePolicy, QWidget, QHBoxLayout
+from qtpy.QtCore import Qt, QObject
 from pydm.application import PyDMApplication
+from pydm.main_window import PyDMMainWindow
+from pydm.pydm_ui import Ui_MainWindow
 from comrad.utils import icon
+from .frame_plugins import load_plugins_from_path
+from .plugin import CToolbarActionPlugin, CActionPlugin, CToolbarWidgetPlugin, CToolbarPlugin, CToolbarPluginPosition
+
+
+logger = logging.getLogger(__name__)
 
 
 _APP_NAME = 'ComRAD'
@@ -60,5 +71,99 @@ class CApplication(PyDMApplication):
                          use_main_window=use_main_window,
                          stylesheet_path=stylesheet_path,
                          fullscreen=fullscreen)
+        self.main_window: PyDMMainWindow = self.main_window  # Just to make code completion work
+        self._plugins_menu: Optional[QMenu] = None
         self.setWindowIcon(icon('app', file_path=__file__))
         self.main_window.setWindowTitle('ComRAD Main Window')
+        self._load_toolbar_plugins()
+        # TODO: Add exit menu item
+
+    def _load_toolbar_plugins(self):
+        all_plugin_paths = os.path.join(os.path.dirname(__file__), 'toolbar')
+        extra_plugin_paths: str = ''
+        try:
+            extra_plugin_paths = os.environ['COMRAD_TOOLBAR_PLUGIN_PATH']
+        except KeyError:
+            pass
+        if extra_plugin_paths:
+            all_plugin_paths = f'{extra_plugin_paths}:{all_plugin_paths}'
+
+        locations = all_plugin_paths.split(':')
+
+        toolbar_plugins: Dict[str, Type] = load_plugins_from_path(locations=locations,
+                                                                  token='_plugin.py',
+                                                                  base_type=CToolbarPlugin)
+        if toolbar_plugins:
+            ui: Ui_MainWindow = self.main_window.ui
+            ui.navbar.addSeparator()
+
+            toolbar_actions: List[QAction] = []
+            toolbar_left: List[Union[QAction, QWidget]] = []  # Items preceding spacer
+            toolbar_right: List[Union[QAction, QWidget]] = []  # Items succeeding spacer
+
+            for plugin_type in toolbar_plugins.values():
+                if issubclass(plugin_type, CActionPlugin):
+                    plugin: CToolbarActionPlugin = plugin_type()
+                    item = CAction(self.main_window, plugin=plugin)
+                    toolbar_actions.append(item)
+                else:
+                    plugin: CToolbarWidgetPlugin = plugin_type()
+                    item = plugin.create_widget()
+
+                (toolbar_left if cast(CToolbarPlugin, plugin).position == CToolbarPluginPosition.LEFT
+                 else toolbar_right).append(item)
+
+            if toolbar_actions:
+                self._add_plugins_menu(plugins=toolbar_actions, submenu='Toolbar')
+
+            def _add_to_nav_bar(item: Union[QWidget, QAction]):
+                if isinstance(item, QWidget):
+                    ui.navbar.addWidget(item)
+                elif isinstance(item, QAction):
+                    ui.navbar.addAction(item)
+
+            for item in toolbar_left:
+                _add_to_nav_bar(item)
+
+            # Add spacer to compress toolbar items when possible
+            spacer = QWidget()
+            layout = QHBoxLayout()
+            spacer.setLayout(layout)
+            layout.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Preferred))
+            ui.navbar.addWidget(spacer)
+
+            for item in toolbar_right:
+                _add_to_nav_bar(item)
+
+    def _add_plugins_menu(self, plugins: Iterable[QAction], submenu: str):
+
+        if self._plugins_menu is None:
+            logger.debug('Adding plugins menu "Plugins"')
+            self._plugins_menu = self.main_window.ui.menubar.addMenu('Plugins')
+
+        menu: QMenu
+        try:
+            menu = next((a for a in self._plugins_menu.actions() if a.text() == submenu))
+        except StopIteration:
+            logger.debug(f'Adding plugins submenu "Plugins->{submenu}"')
+            menu = self._plugins_menu.addMenu(submenu)
+
+        menu.addActions(plugins)
+
+
+class CAction(QAction):
+
+    def __init__(self, parent: Optional[QObject], *args, plugin: CActionPlugin, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        # To keep the plugin object alive
+        self._plugin = plugin
+
+        self.setShortcutContext(Qt.ApplicationShortcut)
+        if plugin.shortcut is not None:
+            self.setShortcut(plugin.shortcut)
+        if plugin.icon is not None:
+            if isinstance(parent, PyDMMainWindow):
+                main_window: PyDMMainWindow = parent
+                self.setIcon(main_window.iconFont.icon(plugin.icon))
+        self.triggered.connect(plugin.triggered)
+        self.setText(plugin.title())
