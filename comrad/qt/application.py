@@ -6,6 +6,7 @@ from qtpy.QtCore import Qt, QObject
 from pydm.application import PyDMApplication
 from pydm.main_window import PyDMMainWindow
 from comrad.utils import icon
+from .rbac import RBACState
 from .frame_plugins import load_plugins_from_path
 from .plugin import (CToolbarActionPlugin, CActionPlugin, CWidgetPlugin, CPositionalPlugin,
                      CPluginPosition, CPlugin, CMenuBarPlugin, CStatusBarPlugin)
@@ -81,6 +82,7 @@ class CApplication(PyDMApplication):
                          stylesheet_path=stylesheet_path,
                          fullscreen=fullscreen)
         self.main_window: PyDMMainWindow = self.main_window  # Just to make code completion work
+        self.rbac = RBACState()
         self._plugins_menu: Optional[QMenu] = None
         self.setWindowIcon(icon('app', file_path=__file__))
         self.main_window.setWindowTitle('ComRAD Main Window')
@@ -94,8 +96,7 @@ class CApplication(PyDMApplication):
     def _load_toolbar_plugins(self, cmd_line_paths: Optional[str]) -> Optional[List[CPlugin]]:
         toolbar_plugins = CApplication._load_plugins(env_var_path_key='COMRAD_TOOLBAR_PLUGIN_PATH',
                                                      cmd_line_paths=cmd_line_paths,
-                                                     shipped_plugin_path='toolbar',
-                                                     base_type=CPositionalPlugin)
+                                                     shipped_plugin_path='toolbar')
         if not toolbar_plugins:
             return None
 
@@ -109,7 +110,7 @@ class CApplication(PyDMApplication):
 
         for plugin_type in toolbar_plugins.values():
             plugin: Union[CToolbarActionPlugin, CWidgetPlugin]
-            if issubclass(plugin_type, CActionPlugin):
+            if issubclass(plugin_type, CToolbarActionPlugin):
                 action_plugin = cast(CToolbarActionPlugin, plugin_type())
                 item = QAction(self.main_window)
                 item.setShortcutContext(Qt.ApplicationShortcut)
