@@ -117,7 +117,9 @@ class CApplication(PyDMApplication):
                 if action_plugin.shortcut is not None:
                     item.setShortcut(action_plugin.shortcut)
                 if action_plugin.icon is not None:
-                    item.setIcon(self.main_window.iconFont.icon(action_plugin.icon))
+                    item_icon = (self.main_window.iconFont.icon(action_plugin.icon)
+                                 if isinstance(action_plugin.icon, str) else action_plugin.icon)
+                    item.setIcon(item_icon)
                 item.triggered.connect(action_plugin.triggered)
                 item.setText(action_plugin.title())
                 toolbar_actions.append(item)

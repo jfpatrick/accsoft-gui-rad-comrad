@@ -2,6 +2,7 @@ import abc
 from typing import Optional, Union, Iterable
 from enum import Enum
 from qtpy.QtWidgets import QWidget, QAction, QMenu
+from qtpy.QtGui import QIcon
 
 
 class CPlugin(metaclass=abc.ABCMeta):
@@ -32,7 +33,7 @@ class CActionPlugin(CPlugin, metaclass=abc.ABCMeta):
     shortcut: Optional[str] = None
     """If defined, shortcut will be applied to the action of the plugin."""
 
-    icon: Optional[str] = None
+    icon: Union[str, QIcon, None] = None
     """If defined, icon will be applied to the action of the plugin."""
 
     @abc.abstractmethod
