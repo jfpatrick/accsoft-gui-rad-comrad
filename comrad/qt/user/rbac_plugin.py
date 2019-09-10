@@ -1,20 +1,26 @@
 import os
+import logging
 from typing import Optional, cast
-from qtpy.QtWidgets import QWidget, QPushButton, QLineEdit, QLabel, QDialog, QVBoxLayout, QToolButton, QMenu, QWidgetAction
+from qtpy.QtWidgets import (QWidget, QPushButton, QLineEdit, QLabel, QDialog, QVBoxLayout, QToolButton, QMenu,
+                            QWidgetAction, QSizePolicy, QAction)
 from qtpy import uic
 from qtpy.QtCore import Signal, Qt
 from comrad.qt.application import CApplication
 from comrad.qt.plugin import CWidgetPlugin, CPluginPosition
 from comrad.qt.rbac import RBACLoginStatus
+from comrad.utils import icon
+
+
+logger = logging.getLogger(__name__)
 
 
 class RBACDialogWidget(QWidget):
     """Dialog seen when user presses the RBAC button."""
 
     login_by_location = Signal()
-    login_by_username = Signal([list])
+    login_by_username = Signal(str, str)
 
-    def __init__(self, parent: Optional[QWidget] = None, *args, **kwargs):
+    def __init__(self, app: CApplication, parent: Optional[QWidget] = None, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
 
         # For IDE support, assign types to dynamically created items from the *.ui file
@@ -35,6 +41,9 @@ class RBACDialogWidget(QWidget):
         self.loc_btn.clicked.connect(self._login_loc)
         self.user_btn.clicked.connect(self._login_user)
 
+        self.login_by_location.connect(app.rbac.login_by_location)
+        self.login_by_username.connect(app.rbac.login_by_credentials)
+
     def _login_loc(self):
         self.loc_error.hide()
         self.login_by_location.emit()
@@ -53,7 +62,7 @@ class RBACDialogWidget(QWidget):
 
         self.user_error.hide()
         self.password_error.hide()
-        self.login_by_username.emit([user, passwd])
+        self.login_by_username.emit(user, passwd)
 
 
 class RBACDialog(QDialog):
@@ -71,24 +80,42 @@ class RBACButton(QToolButton):
         super().__init__(parent, *args, **kwargs)
         self._app = cast(CApplication, CApplication.instance())
         self._dialog: Optional[RBACDialog] = None
-        if self._app.rbac.status == RBACLoginStatus.LOGGED_OUT:
-            self.setText('RBA: no token')
-        elif self._app.rbac.status == RBACLoginStatus.LOGGED_IN_BY_CREDENTIALS:
-            self.setText(f'RBA: {self._app.rbac.user}')
-        else:
-            # FIXME: How to show it when logged in by location?
-            pass
-        # self.clicked.connect(self._clicked)
+        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         self.setPopupMode(QToolButton.InstantPopup)
-        self.setMenu(QMenu(self))
+        self._menu = QMenu(self)
         action = QWidgetAction(self)
-        action.setDefaultWidget(RBACDialogWidget())
-        self.menu().addAction(action)
+        action.setDefaultWidget(RBACDialogWidget(parent=self, app=self._app))
+        self._menu.addAction(action)
         self.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-        self.setIcon(self._app.main_window.iconFont.icon('google-plus-circle'))
 
+        self._decorate(status=self._app.rbac.status)
+        self._app.rbac.rbac_status_changed.connect(self._status_changed)
 
-    # def _clicked(self):
+    def _status_changed(self, new_status: int):
+        status = RBACLoginStatus(new_status)
+        self._decorate(status=status)
+
+    def _decorate(self, status: RBACLoginStatus):
+        icon_name: str
+        if status == RBACLoginStatus.LOGGED_OUT:
+            self.setText('RBA: no token')
+            icon_name = 'offline'
+            self.setMenu(self._menu)
+            try:
+                self.clicked.disconnect()
+            except TypeError:
+                # Was not connected (happens during initial setup)
+                pass
+        else:
+            self.setText(f'RBA: {self._app.rbac.user}')
+            icon_name = 'online'
+            self.menu().hide()
+            self.setMenu(None)
+            self.clicked.connect(self._app.rbac.logout)
+
+        self.setIcon(icon(icon_name, file_path=os.path.join(os.path.dirname(__file__))))
+
+# def _clicked(self):
     #     if self._dialog:
     #         return
     #
