@@ -2,9 +2,9 @@ import os
 import logging
 from typing import Optional, cast
 from qtpy.QtWidgets import (QWidget, QPushButton, QLineEdit, QLabel, QDialog, QVBoxLayout, QToolButton, QMenu,
-                            QWidgetAction, QSizePolicy, QAction)
+                            QWidgetAction, QSizePolicy)
 from qtpy import uic
-from qtpy.QtCore import Signal, Qt
+from qtpy.QtCore import Signal, Qt, QEvent
 from comrad.qt.application import CApplication
 from comrad.qt.plugin import CWidgetPlugin, CPluginPosition
 from comrad.qt.rbac import RBACLoginStatus
@@ -43,6 +43,13 @@ class RBACDialogWidget(QWidget):
 
         self.login_by_location.connect(app.rbac.login_by_location)
         self.login_by_username.connect(app.rbac.login_by_credentials)
+        app.rbac.rbac_status_changed.connect(self._clean_password)
+
+    def event(self, event: QEvent) -> bool:
+        if event.type() == QEvent.MouseButtonPress or event.type() == QEvent.MouseButtonRelease:
+            # Prevent widget being hidden on a click inside the popup area
+            return True
+        return super().event(event)
 
     def _login_loc(self):
         self.loc_error.hide()
@@ -63,6 +70,9 @@ class RBACDialogWidget(QWidget):
         self.user_error.hide()
         self.password_error.hide()
         self.login_by_username.emit(user, passwd)
+
+    def _clean_password(self):
+        self.password.setText(None)
 
 
 class RBACDialog(QDialog):
@@ -109,7 +119,9 @@ class RBACButton(QToolButton):
         else:
             self.setText(f'RBA: {self._app.rbac.user}')
             icon_name = 'online'
-            self.menu().hide()
+            menu = self.menu()
+            if menu:  # Avoid initial error, when menu might not be created
+                menu.hide()
             self.setMenu(None)
             self.clicked.connect(self._app.rbac.logout)
 

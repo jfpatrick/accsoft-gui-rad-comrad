@@ -50,10 +50,6 @@ class RBACState(QObject):
             logger.debug('RBA login dropped, as user logged in already')
         self.rbac_login_user.emit(user, password)
 
-        # FIXME: Test only
-        self.user = user
-        self.status = RBACLoginStatus.LOGGED_IN_BY_CREDENTIALS
-
     def login_by_location(self):
         logger.debug('RBA Login by location requested')
         if self.status != RBACLoginStatus.LOGGED_OUT:
@@ -61,16 +57,9 @@ class RBACState(QObject):
             return
         self.rbac_login_by_location.emit()
 
-        # FIXME: Test only
-        self.user = 'spsop'
-        self.status = RBACLoginStatus.LOGGED_IN_BY_LOCATION
-
     def logout(self):
         logger.debug('RBA Logout requested')
         if self.status == RBACLoginStatus.LOGGED_OUT:
             logger.debug('RBA logout dropped, as user logged out already')
             return
         self.rbac_logout_user.emit()
-
-        # FIXME: Test only
-        self.status = RBACLoginStatus.LOGGED_OUT

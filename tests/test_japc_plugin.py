@@ -11,34 +11,34 @@ def test_japc_singleton():
 
 def test_rbac_login_succeeds_by_location(mocker):
     japc = japc_plugin._JapcService(selector='', incaAcceleratorName=None)
-    assert japc._loggedIn is False
+    assert japc._logged_in is False
     with mocker.patch.object(japc, 'rbacLogin'):
         japc.try_rbac_login()
-        assert japc._loggedIn is True
+        assert japc._logged_in is True
         japc.rbacLogin.assert_called_once_with()
 
 
 def test_rbac_login_only_once(mocker):
     japc = japc_plugin._JapcService(selector='', incaAcceleratorName=None)
-    assert japc._loggedIn is False
+    assert japc._logged_in is False
     with mocker.patch.object(japc, 'rbacLogin'):
         japc.try_rbac_login()
         japc.try_rbac_login()
         japc.try_rbac_login()
         japc.try_rbac_login()
-        assert japc._loggedIn is True
+        assert japc._logged_in is True
         japc.rbacLogin.assert_called_once_with()
 
 
 @mock.patch('pyjapc.PyJapc.rbacLogout')
 def test_rbac_logout_only_once(mocked_super):
     japc = japc_plugin._JapcService(selector='', incaAcceleratorName=None)
-    japc._loggedIn = True
+    japc._logged_in = True
     japc.rbacLogout()
     japc.rbacLogout()
     japc.rbacLogout()
     japc.rbacLogout()
-    assert japc._loggedIn is False
+    assert japc._logged_in is False
     mocked_super.assert_called_once_with()
 
 
@@ -48,23 +48,23 @@ def test_rbac_login_succeeds_with_dialog(mocker):
             raise UserWarning('mock exception')
 
     japc = japc_plugin._JapcService(selector='', incaAcceleratorName=None)
-    assert japc._loggedIn is False
+    assert japc._logged_in is False
 
     with mocker.patch.object(japc, 'rbacLogin', side_effect=fake_login):
         japc.try_rbac_login()
-        assert japc._loggedIn is True
+        assert japc._logged_in is True
         japc.rbacLogin.assert_has_calls([mock.call(), mock.call(loginDialog=True)])
 
 
 def test_rbac_fails(mocker):
     japc = japc_plugin._JapcService(selector='', incaAcceleratorName=None)
-    assert japc._loggedIn is False
+    assert japc._logged_in is False
 
     with mocker.patch.object(japc, 'rbacLogin', side_effect=UserWarning('mock exception')):
         with pytest.raises(UserWarning) as excinfo:
             japc.try_rbac_login()
         assert str(excinfo.value) == 'mock exception'
-        assert japc._loggedIn is False
+        assert japc._logged_in is False
         japc.rbacLogin.assert_has_calls([mock.call(), mock.call(loginDialog=True)])
 
 

@@ -69,6 +69,7 @@ class CApplication(PyDMApplication):
         """
         args = [_APP_NAME]
         args.extend(command_line_args or [])
+        self.rbac = RBACState()  # We must keep it before super because dependant plugins will be initialized in super()
         super().__init__(ui_file=ui_file,
                          command_line_args=args,
                          display_args=display_args or [],
@@ -82,7 +83,6 @@ class CApplication(PyDMApplication):
                          stylesheet_path=stylesheet_path,
                          fullscreen=fullscreen)
         self.main_window: PyDMMainWindow = self.main_window  # Just to make code completion work
-        self.rbac = RBACState()
         self._plugins_menu: Optional[QMenu] = None
         self.setWindowIcon(icon('app', file_path=__file__))
         self.main_window.setWindowTitle('ComRAD Main Window')
