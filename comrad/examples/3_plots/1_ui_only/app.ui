@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>900</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="CScrollingPlot" name="CScrollingPlot">
+     <property name="showGridX" stdset="0">
+      <bool>true</bool>
+     </property>
+     <property name="showGridY" stdset="0">
+      <bool>true</bool>
+     </property>
+     <property name="showTopAxis" stdset="0">
+      <bool>false</bool>
+     </property>
+     <property name="showRightAxis" stdset="0">
+      <bool>false</bool>
+     </property>
+     <property name="additionalLayers" stdset="0">
+      <number>2</number>
+     </property>
+     <property name="axisLabels" stdset="0">
+      <string>{&quot;left&quot;: &quot;Bar Graph&quot;, &quot;layer_0&quot;: &quot;Curve&quot;, &quot;layer_1&quot;: &quot;Injection Bars&quot;}</string>
+     </property>
+     <property name="axisRanges" stdset="0">
+      <string>{&quot;y&quot;: [0, 3], &quot;layer_0&quot;: [-1, 2], &quot;layer_1&quot;: [-4.5, 1.5]}</string>
+     </property>
+     <property name="fixedXRange" stdset="0">
+      <bool>true</bool>
+     </property>
+     <property name="showTimeProgressLine" stdset="0">
+      <bool>false</bool>
+     </property>
+     <property name="timeSpan" stdset="0">
+      <double>60.000000000000000</double>
+     </property>
+     <property name="curves" stdset="0">
+      <stringlist>
+       <string>{&quot;channel&quot;: &quot;japc://DemoDevice/Acquisition#RandomBar&quot;, &quot;style&quot;: &quot;Bar Graph&quot;, &quot;layer&quot;: &quot;&quot;, &quot;name&quot;: &quot;bars&quot;, &quot;color&quot;: &quot;yellow&quot;, &quot;line_style&quot;: 2, &quot;line_width&quot;: 1, &quot;symbol&quot;: &quot;+&quot;, &quot;symbol_size&quot;: 10}</string>
+       <string>{&quot;channel&quot;: &quot;japc://DemoDevice/Acquisition#RandomPoint&quot;, &quot;style&quot;: &quot;Line Graph&quot;, &quot;layer&quot;: &quot;layer_0&quot;, &quot;name&quot;: &quot;line&quot;, &quot;color&quot;: &quot;red&quot;, &quot;line_style&quot;: 1, &quot;line_width&quot;: 2, &quot;symbol&quot;: null, &quot;symbol_size&quot;: 10}</string>
+       <string>{&quot;channel&quot;: &quot;japc://DemoDevice/Acquisition#RandomInjectionBar&quot;, &quot;style&quot;: &quot;Injection Bar Graph&quot;, &quot;layer&quot;: &quot;layer_1&quot;, &quot;name&quot;: &quot;injection bg&quot;, &quot;color&quot;: &quot;dodgerblue&quot;, &quot;line_style&quot;: 1, &quot;line_width&quot;: 2, &quot;symbol&quot;: &quot;t&quot;, &quot;symbol_size&quot;: 10}</string>
+       <string>{&quot;channel&quot;: &quot;japc://DemoDevice/Acquisition#RandomTimestampMarker&quot;, &quot;style&quot;: &quot;Timestamp Marker&quot;, &quot;layer&quot;: &quot;&quot;, &quot;name&quot;: &quot;ts marker&quot;, &quot;color&quot;: &quot;forestgreen&quot;, &quot;line_style&quot;: 0, &quot;line_width&quot;: 3, &quot;symbol&quot;: null, &quot;symbol_size&quot;: 10}</string>
+      </stringlist>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="CSlidingPlot" name="CSlidingPlot">
+     <property name="additionalLayers" stdset="0">
+      <number>1</number>
+     </property>
+     <property name="axisLabels" stdset="0">
+      <string>{&quot;left&quot;: &quot;Dotted Curve&quot;, &quot;layer_0&quot;: &quot;Triangle Scatter&quot;}</string>
+     </property>
+     <property name="axisRanges" stdset="0">
+      <string>{}</string>
+     </property>
+     <property name="timeSpan" stdset="0">
+      <double>10.000000000000000</double>
+     </property>
+     <property name="curves" stdset="0">
+      <stringlist>
+       <string>{&quot;channel&quot;: &quot;japc://DemoDevice/Acquisition#RandomPoint&quot;, &quot;style&quot;: &quot;Line Graph&quot;, &quot;layer&quot;: &quot;&quot;, &quot;name&quot;: &quot;curve&quot;, &quot;color&quot;: &quot;yellow&quot;, &quot;line_style&quot;: 2, &quot;line_width&quot;: 2, &quot;symbol&quot;: null, &quot;symbol_size&quot;: 10}</string>
+       <string>{&quot;channel&quot;: &quot;japc://DemoDevice/Acquisition#RandomPoint&quot;, &quot;style&quot;: &quot;Line Graph&quot;, &quot;layer&quot;: &quot;layer_0&quot;, &quot;name&quot;: &quot;curve II&quot;, &quot;color&quot;: &quot;red&quot;, &quot;line_style&quot;: 0, &quot;line_width&quot;: 1, &quot;symbol&quot;: &quot;t&quot;, &quot;symbol_size&quot;: 10}</string>
+      </stringlist>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>CScrollingPlot</class>
+   <extends>QGraphicsView</extends>
+   <header>comrad.qt.cern_widgets.graph</header>
+  </customwidget>
+  <customwidget>
+   <class>CSlidingPlot</class>
+   <extends>QGraphicsView</extends>
+   <header>comrad.qt.cern_widgets.graph</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
