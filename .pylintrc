@@ -144,6 +144,7 @@ disable=print-statement,
         # Own disabled
         too-few-public-methods,
         logging-fstring-interpolation,
+        unnecessary-pass,
         bad-continuation # Related to https://github.com/PyCQA/pylint/issues/289
 
 # Enable the message, report, category or checker with the given id(s). You can

@@ -9,7 +9,8 @@ from pydm.widgets.qtplugin_extensions import (RulesExtension, WaveformCurveEdito
                                               ScatterCurveEditorExtension)
 from comrad.utils import icon
 from comrad.designer.utils import qtplugin_factory
-from comrad.qt.cern_widgets import CToggleButton, CAccPlot, CValueAggregator
+from comrad.qt.cern_widgets.graph import CScrollingPlot, CSlidingPlot, CPlottingItemEditorExtension
+from comrad.qt.widgets import CToggleButton, CValueAggregator
 from comrad.qt.pydm_widgets import (CScatterPlot, CTabWidget, CTimePlot, CScaleIndicator, CLogDisplay, CImageView,
                                     CEnumComboBox, CSlider, CSpinBox, CLabel, CByteIndicator, CWaveFormPlot, CLineEdit,
                                     CTemplateRepeater, CFrame, CEmbeddedDisplay, CShellCommand, CRelatedDisplayButton,
@@ -87,7 +88,9 @@ WaveformPlot = qtplugin_factory(CWaveFormPlot, group=_COMRAD_GROUP_PLOT, icon=lo
                                                                                                                       RulesExtension])
 ScatterPlot = qtplugin_factory(CScatterPlot, group=_COMRAD_GROUP_PLOT, icon=load_icon('scatter_plot'), extensions=[ScatterCurveEditorExtension,
                                                                                                                    RulesExtension])
-AccPlot = qtplugin_factory(CAccPlot, group=_COMRAD_GROUP_PLOT, icon=load_icon('scatter_plot'), extensions=_BASE_EXTENSIONS)
+ScrollingPlot = qtplugin_factory(CScrollingPlot, group=_COMRAD_GROUP_PLOT, icon=load_icon('graph_scrolling_plot'), extensions=[CPlottingItemEditorExtension])
+
+SlidingPlot = qtplugin_factory(CSlidingPlot, group=_COMRAD_GROUP_PLOT, icon=load_icon('graph_sliding_plot'), extensions=[CPlottingItemEditorExtension])
 
 # Invisible
 ValueAggregator = qtplugin_factory(CValueAggregator, group=_COMRAD_GROUP_VIRTUAL, icon=load_icon('calc'))
