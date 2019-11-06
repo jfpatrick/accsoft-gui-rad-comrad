@@ -90,6 +90,14 @@ class CApplication(PyDMApplication):
         self._plugins_menu: Optional[QMenu] = None
         self.setWindowIcon(icon('app', file_path=__file__))
         self.main_window.setWindowTitle('ComRAD Main Window')
+        # TODO: We need a completely new action here instead, which will launch a subclass of the about dialog with our info
+        try:
+            action = next(x for x in reversed(self._get_or_create_menu(name=('File')).actions())
+                          if x.text() == 'About PyDM')
+            action.setText('About ComRAD')
+        except StopIteration:
+            pass
+
         self._stored_plugins: List[CPlugin] = []  # Reference plugins to keep the objects alive
 
         order: Optional[Iterable[Union[str, CToolbarID]]] = None
