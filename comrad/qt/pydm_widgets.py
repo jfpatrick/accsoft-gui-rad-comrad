@@ -65,18 +65,6 @@ class CLabel(ValueTransformer, PyDMLabel):
         self.value_changed(new_val)
 
 
-class CTimePlot(PyDMTimePlot):
-    pass
-
-
-class CWaveFormPlot(PyDMWaveformPlot):
-    pass
-
-
-class CScatterPlot(PyDMScatterPlot):
-    pass
-
-
 class CFrame(PyDMFrame):
     pass
 

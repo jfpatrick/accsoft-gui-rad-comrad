@@ -4,17 +4,15 @@ Plugins for Qt Designer that are visible ComRAD widgets.
 import functools
 from typing import List, Optional
 from pydm.widgets.tab_bar_qtplugin import TabWidgetPlugin as PyDMTabWidgetPlugin
-from pydm.widgets.qtplugin_extensions import (RulesExtension, WaveformCurveEditorExtension,
-                                              TimeCurveEditorExtension,
-                                              ScatterCurveEditorExtension)
+from pydm.widgets.qtplugin_extensions import RulesExtension
 from comrad.utils import icon
 from comrad.designer.utils import qtplugin_factory
 from comrad.qt.cern_widgets.graph import CScrollingPlot, CSlidingPlot, CPlottingItemEditorExtension
 from comrad.qt.widgets import CToggleButton, CValueAggregator
-from comrad.qt.pydm_widgets import (CScatterPlot, CTabWidget, CTimePlot, CScaleIndicator, CLogDisplay, CImageView,
-                                    CEnumComboBox, CSlider, CSpinBox, CLabel, CByteIndicator, CWaveFormPlot, CLineEdit,
-                                    CTemplateRepeater, CFrame, CEmbeddedDisplay, CShellCommand, CRelatedDisplayButton,
-                                    CPushButton, CEnumButton, CWaveFormTable, CCheckBox)
+from comrad.qt.pydm_widgets import (CTabWidget, CScaleIndicator, CLogDisplay, CImageView, CEnumComboBox, CSlider,
+                                    CSpinBox, CLabel, CByteIndicator, CLineEdit, CTemplateRepeater, CFrame,
+                                    CEmbeddedDisplay, CShellCommand, CRelatedDisplayButton, CPushButton, CEnumButton,
+                                    CWaveFormTable, CCheckBox)
 import comrad
 
 
@@ -83,13 +81,7 @@ LogDisplay = qtplugin_factory(CLogDisplay, group=_COMRAD_GROUP_DISPLAY, icon=loa
 ScaleIndicator = qtplugin_factory(CScaleIndicator, group=_COMRAD_GROUP_DISPLAY, icon=load_icon('scale_indicator'), extensions=_BASE_EXTENSIONS)
 
 # Charts
-TimePlot = qtplugin_factory(CTimePlot, group=_COMRAD_GROUP_PLOT, icon=load_icon('time_plot'), extensions=[TimeCurveEditorExtension, RulesExtension])
-WaveformPlot = qtplugin_factory(CWaveFormPlot, group=_COMRAD_GROUP_PLOT, icon=load_icon('waveform_plot'), extensions=[WaveformCurveEditorExtension,
-                                                                                                                      RulesExtension])
-ScatterPlot = qtplugin_factory(CScatterPlot, group=_COMRAD_GROUP_PLOT, icon=load_icon('scatter_plot'), extensions=[ScatterCurveEditorExtension,
-                                                                                                                   RulesExtension])
 ScrollingPlot = qtplugin_factory(CScrollingPlot, group=_COMRAD_GROUP_PLOT, icon=load_icon('graph_scrolling_plot'), extensions=[CPlottingItemEditorExtension])
-
 SlidingPlot = qtplugin_factory(CSlidingPlot, group=_COMRAD_GROUP_PLOT, icon=load_icon('graph_sliding_plot'), extensions=[CPlottingItemEditorExtension])
 
 # Invisible
