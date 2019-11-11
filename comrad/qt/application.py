@@ -1,11 +1,15 @@
 import os
 import logging
+import json
+import subprocess
 from itertools import chain
 from typing import Optional, List, Dict, Iterable, Type, Union, cast, Tuple
 from qtpy.QtWidgets import QAction, QMenu, QSpacerItem, QSizePolicy, QWidget, QHBoxLayout
 from qtpy.QtCore import Qt, QObject
 from pydm.application import PyDMApplication
 from pydm.main_window import PyDMMainWindow
+from pydm.utilities import path_info, which
+from pydm.data_plugins import is_read_only
 from comrad.utils import icon
 from .rbac import RBACState
 from .frame_plugins import load_plugins_from_path
@@ -90,6 +94,16 @@ class CApplication(PyDMApplication):
         self._plugins_menu: Optional[QMenu] = None
         self.setWindowIcon(icon('app', file_path=__file__))
         self.main_window.setWindowTitle('ComRAD Main Window')
+
+        # Useful for subprocesses
+        self._stylesheet_path = stylesheet_path
+        self._nav_bar_plugin_path = nav_bar_plugin_path
+        self._status_bar_plugin_path = status_bar_plugin_path
+        self._menu_bar_plugin_path = menu_bar_plugin_path
+        self._toolbar_order = toolbar_order
+        self._plugin_whitelist = plugin_whitelist
+        self._plugin_blacklist = plugin_blacklist
+
         # TODO: We need a completely new action here instead, which will launch a subclass of the about dialog with our info
         try:
             action = next(x for x in reversed(self._get_or_create_menu(name=('File')).actions())
@@ -123,6 +137,68 @@ class CApplication(PyDMApplication):
                                                                   whitelist=plugin_whitelist,
                                                                   blacklist=plugin_blacklist) or [])
         # TODO: Add exit menu item
+
+    def new_pydm_process(self,
+                         ui_file: str,
+                         macros: Optional[Dict[str, str]] = None,
+                         command_line_args: Optional[List[str]] = None):
+        """
+        Overrides the subclass method to spawn ComRAD process instead of bare PyDM.
+
+        Args:
+            ui_file: The path to a .ui or .py file to open in the new process.
+            macros: A dictionary of macro variables to supply to the display file to be opened.
+            command_line_args: A list of command line arguments to pass to the new process. Typically,
+                this argument is used by related display buttons
+                to pass in extra arguments.  It is probably rare that code you
+                write needs to use this argument.
+        """
+        # Expand user (~ or ~user) and environment variables.
+        ui_file = os.path.expanduser(os.path.expandvars(ui_file))
+        base_dir, file_name, args = path_info(str(ui_file))
+        filepath = os.path.join(base_dir, file_name)
+        filepath_args = args
+        exec_path = which('comrad')
+
+        if exec_path is None:
+            extra_path = os.environ.get('PYDM_PATH', None)
+            if extra_path is not None:
+                exec_path = os.path.join(extra_path, 'comrad')
+
+        args = [exec_path, 'run']
+        if self.hide_nav_bar:
+            args.append('--hide-nav-bar')
+        if self.hide_menu_bar:
+            args.append('--hide-menu-bar')
+        if self.hide_status_bar:
+            args.append('--hide-status-bar')
+        if self.fullscreen:
+            args.append('--fullscreen')
+        if is_read_only():
+            args.append('--read-only')
+        if self._stylesheet_path:
+            args.extend(['--stylesheet', self._stylesheet_path])
+        if macros is not None:
+            args.extend(['-m', json.dumps(macros)])
+        if self._nav_bar_plugin_path:
+            args.extend(['--nav-plugin-path', self._nav_bar_plugin_path])
+        if self._status_bar_plugin_path:
+            args.extend(['--status-plugin-path', self._status_bar_plugin_path])
+        if self._menu_bar_plugin_path:
+            args.extend(['--menu-plugin-path', self._menu_bar_plugin_path])
+        if self._toolbar_order:
+            args.extend(['--nav-bar-order', ','.join(self._toolbar_order)])
+        if self._plugin_whitelist:
+            args.extend(['--enable-plugins', ','.join(self._plugin_whitelist)])
+        if self._plugin_blacklist:
+            args.extend(['--disable-plugins', ','.join(self._plugin_blacklist)])
+        args.extend(['--log-level', logging.getLevelName(logging.getLogger('').getEffectiveLevel())])
+        args.append(filepath)
+        args.extend(self.display_args)
+        args.extend(filepath_args)
+        if command_line_args is not None:
+            args.extend(command_line_args)
+        subprocess.Popen(args, shell=False)
 
     def _load_toolbar_plugins(self,
                               cmd_line_paths: Optional[str],
