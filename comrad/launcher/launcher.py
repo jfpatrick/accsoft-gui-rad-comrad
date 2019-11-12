@@ -150,6 +150,28 @@ def _run_subcommand(parser: argparse.ArgumentParser):
                                        '(This option will override --stylesheet flag).')
 
     plugin_group = parser.add_argument_group('Extensions')
+    plugin_group.add_argument('--enable-plugins',
+                              metavar="'ID,...'",
+                              help='Specify plugins that are disabled by default but should be enabled in '
+                                   'this instance. Plugins can be built-in or custom ones that are '
+                                   'visible to the application (make sure to specify --nav-plugin-path or '
+                                   'COMRAD_TOOLBAR_PLUGIN_PATH for any custom plugins). The order must be a comma-'
+                                   'separated string with plugin IDs. For built-in items use following identifiers:'
+                                   ' - RBAC dialog button: comrad.rbac'
+                                   ''
+                                   "Example usage: --enable-plugins 'comrad.rbac'",
+                              default=None)
+    plugin_group.add_argument('--disable-plugins',
+                              metavar="'ID,...'",
+                              help='Specify plugins that are enabled by default but should be disabled in '
+                                   'this instance. Plugins can be built-in or custom ones that are '
+                                   'visible to the application (make sure to specify --nav-plugin-path or '
+                                   'COMRAD_TOOLBAR_PLUGIN_PATH for any custom plugins). The order must be a comma-'
+                                   'separated string with plugin IDs. For built-in items use following identifiers:'
+                                   ' - RBAC dialog button: comrad.rbac'
+                                   ''
+                                   "Example usage: --disable-plugins 'comrad.rbac'",
+                              default=None)
     plugin_group.add_argument('--status-plugin-path',
                               metavar='PATH',
                               help='Specify the full path to a directory containing status bar ComRAD plugins.',
@@ -163,7 +185,7 @@ def _run_subcommand(parser: argparse.ArgumentParser):
                               help='Specify the full path to a directory containing toolbar ComRAD plugins.',
                               default=None)
     plugin_group.add_argument('--nav-bar-order',
-                              metavar='ORDER',
+                              metavar="'ID,...'",
                               help='Specify the order of items to appear in the navigation bar. Plugins must be '
                                    'visible to the application (make sure to specify --nav-plugin-path or '
                                    'COMRAD_TOOLBAR_PLUGIN_PATH for any custom plugins). The order must be a comma-'
@@ -246,6 +268,14 @@ def _run_comrad(args: argparse.Namespace):
     if args.nav_bar_order:
         order = cast(str, args.nav_bar_order).split(',')
 
+    whitelist: Optional[Iterable[str]] = None
+    if args.enable_plugins:
+        whitelist = cast(str, args.enable_plugins).split(',')
+
+    blacklist: Optional[Iterable[str]] = None
+    if args.disable_plugins:
+        blacklist = cast(str, args.disable_plugins).split(',')
+
     stylesheet: Optional[str] = _relative('dark.qss') if args.dark_mode else args.stylesheet
 
     os.environ['PYDM_DATA_PLUGINS_PATH'] = _relative('data')
@@ -265,6 +295,8 @@ def _run_comrad(args: argparse.Namespace):
                        status_bar_plugin_path=args.status_plugin_path,
                        menu_bar_plugin_path=args.menu_plugin_path,
                        toolbar_order=order,
+                       plugin_blacklist=blacklist,
+                       plugin_whitelist=whitelist,
                        stylesheet_path=stylesheet)
     sys.exit(app.exec_())
 

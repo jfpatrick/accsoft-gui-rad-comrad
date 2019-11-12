@@ -7,7 +7,12 @@ from qtpy.QtGui import QIcon
 
 class CPlugin(metaclass=abc.ABCMeta):
     """Base class for all ComRAD plugins."""
-    pass
+
+    enabled: bool = True
+    """Useful for integrated plugins to mark whether it's enabled by default or should be enabled via launch flag."""
+
+    plugin_id: str = ''
+    "Reverse domain string that represents the unique ID of the plugin class."
 
 
 class CPluginPosition(Enum):
@@ -24,7 +29,7 @@ class CPositionalPlugin(metaclass=abc.ABCMeta):
     """Base class for ComRAD toolbar plugins."""
 
     position: CPluginPosition = CPluginPosition.LEFT
-    """Whether plugin should be positioned following the navigation buttons or on the far right"""
+    """Whether plugin should be positioned following the navigation buttons or on the far right."""
 
 
 class CActionPlugin(CPlugin, metaclass=abc.ABCMeta):
@@ -67,9 +72,7 @@ class CToolbarID(Enum):
 
 class CToolbarPlugin(metaclass=abc.ABCMeta):
     """Base class for toolbar ComRAD plugins."""
-
-    toolbar_id: str = ''
-    "Reverse domain string that represents the unique ID of the plugin class."
+    pass
 
 
 class CToolbarActionPlugin(CActionPlugin, CPositionalPlugin, CToolbarPlugin, metaclass=abc.ABCMeta):

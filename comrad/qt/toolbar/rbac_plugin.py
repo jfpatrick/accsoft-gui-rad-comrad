@@ -153,6 +153,8 @@ class RBACButton(QToolButton):
 class RBACButtonPlugin(CWidgetPlugin):
 
     position = CPluginPosition.RIGHT
+    plugin_id = 'comrad.rbac'
+    enabled = False
 
     def create_widget(self):
         return RBACButton()

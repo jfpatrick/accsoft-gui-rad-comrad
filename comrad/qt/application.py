@@ -36,6 +36,8 @@ class CApplication(PyDMApplication):
                  menu_bar_plugin_path: Optional[str] = None,
                  stylesheet_path: Optional[str] = None,
                  toolbar_order: Optional[Iterable[Union[str, CToolbarID]]] = None,
+                 plugin_whitelist: Optional[Iterable[str]] = None,
+                 plugin_blacklist: Optional[Iterable[str]] = None,
                  fullscreen: bool = False):
         """
         Args:
@@ -102,14 +104,23 @@ class CApplication(PyDMApplication):
 
             order = list(map(_convert, toolbar_order))
 
-        self._stored_plugins.extend(self._load_toolbar_plugins(nav_bar_plugin_path, order=order) or [])
-        self._stored_plugins.extend(self._load_menubar_plugins(menu_bar_plugin_path) or [])
-        self._stored_plugins.extend(self._load_status_bar_plugins(status_bar_plugin_path) or [])
+        self._stored_plugins.extend(self._load_toolbar_plugins(nav_bar_plugin_path,
+                                                               order=order,
+                                                               whitelist=plugin_whitelist,
+                                                               blacklist=plugin_blacklist) or [])
+        self._stored_plugins.extend(self._load_menubar_plugins(menu_bar_plugin_path,
+                                                               whitelist=plugin_whitelist,
+                                                               blacklist=plugin_blacklist) or [])
+        self._stored_plugins.extend(self._load_status_bar_plugins(status_bar_plugin_path,
+                                                                  whitelist=plugin_whitelist,
+                                                                  blacklist=plugin_blacklist) or [])
         # TODO: Add exit menu item
 
     def _load_toolbar_plugins(self,
                               cmd_line_paths: Optional[str],
-                              order: Optional[List[Union[str, CToolbarID]]] = None) -> Optional[List[CPlugin]]:
+                              order: Optional[List[Union[str, CToolbarID]]] = None,
+                              whitelist: Optional[List[str]] = None,
+                              blacklist: Optional[List[str]] = None) -> Optional[List[CPlugin]]:
         toolbar_plugins = CApplication._load_plugins(env_var_path_key='COMRAD_TOOLBAR_PLUGIN_PATH',
                                                      cmd_line_paths=cmd_line_paths,
                                                      shipped_plugin_path='toolbar',
@@ -123,16 +134,9 @@ class CApplication(PyDMApplication):
 
         stored_plugins: List[CPlugin] = []
 
-        for plugin_type in toolbar_plugins.values():
-            plugin: Union[CToolbarActionPlugin, CToolbarWidgetPlugin]
-            try:
-                plugin_id: str = getattr(plugin_type, 'toolbar_id')
-                if not plugin_id:
-                    raise AttributeError
-            except ValueError:
-                logger.exception(f'All toolbar plugins must have a "toolbar_id" class attribute.')
-                continue
-
+        for plugin_id, plugin_type in CApplication._filter_enabled_plugins(plugins=toolbar_plugins.values(),
+                                                                           blacklist=blacklist,
+                                                                           whitelist=whitelist):
             if order is not None and plugin_id not in order:
                 logger.debug(f'Skipping init for "{plugin_type.__name__}", as it is not going to be used.')
                 # Do not instantiate a plugin that is not going to be used
@@ -159,7 +163,7 @@ class CApplication(PyDMApplication):
                 stored_plugins.append(widget_plugin)
                 plugin = widget_plugin
 
-            setattr(item, 'toolbar_id', plugin_id)
+            setattr(item, 'plugin_id', plugin_id)
 
             (toolbar_left if cast(CPositionalPlugin, plugin).position == CPluginPosition.LEFT
              else toolbar_right).append(item)
@@ -191,7 +195,7 @@ class CApplication(PyDMApplication):
                 if isinstance(next_id, str):
                     try:
                         next_item = next((item for item in chain(toolbar_left, toolbar_right)
-                                          if getattr(item, 'toolbar_id') == next_id))
+                                          if getattr(item, 'plugin_id') == next_id))
                         logger.debug(f'Adding toolbar item "{next_id}"')
                     except StopIteration:
                         logger.warning(f'Cannot find "{next_id}" amongst available '
@@ -257,7 +261,10 @@ class CApplication(PyDMApplication):
                 menu = self._get_or_create_menu(name=sub_name, parent=menu, full_path=full_path)
             return menu
 
-    def _load_menubar_plugins(self, cmd_line_paths: Optional[str]) -> Optional[List[CPlugin]]:
+    def _load_menubar_plugins(self,
+                              cmd_line_paths: Optional[str],
+                              whitelist: Optional[List[str]] = None,
+                              blacklist: Optional[List[str]] = None) -> Optional[List[CPlugin]]:
         menubar_plugins = CApplication._load_plugins(env_var_path_key='COMRAD_MENUBAR_PLUGIN_PATH',
                                                      cmd_line_paths=cmd_line_paths,
                                                      shipped_plugin_path='menu',
@@ -267,7 +274,9 @@ class CApplication(PyDMApplication):
 
         stored_plugins: List[CPlugin] = []
 
-        for plugin_type in menubar_plugins.values():
+        for _, plugin_type in CApplication._filter_enabled_plugins(plugins=menubar_plugins.values(),
+                                                                   whitelist=whitelist,
+                                                                   blacklist=blacklist):
             plugin: CMenuBarPlugin = plugin_type()
             try:
                 menu = self._get_or_create_menu(name=plugin.top_level())
@@ -290,7 +299,10 @@ class CApplication(PyDMApplication):
 
         return stored_plugins
 
-    def _load_status_bar_plugins(self, cmd_line_paths: Optional[str]) -> Optional[List[CPlugin]]:
+    def _load_status_bar_plugins(self,
+                                 cmd_line_paths: Optional[str],
+                                 whitelist: Optional[List[str]] = None,
+                                 blacklist: Optional[List[str]] = None) -> Optional[List[CPlugin]]:
         status_bar_plugins = CApplication._load_plugins(env_var_path_key='COMRAD_STATUSBAR_PLUGIN_PATH',
                                                         cmd_line_paths=cmd_line_paths,
                                                         shipped_plugin_path='statusbar',
@@ -302,7 +314,9 @@ class CApplication(PyDMApplication):
         status_bar_right: List[Tuple[QWidget, bool]] = []  # Items succeeding spacer
 
         stored_plugins: List[CPlugin] = []
-        for plugin_type in status_bar_plugins.values():
+        for _, plugin_type in CApplication._filter_enabled_plugins(plugins=status_bar_plugins.values(),
+                                                                   whitelist=whitelist,
+                                                                   blacklist=blacklist):
             plugin = cast(CStatusBarPlugin, plugin_type())
             widget = plugin.create_widget()
             item = (widget, plugin.is_permanent)
@@ -349,6 +363,38 @@ class CApplication(PyDMApplication):
         return load_plugins_from_path(locations=locations,
                                       token='_plugin.py',
                                       base_type=base_type)
+
+    @staticmethod
+    def _filter_enabled_plugins(plugins: Iterable[Type],
+                                whitelist: Optional[Iterable[str]],
+                                blacklist: Optional[Iterable[str]]):
+
+        def extract_type_attr(plugin_class: Type, attr_name: str):
+            val = getattr(plugin_class, attr_name, None)
+            if val is None or (not isinstance(val, bool) and not val):
+                # Allow False, but do not allow empty strings, lists, etc
+                logger.exception(f'Plugin "{plugin_class.__name__}" is missing "{attr_name}" class attribute '
+                                 f'that is essential for all toolbar plugins')
+                raise AttributeError
+            return val
+
+        for plugin_type in plugins:
+            try:
+                plugin_id: str = extract_type_attr(plugin_type, 'plugin_id')
+                is_enabled: bool = extract_type_attr(plugin_type, 'enabled')
+            except AttributeError:
+                continue
+
+            if not is_enabled and whitelist and plugin_id in whitelist:
+                is_enabled = True
+                logger.debug(f'Enabling whitelisted plugin "{plugin_type.__name__}"')
+            elif is_enabled and blacklist and plugin_id in blacklist:
+                is_enabled = False
+                logger.debug(f'Disabling blacklisted plugin "{plugin_type.__name__}"')
+
+            if not is_enabled:
+                continue
+            yield plugin_id, plugin_type
 
 
 class CAction(QAction):
