@@ -312,13 +312,9 @@ class _JapcConnection(PyDMConnection):
     def _on_japc_status_changed(self, connected: bool):
         is_first_connection = self.listener_count == 1
         prev_connected = self.connected
-        if connected:
+        if not prev_connected and connected:
             connected = self._create_subscription(is_new=is_first_connection)
-        self._send_connection_state(connected)
-        if connected and not prev_connected:
-            logger.info(f'{self.protocol}://{self.address} connected!')
-        elif not connected and prev_connected:
-            logger.info(f'{self.protocol}://{self.address} disconnected!')
+            self._send_connection_state(connected)
 
 
 class JapcPlugin(PyDMPlugin):
