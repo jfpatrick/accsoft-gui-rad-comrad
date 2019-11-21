@@ -146,13 +146,32 @@ QSlider::sub-page:horizontal:disabled {
 QWidget {
     /* border-radius: 5px 5px 5px 5px; */
     background-color: rgb(53,53,53);
+    color: rgb(180,180,180);
+}
+
+QAction {
+    color: rgb(180, 180, 180);
+}
+
+QMenu::item,
+#menubar {
+    color: rgb(180, 180, 180);
+}
+
+QMenu::item:selected,
+#menubar {
+    background-color: rgb(45, 45, 45);
+}
+
+#navbar {
+    border-bottom: 1px solid rgb(42, 42, 42);
 }
 
 #titleBar {
     border: 0px none rgb(42,42,42);
     border-top-left-radius: 5px;
     border-top-right-radius: 5px;
-    background-color: rgb(53,53,53);
+    background-color: rgb(64,64,64);
     height: 24px;
 }
 
