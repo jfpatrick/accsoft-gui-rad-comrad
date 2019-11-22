@@ -4,12 +4,13 @@ from pydm.widgets.pushbutton import PyDMPushButton
 from qtpy.QtCore import Property, Signal
 from qtpy.QtWidgets import QWidget
 from qtpy.QtGui import QIcon
+from ..rules import WidgetRulesMixin
 
 
 logger = logging.getLogger(__name__)
 
 
-class CToggleButton(PyDMPushButton):
+class CToggleButton(WidgetRulesMixin, PyDMPushButton):
 
     inverseToggled = Signal([bool])
 
@@ -32,39 +33,55 @@ class CToggleButton(PyDMPushButton):
             init_channel: The channel to be used by the widget.
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
-        super().__init__(parent=parent,
-                         label=label,
-                         icon=icon,
-                         pressValue=pressValue,
-                         relative=relative,
-                         init_channel=init_channel,
-                         **kwargs)
+        WidgetRulesMixin.__init__(self)
+        PyDMPushButton.__init__(self,
+                                parent=parent,
+                                label=label,
+                                icon=icon,
+                                pressValue=pressValue,
+                                relative=relative,
+                                init_channel=init_channel,
+                                **kwargs)
         super().setCheckable(True)
         self._unchecked_text: str = self.text
         self._checked_text: str = self.text
         self.toggled.connect(self._on_checked)
 
-    def getCheckedText(self) -> str:
+    def _getCheckedText(self) -> str:
         return self._checked_text
 
     def setCheckedText(self, new_val: str):
+        """
+        Sets text for the button in the "checked" state.
+
+        Args:
+            new_val: New text.
+        """
         if new_val != self._checked_text:
             self._checked_text = new_val
             self._on_checked(self.isChecked())
 
     # This is the way to preserve 'setCheckedText' as a method, while maintaining checkedText property-style assignment
-    checkedText = Property(str, getCheckedText, setCheckedText)
+    checkedText: str = Property(str, _getCheckedText, setCheckedText)
+    """Text for the button in the "checked" state."""
 
-    def getUncheckedText(self) -> str:
+    def _getUncheckedText(self) -> str:
         return self._unchecked_text
 
     def setUncheckedText(self, new_val: str):
+        """
+        Sets text for the button in the "unchecked" state.
+
+        Args:
+            new_val: New text.
+        """
         if new_val != self._unchecked_text:
             self._unchecked_text = new_val
             self._on_checked(self.isChecked())
 
     # This is the way to preserve 'setUncheckedText' as a method, while maintaining checkedText property-style assignment
-    uncheckedText = Property(str, getUncheckedText, setUncheckedText)
+    uncheckedText: str = Property(str, _getUncheckedText, setUncheckedText)
+    """Text for the button in the "unchecked" state."""
 
     @Property(bool, designable=False)
     def checkable(self):

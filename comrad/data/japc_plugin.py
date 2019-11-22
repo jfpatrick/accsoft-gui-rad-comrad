@@ -5,8 +5,13 @@ import numpy as np
 from pydm.data_plugins import is_read_only
 from pydm.data_plugins.plugin import PyDMPlugin, PyDMConnection
 from qtpy.QtCore import Qt, QObject, Slot, Signal, QVariant
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, cast
 from collections import namedtuple
+from comrad.qt.application import CApplication
+from comrad.qt.rbac import RBACLoginStatus
+
+
+logger = logging.getLogger(__name__)
 
 
 # Unfortunately, we cannot import
@@ -26,8 +31,10 @@ class PyDMChannel:
         pass
 
 
-class _JapcService(pyjapc.PyJapc):
+class _JapcService(QObject, pyjapc.PyJapc):
     """Singleton instance to avoid RBAC login for multiple Japc connections."""
+
+    japc_status_changed = Signal(bool)
 
     def __init__(self,
                  selector: str,
@@ -37,48 +44,81 @@ class _JapcService(pyjapc.PyJapc):
                  logLevel: Optional[int] = None,
                  *args,
                  **kwargs):
-        super().__init__(selector=selector,
-                         incaAcceleratorName=incaAcceleratorName,
-                         noSet=noSet,
-                         timeZone=timeZone,
-                         logLevel=logLevel,
-                         *args,
-                         **kwargs)
-        self._loggedIn: bool = False
+        QObject.__init__(self)
+        pyjapc.PyJapc.__init__(self,
+                               selector=selector,
+                               incaAcceleratorName=incaAcceleratorName,
+                               noSet=noSet,
+                               timeZone=timeZone,
+                               logLevel=logLevel,
+                               *args,
+                               **kwargs)
+        self._logged_in: bool = False
+        self._app = cast(CApplication, CApplication.instance())
+        self._app.rbac.rbac_logout_user.connect(self.rbacLogout)
+        self._app.rbac.rbac_login_user.connect(self.login_by_credentials)
+        self._app.rbac.rbac_login_by_location.connect(self.login_by_location)
 
-    def try_rbac_login(self):
-        """
-        Attempts to login by location first and only then uses RBAC dialog if required.
+    def login_by_location(self):
+        self.rbacLogin()
+        if self._logged_in:
+            self._app.rbac.user = self.rbacGetToken().getUser().getName()  # FIXME: This is Java call. We need to abstract it into PyRBAC
+            self._app.rbac.status = RBACLoginStatus.LOGGED_IN_BY_LOCATION
+        else:
+            # FIXME: Need to communicate login error here and display it in RBAC dialog
+            pass
 
-        This method sets internal login state to avoid repeated login attempts in the future.
-        """
+    def login_by_credentials(self, username: str, password: str):
+        self.rbacLogin(username=username, password=password)
+        if self._logged_in:
+            self._app.rbac.user = self.rbacGetToken().getUser().getName()  # FIXME: This is Java call. We need to abstract it into PyRBAC
+            self._app.rbac.status = RBACLoginStatus.LOGGED_IN_BY_CREDENTIALS
+        else:
+            # FIXME: Need to communicate login error here and display it in RBAC dialog
+            pass
 
-        # Avoid multiple login attempts
-        if self._loggedIn:
+    @property
+    def logged_in(self):
+        return self._logged_in
+
+    def rbacLogin(self,
+                  username: Optional[str] = None,
+                  password: Optional[str] = None,
+                  loginDialog: bool = False,
+                  readEnv: bool = True):
+        if self._logged_in:
             return
         try:
-            self.rbacLogin()
-        except Exception:
-            self.log.info('RBAC login without credentials failed. Trying to connect with a dialog...')
-            self.rbacLogin(loginDialog=True)
-        self._loggedIn = True
+            super().rbacLogin(username=username,
+                              password=password,
+                              loginDialog=loginDialog,
+                              readEnv=readEnv)
+            self._set_online(True)
+        except BaseException:
+            self._set_online(False)
 
     def rbacLogout(self):
-        if self._loggedIn:
+        if self._logged_in:
             super().rbacLogout()
-            self._loggedIn = False
+            self._set_online(False)
 
     def setParam(self, *args, **kwargs):
-        if not self._loggedIn:
-            self.log.warning('Cannot set param because RBAC was not passed previously')
+        if not self._logged_in:
+            logger.warning('Cannot set param because RBAC was not passed previously')
         else:
             super().setParam(*args, **kwargs)
 
     def stopSubscriptions(self, parameterName: Optional[str] = None, selector: Optional[str] = None):
         super().stopSubscriptions(parameterName=parameterName, selector=selector)
         if not self._subscriptionHandleDict:
-            self.log.info(f'Last subscription was removed from JAPC. Logging out.')
+            logger.info(f'Last subscription was removed from JAPC. Logging out.')
             self.rbacLogout()
+
+    def _set_online(self, logged_in: bool):
+        self._logged_in = logged_in
+        self.japc_status_changed.emit(logged_in)
+        if not logged_in:
+            self._app.rbac.status = RBACLoginStatus.LOGGED_OUT
 
 
 _japc: Optional[_JapcService] = None
@@ -117,13 +157,11 @@ class _JapcConnection(PyDMConnection):
                          parent=parent,
                          *args,
                          **kwargs)
-        logging.basicConfig()
-        self.log: logging.Logger = logging.getLogger(__package__)
-
         self._device_prop = self.address[1:] if self.address.startswith('/') else self.address
 
         self._selector: Optional[str] = None
         self._japc_additional_args = {}
+        get_japc().japc_status_changed.connect(self._on_japc_status_changed)
         parsed_addr = split_device_property(self._device_prop)
         if parsed_addr.selector:
             self._device_prop = parsed_addr.address
@@ -132,6 +170,7 @@ class _JapcConnection(PyDMConnection):
         self.add_listener(channel)
 
     def add_listener(self, channel: PyDMChannel):
+        logger.debug(f'Adding a listener for "{self.address}"')
         is_first_connection: bool = self.listener_count == 0
 
         # Superclass does not implement signal for bool values
@@ -151,31 +190,33 @@ class _JapcConnection(PyDMConnection):
 
         super().add_listener(channel)
 
+        # Allow write to all widgets by default. Write permissions are defined in CCDB,
+        # which pyjapc does not have access to, so we can't know if a property is writable at the moment
+        # TODO: This should be considering CCDA
+        self.write_access_signal.emit(not is_read_only())
+
         if channel.value_signal is not None:
-            self.log.info(f'Adding write callback for {self.address}')
+            logger.debug(f'Adding write callback for "{self.address}"')
             self._connect_write_slots(channel.value_signal)
 
-        if is_first_connection:
-            self.connected = self._connect_to_japc()
-            self._send_connection_state(self.connected)
-            if self.connected:
-                self.log.info(f'{self.protocol}://{self.address} connected!')
+        connected: bool
+        japc = get_japc()
+        if is_first_connection and not japc.logged_in:
+            logger.debug(f'Attempting login by location on the first connection to "{self.address}"')
+            try:
+                japc.login_by_location()
+            except BaseException:
+                logger.info('Login by location failed. User will have to manually acquire RBAC token.')
         else:
-            # Artificially emit a single value to allow the UI update once because subscription
-            # is not initiated here, thus we are not getting initial values
-            get_japc().getParam(parameterName=self._device_prop, onValueReceived=self._on_async_get, **self._japc_additional_args)
-
-        if is_read_only():
-            self.write_access_signal.emit(False)
-        else:
-            # Allow write to all widgets by default. Write permissions are defined in CCDB,
-            # which pyjapc does not have access to, so we can't know if a property is writable at the moment
-            self.write_access_signal.emit(True)
+            # Callback will not be received because login is not attempted
+            # So we need to attach subscriptions manually
+            logger.debug(f'Artificially notifying JAPC plugin connection change')
+            self._on_japc_status_changed(connected=japc.logged_in)
 
     def remove_listener(self, channel: PyDMChannel, destroying: bool = False):
         # Superclass does not implement signal for bool values
         if not destroying:
-            self.log.info(f'Removing one of the listeners for {self.protocol}://{self.address}')
+            logger.info(f'Removing one of the listeners for {self.protocol}://{self.address}')
             if channel.value_slot is not None:
                 try:
                     self.new_value_signal[bool].disconnect(channel.value_slot)
@@ -192,12 +233,12 @@ class _JapcConnection(PyDMConnection):
             if channel.value_signal is not None:
                 channel.value_signal.disconnect(self._on_value_updated)
         else:
-            self.log.info(f'Removing a listener for {self.protocol}://{self.address} and destroying channel connection')
+            logger.info(f'Removing a listener for {self.protocol}://{self.address} and destroying channel connection')
         super().remove_listener(channel=channel, destroying=destroying)
 
     def close(self):
         if self.connected:
-            self.log.info(f'Stopping JAPC subscriptions for {self.address}')
+            logger.info(f'Stopping JAPC subscriptions for {self.address}')
             get_japc().stopSubscriptions(parameterName=self._device_prop,
                                          selector=self._selector)
         super().close()
@@ -205,7 +246,7 @@ class _JapcConnection(PyDMConnection):
     def _on_async_get(self, initial_value: Any):
         self._send_connection_state(self.connected)
         self._on_value_received(parameterName=self._device_prop, value=initial_value)
-        self.log.info(f'Added one more listener to {self.protocol}://{self.address}')
+        logger.info(f'Added one more listener to {self.protocol}://{self.address}')
 
     def _connect_write_slots(self, signal: Signal):
         try:
@@ -235,7 +276,7 @@ class _JapcConnection(PyDMConnection):
         try:
             self.new_value_signal[type(value)].emit(value)
         except KeyError:
-            self.log.warning(f'Cannot propagate JAPC value ({type(value)}) to the widget. '
+            logger.warning(f'Cannot propagate JAPC value ({type(value)}) to the widget. '
                              f'Signal override is not defined.')
 
     def _on_value_updated(self, new_val: Any):
@@ -244,32 +285,46 @@ class _JapcConnection(PyDMConnection):
                             **self._japc_additional_args)
 
     def _send_connection_state(self, connected: bool):
+        logger.debug(f'Notifying JAPC plugin connection state: {connected}')
+        self.connected = connected
         self.connection_state_signal.emit(connected)
 
-    def _connect_to_japc(self) -> bool:
+    def _create_subscription(self, is_new: bool) -> bool:
         japc = get_japc()
-
-        try:
-            japc.try_rbac_login()
-        except BaseException as e:
-            self.log.error(f'RBAC login failed. Check your permissions. Underlying error: {str(e)}')
-            return False
-
-        try:
-            japc.subscribeParam(parameterName=self._device_prop,
-                                onValueReceived=self._on_value_received,
-                                **self._japc_additional_args)
-            japc.startSubscriptions(parameterName=self._device_prop,
-                                    selector=self._selector)
-        except Exception as e:
-            self.log.error(f'Unexpected error while subscribing to {self.address}'
-                           '. Please verify the parameters and make sure the address is in the form'
-                           f"'{self.protocol}://device/property#field@selector' or"
-                           f"'{self.protocol}://device/prop#field' or"
-                           f"'{self.protocol}://device/property'. Underlying problem: {str(e)}")
-            return False
-
+        if is_new:
+            logger.debug(f'Creating new subscription for "{self.address}"')
+            try:
+                japc.subscribeParam(parameterName=self._device_prop,
+                                    onValueReceived=self._on_value_received,
+                                    **self._japc_additional_args)
+                japc.startSubscriptions(parameterName=self._device_prop,
+                                        selector=self._selector)
+            except Exception as e:
+                logger.error(f'Unexpected error while subscribing to {self.address}'
+                               '. Please verify the parameters and make sure the address is in the form'
+                               f"'{self.protocol}://device/property#field@selector' or"
+                               f"'{self.protocol}://device/prop#field' or"
+                               f"'{self.protocol}://device/property'. Underlying problem: {str(e)}")
+                return False
+        else:
+            logger.debug(f'Not re-creating subscription for "{self.address}" but issuing a GET')
+            # Artificially emit a single value to allow the UI update once because subscription
+            # is not initiated here, thus we are not getting initial values
+            japc.getParam(parameterName=self._device_prop,
+                          onValueReceived=self._on_async_get,
+                          **self._japc_additional_args)
         return True
+
+    def _on_japc_status_changed(self, connected: bool):
+        is_first_connection = self.listener_count == 1
+        prev_connected = self.connected
+        if not prev_connected and connected:
+            logger.debug(f'JAPC connection changed to "connected", notifying...')
+            connected = self._create_subscription(is_new=is_first_connection)
+            self._send_connection_state(connected)
+        else:
+            # Just an artificial notification for those who subscribed later
+            self._send_connection_state(self.connected)
 
 
 class JapcPlugin(PyDMPlugin):
