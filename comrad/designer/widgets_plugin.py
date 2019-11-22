@@ -2,17 +2,16 @@
 Plugins for Qt Designer that are visible ComRAD widgets.
 """
 import functools
-from typing import List, Optional
 from qtpy.QtWidgets import QAction
-from pydm.widgets.tab_bar_qtplugin import TabWidgetPlugin as PyDMTabWidgetPlugin
+# from pydm.widgets.tab_bar_qtplugin import TabWidgetPlugin as PyDMTabWidgetPlugin
 from pydm.widgets.qtplugin_extensions import RulesExtension, PyDMExtension
 from comrad.utils import icon
 from comrad.designer.utils import qtplugin_factory
 from comrad.designer.rules_editor import NewRulesEditor as RulesEditor
 from comrad.qt.cern_widgets.graph import CScrollingPlot, CSlidingPlot, CPlottingItemEditorExtension
 from comrad.qt.widgets import CToggleButton, CValueAggregator
-from comrad.qt.pydm_widgets import (CTabWidget, CScaleIndicator, CLogDisplay, CImageView, CEnumComboBox, CSlider,
-                                    CSpinBox, CLabel, CByteIndicator, CLineEdit, CTemplateRepeater, CFrame,
+from comrad.qt.pydm_widgets import (CScaleIndicator, CLogDisplay, CImageView, CEnumComboBox, CSlider,
+                                    CSpinBox, CLabel, CByteIndicator, CLineEdit, CTemplateRepeater,
                                     CEmbeddedDisplay, CShellCommand, CRelatedDisplayButton, CPushButton, CEnumButton,
                                     CWaveFormTable, CCheckBox)
 import comrad
@@ -46,6 +45,7 @@ print('\n\n'
       '\n')
 
 _BASE_EXTENSIONS = [RulesExtension]
+_PLOT_EXTENSIONS = [CPlottingItemEditorExtension]
 
 # Currently the groups are made so that new widgets blend into the standard PyQt widgets
 _COMRAD_GROUP_CONTAINER = 'Containers'  # 'ComRAD Container Widgets'
@@ -72,17 +72,18 @@ def _toggle_btn_init(widget: CToggleButton):
 
 EnumButton = qtplugin_factory(CEnumButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('enum_btn'), extensions=_BASE_EXTENSIONS, on_widget_create=_enum_btn_init)
 PushButton = qtplugin_factory(CPushButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('push_btn'), extensions=_BASE_EXTENSIONS, on_widget_create=lambda w: w.setText('RAD PushButton'))
-RelatedDisplayButton = qtplugin_factory(CRelatedDisplayButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('related_display'), extensions=_BASE_EXTENSIONS)
-ShellCommand = qtplugin_factory(CShellCommand, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('shell_cmd'), extensions=_BASE_EXTENSIONS)
+RelatedDisplayButton = qtplugin_factory(CRelatedDisplayButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('related_display'))
+ShellCommand = qtplugin_factory(CShellCommand, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('shell_cmd'))
 ToggleButton = qtplugin_factory(CToggleButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('toggle'), extensions=_BASE_EXTENSIONS, on_widget_create=_toggle_btn_init)
 
 # Item Widgets
 WaveformTable = qtplugin_factory(CWaveFormTable, group=_COMRAD_GROUP_ITEM_VIEWS, icon=load_icon('waveform_table'), extensions=_BASE_EXTENSIONS)
 
 # Containers
-Frame = qtplugin_factory(CFrame, group=_COMRAD_GROUP_CONTAINER, icon=load_icon('frame'), is_container=True, extensions=_BASE_EXTENSIONS)
-EmbeddedDisplay = qtplugin_factory(CEmbeddedDisplay, group=_COMRAD_GROUP_CONTAINER, icon=load_icon('embedded_display'), extensions=_BASE_EXTENSIONS)
-TemplateRepeater = qtplugin_factory(CTemplateRepeater, group=_COMRAD_GROUP_CONTAINER, icon=load_icon('template_repeater'), extensions=_BASE_EXTENSIONS)
+# TODO: What is CFrame useful for?
+# Frame = qtplugin_factory(CFrame, group=_COMRAD_GROUP_CONTAINER, icon=load_icon('frame'), is_container=True, extensions=_BASE_EXTENSIONS)
+EmbeddedDisplay = qtplugin_factory(CEmbeddedDisplay, group=_COMRAD_GROUP_CONTAINER, icon=load_icon('embedded_display'))
+TemplateRepeater = qtplugin_factory(CTemplateRepeater, group=_COMRAD_GROUP_CONTAINER, icon=load_icon('template_repeater'))
 
 # Input Widgets
 EnumComboBox = qtplugin_factory(CEnumComboBox, group=_COMRAD_GROUP_INPUT, icon=load_icon('combobox'), extensions=_BASE_EXTENSIONS)
@@ -98,30 +99,31 @@ LogDisplay = qtplugin_factory(CLogDisplay, group=_COMRAD_GROUP_DISPLAY, icon=loa
 ScaleIndicator = qtplugin_factory(CScaleIndicator, group=_COMRAD_GROUP_DISPLAY, icon=load_icon('scale_indicator'), extensions=_BASE_EXTENSIONS)
 
 # Charts
-ScrollingPlot = qtplugin_factory(CScrollingPlot, group=_COMRAD_GROUP_PLOT, icon=load_icon('graph_scrolling_plot'), extensions=[CPlottingItemEditorExtension])
-SlidingPlot = qtplugin_factory(CSlidingPlot, group=_COMRAD_GROUP_PLOT, icon=load_icon('graph_sliding_plot'), extensions=[CPlottingItemEditorExtension])
+ScrollingPlot = qtplugin_factory(CScrollingPlot, group=_COMRAD_GROUP_PLOT, icon=load_icon('graph_scrolling_plot'), extensions=_PLOT_EXTENSIONS)
+SlidingPlot = qtplugin_factory(CSlidingPlot, group=_COMRAD_GROUP_PLOT, icon=load_icon('graph_sliding_plot'), extensions=_PLOT_EXTENSIONS)
 
 # Invisible
 ValueAggregator = qtplugin_factory(CValueAggregator, group=_COMRAD_GROUP_VIRTUAL, icon=load_icon('calc'))
 
 
-# Tab Widget plugin
-class TabWidgetPlugin(PyDMTabWidgetPlugin):
-    """Qt Designer Plugin for CTabWidget"""
-    TabClass = CTabWidget
-
-    def __init__(self, extensions: Optional[List[RulesExtension]] = None):
-        # Overrides the hardcoded gorup of TabWidgetPlugin to the custom one
-        # This needs to be done via init, because event with the change to PyDMTabWidgetPlugin,
-        # group appeared to be unchanged.
-        super().__init__(extensions=extensions)
-        self._group = _COMRAD_GROUP_CONTAINER
-
-    def icon(self):
-        return load_icon('tab_widget')
-
-
-TabWidget = TabWidgetPlugin(extensions=_BASE_EXTENSIONS)  # pylint: disable=invalid-name
-
-# This has to be removed, otherwise it will also appear in Qt Designer
-del PyDMTabWidgetPlugin
+# # Tab Widget plugin
+# TODO: Figure out what it's used for and if we need it
+# class TabWidgetPlugin(PyDMTabWidgetPlugin):
+#     """Qt Designer Plugin for CTabWidget"""
+#     TabClass = CTabWidget
+#
+#     def __init__(self, extensions: Optional[List[RulesExtension]] = None):
+#         # Overrides the hardcoded gorup of TabWidgetPlugin to the custom one
+#         # This needs to be done via init, because event with the change to PyDMTabWidgetPlugin,
+#         # group appeared to be unchanged.
+#         super().__init__(extensions=extensions)
+#         self._group = _COMRAD_GROUP_CONTAINER
+#
+#     def icon(self):
+#         return load_icon('tab_widget')
+#
+#
+# TabWidget = TabWidgetPlugin(extensions=_BASE_EXTENSIONS)  # pylint: disable=invalid-name
+#
+# # This has to be removed, otherwise it will also appear in Qt Designer
+# del PyDMTabWidgetPlugin

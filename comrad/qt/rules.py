@@ -39,6 +39,12 @@ class WidgetRulesMixin:
     # __CHANNEL_SETTER_SUBSTITUTED: bool = False
 
     def default_rule_channel(self) -> str:
+        """
+        Default channel to be used in the rule evaluation.
+
+        Returns:
+            Address of the channel.
+        """
         try:
             return PyDMWidget.channel.fget(self)  # cast(PyDMWidget, self).channel
         except AttributeError:

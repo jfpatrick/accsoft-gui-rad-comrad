@@ -35,7 +35,7 @@ As a way of hiding these auxiliary widgets from the user, we group them in a spe
 in widget box.
 """
 from comrad.qt.pydm_widgets import (PyDMLabel, PyDMCheckbox, PyDMEnumButton, PyDMPushButton, PyDMRelatedDisplayButton,
-                                    PyDMShellCommand, PyDMWaveformTable, PyDMFrame, PyDMEmbeddedDisplay,
+                                    PyDMShellCommand, PyDMWaveformTable, PyDMEmbeddedDisplay,
                                     PyDMTemplateRepeater, PyDMEnumComboBox, PyDMLineEdit, PyDMSlider, PyDMSpinbox,
                                     PyDMByteIndicator, PyDMImageView, PyDMLogDisplay, PyDMScaleIndicator, PyDMTabWidget)
 from comrad.designer.utils import qtplugin_factory
@@ -56,7 +56,8 @@ PyDMPushButton_ = qtplugin_factory(PyDMPushButton, group=_COMRAD_GROUP_HIDDEN_IT
 PyDMRelatedDisplayButton_ = qtplugin_factory(PyDMRelatedDisplayButton, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 PyDMShellCommand_ = qtplugin_factory(PyDMShellCommand, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 PyDMWaveformTable_ = qtplugin_factory(PyDMWaveformTable, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-PyDMFrame_ = qtplugin_factory(PyDMFrame, group=_COMRAD_GROUP_HIDDEN_ITEMS)
+# TODO: Uncomment if CFrame is needed
+# PyDMFrame_ = qtplugin_factory(PyDMFrame, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 PyDMEmbeddedDisplay_ = qtplugin_factory(PyDMEmbeddedDisplay, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 PyDMTemplateRepeater_ = qtplugin_factory(PyDMTemplateRepeater, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 PyDMEnumComboBox_ = qtplugin_factory(PyDMEnumComboBox, group=_COMRAD_GROUP_HIDDEN_ITEMS)
