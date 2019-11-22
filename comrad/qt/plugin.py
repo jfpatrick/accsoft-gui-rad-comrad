@@ -47,7 +47,32 @@ class CActionPlugin(CPlugin, metaclass=abc.ABCMeta):
         pass
 
 
-class CToolbarActionPlugin(CActionPlugin, CPositionalPlugin, metaclass=abc.ABCMeta):
+class CToolbarID(Enum):
+
+    SEPARATOR = 'comrad.sep'
+    "Toolbar separator"
+
+    NAV_BACK = 'comrad.back'
+    "Navigation button back"
+
+    NAV_FORWARD = 'comrad.fwd'
+    "Navigation button forward"
+
+    NAV_HOME = 'comrad.home'
+    "Navigation button Home"
+
+    SPACER = 'comrad.spacer'
+    "Separating empty space between left-aligned toolbar items and right-aligned ones."
+
+
+class CToolbarPlugin(metaclass=abc.ABCMeta):
+    """Base class for toolbar ComRAD plugins."""
+
+    toolbar_id: str = ''
+    "Reverse domain string that represents the unique ID of the plugin class."
+
+
+class CToolbarActionPlugin(CActionPlugin, CPositionalPlugin, CToolbarPlugin, metaclass=abc.ABCMeta):
     """Base class for action-based ComRAD toolbar plugins."""
     pass
 
@@ -59,6 +84,11 @@ class CWidgetPlugin(CPlugin, CPositionalPlugin, metaclass=abc.ABCMeta):
     def create_widget(self) -> QWidget:
         """Instantiate a widget to be rendered in GUI."""
         pass
+
+
+class CToolbarWidgetPlugin(CWidgetPlugin, CToolbarPlugin, metaclass=abc.ABCMeta):
+    """Base class for widget-based ComRAD toolbar plugins."""
+    pass
 
 
 class CMenuBarPlugin(CPlugin, metaclass=abc.ABCMeta):

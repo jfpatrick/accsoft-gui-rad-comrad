@@ -6,7 +6,7 @@ import argcomplete
 import logging
 import os
 import sys
-from typing import Optional
+from typing import Optional, Iterable, cast
 from pydm.utilities.macro import parse_macro_string
 from comrad import __version__, CApplication
 from comrad.examples.__main__ import populate_parser as populate_examples_parser, run_browser as run_examples_browser
@@ -150,10 +150,6 @@ def _run_subcommand(parser: argparse.ArgumentParser):
                                        '(This option will override --stylesheet flag).')
 
     plugin_group = parser.add_argument_group('Extensions')
-    plugin_group.add_argument('--nav-plugin-path',
-                              metavar='PATH',
-                              help='Specify the full path to a directory containing toolbar ComRAD plugins.',
-                              default=None)
     plugin_group.add_argument('--status-plugin-path',
                               metavar='PATH',
                               help='Specify the full path to a directory containing status bar ComRAD plugins.',
@@ -161,6 +157,25 @@ def _run_subcommand(parser: argparse.ArgumentParser):
     plugin_group.add_argument('--menu-plugin-path',
                               metavar='PATH',
                               help='Specify the full path to a directory containing menu bar ComRAD plugins.',
+                              default=None)
+    plugin_group.add_argument('--nav-plugin-path',
+                              metavar='PATH',
+                              help='Specify the full path to a directory containing toolbar ComRAD plugins.',
+                              default=None)
+    plugin_group.add_argument('--nav-bar-order',
+                              metavar='ORDER',
+                              help='Specify the order of items to appear in the navigation bar. Plugins must be '
+                                   'visible to the application (make sure to specify --nav-plugin-path or '
+                                   'COMRAD_TOOLBAR_PLUGIN_PATH for any custom plugins). The order must be a comma-'
+                                   'separated string with plugin IDs. For native items, use following identifiers:'
+                                   ' - "Back" button: comrad.back'
+                                   ' - "Forward" button: comrad.fwd'
+                                   ' - "Home" button: comrad.home'
+                                   ' - Toolbar separator: comrad.sep'
+                                   ' - Toolbar empty space: comrad.spacer'
+                                   ' - RBAC dialog button: comrad.rbac'
+                                   ''
+                                   "Example usage: --nav-bar-order 'comrad.home,comrad.sep,comrad.spacer,comrad.rbac'",
                               default=None)
 
     debug_group = parser.add_argument_group('Debugging')
@@ -227,6 +242,10 @@ def _run_comrad(args: argparse.Namespace):
             # Redefine the level of the root logger
             logger.setLevel(level)
 
+    order: Optional[Iterable[str]] = None
+    if args.nav_bar_order:
+        order = cast(str, args.nav_bar_order).split(',')
+
     stylesheet: Optional[str] = _relative('dark.qss') if args.dark_mode else args.stylesheet
 
     os.environ['PYDM_DATA_PLUGINS_PATH'] = _relative('data')
@@ -245,6 +264,7 @@ def _run_comrad(args: argparse.Namespace):
                        nav_bar_plugin_path=args.nav_plugin_path,
                        status_bar_plugin_path=args.status_plugin_path,
                        menu_bar_plugin_path=args.menu_plugin_path,
+                       toolbar_order=order,
                        stylesheet_path=stylesheet)
     sys.exit(app.exec_())
 

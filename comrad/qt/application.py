@@ -1,5 +1,6 @@
 import os
 import logging
+from itertools import chain
 from typing import Optional, List, Dict, Iterable, Type, Union, cast, Tuple
 from qtpy.QtWidgets import QAction, QMenu, QSpacerItem, QSizePolicy, QWidget, QHBoxLayout
 from qtpy.QtCore import Qt, QObject
@@ -8,8 +9,8 @@ from pydm.main_window import PyDMMainWindow
 from comrad.utils import icon
 from .rbac import RBACState
 from .frame_plugins import load_plugins_from_path
-from .plugin import (CToolbarActionPlugin, CActionPlugin, CWidgetPlugin, CPositionalPlugin,
-                     CPluginPosition, CPlugin, CMenuBarPlugin, CStatusBarPlugin)
+from .plugin import (CToolbarActionPlugin, CActionPlugin, CToolbarWidgetPlugin, CPositionalPlugin, CToolbarID,
+                     CPluginPosition, CPlugin, CMenuBarPlugin, CStatusBarPlugin, CToolbarPlugin)
 
 
 logger = logging.getLogger(__name__)
@@ -34,6 +35,7 @@ class CApplication(PyDMApplication):
                  status_bar_plugin_path: Optional[str] = None,
                  menu_bar_plugin_path: Optional[str] = None,
                  stylesheet_path: Optional[str] = None,
+                 toolbar_order: Optional[Iterable[Union[str, CToolbarID]]] = None,
                  fullscreen: bool = False):
         """
         Args:
@@ -88,19 +90,32 @@ class CApplication(PyDMApplication):
         self.main_window.setWindowTitle('ComRAD Main Window')
         self._stored_plugins: List[CPlugin] = []  # Reference plugins to keep the objects alive
 
-        self._stored_plugins.extend(self._load_toolbar_plugins(nav_bar_plugin_path) or [])
+        order: Optional[Iterable[Union[str, CToolbarID]]] = None
+        if toolbar_order is not None:
+
+            def _convert(identifier: str) -> Union[str, CToolbarID]:
+                try:
+                    return CToolbarID(identifier)
+                except ValueError:
+                    # Not a valid CToolbarID identifier
+                    return identifier
+
+            order = list(map(_convert, toolbar_order))
+
+        self._stored_plugins.extend(self._load_toolbar_plugins(nav_bar_plugin_path, order=order) or [])
         self._stored_plugins.extend(self._load_menubar_plugins(menu_bar_plugin_path) or [])
         self._stored_plugins.extend(self._load_status_bar_plugins(status_bar_plugin_path) or [])
         # TODO: Add exit menu item
 
-    def _load_toolbar_plugins(self, cmd_line_paths: Optional[str]) -> Optional[List[CPlugin]]:
+    def _load_toolbar_plugins(self,
+                              cmd_line_paths: Optional[str],
+                              order: Optional[List[Union[str, CToolbarID]]] = None) -> Optional[List[CPlugin]]:
         toolbar_plugins = CApplication._load_plugins(env_var_path_key='COMRAD_TOOLBAR_PLUGIN_PATH',
                                                      cmd_line_paths=cmd_line_paths,
-                                                     shipped_plugin_path='toolbar')
+                                                     shipped_plugin_path='toolbar',
+                                                     base_type=CToolbarPlugin)
         if not toolbar_plugins:
             return None
-
-        self.main_window.ui.navbar.addSeparator()
 
         toolbar_actions: List[QAction] = []
         toolbar_left: List[Union[QAction, QWidget]] = []  # Items preceding spacer
@@ -109,8 +124,21 @@ class CApplication(PyDMApplication):
         stored_plugins: List[CPlugin] = []
 
         for plugin_type in toolbar_plugins.values():
-            plugin: Union[CToolbarActionPlugin, CWidgetPlugin]
-            if issubclass(plugin_type, CToolbarActionPlugin):
+            plugin: Union[CToolbarActionPlugin, CToolbarWidgetPlugin]
+            try:
+                plugin_id: str = getattr(plugin_type, 'toolbar_id')
+                if not plugin_id:
+                    raise AttributeError
+            except ValueError:
+                logger.exception(f'All toolbar plugins must have a "toolbar_id" class attribute.')
+                continue
+
+            if order is not None and plugin_id not in order:
+                logger.debug(f'Skipping init for "{plugin_type.__name__}", as it is not going to be used.')
+                # Do not instantiate a plugin that is not going to be used
+                continue
+
+            if issubclass(plugin_type, CActionPlugin):
                 action_plugin = cast(CToolbarActionPlugin, plugin_type())
                 item = QAction(self.main_window)
                 item.setShortcutContext(Qt.ApplicationShortcut)
@@ -126,10 +154,12 @@ class CApplication(PyDMApplication):
                 stored_plugins.append(action_plugin)
                 plugin = action_plugin
             else:
-                widget_plugin = cast(CWidgetPlugin, plugin_type())
+                widget_plugin = cast(CToolbarWidgetPlugin, plugin_type())
                 item = widget_plugin.create_widget()
                 stored_plugins.append(widget_plugin)
                 plugin = widget_plugin
+
+            setattr(item, 'toolbar_id', plugin_id)
 
             (toolbar_left if cast(CPositionalPlugin, plugin).position == CPluginPosition.LEFT
              else toolbar_right).append(item)
@@ -138,24 +168,66 @@ class CApplication(PyDMApplication):
             menu = self._get_or_create_menu(name=('Plugins', 'Toolbar'))
             menu.addActions(toolbar_actions)
 
-        def _add_to_nav_bar(items: Iterable[Union[QWidget, QAction]]):
+        def _add_item_to_nav_bar(item: Union[QWidget, QAction]):
             nav_bar = self.main_window.ui.navbar
-            for item in items:
-                if isinstance(item, QWidget):
-                    nav_bar.addWidget(item)
-                elif isinstance(item, QAction):
-                    nav_bar.addAction(item)
+            if isinstance(item, QWidget):
+                nav_bar.addWidget(item)
+            elif isinstance(item, QAction):
+                nav_bar.addAction(item)
 
-        _add_to_nav_bar(toolbar_left)
+        def _add_toolbar_spacer():
+            # Add spacer to compress toolbar items when possible
+            spacer = QWidget()
+            layout = QHBoxLayout()
+            spacer.setLayout(layout)
+            layout.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Preferred))
+            self.main_window.ui.navbar.addWidget(spacer)
 
-        # Add spacer to compress toolbar items when possible
-        spacer = QWidget()
-        layout = QHBoxLayout()
-        spacer.setLayout(layout)
-        layout.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Preferred))
-        self.main_window.ui.navbar.addWidget(spacer)
+        # If we have sequence supplied, we need to re-order toolbar items
+        if order is not None:
+            self.main_window.ui.navbar.clear()
+            stayed_empty = True
+            for next_id in order:
+                if isinstance(next_id, str):
+                    try:
+                        next_item = next((item for item in chain(toolbar_left, toolbar_right)
+                                          if getattr(item, 'toolbar_id') == next_id))
+                        logger.debug(f'Adding toolbar item "{next_id}"')
+                    except StopIteration:
+                        logger.warning(f'Cannot find "{next_id}" amongst available '
+                                       f'toolbar items. It will not be placed')
+                        continue
+                    _add_item_to_nav_bar(next_item)
+                else:
+                    if next_id == CToolbarID.SPACER:
+                        _add_toolbar_spacer()
+                        logger.debug('Adding toolbar spacer')
+                    elif next_id == CToolbarID.SEPARATOR:
+                        self.main_window.ui.navbar.addSeparator()
+                        logger.debug('Adding toolbar separator')
+                    elif next_id == CToolbarID.NAV_BACK:
+                        _add_item_to_nav_bar(self.main_window.ui.actionBack)
+                        logger.debug('Adding toolbar back')
+                    elif next_id == CToolbarID.NAV_FORWARD:
+                        _add_item_to_nav_bar(self.main_window.ui.actionForward)
+                        logger.debug('Adding toolbar forward')
+                    elif next_id == CToolbarID.NAV_HOME:
+                        _add_item_to_nav_bar(self.main_window.ui.actionHome)
+                        logger.debug('Adding toolbar home')
+                    else:
+                        continue
+                stayed_empty = False
 
-        _add_to_nav_bar(toolbar_right)
+            if stayed_empty:
+                logger.info(f'No items are placed in nav bar, it will be hidden by default')
+                self.main_window.toggle_nav_bar(False)  # FIXME: There is a bug in PyDMMainWindow. When navbar is hidden by default, its menu action is marked as checked
+        else:
+            self.main_window.ui.navbar.addSeparator()
+            for item in toolbar_left:
+                _add_item_to_nav_bar(item)
+            _add_toolbar_spacer()
+            for item in toolbar_right:
+                _add_item_to_nav_bar(item)
 
         return stored_plugins
 
