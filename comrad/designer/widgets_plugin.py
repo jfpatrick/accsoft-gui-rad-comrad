@@ -3,10 +3,12 @@ Plugins for Qt Designer that are visible ComRAD widgets.
 """
 import functools
 from typing import List, Optional
+from qtpy.QtWidgets import QAction
 from pydm.widgets.tab_bar_qtplugin import TabWidgetPlugin as PyDMTabWidgetPlugin
-from pydm.widgets.qtplugin_extensions import RulesExtension
+from pydm.widgets.qtplugin_extensions import RulesExtension, PyDMExtension
 from comrad.utils import icon
 from comrad.designer.utils import qtplugin_factory
+from comrad.designer.rules_editor import NewRulesEditor as RulesEditor
 from comrad.qt.cern_widgets.graph import CScrollingPlot, CSlidingPlot, CPlottingItemEditorExtension
 from comrad.qt.widgets import CToggleButton, CValueAggregator
 from comrad.qt.pydm_widgets import (CTabWidget, CScaleIndicator, CLogDisplay, CImageView, CEnumComboBox, CSlider,
@@ -14,6 +16,21 @@ from comrad.qt.pydm_widgets import (CTabWidget, CScaleIndicator, CLogDisplay, CI
                                     CEmbeddedDisplay, CShellCommand, CRelatedDisplayButton, CPushButton, CEnumButton,
                                     CWaveFormTable, CCheckBox)
 import comrad
+
+
+class RulesExtension(PyDMExtension):
+    def __init__(self, widget):
+        super(RulesExtension, self).__init__(widget)
+        self.widget = widget
+        self.edit_rules_action = QAction("Edit Rules...", self.widget)
+        self.edit_rules_action.triggered.connect(self.edit_rules)
+
+    def edit_rules(self, state):
+        edit_rules_dialog = RulesEditor(self.widget, parent=None)
+        edit_rules_dialog.exec_()
+
+    def actions(self):
+        return [self.edit_rules_action]
 
 
 load_icon = functools.partial(icon, file_path=__file__)  # pylint: disable=invalid-name

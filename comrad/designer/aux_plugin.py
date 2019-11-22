@@ -37,8 +37,7 @@ in widget box.
 from comrad.qt.pydm_widgets import (PyDMLabel, PyDMCheckbox, PyDMEnumButton, PyDMPushButton, PyDMRelatedDisplayButton,
                                     PyDMShellCommand, PyDMWaveformTable, PyDMFrame, PyDMEmbeddedDisplay,
                                     PyDMTemplateRepeater, PyDMEnumComboBox, PyDMLineEdit, PyDMSlider, PyDMSpinbox,
-                                    PyDMByteIndicator, PyDMImageView, PyDMLogDisplay, PyDMScaleIndicator, PyDMTimePlot,
-                                    PyDMWaveformPlot, PyDMScatterPlot, PyDMTabWidget)
+                                    PyDMByteIndicator, PyDMImageView, PyDMLogDisplay, PyDMScaleIndicator, PyDMTabWidget)
 from comrad.designer.utils import qtplugin_factory
 
 
@@ -68,7 +67,4 @@ PyDMByteIndicator_ = qtplugin_factory(PyDMByteIndicator, group=_COMRAD_GROUP_HID
 PyDMImageView_ = qtplugin_factory(PyDMImageView, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 PyDMLogDisplay_ = qtplugin_factory(PyDMLogDisplay, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 PyDMScaleIndicator_ = qtplugin_factory(PyDMScaleIndicator, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-PyDMTimePlot_ = qtplugin_factory(PyDMTimePlot, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-PyDMWaveformPlot_ = qtplugin_factory(PyDMWaveformPlot, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-PyDMScatterPlot_ = qtplugin_factory(PyDMScatterPlot, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 PyDMTabWidget_ = qtplugin_factory(PyDMTabWidget, group=_COMRAD_GROUP_HIDDEN_ITEMS)

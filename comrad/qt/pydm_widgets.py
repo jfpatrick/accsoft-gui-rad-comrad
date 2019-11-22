@@ -5,9 +5,6 @@
 import numpy as np
 from pydm.widgets.waveformtable import PyDMWaveformTable
 from pydm.widgets.scale import PyDMScaleIndicator
-from pydm.widgets.timeplot import PyDMTimePlot
-from pydm.widgets.waveformplot import PyDMWaveformPlot
-from pydm.widgets.scatterplot import PyDMScatterPlot
 from pydm.widgets.template_repeater import PyDMTemplateRepeater
 from pydm.widgets.image import PyDMImageView
 from pydm.widgets.label import PyDMLabel
@@ -28,6 +25,7 @@ from pydm.widgets.frame import PyDMFrame
 from qtpy.QtWidgets import QWidget
 from qtpy.QtCore import Slot
 from .value_transform import ValueTransformer
+from .rules import ColorRulesMixin
 from typing import List, Tuple, Union, Optional
 
 
@@ -35,7 +33,7 @@ class CWaveFormTable(PyDMWaveformTable):
     pass
 
 
-class CLabel(ValueTransformer, PyDMLabel):
+class CLabel(ColorRulesMixin, ValueTransformer, PyDMLabel):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -51,6 +49,7 @@ class CLabel(ValueTransformer, PyDMLabel):
             init_channel: The channel to be used by the widget.
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
+        ColorRulesMixin.__init__(self)
         PyDMLabel.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformer.__init__(self)
 
@@ -63,6 +62,24 @@ class CLabel(ValueTransformer, PyDMLabel):
             new_val: The new value from the channel. The type depends on the channel.
         """
         self.value_changed(new_val)
+
+    def set_color(self, val: str):
+        """Overridden method of ColorRulesMixin.
+
+        Args:
+            val: The new value of the color."""
+        super().set_color(val)
+        # color = self._default_color if val is None else QColor(val)
+        # palette = self.palette()
+        # palette.setColor(self.foregroundRole(), color)
+        # self.setPalette(palette)
+        # We can't use palettes here because custom stylesheet passed via CLI will override it...
+        # TODO: Also check QSS dynamic properties and polish/unpolish. But that means we need to parse rules and preset stylesheet before
+        if val is None:
+            self.setStyleSheet(None)
+        else:
+            self.setStyleSheet(f'color: {val}')
+
 
 
 class CFrame(PyDMFrame):

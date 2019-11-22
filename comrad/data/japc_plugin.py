@@ -170,6 +170,7 @@ class _JapcConnection(PyDMConnection):
         self.add_listener(channel)
 
     def add_listener(self, channel: PyDMChannel):
+        logger.debug(f'Adding a listener for "{self.address}"')
         is_first_connection: bool = self.listener_count == 0
 
         # Superclass does not implement signal for bool values
@@ -195,19 +196,21 @@ class _JapcConnection(PyDMConnection):
         self.write_access_signal.emit(not is_read_only())
 
         if channel.value_signal is not None:
-            logger.info(f'Adding write callback for {self.address}')
+            logger.debug(f'Adding write callback for "{self.address}"')
             self._connect_write_slots(channel.value_signal)
 
         connected: bool
         japc = get_japc()
         if is_first_connection and not japc.logged_in:
+            logger.debug(f'Attempting login by location on the first connection to "{self.address}"')
             try:
                 japc.login_by_location()
             except BaseException:
                 logger.info('Login by location failed. User will have to manually acquire RBAC token.')
         else:
-            # Not callback will be received because login is not attempted
+            # Callback will not be received because login is not attempted
             # So we need to attach subscriptions manually
+            logger.debug(f'Artificially notifying JAPC plugin connection change')
             self._on_japc_status_changed(connected=japc.logged_in)
 
     def remove_listener(self, channel: PyDMChannel, destroying: bool = False):
@@ -282,12 +285,14 @@ class _JapcConnection(PyDMConnection):
                             **self._japc_additional_args)
 
     def _send_connection_state(self, connected: bool):
+        logger.debug(f'Notifying JAPC plugin connection state: {connected}')
         self.connected = connected
         self.connection_state_signal.emit(connected)
 
     def _create_subscription(self, is_new: bool) -> bool:
         japc = get_japc()
         if is_new:
+            logger.debug(f'Creating new subscription for "{self.address}"')
             try:
                 japc.subscribeParam(parameterName=self._device_prop,
                                     onValueReceived=self._on_value_received,
@@ -302,6 +307,7 @@ class _JapcConnection(PyDMConnection):
                                f"'{self.protocol}://device/property'. Underlying problem: {str(e)}")
                 return False
         else:
+            logger.debug(f'Not re-creating subscription for "{self.address}" but issuing a GET')
             # Artificially emit a single value to allow the UI update once because subscription
             # is not initiated here, thus we are not getting initial values
             japc.getParam(parameterName=self._device_prop,
@@ -312,13 +318,13 @@ class _JapcConnection(PyDMConnection):
     def _on_japc_status_changed(self, connected: bool):
         is_first_connection = self.listener_count == 1
         prev_connected = self.connected
-        if connected:
+        if not prev_connected and connected:
+            logger.debug(f'JAPC connection changed to "connected", notifying...')
             connected = self._create_subscription(is_new=is_first_connection)
-        self._send_connection_state(connected)
-        if connected and not prev_connected:
-            logger.info(f'{self.protocol}://{self.address} connected!')
-        elif not connected and prev_connected:
-            logger.info(f'{self.protocol}://{self.address} disconnected!')
+            self._send_connection_state(connected)
+        else:
+            # Just an artificial notification for those who subscribed later
+            self._send_connection_state(self.connected)
 
 
 class JapcPlugin(PyDMPlugin):
