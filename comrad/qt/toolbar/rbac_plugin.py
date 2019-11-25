@@ -29,14 +29,12 @@ class RBACDialogWidget(QWidget):
         self.username: QLineEdit = None
         self.password: QLineEdit = None
         self.user_error: QLabel = None
-        self.password_error: QLabel = None
         self.loc_error: QLabel = None
 
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'rbac_dialog.ui'), self)
 
         self.user_error.hide()
         self.loc_error.hide()
-        self.password_error.hide()
 
         self.loc_btn.clicked.connect(self._login_loc)
         self.user_btn.clicked.connect(self._login_user)
@@ -57,19 +55,18 @@ class RBACDialogWidget(QWidget):
 
     def _login_user(self):
         user = self.username.text()
-        if not user:
-            self.user_error.setText('You must define username')
-            self.user_error.show()
         passwd = self.password.text()
-        if not passwd:
-            self.password_error.setText('You must define password')
-            self.password_error.show()
-        if not user or not passwd:
+        if not user and not passwd:
+            self.user_error.setText('You must define username and password')
+        elif not user:
+            self.user_error.setText('You must define username')
+        elif not passwd:
+            self.user_error.setText('You must define password')
+        else:
+            self.user_error.hide()
+            self.login_by_username.emit(user, passwd)
             return
-
-        self.user_error.hide()
-        self.password_error.hide()
-        self.login_by_username.emit(user, passwd)
+        self.user_error.show()
 
     def _clean_password(self):
         self.password.setText(None)
