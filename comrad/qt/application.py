@@ -4,7 +4,7 @@ import json
 import subprocess
 from itertools import chain
 from typing import Optional, List, Dict, Iterable, Type, Union, cast, Tuple
-from qtpy.QtWidgets import QAction, QMenu, QSpacerItem, QSizePolicy, QWidget, QHBoxLayout
+from qtpy.QtWidgets import QAction, QMenu, QSpacerItem, QSizePolicy, QWidget, QHBoxLayout, QMessageBox
 from qtpy.QtCore import Qt, QObject
 from pydm.application import PyDMApplication
 from pydm.main_window import PyDMMainWindow
@@ -202,6 +202,11 @@ class CApplication(PyDMApplication):
         if command_line_args is not None:
             args.extend(command_line_args)
         subprocess.Popen(args, shell=False)
+
+    def on_control_error(self, message: str):
+        """Callback to display a message whenever an exception happens in the control system."""
+        logger.warning(f'Control system warning received: {message}')
+        QMessageBox.warning(None, 'Control system problem', message)
 
     def _load_toolbar_plugins(self,
                               cmd_line_paths: Optional[str],

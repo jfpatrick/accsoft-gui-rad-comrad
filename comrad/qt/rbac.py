@@ -49,7 +49,7 @@ class RBACState(QObject):
         self.rbac_status_changed.emit(self._status.value)
 
     def login_by_credentials(self, user: str, password: str):
-        logger.debug('RBA Login with credentials requested: {user}')
+        logger.debug(f'RBA Login with credentials requested: {user}')
         if self.status != RBACLoginStatus.LOGGED_OUT:
             logger.debug('RBA login dropped, as user logged in already')
         self.rbac_login_user.emit(user, password)

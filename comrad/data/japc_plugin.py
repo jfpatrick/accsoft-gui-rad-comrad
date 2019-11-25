@@ -41,6 +41,7 @@ class _JapcService(QObject, pyjapc.PyJapc):
 
     japc_status_changed = Signal(bool)
     japc_login_error = Signal(tuple)
+    japc_param_error = Signal(str)
 
     def __init__(self):
         app = cast(CApplication, CApplication.instance())
@@ -65,6 +66,7 @@ class _JapcService(QObject, pyjapc.PyJapc):
         self._app.rbac.rbac_login_user.connect(self.login_by_credentials)
         self._app.rbac.rbac_login_by_location.connect(self.login_by_location)
         self.japc_login_error.connect(self._app.rbac.rbac_on_error)
+        self.japc_param_error.connect(self._app.on_control_error)
 
     def login_by_location(self):
         self.rbacLogin(on_exception=self._login_err)
@@ -109,6 +111,13 @@ class _JapcService(QObject, pyjapc.PyJapc):
             super().rbacLogout()
             self._set_online(False)
 
+    def getParam(self, *args, **kwargs):
+        try:
+            super().getParam(*args, **kwargs)
+        except jpype.JException(cern.japc.core.ParameterException) as e:
+            message = get_user_message(e)
+            self.japc_param_error.emit(message)
+
     def setParam(self, *args, **kwargs):
         if not self._logged_in:
             logger.warning('Cannot set param because RBAC was not passed previously')
@@ -118,7 +127,18 @@ class _JapcService(QObject, pyjapc.PyJapc):
                 # receive valueDescriptor while trying to verify dimensions.
                 kwargs['checkDims'] = False
 
-            super().setParam(*args, **kwargs)
+            try:
+                super().setParam(*args, **kwargs)
+            except jpype.JException(cern.japc.core.ParameterException) as e:
+                message = get_user_message(e)
+                self.japc_param_error.emit(message)
+
+    def subscribeParam(self, *args, **kwargs):
+        try:
+            super().subscribeParam(*args, **kwargs)
+        except jpype.JException(cern.japc.core.ParameterException) as e:
+            message = get_user_message(e)
+            self.japc_param_error.emit(message)
 
     def stopSubscriptions(self, parameterName: Optional[str] = None, selector: Optional[str] = None):
         super().stopSubscriptions(parameterName=parameterName, selector=selector)
@@ -169,7 +189,7 @@ class _JapcConnection(PyDMConnection):
                          *args,
                          **kwargs)
         self._device_prop = self.address[1:] if self.address.startswith('/') else self.address
-
+        self._subscriptions_active: bool = False
         self._selector: Optional[str] = None
         self._japc_additional_args = {}
         get_japc().japc_status_changed.connect(self._on_japc_status_changed)
@@ -181,8 +201,6 @@ class _JapcConnection(PyDMConnection):
         self.add_listener(channel)
 
     def add_listener(self, channel: PyDMChannel):
-        is_first_connection: bool = self.listener_count == 0
-
         # Superclass does not implement signal for bool values
         if channel.value_slot is not None:
             try:
@@ -211,7 +229,8 @@ class _JapcConnection(PyDMConnection):
 
         connected: bool
         japc = get_japc()
-        if is_first_connection and not japc.logged_in:
+        if not self._subscriptions_active and not japc.logged_in:
+            logger.debug(f'Attempting login by location on the first connection')
             try:
                 japc.login_by_location()
             except BaseException:
@@ -247,6 +266,7 @@ class _JapcConnection(PyDMConnection):
     def close(self):
         if self.connected:
             logger.info(f'Stopping JAPC subscriptions for {self.address}')
+            self._subscriptions_active = False
             get_japc().stopSubscriptions(parameterName=self._device_prop,
                                          selector=self._selector)
         super().close()
@@ -296,10 +316,11 @@ class _JapcConnection(PyDMConnection):
         self.connected = connected
         self.connection_state_signal.emit(connected)
 
-    def _create_subscription(self, is_new: bool) -> bool:
+    def _create_subscription(self) -> bool:
         japc = get_japc()
-        if is_new:
+        if not self._subscriptions_active:
             try:
+                logger.debug(f'Subscribing to JAPC at {self._device_prop}')
                 japc.subscribeParam(parameterName=self._device_prop,
                                     onValueReceived=self._on_value_received,
                                     **self._japc_additional_args)
@@ -312,7 +333,9 @@ class _JapcConnection(PyDMConnection):
                                f"'{self.protocol}:///device/prop#field' or"
                                f"'{self.protocol}:///device/property'. Underlying problem: {str(e)}")
                 return False
+            self._subscriptions_active = True
         else:
+            logger.debug(f'Initiating a single GET to {self._device_prop} to update the displayed value')
             # Artificially emit a single value to allow the UI update once because subscription
             # is not initiated here, thus we are not getting initial values
             japc.getParam(parameterName=self._device_prop,
@@ -321,10 +344,10 @@ class _JapcConnection(PyDMConnection):
         return True
 
     def _on_japc_status_changed(self, connected: bool):
-        is_first_connection = self.listener_count == 1
         prev_connected = self.connected
         if not prev_connected and connected:
-            connected = self._create_subscription(is_new=is_first_connection)
+            logger.debug(f'Connection became online, creating subscriptions if needed')
+            connected = self._create_subscription()
             self._send_connection_state(connected)
 
 
