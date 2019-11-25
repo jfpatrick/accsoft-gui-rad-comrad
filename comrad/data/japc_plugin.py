@@ -1,16 +1,15 @@
 import logging
 import pyjapc
-import datetime
 import numpy as np
 import jpype
 from pydm.data_plugins import is_read_only
 from pydm.data_plugins.plugin import PyDMPlugin, PyDMConnection
 from qtpy.QtCore import Qt, QObject, Slot, Signal, QVariant
-from typing import Any, Optional, Union, cast, Callable
+from typing import Any, Optional, cast, Callable
 from collections import namedtuple
 from comrad.qt.application import CApplication
 from comrad.qt.rbac import RBACLoginStatus
-from comrad.data.jpype import get_user_message
+from comrad.data.jpype import get_user_message, get_root_cause
 
 
 logger = logging.getLogger(__name__)
@@ -112,11 +111,7 @@ class _JapcService(QObject, pyjapc.PyJapc):
             self._set_online(False)
 
     def getParam(self, *args, **kwargs):
-        try:
-            super().getParam(*args, **kwargs)
-        except jpype.JException(cern.japc.core.ParameterException) as e:
-            message = get_user_message(e)
-            self.japc_param_error.emit(message)
+        self._expect_cmw_security_error(super().getParam, *args, **kwargs)
 
     def setParam(self, *args, **kwargs):
         if not self._logged_in:
@@ -126,19 +121,10 @@ class _JapcService(QObject, pyjapc.PyJapc):
                 # Because when InCA is not set up, setter will crash because it will fail to
                 # receive valueDescriptor while trying to verify dimensions.
                 kwargs['checkDims'] = False
-
-            try:
-                super().setParam(*args, **kwargs)
-            except jpype.JException(cern.japc.core.ParameterException) as e:
-                message = get_user_message(e)
-                self.japc_param_error.emit(message)
+            self._expect_cmw_security_error(super().setParam, *args, **kwargs)
 
     def subscribeParam(self, *args, **kwargs):
-        try:
-            super().subscribeParam(*args, **kwargs)
-        except jpype.JException(cern.japc.core.ParameterException) as e:
-            message = get_user_message(e)
-            self.japc_param_error.emit(message)
+        self._expect_cmw_security_error(super().subscribeParam, *args, **kwargs)
 
     def stopSubscriptions(self, parameterName: Optional[str] = None, selector: Optional[str] = None):
         super().stopSubscriptions(parameterName=parameterName, selector=selector)
@@ -154,6 +140,18 @@ class _JapcService(QObject, pyjapc.PyJapc):
 
     def _login_err(self, message: str, login_by_location: bool):
         self.japc_login_error.emit((message, login_by_location))
+
+    def _expect_cmw_security_error(self, fn: Callable, *args, **kwargs):
+        try:
+            fn(*args, **kwargs)
+        except jpype.JException(cern.japc.core.ParameterException) as e:
+            real_err = get_root_cause(e)
+            # FIXME: Can we have backend-agnostic error here? If it's not RDA3 then what?
+            if isinstance(real_err, cern.cmw.rda3.common.exception.SecurityException):
+                message = get_user_message(e)
+                self.japc_param_error.emit(message)
+            else:
+                raise e
 
 
 _japc: Optional[_JapcService] = None

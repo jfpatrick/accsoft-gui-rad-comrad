@@ -13,6 +13,25 @@ def get_java_exc(jpype_exc: Any) -> Any:
     return jpype_exc.__javaobject__
 
 
+def get_root_cause(jpype_exc: Any) -> Any:
+    """
+    Extracts instance of the Java exception that caused the problem.
+
+    Args:
+        jpype_exc: jPype exception wrapper produced with jpype.JException(cern.java.smth.Exception).
+
+    Returns:
+        Instance of the Java exception
+    """
+    throwable = get_java_exc(jpype_exc)
+    while True:
+        cause = throwable.getCause()
+        if cause is None:
+            break
+        throwable = cause
+    return throwable
+
+
 def get_user_message(jpype_exc: Any) -> str:
     """
     Extracts the last part of the Java exception from the wrapper.
@@ -27,12 +46,7 @@ def get_user_message(jpype_exc: Any) -> str:
     Returns:
         String extracted from the message.
     """
-    throwable = get_java_exc(jpype_exc)
-    while True:
-        cause = throwable.getCause()
-        if cause is None:
-            break
-        throwable = cause
+    throwable = get_root_cause(jpype_exc)
     parts = throwable.getMessage().split(' : ')
     parts = parts[-1].split(' --> ')
     return parts[-1]
