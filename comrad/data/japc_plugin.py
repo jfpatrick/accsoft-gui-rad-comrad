@@ -40,7 +40,7 @@ class _JapcService(QObject, pyjapc.PyJapc):
     """Singleton instance to avoid RBAC login for multiple Japc connections."""
 
     japc_status_changed = Signal(bool)
-    japc_login_error = Signal(str)
+    japc_login_error = Signal(tuple)
 
     def __init__(self,
                  selector: str,
@@ -87,7 +87,7 @@ class _JapcService(QObject, pyjapc.PyJapc):
                   password: Optional[str] = None,
                   loginDialog: bool = False,
                   readEnv: bool = True,
-                  on_exception: Optional[Callable[[str], None]] = None,
+                  on_exception: Optional[Callable[[str, bool], None]] = None,
                   ):
         if self._logged_in:
             return
@@ -100,7 +100,8 @@ class _JapcService(QObject, pyjapc.PyJapc):
         except jpype.JException(cern.rbac.client.authentication.AuthenticationException) as e:
             if on_exception is not None:
                 message = get_user_message(e)
-                on_exception(message)
+                login_by_location = not username and not password
+                on_exception(message, login_by_location)
             self._set_online(False)
 
     def rbacLogout(self):
@@ -126,8 +127,8 @@ class _JapcService(QObject, pyjapc.PyJapc):
         if not logged_in:
             self._app.rbac.status = RBACLoginStatus.LOGGED_OUT
 
-    def _login_err(self, message: str):
-        self.japc_login_error.emit(message)
+    def _login_err(self, message: str, login_by_location: bool):
+        self.japc_login_error.emit((message, login_by_location))
 
 
 _japc: Optional[_JapcService] = None

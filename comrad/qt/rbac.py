@@ -1,13 +1,13 @@
 import logging
-from typing import Optional
-from enum import Enum
+from typing import Optional, Tuple
+from enum import IntEnum
 from qtpy.QtCore import Signal, QObject
 
 
 logger = logging.getLogger(__name__)
 
 
-class RBACLoginStatus(Enum):
+class RBACLoginStatus(IntEnum):
     LOGGED_OUT = 0
     LOGGED_IN_BY_LOCATION = 1
     LOGGED_IN_BY_CREDENTIALS = 2
@@ -26,6 +26,10 @@ class RBACState(QObject):
 
     rbac_status_changed = Signal(int)
     """Emits when authentication of the user has been changed."""
+
+    rbac_error = Signal(tuple)
+    """Emits when authentication error occurs. Payload is a tuple of message string and a boolean
+       for request type (True -> by location, False -> by username)"""
 
     def __init__(self, parent: Optional[QObject] = None):
         super().__init__(parent)
@@ -64,7 +68,8 @@ class RBACState(QObject):
             return
         self.rbac_logout_user.emit()
 
-    def rbac_on_error(self, message: str):
+    def rbac_on_error(self, payload: Tuple[str, bool]):
         """Callback to receive JAPC login errors."""
-        logger.debug(f'RBAC got error message: {message}')
-
+        message, by_loc = payload
+        logger.warning(f'RBAC received error authenticating by {"location" if by_loc else "username"}: {message}')
+        self.rbac_error.emit(payload)
