@@ -13,6 +13,26 @@ def get_java_exc(jpype_exc: Any) -> Any:
     return jpype_exc.__javaobject__
 
 
+def _iter_causes(jpype_exc: Any) -> Any:
+    """
+    Iterates through the hierarchy of exceptions in the nested exception.
+
+    Args:
+        jpype_exc: jPype exception wrapper produced with jpype.JException(cern.java.smth.Exception).
+
+    Returns:
+        Instance of each Java exception.
+    """
+    throwable = get_java_exc(jpype_exc)
+    yield throwable
+    while True:
+        cause = throwable.getCause()
+        if cause is None:
+            break
+        throwable = cause
+        yield throwable
+
+
 def get_root_cause(jpype_exc: Any) -> Any:
     """
     Extracts instance of the Java exception that caused the problem.
@@ -23,13 +43,8 @@ def get_root_cause(jpype_exc: Any) -> Any:
     Returns:
         Instance of the Java exception
     """
-    throwable = get_java_exc(jpype_exc)
-    while True:
-        cause = throwable.getCause()
-        if cause is None:
-            break
-        throwable = cause
-    return throwable
+    *_, last = _iter_causes(jpype_exc)
+    return last
 
 
 def get_user_message(jpype_exc: Any) -> str:
@@ -50,3 +65,23 @@ def get_user_message(jpype_exc: Any) -> str:
     parts = throwable.getMessage().split(' : ')
     parts = parts[-1].split(' --> ')
     return parts[-1]
+
+
+def is_security_exception(jpype_exc: Any) -> bool:
+    """
+    Checks whether given exception is the security exception related to user permissions.
+
+    To not be coupled with the PyJAPC implementation, we actually look for pattern in the name
+    of the causes of the exception. It's just an assumption, but it's the best guess to not
+    have a hardcoded types here...
+
+    Args:
+        jpype_exc: jPype exception wrapper produced with jpype.JException(cern.java.smth.Exception).
+
+    Returns:
+        True if exception related to user permissions.
+    """
+    for exc in _iter_causes(jpype_exc):
+        if type(exc).__name__.endswith('SecurityException'):
+            return True
+    return False

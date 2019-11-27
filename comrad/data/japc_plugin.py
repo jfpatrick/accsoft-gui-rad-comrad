@@ -9,7 +9,7 @@ from typing import Any, Optional, cast, Callable
 from collections import namedtuple
 from comrad.qt.application import CApplication
 from comrad.qt.rbac import RBACLoginStatus
-from comrad.data.jpype import get_user_message, get_root_cause
+from comrad.data.jpype import get_user_message, is_security_exception
 
 
 logger = logging.getLogger('comrad_japc')
@@ -147,9 +147,7 @@ class _JapcService(QObject, pyjapc.PyJapc):
         try:
             fn(*args, **kwargs)
         except jpype.JException(cern.japc.core.ParameterException) as e:
-            real_err = get_root_cause(e)
-            # FIXME: Can we have backend-agnostic error here? If it's not RDA3 then what?
-            if isinstance(real_err, cern.cmw.rda3.common.exception.SecurityException):
+            if is_security_exception(e):
                 message = get_user_message(e)
                 self.japc_param_error.emit(message)
             else:
