@@ -12,7 +12,7 @@ from comrad.qt.rbac import RBACLoginStatus
 from comrad.data.jpype import get_user_message, get_root_cause
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('comrad_japc')
 
 
 cern = jpype.JPackage('cern')
@@ -66,14 +66,17 @@ class _JapcService(QObject, pyjapc.PyJapc):
         self._app.rbac.rbac_login_by_location.connect(self.login_by_location)
         self.japc_login_error.connect(self._app.rbac.rbac_on_error)
         self.japc_param_error.connect(self._app.on_control_error)
+        logger.debug(f'JAPC is set up and ready!')
 
     def login_by_location(self):
+        logger.debug(f'Attempting RBAC login by location')
         self.rbacLogin(on_exception=self._login_err)
         if self._logged_in:
             self._app.rbac.user = self.rbacGetToken().getUser().getName()  # FIXME: This is Java call. We need to abstract it into PyRBAC
             self._app.rbac.status = RBACLoginStatus.LOGGED_IN_BY_LOCATION
 
     def login_by_credentials(self, username: str, password: str):
+        logger.debug(f'Attempting RBAC login with credentials')
         self.rbacLogin(username=username, password=password, on_exception=self._login_err)
         if self._logged_in:
             self._app.rbac.user = self.rbacGetToken().getUser().getName()  # FIXME: This is Java call. We need to abstract it into PyRBAC
@@ -92,18 +95,20 @@ class _JapcService(QObject, pyjapc.PyJapc):
                   ):
         if self._logged_in:
             return
+        logger.debug(f'Performing RBAC login')
         try:
             super().rbacLogin(username=username,
                               password=password,
                               loginDialog=loginDialog,
                               readEnv=readEnv)
-            self._set_online(True)
         except jpype.JException(cern.rbac.client.authentication.AuthenticationException) as e:
             if on_exception is not None:
                 message = get_user_message(e)
                 login_by_location = not username and not password
                 on_exception(message, login_by_location)
             self._set_online(False)
+            return
+        self._set_online(True)
 
     def rbacLogout(self):
         if self._logged_in:
@@ -114,14 +119,11 @@ class _JapcService(QObject, pyjapc.PyJapc):
         self._expect_cmw_security_error(super().getParam, *args, **kwargs)
 
     def setParam(self, *args, **kwargs):
-        if not self._logged_in:
-            logger.warning('Cannot set param because RBAC was not passed previously')
-        else:
-            if not self._use_inca and 'checkDims' not in kwargs:
-                # Because when InCA is not set up, setter will crash because it will fail to
-                # receive valueDescriptor while trying to verify dimensions.
-                kwargs['checkDims'] = False
-            self._expect_cmw_security_error(super().setParam, *args, **kwargs)
+        if not self._use_inca and 'checkDims' not in kwargs:
+            # Because when InCA is not set up, setter will crash because it will fail to
+            # receive valueDescriptor while trying to verify dimensions.
+            kwargs['checkDims'] = False
+        self._expect_cmw_security_error(super().setParam, *args, **kwargs)
 
     def subscribeParam(self, *args, **kwargs):
         self._expect_cmw_security_error(super().subscribeParam, *args, **kwargs)
@@ -129,7 +131,7 @@ class _JapcService(QObject, pyjapc.PyJapc):
     def stopSubscriptions(self, parameterName: Optional[str] = None, selector: Optional[str] = None):
         super().stopSubscriptions(parameterName=parameterName, selector=selector)
         if not self._subscriptionHandleDict:
-            logger.info(f'Last subscription was removed from JAPC. Logging out.')
+            logger.debug(f'Last subscription was removed from JAPC. Logging out.')
             self.rbacLogout()
 
     def _set_online(self, logged_in: bool):
@@ -190,7 +192,6 @@ class _JapcConnection(PyDMConnection):
         self._subscriptions_active: bool = False
         self._selector: Optional[str] = None
         self._japc_additional_args = {}
-        get_japc().japc_status_changed.connect(self._on_japc_status_changed)
         parsed_addr = split_device_property(self._device_prop)
         if parsed_addr.selector:
             self._device_prop = parsed_addr.address
@@ -199,49 +200,40 @@ class _JapcConnection(PyDMConnection):
         self.add_listener(channel)
 
     def add_listener(self, channel: PyDMChannel):
-        # Superclass does not implement signal for bool values
-        if channel.value_slot is not None:
-            try:
-                self.new_value_signal[bool].connect(channel.value_slot, Qt.QueuedConnection)
-            except TypeError:
-                pass
-            try:
-                self.new_value_signal[list].connect(channel.value_slot, Qt.QueuedConnection)
-            except TypeError:
-                pass
-            try:
-                self.new_value_signal[QVariant].connect(channel.value_slot, Qt.QueuedConnection)
-            except TypeError:
-                pass
-
+        logger.debug(f'Adding a listener for {self._device_prop}')
         super().add_listener(channel)
-
-        # Allow write to all widgets by default. Write permissions are defined in CCDB,
-        # which pyjapc does not have access to, so we can't know if a property is writable at the moment
-        # TODO: This should be considering CCDA
-        self.write_access_signal.emit(not is_read_only())
+        self._connect_extra_signal_types(channel)
 
         if channel.value_signal is not None:
-            logger.info(f'Adding write callback for {self.address}')
+            logger.debug(f'Adding write callback for {self.protocol}://{self.address}')
             self._connect_write_slots(channel.value_signal)
 
-        connected: bool
         japc = get_japc()
-        if not self._subscriptions_active and not japc.logged_in:
+        if not self.online and not japc.logged_in:
             logger.debug(f'Attempting login by location on the first connection')
             try:
                 japc.login_by_location()
             except BaseException:
                 logger.info('Login by location failed. User will have to manually acquire RBAC token.')
-        else:
-            # Not callback will be received because login is not attempted
-            # So we need to attach subscriptions manually
-            self._on_japc_status_changed(connected=japc.logged_in)
+
+        # Allow write to all widgets by default. Write permissions are defined in CCDB,
+        # which pyjapc does not have access to, so we can't know if a property is writable at the moment
+        # TODO: This should be considering CCDA
+        enable_write_access = not is_read_only()
+        logger.debug(f'Emitting write access for {self._device_prop}: {enable_write_access}')
+        self.write_access_signal.emit(enable_write_access)
+
+        # Issue a connection signal (e.g. if it's an additional listener for already connected channel, we need to let
+        # it know that we are already connected
+        self.connection_state_signal.emit(self.online)
+
+        # Start receiving values
+        self._create_subscription()
 
     def remove_listener(self, channel: PyDMChannel, destroying: bool = False):
         # Superclass does not implement signal for bool values
         if not destroying:
-            logger.info(f'Removing one of the listeners for {self.protocol}://{self.address}')
+            logger.debug(f'Removing one of the listeners for {self.protocol}://{self.address}')
             if channel.value_slot is not None:
                 try:
                     self.new_value_signal[bool].disconnect(channel.value_slot)
@@ -258,21 +250,38 @@ class _JapcConnection(PyDMConnection):
             if channel.value_signal is not None:
                 channel.value_signal.disconnect(self._on_value_updated)
         else:
-            logger.info(f'Removing a listener for {self.protocol}://{self.address} and destroying channel connection')
+            logger.debug(f'Removing a listener for {self.protocol}://{self.address} and destroying channel connection')
         super().remove_listener(channel=channel, destroying=destroying)
 
     def close(self):
-        if self.connected:
-            logger.info(f'Stopping JAPC subscriptions for {self.address}')
-            self._subscriptions_active = False
+        if self.online:
+            logger.debug(f'Stopping JAPC subscriptions for {self.address}')
+            self.online = False
             get_japc().stopSubscriptions(parameterName=self._device_prop,
                                          selector=self._selector)
         super().close()
 
     def _on_async_get(self, initial_value: Any):
-        self._send_connection_state(self.connected)
+        logger.debug(f'Received async GET callback on {self.protocol}://{self.address}')
+        self.online = True
         self._on_value_received(parameterName=self._device_prop, value=initial_value)
-        logger.info(f'Added one more listener to {self.protocol}://{self.address}')
+        logger.debug(f'Added one more listener to {self.protocol}://{self.address}')
+
+    def _connect_extra_signal_types(self, channel: PyDMChannel):
+        # Superclass does not implement signal for bool values
+        if channel.value_slot is not None:
+            try:
+                self.new_value_signal[bool].connect(channel.value_slot, Qt.QueuedConnection)
+            except TypeError:
+                pass
+            try:
+                self.new_value_signal[list].connect(channel.value_slot, Qt.QueuedConnection)
+            except TypeError:
+                pass
+            try:
+                self.new_value_signal[QVariant].connect(channel.value_slot, Qt.QueuedConnection)
+            except TypeError:
+                pass
 
     def _connect_write_slots(self, signal: Signal):
         try:
@@ -310,28 +319,37 @@ class _JapcConnection(PyDMConnection):
                             parameterValue=new_val,
                             **self._japc_additional_args)
 
-    def _send_connection_state(self, connected: bool):
+    @property
+    def online(self) -> bool:
+        return self._subscriptions_active
+
+    @online.setter
+    def online(self, connected: bool):
         self.connected = connected
-        self.connection_state_signal.emit(connected)
+        if self._subscriptions_active != connected:
+            self._subscriptions_active = connected
+            logger.debug(f'Channel {self.protocol}://{self.address} is {"online" if connected else "offline"}')
+            self.connection_state_signal.emit(connected)
 
     def _create_subscription(self) -> bool:
         japc = get_japc()
-        if not self._subscriptions_active:
+        if not self.online:
+            logger.debug(f'Subscribing to JAPC at {self._device_prop}')
             try:
-                logger.debug(f'Subscribing to JAPC at {self._device_prop}')
                 japc.subscribeParam(parameterName=self._device_prop,
                                     onValueReceived=self._on_value_received,
                                     **self._japc_additional_args)
                 japc.startSubscriptions(parameterName=self._device_prop,
                                         selector=self._selector)
             except Exception as e:
+                # TODO: Catch more speicific Jpype errors here
                 logger.error(f'Unexpected error while subscribing to {self.address}'
                                '. Please verify the parameters and make sure the address is in the form'
                                f"'{self.protocol}:///device/property#field@selector' or"
                                f"'{self.protocol}:///device/prop#field' or"
                                f"'{self.protocol}:///device/property'. Underlying problem: {str(e)}")
-                return False
-            self._subscriptions_active = True
+                return
+            self.online = True
         else:
             logger.debug(f'Initiating a single GET to {self._device_prop} to update the displayed value')
             # Artificially emit a single value to allow the UI update once because subscription
@@ -339,14 +357,6 @@ class _JapcConnection(PyDMConnection):
             japc.getParam(parameterName=self._device_prop,
                           onValueReceived=self._on_async_get,
                           **self._japc_additional_args)
-        return True
-
-    def _on_japc_status_changed(self, connected: bool):
-        prev_connected = self.connected
-        if not prev_connected and connected:
-            logger.debug(f'Connection became online, creating subscriptions if needed')
-            connected = self._create_subscription()
-            self._send_connection_state(connected)
 
 
 class JapcPlugin(PyDMPlugin):
