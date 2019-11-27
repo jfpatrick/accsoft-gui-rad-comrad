@@ -29,6 +29,7 @@ class CApplication(PyDMApplication):
                  command_line_args: Optional[List[str]] = None,
                  display_args: Optional[List[str]] = None,
                  use_inca: bool = True,
+                 java_env: Optional[Dict[str, str]] = None,
                  perfmon: bool = False,
                  hide_nav_bar: bool = False,
                  hide_menu_bar: bool = False,
@@ -55,6 +56,7 @@ class CApplication(PyDMApplication):
                 probably isn't something you will ever need to use when writing
                 code that instantiates CApplication.
             use_inca: Whether to route JAPC connection through known InCA servers.
+            java_env: JVM flags to be passed to the control system libraries.
             perfmon: Whether or not to enable performance monitoring using 'psutil'.
                 When enabled, CPU load information on a per-thread basis is
                 periodically printed to the terminal.
@@ -81,6 +83,7 @@ class CApplication(PyDMApplication):
         args.extend(command_line_args or [])
         self.rbac = RBACState()  # We must keep it before super because dependant plugins will be initialized in super()
         self.use_inca = use_inca
+        self.jvm_flags = java_env
         super().__init__(ui_file=ui_file,
                          command_line_args=args,
                          display_args=display_args or [],

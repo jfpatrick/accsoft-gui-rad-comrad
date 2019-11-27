@@ -6,9 +6,10 @@ import argcomplete
 import logging
 import os
 import sys
-from typing import Optional, Iterable, cast
+from typing import Optional, Iterable, cast, Tuple, Dict
 from pydm.utilities.macro import parse_macro_string
 from comrad import __version__, CApplication
+from comrad.utils import ccda_map
 from comrad.examples.__main__ import populate_parser as populate_examples_parser, run_browser as run_examples_browser
 
 
@@ -75,14 +76,15 @@ def run():
     argcomplete.autocomplete(parser)
 
     args = parser.parse_args()
-    if args.cmd == 'run':
-        _run_comrad(args)
-    elif args.cmd == 'examples':
+    if args.cmd == 'examples':
         run_examples_browser(args)
-    elif args.cmd == 'designer':
-        _run_designer(args)
     else:
-        parser.print_help()
+        if args.cmd == 'run':
+            _run_comrad(args) or parser.print_usage()
+        elif args.cmd == 'designer':
+            _run_designer(args) or parser.print_usage()
+        else:
+            parser.print_help()
 
 
 _PKG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -103,7 +105,22 @@ def _install_controls_arguments(parser: argparse.ArgumentParser):
                         action='store_true',
                         help='Do not use InCA server middleware and connect directly to devices. By default JAPC '
                              'connection will use a set of known InCA servers.')
-    # TODO: CMW environment should go here
+    parser.add_argument('--cmw-env',
+                        help='Configure environment for CMW directory service, RBAC and CCDB. (default: PRO)'
+                             ' - PRO: stable production service; uses CCDB PRO schema; - TEST: stable test/testbed '
+                             'service for integration/acceptance/system testing to be used by external clients; '
+                             'uses CCDB INT schema; - INT: unstable integration service for internal CMW '
+                             'integration testing used by the CMW team only; uses CCDB INT schema; - DEV: '
+                             'Development environment. Uses CCDB DEV schema. The environments with suffix \'2\' are'
+                             ' similar to original ones but use alternative CCDB endpoints.',
+                         choices=['PRO', 'TEST', 'INT', 'DEV', 'PRO2', 'TEST2', 'INT2', 'DEV2'],
+                         default='PRO')
+    parser.add_argument('--java-env',
+                        help='Custom JVM flags to be passed for JVM-dependent control libraries. Note, all '
+                             'Java-based libraries will reuse the same JVM, therefore these variables will '
+                             'affect all of them.',
+                        metavar="key=value",
+                        nargs=argparse.ZERO_OR_MORE)
 
 
 def _run_subcommand(parser: argparse.ArgumentParser):
@@ -234,7 +251,7 @@ def __designer_subcommand(parser: argparse.ArgumentParser):
     comrad_group.add_argument('files',
                               help='Files to be opened in ComRAD designer.',
                               metavar='FILES',
-                              nargs='*',
+                              nargs=argparse.ZERO_OR_MORE,
                               default=None)
     comrad_group.add_argument('--online',
                               action='store_true',
@@ -259,7 +276,8 @@ def __designer_subcommand(parser: argparse.ArgumentParser):
                           help='Enable internal dynamic properties.')
 
 
-def _run_comrad(args: argparse.Namespace):
+def _run_comrad(args: argparse.Namespace) -> bool:
+
     macros = parse_macro_string(args.macro) if args.macro is not None else None
 
     if args.log_level:
@@ -275,6 +293,12 @@ def _run_comrad(args: argparse.Namespace):
         if level:
             # Redefine the level of the root logger
             logger.setLevel(level)
+
+    try:
+        _, java_env = _parse_control_env(args)
+    except EnvironmentError as e:
+        logger.exception(str(e))
+        return False
 
     order: Optional[Iterable[str]] = None
     if args.nav_bar_order:
@@ -297,6 +321,7 @@ def _run_comrad(args: argparse.Namespace):
     app = CApplication(ui_file=args.display_file,
                        command_line_args=args.display_args,
                        use_inca=not args.no_inca,
+                       java_env=java_env,
                        perfmon=args.perfmon,
                        hide_nav_bar=args.hide_nav_bar,
                        hide_menu_bar=args.hide_menu_bar,
@@ -312,13 +337,43 @@ def _run_comrad(args: argparse.Namespace):
                        plugin_whitelist=whitelist,
                        stylesheet_path=stylesheet)
     sys.exit(app.exec_())
+    return True
 
 
-def _run_designer(args: argparse.Namespace):
+def _run_designer(args: argparse.Namespace) -> bool:
+
+    try:
+        ccda_endpoint, java_env = _parse_control_env(args)
+    except EnvironmentError as e:
+        print(str(e))
+        return False
+
     from .designer import run_designer
     run_designer(files=args.files,
+                 ccda_env=ccda_endpoint,
+                 java_env=java_env,
+                 use_inca=not args.no_inca,
                  online=args.online,
                  server=args.server,
                  client=args.client,
                  resource_dir=args.resourcedir,
                  enable_internal_props=args.enableinternaldynamicproperties)
+    return True
+
+
+def _parse_control_env(args: argparse.Namespace) -> Tuple[str, Dict[str, str]]:
+
+    cmw_env: str = args.cmw_env
+    try:
+        ccda_endpoint = ccda_map[cmw_env]
+    except KeyError:
+        raise EnvironmentError(f'Invalid CMW environment specified: {cmw_env}')
+
+    java_env = args.java_env or {}
+    if cmw_env not in ['PRO', 'PRO2']:
+        if cmw_env.endswith('2'):
+            cmw_env = cmw_env[:-1]
+        java_env['cmw.directory.env'] = cmw_env
+        java_env['rbac.env'] = cmw_env
+
+    return ccda_endpoint, java_env

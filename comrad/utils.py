@@ -3,7 +3,7 @@ Utility functions to be used across different ComRAD modules.
 """
 import os
 from types import ModuleType
-from typing import Optional
+from typing import Optional, Dict
 from qtpy.QtGui import QIcon, QPixmap
 
 
@@ -33,3 +33,15 @@ def icon(name: str, file_path: Optional[str] = None, module_path: Optional[Modul
         print(f'Warning: Icon "{name}" cannot be found at {str(icon_path)}')
     pixmap = QPixmap(icon_path)
     return QIcon(pixmap)
+
+
+ccda_map: Dict[str, str] = {
+    'PRO': 'https://ccda.cern.ch:8900/api/',
+    'PRO2': 'https://ccda.cern.ch:8901/api/',
+    'TEST': 'https://ccda-test.cern.ch:8902/api/',
+    'TEST2': 'https://ccda-test.cern.ch:8903/api/',
+    'INT': 'https://ccda-int.cern.ch:8904/api/',
+    'INT2': 'https://ccda-int.cern.ch:8905/api/',
+    'DEV': 'https://ccda-dev.cern.ch:8906/api/',
+    'DEV2': 'https://ccda-dev.cern.ch:8907/api/',
+}
