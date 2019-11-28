@@ -63,3 +63,8 @@ class RBACState(QObject):
             logger.debug('RBA logout dropped, as user logged out already')
             return
         self.rbac_logout_user.emit()
+
+    def rbac_on_error(self, message: str):
+        """Callback to receive JAPC login errors."""
+        logger.debug(f'RBAC got error message: {message}')
+

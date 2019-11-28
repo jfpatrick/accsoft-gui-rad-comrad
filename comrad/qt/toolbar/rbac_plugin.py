@@ -6,7 +6,7 @@ from qtpy.QtWidgets import (QWidget, QPushButton, QLineEdit, QLabel, QDialog, QV
 from qtpy import uic
 from qtpy.QtCore import Signal, Qt, QEvent
 from comrad.qt.application import CApplication
-from comrad.qt.plugin import CWidgetPlugin, CPluginPosition
+from comrad.qt.plugin import CToolbarWidgetPlugin, CPluginPosition
 from comrad.qt.rbac import RBACLoginStatus
 from comrad.utils import icon
 
@@ -150,7 +150,7 @@ class RBACButton(QToolButton):
 #     def triggered(self):
 #         print(f'RBAC triggered')
 
-class RBACButtonPlugin(CWidgetPlugin):
+class RBACButtonPlugin(CToolbarWidgetPlugin):
 
     position = CPluginPosition.RIGHT
     plugin_id = 'comrad.rbac'

@@ -2,16 +2,21 @@ import logging
 import pyjapc
 import datetime
 import numpy as np
+import jpype
 from pydm.data_plugins import is_read_only
 from pydm.data_plugins.plugin import PyDMPlugin, PyDMConnection
 from qtpy.QtCore import Qt, QObject, Slot, Signal, QVariant
-from typing import Any, Optional, Union, cast
+from typing import Any, Optional, Union, cast, Callable
 from collections import namedtuple
 from comrad.qt.application import CApplication
 from comrad.qt.rbac import RBACLoginStatus
+from comrad.data.jpype import get_user_message
 
 
 logger = logging.getLogger(__name__)
+
+
+cern = jpype.JPackage('cern')
 
 
 # Unfortunately, we cannot import
@@ -35,6 +40,7 @@ class _JapcService(QObject, pyjapc.PyJapc):
     """Singleton instance to avoid RBAC login for multiple Japc connections."""
 
     japc_status_changed = Signal(bool)
+    japc_login_error = Signal(str)
 
     def __init__(self,
                  selector: str,
@@ -58,24 +64,19 @@ class _JapcService(QObject, pyjapc.PyJapc):
         self._app.rbac.rbac_logout_user.connect(self.rbacLogout)
         self._app.rbac.rbac_login_user.connect(self.login_by_credentials)
         self._app.rbac.rbac_login_by_location.connect(self.login_by_location)
+        self.japc_login_error.connect(self._app.rbac.rbac_on_error)
 
     def login_by_location(self):
-        self.rbacLogin()
+        self.rbacLogin(on_exception=self._login_err)
         if self._logged_in:
             self._app.rbac.user = self.rbacGetToken().getUser().getName()  # FIXME: This is Java call. We need to abstract it into PyRBAC
             self._app.rbac.status = RBACLoginStatus.LOGGED_IN_BY_LOCATION
-        else:
-            # FIXME: Need to communicate login error here and display it in RBAC dialog
-            pass
 
     def login_by_credentials(self, username: str, password: str):
-        self.rbacLogin(username=username, password=password)
+        self.rbacLogin(username=username, password=password, on_exception=self._login_err)
         if self._logged_in:
             self._app.rbac.user = self.rbacGetToken().getUser().getName()  # FIXME: This is Java call. We need to abstract it into PyRBAC
             self._app.rbac.status = RBACLoginStatus.LOGGED_IN_BY_CREDENTIALS
-        else:
-            # FIXME: Need to communicate login error here and display it in RBAC dialog
-            pass
 
     @property
     def logged_in(self):
@@ -85,7 +86,9 @@ class _JapcService(QObject, pyjapc.PyJapc):
                   username: Optional[str] = None,
                   password: Optional[str] = None,
                   loginDialog: bool = False,
-                  readEnv: bool = True):
+                  readEnv: bool = True,
+                  on_exception: Optional[Callable[[str], None]] = None,
+                  ):
         if self._logged_in:
             return
         try:
@@ -94,7 +97,10 @@ class _JapcService(QObject, pyjapc.PyJapc):
                               loginDialog=loginDialog,
                               readEnv=readEnv)
             self._set_online(True)
-        except BaseException:
+        except jpype.JException(cern.rbac.client.authentication.AuthenticationException) as e:
+            if on_exception is not None:
+                message = get_user_message(e)
+                on_exception(message)
             self._set_online(False)
 
     def rbacLogout(self):
@@ -119,6 +125,9 @@ class _JapcService(QObject, pyjapc.PyJapc):
         self.japc_status_changed.emit(logged_in)
         if not logged_in:
             self._app.rbac.status = RBACLoginStatus.LOGGED_OUT
+
+    def _login_err(self, message: str):
+        self.japc_login_error.emit(message)
 
 
 _japc: Optional[_JapcService] = None
