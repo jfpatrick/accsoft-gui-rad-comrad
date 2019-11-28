@@ -6,7 +6,7 @@ import argcomplete
 import logging
 import os
 import sys
-from typing import Optional, Iterable, cast, Tuple, Dict
+from typing import Optional, Iterable, cast, Tuple, Dict, List
 from pydm.utilities.macro import parse_macro_string
 from comrad import __version__, CApplication
 from comrad.utils import ccda_map
@@ -120,7 +120,7 @@ def _install_controls_arguments(parser: argparse.ArgumentParser):
                              'Java-based libraries will reuse the same JVM, therefore these variables will '
                              'affect all of them.',
                         metavar="key=value",
-                        nargs=argparse.ZERO_OR_MORE)
+                        nargs=argparse.ONE_OR_MORE)
 
 
 def _run_subcommand(parser: argparse.ArgumentParser):
@@ -369,11 +369,16 @@ def _parse_control_env(args: argparse.Namespace) -> Tuple[str, Dict[str, str]]:
     except KeyError:
         raise EnvironmentError(f'Invalid CMW environment specified: {cmw_env}')
 
-    java_env = args.java_env or {}
+    java_env: Optional[List[str]] = args.java_env
+    jvm_flags = {}
+    if java_env:
+        for arg in java_env:
+            name, val = tuple(arg.split('='))
+            jvm_flags[name] = val
     if cmw_env not in ['PRO', 'PRO2']:
         if cmw_env.endswith('2'):
             cmw_env = cmw_env[:-1]
-        java_env['cmw.directory.env'] = cmw_env
-        java_env['rbac.env'] = cmw_env
+        jvm_flags['cmw.directory.env'] = cmw_env
+        jvm_flags['rbac.env'] = cmw_env
 
-    return ccda_endpoint, java_env
+    return ccda_endpoint, jvm_flags
