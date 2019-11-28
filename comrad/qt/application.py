@@ -28,6 +28,7 @@ class CApplication(PyDMApplication):
     def __init__(self, ui_file: Optional[str] = None,
                  command_line_args: Optional[List[str]] = None,
                  display_args: Optional[List[str]] = None,
+                 use_inca: bool = True,
                  perfmon: bool = False,
                  hide_nav_bar: bool = False,
                  hide_menu_bar: bool = False,
@@ -53,6 +54,7 @@ class CApplication(PyDMApplication):
                 is opening up a .py file with extra arguments specified, and
                 probably isn't something you will ever need to use when writing
                 code that instantiates CApplication.
+            use_inca: Whether to route JAPC connection through known InCA servers.
             perfmon: Whether or not to enable performance monitoring using 'psutil'.
                 When enabled, CPU load information on a per-thread basis is
                 periodically printed to the terminal.
@@ -78,6 +80,7 @@ class CApplication(PyDMApplication):
         args = [_APP_NAME]
         args.extend(command_line_args or [])
         self.rbac = RBACState()  # We must keep it before super because dependant plugins will be initialized in super()
+        self.use_inca = use_inca
         super().__init__(ui_file=ui_file,
                          command_line_args=args,
                          display_args=display_args or [],

@@ -98,6 +98,14 @@ def _install_help(parser: argparse.ArgumentParser):
                         help='Show this help message and exit.')
 
 
+def _install_controls_arguments(parser: argparse.ArgumentParser):
+    parser.add_argument('--no-inca',
+                        action='store_true',
+                        help='Do not use InCA server middleware and connect directly to devices. By default JAPC '
+                             'connection will use a set of known InCA servers.')
+    # TODO: CMW environment should go here
+
+
 def _run_subcommand(parser: argparse.ArgumentParser):
     required_group = parser.add_argument_group('Required arguments')
     required_group.add_argument('display_file',
@@ -148,6 +156,9 @@ def _run_subcommand(parser: argparse.ArgumentParser):
                                   action='store_true',
                                   help='Use predefined stylesheet with the dark theme for the application. '
                                        '(This option will override --stylesheet flag).')
+
+    controls_group = parser.add_argument_group('Control system configuration')
+    _install_controls_arguments(controls_group)
 
     plugin_group = parser.add_argument_group('Extensions')
     plugin_group.add_argument('--enable-plugins',
@@ -229,6 +240,7 @@ def __designer_subcommand(parser: argparse.ArgumentParser):
                               action='store_true',
                               help='Launch ComRAD Designer displaying live data from the control system.')
     _install_help(comrad_group)
+    _install_controls_arguments(comrad_group)
 
     qt_group = parser.add_argument_group('Standard Qt Designer arguments')
     qt_group.add_argument('--server',
@@ -284,6 +296,7 @@ def _run_comrad(args: argparse.Namespace):
 
     app = CApplication(ui_file=args.display_file,
                        command_line_args=args.display_args,
+                       use_inca=not args.no_inca,
                        perfmon=args.perfmon,
                        hide_nav_bar=args.hide_nav_bar,
                        hide_menu_bar=args.hide_menu_bar,

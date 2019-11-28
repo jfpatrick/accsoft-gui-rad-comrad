@@ -42,25 +42,25 @@ class _JapcService(QObject, pyjapc.PyJapc):
     japc_status_changed = Signal(bool)
     japc_login_error = Signal(tuple)
 
-    def __init__(self,
-                 selector: str,
-                 incaAcceleratorName: str,
-                 noSet: bool = False,
-                 timeZone: Union[str, datetime.tzinfo] = 'utc',
-                 logLevel: Optional[int] = None,
-                 *args,
-                 **kwargs):
-        QObject.__init__(self)
-        pyjapc.PyJapc.__init__(self,
-                               selector=selector,
-                               incaAcceleratorName=incaAcceleratorName,
-                               noSet=noSet,
-                               timeZone=timeZone,
-                               logLevel=logLevel,
-                               *args,
-                               **kwargs)
+    def __init__(self):
+        app = cast(CApplication, CApplication.instance())
+        if not app.use_inca:
+            logger.debug(f'User has opted-out from using InCA')
+
+        # We don't need to call separate initializers here, because QObject will call PyJapc intializer by default.
+        # It is also reflected in the examples of the PyQt5 documentation:
+        # https://www.riverbankcomputing.com/static/Docs/PyQt5/multiinheritance.html
+
+        # Selector is important to set, otherwise the default PyJapc selector tends to be LHC.USER.ALL
+        # which fails to read data from private virtual devices.
+        # When passing selector, it is important to set incaAcceleratorName, because default 'auto' name
+        # will try to infer the accelerator from the selector and will fail, if we are passing None
+        super().__init__(None,
+                         selector='',
+                         incaAcceleratorName='' if app.use_inca else None)
         self._logged_in: bool = False
-        self._app = cast(CApplication, CApplication.instance())
+        self._use_inca = app.use_inca
+        self._app = app
         self._app.rbac.rbac_logout_user.connect(self.rbacLogout)
         self._app.rbac.rbac_login_user.connect(self.login_by_credentials)
         self._app.rbac.rbac_login_by_location.connect(self.login_by_location)
@@ -113,6 +113,11 @@ class _JapcService(QObject, pyjapc.PyJapc):
         if not self._logged_in:
             logger.warning('Cannot set param because RBAC was not passed previously')
         else:
+            if not self._use_inca and 'checkDims' not in kwargs:
+                # Because when InCA is not set up, setter will crash because it will fail to
+                # receive valueDescriptor while trying to verify dimensions.
+                kwargs['checkDims'] = False
+
             super().setParam(*args, **kwargs)
 
     def stopSubscriptions(self, parameterName: Optional[str] = None, selector: Optional[str] = None):
@@ -144,13 +149,9 @@ def get_japc() -> _JapcService:
         Singleton instance.
     """
 
-    # Selector is important to set, otherwise the default PyJapc selector tends to be LHC.USER.ALL
-    # which fails to read data from private virtual devices.
-    # When passing selector, it is important to set incaAcceleratorName, because default 'auto' name
-    # will try to infer the accelerator from the selector and will fail, if we are passing None
     global _japc
     if _japc is None:
-        _japc = _JapcService(selector='', incaAcceleratorName='')
+        _japc = _JapcService()
     return _japc
 
 
@@ -307,9 +308,9 @@ class _JapcConnection(PyDMConnection):
             except Exception as e:
                 logger.error(f'Unexpected error while subscribing to {self.address}'
                                '. Please verify the parameters and make sure the address is in the form'
-                               f"'{self.protocol}://device/property#field@selector' or"
-                               f"'{self.protocol}://device/prop#field' or"
-                               f"'{self.protocol}://device/property'. Underlying problem: {str(e)}")
+                               f"'{self.protocol}:///device/property#field@selector' or"
+                               f"'{self.protocol}:///device/prop#field' or"
+                               f"'{self.protocol}:///device/property'. Underlying problem: {str(e)}")
                 return False
         else:
             # Artificially emit a single value to allow the UI update once because subscription
