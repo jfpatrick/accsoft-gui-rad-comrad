@@ -47,6 +47,9 @@ class _JapcService(QObject, pyjapc.PyJapc):
         if not app.use_inca:
             logger.debug(f'User has opted-out from using InCA')
 
+        # This has to be set before super, as it will be accessed in JVM setup hook
+        self._app = app
+
         # We don't need to call separate initializers here, because QObject will call PyJapc intializer by default.
         # It is also reflected in the examples of the PyQt5 documentation:
         # https://www.riverbankcomputing.com/static/Docs/PyQt5/multiinheritance.html
@@ -60,7 +63,6 @@ class _JapcService(QObject, pyjapc.PyJapc):
                          incaAcceleratorName='' if app.use_inca else None)
         self._logged_in: bool = False
         self._use_inca = app.use_inca
-        self._app = app
         self._app.rbac.rbac_logout_user.connect(self.rbacLogout)
         self._app.rbac.rbac_login_user.connect(self.login_by_credentials)
         self._app.rbac.rbac_login_by_location.connect(self.login_by_location)
@@ -159,6 +161,13 @@ class _JapcService(QObject, pyjapc.PyJapc):
                 self.japc_param_error.emit(message)
             else:
                 raise e
+
+    def _setup_jvm(self, log_level: int):
+        """Overrides internal PyJapc hook to set any custom JVM flags"""
+        super()._setup_jvm(log_level=log_level)
+        for name, val in self._app.jvm_flags.items():
+            logger.debug(f'Setting extra JVM flag: {name}={val}')
+            jpype.java.lang.System.setProperty(name, str(val))
 
 
 _japc: Optional[_JapcService] = None
@@ -361,7 +370,7 @@ class _JapcConnection(PyDMConnection):
                              f"'{self.protocol}:///device/property'. Underlying problem: {str(e)}")
 
     def _on_subscription_exception(self, param_name: str, description: str, exception: Exception):
-        logger.exception(f'Exception {type(exception).__name__} triggered on {param_name}: {description}')
+        logger.exception(f'Exception {type(exception).__name__} triggered on {param_name}: {exception.getMessage()}')
         self._some_subscriptions_failed = True
 
     def _on_japc_status_changed(self, logged_in: bool):
