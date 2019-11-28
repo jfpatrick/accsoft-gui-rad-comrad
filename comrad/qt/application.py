@@ -1,15 +1,20 @@
 import os
 import logging
+import json
+import subprocess
+from itertools import chain
 from typing import Optional, List, Dict, Iterable, Type, Union, cast, Tuple
-from qtpy.QtWidgets import QAction, QMenu, QSpacerItem, QSizePolicy, QWidget, QHBoxLayout
+from qtpy.QtWidgets import QAction, QMenu, QSpacerItem, QSizePolicy, QWidget, QHBoxLayout, QMessageBox
 from qtpy.QtCore import Qt, QObject
 from pydm.application import PyDMApplication
 from pydm.main_window import PyDMMainWindow
+from pydm.utilities import path_info, which
+from pydm.data_plugins import is_read_only
 from comrad.utils import icon
 from .rbac import RBACState
 from .frame_plugins import load_plugins_from_path
-from .plugin import (CToolbarActionPlugin, CActionPlugin, CWidgetPlugin, CPositionalPlugin,
-                     CPluginPosition, CPlugin, CMenuBarPlugin, CStatusBarPlugin)
+from .plugin import (CToolbarActionPlugin, CActionPlugin, CToolbarWidgetPlugin, CPositionalPlugin, CToolbarID,
+                     CPluginPosition, CPlugin, CMenuBarPlugin, CStatusBarPlugin, CToolbarPlugin)
 
 
 logger = logging.getLogger(__name__)
@@ -23,6 +28,8 @@ class CApplication(PyDMApplication):
     def __init__(self, ui_file: Optional[str] = None,
                  command_line_args: Optional[List[str]] = None,
                  display_args: Optional[List[str]] = None,
+                 use_inca: bool = True,
+                 java_env: Optional[Dict[str, str]] = None,
                  perfmon: bool = False,
                  hide_nav_bar: bool = False,
                  hide_menu_bar: bool = False,
@@ -34,6 +41,9 @@ class CApplication(PyDMApplication):
                  status_bar_plugin_path: Optional[str] = None,
                  menu_bar_plugin_path: Optional[str] = None,
                  stylesheet_path: Optional[str] = None,
+                 toolbar_order: Optional[Iterable[Union[str, CToolbarID]]] = None,
+                 plugin_whitelist: Optional[Iterable[str]] = None,
+                 plugin_blacklist: Optional[Iterable[str]] = None,
                  fullscreen: bool = False):
         """
         Args:
@@ -45,6 +55,8 @@ class CApplication(PyDMApplication):
                 is opening up a .py file with extra arguments specified, and
                 probably isn't something you will ever need to use when writing
                 code that instantiates CApplication.
+            use_inca: Whether to route JAPC connection through known InCA servers.
+            java_env: JVM flags to be passed to the control system libraries.
             perfmon: Whether or not to enable performance monitoring using 'psutil'.
                 When enabled, CPU load information on a per-thread basis is
                 periodically printed to the terminal.
@@ -70,6 +82,8 @@ class CApplication(PyDMApplication):
         args = [_APP_NAME]
         args.extend(command_line_args or [])
         self.rbac = RBACState()  # We must keep it before super because dependant plugins will be initialized in super()
+        self.use_inca = use_inca
+        self.jvm_flags = java_env
         super().__init__(ui_file=ui_file,
                          command_line_args=args,
                          display_args=display_args or [],
@@ -86,21 +100,128 @@ class CApplication(PyDMApplication):
         self._plugins_menu: Optional[QMenu] = None
         self.setWindowIcon(icon('app', file_path=__file__))
         self.main_window.setWindowTitle('ComRAD Main Window')
+
+        # Useful for subprocesses
+        self._stylesheet_path = stylesheet_path
+        self._nav_bar_plugin_path = nav_bar_plugin_path
+        self._status_bar_plugin_path = status_bar_plugin_path
+        self._menu_bar_plugin_path = menu_bar_plugin_path
+        self._toolbar_order = toolbar_order
+        self._plugin_whitelist = plugin_whitelist
+        self._plugin_blacklist = plugin_blacklist
+
+        # TODO: We need a completely new action here instead, which will launch a subclass of the about dialog with our info
+        try:
+            action = next(x for x in reversed(self._get_or_create_menu(name=('File')).actions())
+                          if x.text() == 'About PyDM')
+            action.setText('About ComRAD')
+        except StopIteration:
+            pass
+
         self._stored_plugins: List[CPlugin] = []  # Reference plugins to keep the objects alive
 
-        self._stored_plugins.extend(self._load_toolbar_plugins(nav_bar_plugin_path) or [])
-        self._stored_plugins.extend(self._load_menubar_plugins(menu_bar_plugin_path) or [])
-        self._stored_plugins.extend(self._load_status_bar_plugins(status_bar_plugin_path) or [])
+        order: Optional[Iterable[Union[str, CToolbarID]]] = None
+        if toolbar_order is not None:
+
+            def _convert(identifier: str) -> Union[str, CToolbarID]:
+                try:
+                    return CToolbarID(identifier)
+                except ValueError:
+                    # Not a valid CToolbarID identifier
+                    return identifier
+
+            order = list(map(_convert, toolbar_order))
+
+        self._stored_plugins.extend(self._load_toolbar_plugins(nav_bar_plugin_path,
+                                                               order=order,
+                                                               whitelist=plugin_whitelist,
+                                                               blacklist=plugin_blacklist) or [])
+        self._stored_plugins.extend(self._load_menubar_plugins(menu_bar_plugin_path,
+                                                               whitelist=plugin_whitelist,
+                                                               blacklist=plugin_blacklist) or [])
+        self._stored_plugins.extend(self._load_status_bar_plugins(status_bar_plugin_path,
+                                                                  whitelist=plugin_whitelist,
+                                                                  blacklist=plugin_blacklist) or [])
         # TODO: Add exit menu item
 
-    def _load_toolbar_plugins(self, cmd_line_paths: Optional[str]) -> Optional[List[CPlugin]]:
+    def new_pydm_process(self,
+                         ui_file: str,
+                         macros: Optional[Dict[str, str]] = None,
+                         command_line_args: Optional[List[str]] = None):
+        """
+        Overrides the subclass method to spawn ComRAD process instead of bare PyDM.
+
+        Args:
+            ui_file: The path to a .ui or .py file to open in the new process.
+            macros: A dictionary of macro variables to supply to the display file to be opened.
+            command_line_args: A list of command line arguments to pass to the new process. Typically,
+                this argument is used by related display buttons
+                to pass in extra arguments.  It is probably rare that code you
+                write needs to use this argument.
+        """
+        # Expand user (~ or ~user) and environment variables.
+        ui_file = os.path.expanduser(os.path.expandvars(ui_file))
+        base_dir, file_name, args = path_info(str(ui_file))
+        filepath = os.path.join(base_dir, file_name)
+        filepath_args = args
+        exec_path = which('comrad')
+
+        if exec_path is None:
+            extra_path = os.environ.get('PYDM_PATH', None)
+            if extra_path is not None:
+                exec_path = os.path.join(extra_path, 'comrad')
+
+        args = [exec_path, 'run']
+        if self.hide_nav_bar:
+            args.append('--hide-nav-bar')
+        if self.hide_menu_bar:
+            args.append('--hide-menu-bar')
+        if self.hide_status_bar:
+            args.append('--hide-status-bar')
+        if self.fullscreen:
+            args.append('--fullscreen')
+        if is_read_only():
+            args.append('--read-only')
+        if self._stylesheet_path:
+            args.extend(['--stylesheet', self._stylesheet_path])
+        if macros is not None:
+            args.extend(['-m', json.dumps(macros)])
+        if self._nav_bar_plugin_path:
+            args.extend(['--nav-plugin-path', self._nav_bar_plugin_path])
+        if self._status_bar_plugin_path:
+            args.extend(['--status-plugin-path', self._status_bar_plugin_path])
+        if self._menu_bar_plugin_path:
+            args.extend(['--menu-plugin-path', self._menu_bar_plugin_path])
+        if self._toolbar_order:
+            args.extend(['--nav-bar-order', ','.join(self._toolbar_order)])
+        if self._plugin_whitelist:
+            args.extend(['--enable-plugins', ','.join(self._plugin_whitelist)])
+        if self._plugin_blacklist:
+            args.extend(['--disable-plugins', ','.join(self._plugin_blacklist)])
+        args.extend(['--log-level', logging.getLevelName(logging.getLogger('').getEffectiveLevel())])
+        args.append(filepath)
+        args.extend(self.display_args)
+        args.extend(filepath_args)
+        if command_line_args is not None:
+            args.extend(command_line_args)
+        subprocess.Popen(args, shell=False)
+
+    def on_control_error(self, message: str):
+        """Callback to display a message whenever an exception happens in the control system."""
+        logger.warning(f'Control system warning received: {message}')
+        QMessageBox.warning(None, 'Control system problem', message)
+
+    def _load_toolbar_plugins(self,
+                              cmd_line_paths: Optional[str],
+                              order: Optional[List[Union[str, CToolbarID]]] = None,
+                              whitelist: Optional[List[str]] = None,
+                              blacklist: Optional[List[str]] = None) -> Optional[List[CPlugin]]:
         toolbar_plugins = CApplication._load_plugins(env_var_path_key='COMRAD_TOOLBAR_PLUGIN_PATH',
                                                      cmd_line_paths=cmd_line_paths,
-                                                     shipped_plugin_path='toolbar')
+                                                     shipped_plugin_path='toolbar',
+                                                     base_type=CToolbarPlugin)
         if not toolbar_plugins:
             return None
-
-        self.main_window.ui.navbar.addSeparator()
 
         toolbar_actions: List[QAction] = []
         toolbar_left: List[Union[QAction, QWidget]] = []  # Items preceding spacer
@@ -108,9 +229,15 @@ class CApplication(PyDMApplication):
 
         stored_plugins: List[CPlugin] = []
 
-        for plugin_type in toolbar_plugins.values():
-            plugin: Union[CToolbarActionPlugin, CWidgetPlugin]
-            if issubclass(plugin_type, CToolbarActionPlugin):
+        for plugin_id, plugin_type in CApplication._filter_enabled_plugins(plugins=toolbar_plugins.values(),
+                                                                           blacklist=blacklist,
+                                                                           whitelist=whitelist):
+            if order is not None and plugin_id not in order:
+                logger.debug(f'Skipping init for "{plugin_type.__name__}", as it is not going to be used.')
+                # Do not instantiate a plugin that is not going to be used
+                continue
+
+            if issubclass(plugin_type, CActionPlugin):
                 action_plugin = cast(CToolbarActionPlugin, plugin_type())
                 item = QAction(self.main_window)
                 item.setShortcutContext(Qt.ApplicationShortcut)
@@ -126,10 +253,12 @@ class CApplication(PyDMApplication):
                 stored_plugins.append(action_plugin)
                 plugin = action_plugin
             else:
-                widget_plugin = cast(CWidgetPlugin, plugin_type())
+                widget_plugin = cast(CToolbarWidgetPlugin, plugin_type())
                 item = widget_plugin.create_widget()
                 stored_plugins.append(widget_plugin)
                 plugin = widget_plugin
+
+            setattr(item, 'plugin_id', plugin_id)
 
             (toolbar_left if cast(CPositionalPlugin, plugin).position == CPluginPosition.LEFT
              else toolbar_right).append(item)
@@ -138,24 +267,66 @@ class CApplication(PyDMApplication):
             menu = self._get_or_create_menu(name=('Plugins', 'Toolbar'))
             menu.addActions(toolbar_actions)
 
-        def _add_to_nav_bar(items: Iterable[Union[QWidget, QAction]]):
+        def _add_item_to_nav_bar(item: Union[QWidget, QAction]):
             nav_bar = self.main_window.ui.navbar
-            for item in items:
-                if isinstance(item, QWidget):
-                    nav_bar.addWidget(item)
-                elif isinstance(item, QAction):
-                    nav_bar.addAction(item)
+            if isinstance(item, QWidget):
+                nav_bar.addWidget(item)
+            elif isinstance(item, QAction):
+                nav_bar.addAction(item)
 
-        _add_to_nav_bar(toolbar_left)
+        def _add_toolbar_spacer():
+            # Add spacer to compress toolbar items when possible
+            spacer = QWidget()
+            layout = QHBoxLayout()
+            spacer.setLayout(layout)
+            layout.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Preferred))
+            self.main_window.ui.navbar.addWidget(spacer)
 
-        # Add spacer to compress toolbar items when possible
-        spacer = QWidget()
-        layout = QHBoxLayout()
-        spacer.setLayout(layout)
-        layout.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Preferred))
-        self.main_window.ui.navbar.addWidget(spacer)
+        # If we have sequence supplied, we need to re-order toolbar items
+        if order is not None:
+            self.main_window.ui.navbar.clear()
+            stayed_empty = True
+            for next_id in order:
+                if isinstance(next_id, str):
+                    try:
+                        next_item = next((item for item in chain(toolbar_left, toolbar_right)
+                                          if getattr(item, 'plugin_id') == next_id))
+                        logger.debug(f'Adding toolbar item "{next_id}"')
+                    except StopIteration:
+                        logger.warning(f'Cannot find "{next_id}" amongst available '
+                                       f'toolbar items. It will not be placed')
+                        continue
+                    _add_item_to_nav_bar(next_item)
+                else:
+                    if next_id == CToolbarID.SPACER:
+                        _add_toolbar_spacer()
+                        logger.debug('Adding toolbar spacer')
+                    elif next_id == CToolbarID.SEPARATOR:
+                        self.main_window.ui.navbar.addSeparator()
+                        logger.debug('Adding toolbar separator')
+                    elif next_id == CToolbarID.NAV_BACK:
+                        _add_item_to_nav_bar(self.main_window.ui.actionBack)
+                        logger.debug('Adding toolbar back')
+                    elif next_id == CToolbarID.NAV_FORWARD:
+                        _add_item_to_nav_bar(self.main_window.ui.actionForward)
+                        logger.debug('Adding toolbar forward')
+                    elif next_id == CToolbarID.NAV_HOME:
+                        _add_item_to_nav_bar(self.main_window.ui.actionHome)
+                        logger.debug('Adding toolbar home')
+                    else:
+                        continue
+                stayed_empty = False
 
-        _add_to_nav_bar(toolbar_right)
+            if stayed_empty:
+                logger.info(f'No items are placed in nav bar, it will be hidden by default')
+                self.main_window.toggle_nav_bar(False)  # FIXME: There is a bug in PyDMMainWindow. When navbar is hidden by default, its menu action is marked as checked
+        else:
+            self.main_window.ui.navbar.addSeparator()
+            for item in toolbar_left:
+                _add_item_to_nav_bar(item)
+            _add_toolbar_spacer()
+            for item in toolbar_right:
+                _add_item_to_nav_bar(item)
 
         return stored_plugins
 
@@ -185,7 +356,10 @@ class CApplication(PyDMApplication):
                 menu = self._get_or_create_menu(name=sub_name, parent=menu, full_path=full_path)
             return menu
 
-    def _load_menubar_plugins(self, cmd_line_paths: Optional[str]) -> Optional[List[CPlugin]]:
+    def _load_menubar_plugins(self,
+                              cmd_line_paths: Optional[str],
+                              whitelist: Optional[List[str]] = None,
+                              blacklist: Optional[List[str]] = None) -> Optional[List[CPlugin]]:
         menubar_plugins = CApplication._load_plugins(env_var_path_key='COMRAD_MENUBAR_PLUGIN_PATH',
                                                      cmd_line_paths=cmd_line_paths,
                                                      shipped_plugin_path='menu',
@@ -195,7 +369,9 @@ class CApplication(PyDMApplication):
 
         stored_plugins: List[CPlugin] = []
 
-        for plugin_type in menubar_plugins.values():
+        for _, plugin_type in CApplication._filter_enabled_plugins(plugins=menubar_plugins.values(),
+                                                                   whitelist=whitelist,
+                                                                   blacklist=blacklist):
             plugin: CMenuBarPlugin = plugin_type()
             try:
                 menu = self._get_or_create_menu(name=plugin.top_level())
@@ -218,7 +394,10 @@ class CApplication(PyDMApplication):
 
         return stored_plugins
 
-    def _load_status_bar_plugins(self, cmd_line_paths: Optional[str]) -> Optional[List[CPlugin]]:
+    def _load_status_bar_plugins(self,
+                                 cmd_line_paths: Optional[str],
+                                 whitelist: Optional[List[str]] = None,
+                                 blacklist: Optional[List[str]] = None) -> Optional[List[CPlugin]]:
         status_bar_plugins = CApplication._load_plugins(env_var_path_key='COMRAD_STATUSBAR_PLUGIN_PATH',
                                                         cmd_line_paths=cmd_line_paths,
                                                         shipped_plugin_path='statusbar',
@@ -230,7 +409,9 @@ class CApplication(PyDMApplication):
         status_bar_right: List[Tuple[QWidget, bool]] = []  # Items succeeding spacer
 
         stored_plugins: List[CPlugin] = []
-        for plugin_type in status_bar_plugins.values():
+        for _, plugin_type in CApplication._filter_enabled_plugins(plugins=status_bar_plugins.values(),
+                                                                   whitelist=whitelist,
+                                                                   blacklist=blacklist):
             plugin = cast(CStatusBarPlugin, plugin_type())
             widget = plugin.create_widget()
             item = (widget, plugin.is_permanent)
@@ -277,6 +458,38 @@ class CApplication(PyDMApplication):
         return load_plugins_from_path(locations=locations,
                                       token='_plugin.py',
                                       base_type=base_type)
+
+    @staticmethod
+    def _filter_enabled_plugins(plugins: Iterable[Type],
+                                whitelist: Optional[Iterable[str]],
+                                blacklist: Optional[Iterable[str]]):
+
+        def extract_type_attr(plugin_class: Type, attr_name: str):
+            val = getattr(plugin_class, attr_name, None)
+            if val is None or (not isinstance(val, bool) and not val):
+                # Allow False, but do not allow empty strings, lists, etc
+                logger.exception(f'Plugin "{plugin_class.__name__}" is missing "{attr_name}" class attribute '
+                                 f'that is essential for all toolbar plugins')
+                raise AttributeError
+            return val
+
+        for plugin_type in plugins:
+            try:
+                plugin_id: str = extract_type_attr(plugin_type, 'plugin_id')
+                is_enabled: bool = extract_type_attr(plugin_type, 'enabled')
+            except AttributeError:
+                continue
+
+            if not is_enabled and whitelist and plugin_id in whitelist:
+                is_enabled = True
+                logger.debug(f'Enabling whitelisted plugin "{plugin_type.__name__}"')
+            elif is_enabled and blacklist and plugin_id in blacklist:
+                is_enabled = False
+                logger.debug(f'Disabling blacklisted plugin "{plugin_type.__name__}"')
+
+            if not is_enabled:
+                continue
+            yield plugin_id, plugin_type
 
 
 class CAction(QAction):

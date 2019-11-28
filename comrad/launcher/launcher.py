@@ -6,9 +6,10 @@ import argcomplete
 import logging
 import os
 import sys
-from typing import Optional
+from typing import Optional, Iterable, cast, Tuple, Dict, List
 from pydm.utilities.macro import parse_macro_string
 from comrad import __version__, CApplication
+from comrad.utils import ccda_map
 from comrad.examples.__main__ import populate_parser as populate_examples_parser, run_browser as run_examples_browser
 
 
@@ -75,14 +76,15 @@ def run():
     argcomplete.autocomplete(parser)
 
     args = parser.parse_args()
-    if args.cmd == 'run':
-        _run_comrad(args)
-    elif args.cmd == 'examples':
+    if args.cmd == 'examples':
         run_examples_browser(args)
-    elif args.cmd == 'designer':
-        _run_designer(args)
     else:
-        parser.print_help()
+        if args.cmd == 'run':
+            _run_comrad(args) or parser.print_usage()
+        elif args.cmd == 'designer':
+            _run_designer(args) or parser.print_usage()
+        else:
+            parser.print_help()
 
 
 _PKG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -96,6 +98,29 @@ def _install_help(parser: argparse.ArgumentParser):
     parser.add_argument('-h', '--help',
                         action='help',
                         help='Show this help message and exit.')
+
+
+def _install_controls_arguments(parser: argparse.ArgumentParser):
+    parser.add_argument('--no-inca',
+                        action='store_true',
+                        help='Do not use InCA server middleware and connect directly to devices. By default JAPC '
+                             'connection will use a set of known InCA servers.')
+    parser.add_argument('--cmw-env',
+                        help='Configure environment for CMW directory service, RBAC and CCDB. (default: PRO)'
+                             ' - PRO: stable production service; uses CCDB PRO schema; - TEST: stable test/testbed '
+                             'service for integration/acceptance/system testing to be used by external clients; '
+                             'uses CCDB INT schema; - INT: unstable integration service for internal CMW '
+                             'integration testing used by the CMW team only; uses CCDB INT schema; - DEV: '
+                             'Development environment. Uses CCDB DEV schema. The environments with suffix \'2\' are'
+                             ' similar to original ones but use alternative CCDB endpoints.',
+                         choices=['PRO', 'TEST', 'INT', 'DEV', 'PRO2', 'TEST2', 'INT2', 'DEV2'],
+                         default='PRO')
+    parser.add_argument('--java-env',
+                        help='Custom JVM flags to be passed for JVM-dependent control libraries. Note, all '
+                             'Java-based libraries will reuse the same JVM, therefore these variables will '
+                             'affect all of them.',
+                        metavar="key=value",
+                        nargs=argparse.ONE_OR_MORE)
 
 
 def _run_subcommand(parser: argparse.ArgumentParser):
@@ -149,10 +174,31 @@ def _run_subcommand(parser: argparse.ArgumentParser):
                                   help='Use predefined stylesheet with the dark theme for the application. '
                                        '(This option will override --stylesheet flag).')
 
+    controls_group = parser.add_argument_group('Control system configuration')
+    _install_controls_arguments(controls_group)
+
     plugin_group = parser.add_argument_group('Extensions')
-    plugin_group.add_argument('--nav-plugin-path',
-                              metavar='PATH',
-                              help='Specify the full path to a directory containing toolbar ComRAD plugins.',
+    plugin_group.add_argument('--enable-plugins',
+                              metavar="'ID,...'",
+                              help='Specify plugins that are disabled by default but should be enabled in '
+                                   'this instance. Plugins can be built-in or custom ones that are '
+                                   'visible to the application (make sure to specify --nav-plugin-path or '
+                                   'COMRAD_TOOLBAR_PLUGIN_PATH for any custom plugins). The order must be a comma-'
+                                   'separated string with plugin IDs. For built-in items use following identifiers:'
+                                   ' - RBAC dialog button: comrad.rbac'
+                                   ''
+                                   "Example usage: --enable-plugins 'comrad.rbac'",
+                              default=None)
+    plugin_group.add_argument('--disable-plugins',
+                              metavar="'ID,...'",
+                              help='Specify plugins that are enabled by default but should be disabled in '
+                                   'this instance. Plugins can be built-in or custom ones that are '
+                                   'visible to the application (make sure to specify --nav-plugin-path or '
+                                   'COMRAD_TOOLBAR_PLUGIN_PATH for any custom plugins). The order must be a comma-'
+                                   'separated string with plugin IDs. For built-in items use following identifiers:'
+                                   ' - RBAC dialog button: comrad.rbac'
+                                   ''
+                                   "Example usage: --disable-plugins 'comrad.rbac'",
                               default=None)
     plugin_group.add_argument('--status-plugin-path',
                               metavar='PATH',
@@ -161,6 +207,25 @@ def _run_subcommand(parser: argparse.ArgumentParser):
     plugin_group.add_argument('--menu-plugin-path',
                               metavar='PATH',
                               help='Specify the full path to a directory containing menu bar ComRAD plugins.',
+                              default=None)
+    plugin_group.add_argument('--nav-plugin-path',
+                              metavar='PATH',
+                              help='Specify the full path to a directory containing toolbar ComRAD plugins.',
+                              default=None)
+    plugin_group.add_argument('--nav-bar-order',
+                              metavar="'ID,...'",
+                              help='Specify the order of items to appear in the navigation bar. Plugins must be '
+                                   'visible to the application (make sure to specify --nav-plugin-path or '
+                                   'COMRAD_TOOLBAR_PLUGIN_PATH for any custom plugins). The order must be a comma-'
+                                   'separated string with plugin IDs. For native items, use following identifiers:'
+                                   ' - "Back" button: comrad.back'
+                                   ' - "Forward" button: comrad.fwd'
+                                   ' - "Home" button: comrad.home'
+                                   ' - Toolbar separator: comrad.sep'
+                                   ' - Toolbar empty space: comrad.spacer'
+                                   ' - RBAC dialog button: comrad.rbac'
+                                   ''
+                                   "Example usage: --nav-bar-order 'comrad.home,comrad.sep,comrad.spacer,comrad.rbac'",
                               default=None)
 
     debug_group = parser.add_argument_group('Debugging')
@@ -186,12 +251,13 @@ def __designer_subcommand(parser: argparse.ArgumentParser):
     comrad_group.add_argument('files',
                               help='Files to be opened in ComRAD designer.',
                               metavar='FILES',
-                              nargs='*',
+                              nargs=argparse.ZERO_OR_MORE,
                               default=None)
     comrad_group.add_argument('--online',
                               action='store_true',
                               help='Launch ComRAD Designer displaying live data from the control system.')
     _install_help(comrad_group)
+    _install_controls_arguments(comrad_group)
 
     qt_group = parser.add_argument_group('Standard Qt Designer arguments')
     qt_group.add_argument('--server',
@@ -210,7 +276,8 @@ def __designer_subcommand(parser: argparse.ArgumentParser):
                           help='Enable internal dynamic properties.')
 
 
-def _run_comrad(args: argparse.Namespace):
+def _run_comrad(args: argparse.Namespace) -> bool:
+
     macros = parse_macro_string(args.macro) if args.macro is not None else None
 
     if args.log_level:
@@ -227,6 +294,24 @@ def _run_comrad(args: argparse.Namespace):
             # Redefine the level of the root logger
             logger.setLevel(level)
 
+    try:
+        _, java_env = _parse_control_env(args)
+    except EnvironmentError as e:
+        logger.exception(str(e))
+        return False
+
+    order: Optional[Iterable[str]] = None
+    if args.nav_bar_order:
+        order = cast(str, args.nav_bar_order).split(',')
+
+    whitelist: Optional[Iterable[str]] = None
+    if args.enable_plugins:
+        whitelist = cast(str, args.enable_plugins).split(',')
+
+    blacklist: Optional[Iterable[str]] = None
+    if args.disable_plugins:
+        blacklist = cast(str, args.disable_plugins).split(',')
+
     stylesheet: Optional[str] = _relative('dark.qss') if args.dark_mode else args.stylesheet
 
     os.environ['PYDM_DATA_PLUGINS_PATH'] = _relative('data')
@@ -235,6 +320,8 @@ def _run_comrad(args: argparse.Namespace):
 
     app = CApplication(ui_file=args.display_file,
                        command_line_args=args.display_args,
+                       use_inca=not args.no_inca,
+                       java_env=java_env,
                        perfmon=args.perfmon,
                        hide_nav_bar=args.hide_nav_bar,
                        hide_menu_bar=args.hide_menu_bar,
@@ -245,15 +332,53 @@ def _run_comrad(args: argparse.Namespace):
                        nav_bar_plugin_path=args.nav_plugin_path,
                        status_bar_plugin_path=args.status_plugin_path,
                        menu_bar_plugin_path=args.menu_plugin_path,
+                       toolbar_order=order,
+                       plugin_blacklist=blacklist,
+                       plugin_whitelist=whitelist,
                        stylesheet_path=stylesheet)
     sys.exit(app.exec_())
+    return True
 
 
-def _run_designer(args: argparse.Namespace):
+def _run_designer(args: argparse.Namespace) -> bool:
+
+    try:
+        ccda_endpoint, java_env = _parse_control_env(args)
+    except EnvironmentError as e:
+        print(str(e))
+        return False
+
     from .designer import run_designer
     run_designer(files=args.files,
+                 ccda_env=ccda_endpoint,
+                 java_env=java_env,
+                 use_inca=not args.no_inca,
                  online=args.online,
                  server=args.server,
                  client=args.client,
                  resource_dir=args.resourcedir,
                  enable_internal_props=args.enableinternaldynamicproperties)
+    return True
+
+
+def _parse_control_env(args: argparse.Namespace) -> Tuple[str, Dict[str, str]]:
+
+    cmw_env: str = args.cmw_env
+    try:
+        ccda_endpoint = ccda_map[cmw_env]
+    except KeyError:
+        raise EnvironmentError(f'Invalid CMW environment specified: {cmw_env}')
+
+    java_env: Optional[List[str]] = args.java_env
+    jvm_flags = {}
+    if java_env:
+        for arg in java_env:
+            name, val = tuple(arg.split('='))
+            jvm_flags[name] = val
+    if cmw_env not in ['PRO', 'PRO2']:
+        if cmw_env.endswith('2'):
+            cmw_env = cmw_env[:-1]
+        jvm_flags['cmw.directory.env'] = cmw_env
+        jvm_flags['rbac.env'] = cmw_env
+
+    return ccda_endpoint, jvm_flags

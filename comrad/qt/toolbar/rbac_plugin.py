@@ -1,12 +1,12 @@
 import os
 import logging
-from typing import Optional, cast
+from typing import Optional, cast, Tuple
 from qtpy.QtWidgets import (QWidget, QPushButton, QLineEdit, QLabel, QDialog, QVBoxLayout, QToolButton, QMenu,
-                            QWidgetAction, QSizePolicy)
+                            QWidgetAction, QSizePolicy, QTabWidget)
 from qtpy import uic
 from qtpy.QtCore import Signal, Qt, QEvent
 from comrad.qt.application import CApplication
-from comrad.qt.plugin import CWidgetPlugin, CPluginPosition
+from comrad.qt.plugin import CToolbarWidgetPlugin, CPluginPosition
 from comrad.qt.rbac import RBACLoginStatus
 from comrad.utils import icon
 
@@ -29,14 +29,13 @@ class RBACDialogWidget(QWidget):
         self.username: QLineEdit = None
         self.password: QLineEdit = None
         self.user_error: QLabel = None
-        self.password_error: QLabel = None
         self.loc_error: QLabel = None
+        self.tabs: QTabWidget = None
 
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'rbac_dialog.ui'), self)
 
         self.user_error.hide()
         self.loc_error.hide()
-        self.password_error.hide()
 
         self.loc_btn.clicked.connect(self._login_loc)
         self.user_btn.clicked.connect(self._login_user)
@@ -44,6 +43,7 @@ class RBACDialogWidget(QWidget):
         self.login_by_location.connect(app.rbac.login_by_location)
         self.login_by_username.connect(app.rbac.login_by_credentials)
         app.rbac.rbac_status_changed.connect(self._clean_password)
+        app.rbac.rbac_error.connect(self._on_error)
 
     def event(self, event: QEvent) -> bool:
         if event.type() == QEvent.MouseButtonPress or event.type() == QEvent.MouseButtonRelease:
@@ -53,26 +53,40 @@ class RBACDialogWidget(QWidget):
 
     def _login_loc(self):
         self.loc_error.hide()
+        self.user_error.hide()
         self.login_by_location.emit()
 
     def _login_user(self):
         user = self.username.text()
-        if not user:
-            self.user_error.setText('You must define username')
-            self.user_error.show()
         passwd = self.password.text()
-        if not passwd:
-            self.password_error.setText('You must define password')
-            self.password_error.show()
-        if not user or not passwd:
+        if not user and not passwd:
+            self.user_error.setText('You must define username and password')
+        elif not user:
+            self.user_error.setText('You must define username')
+        elif not passwd:
+            self.user_error.setText('You must define password')
+        else:
+            self.user_error.hide()
+            self.loc_error.hide()
+            self.login_by_username.emit(user, passwd)
             return
-
-        self.user_error.hide()
-        self.password_error.hide()
-        self.login_by_username.emit(user, passwd)
+        self.user_error.show()
 
     def _clean_password(self):
         self.password.setText(None)
+
+    def _on_error(self, payload: Tuple[str, bool]):
+        msg, by_loc = payload
+        if by_loc:
+            self.loc_error.setText(msg)
+            self.tabs.setCurrentIndex(0)
+            self.loc_error.show()
+            self.user_error.hide()
+        else:
+            self.user_error.setText(msg)
+            self.tabs.setCurrentIndex(1)
+            self.user_error.show()
+            self.loc_error.hide()
 
 
 class RBACDialog(QDialog):
@@ -150,9 +164,10 @@ class RBACButton(QToolButton):
 #     def triggered(self):
 #         print(f'RBAC triggered')
 
-class RBACButtonPlugin(CWidgetPlugin):
+class RBACButtonPlugin(CToolbarWidgetPlugin):
 
     position = CPluginPosition.RIGHT
+    plugin_id = 'comrad.rbac'
 
     def create_widget(self):
         return RBACButton()
