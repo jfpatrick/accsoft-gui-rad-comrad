@@ -8,7 +8,7 @@ from qtpy.QtCore import Qt, QObject, Slot, Signal, QVariant
 from typing import Any, Optional, cast, Callable
 from collections import namedtuple
 from comrad.qt.application import CApplication
-from comrad.qt.rbac import RBACLoginStatus
+from comrad.qt.rbac import RBACLoginStatus, RBACStartupLoginPolicy
 from comrad.data.jpype import get_user_message, is_security_exception
 
 
@@ -68,6 +68,16 @@ class _JapcService(QObject, pyjapc.PyJapc):
         self.japc_param_error.connect(self._app.on_control_error)
         logger.debug(f'JAPC is set up and ready!')
 
+        if app.rbac.startup_login_policy == RBACStartupLoginPolicy.LOGIN_BY_LOCATION:
+            logger.debug(f'Attempting login by location on the first connection')
+            try:
+                self.login_by_location()
+            except BaseException:
+                logger.info('Login by location failed. User will have to manually acquire RBAC token.')
+        elif app.rbac.startup_login_policy == RBACStartupLoginPolicy.LOGIN_BY_CREDENTIALS:
+            # TODO: Implement presenting a dialog here
+            pass
+
     def login_by_location(self):
         logger.debug(f'Attempting RBAC login by location')
         self.rbacLogin(on_exception=self._login_err)
@@ -124,9 +134,6 @@ class _JapcService(QObject, pyjapc.PyJapc):
             # receive valueDescriptor while trying to verify dimensions.
             kwargs['checkDims'] = False
         self._expect_cmw_security_error(super().setParam, *args, **kwargs)
-
-    def subscribeParam(self, *args, **kwargs):
-        self._expect_cmw_security_error(super().subscribeParam, *args, **kwargs)
 
     def stopSubscriptions(self, parameterName: Optional[str] = None, selector: Optional[str] = None):
         super().stopSubscriptions(parameterName=parameterName, selector=selector)
@@ -190,11 +197,13 @@ class _JapcConnection(PyDMConnection):
         self._subscriptions_active: bool = False
         self._selector: Optional[str] = None
         self._japc_additional_args = {}
+        self._some_subscriptions_failed: bool = False
         parsed_addr = split_device_property(self._device_prop)
         if parsed_addr.selector:
             self._device_prop = parsed_addr.address
             self._japc_additional_args['timingSelectorOverride'] = self._selector = parsed_addr.selector
 
+        get_japc().japc_status_changed.connect(self._on_japc_status_changed)
         self.add_listener(channel)
 
     def add_listener(self, channel: PyDMChannel):
@@ -205,14 +214,6 @@ class _JapcConnection(PyDMConnection):
         if channel.value_signal is not None:
             logger.debug(f'Adding write callback for {self.protocol}://{self.address}')
             self._connect_write_slots(channel.value_signal)
-
-        japc = get_japc()
-        if not self.online and not japc.logged_in:
-            logger.debug(f'Attempting login by location on the first connection')
-            try:
-                japc.login_by_location()
-            except BaseException:
-                logger.info('Login by location failed. User will have to manually acquire RBAC token.')
 
         # Allow write to all widgets by default. Write permissions are defined in CCDB,
         # which pyjapc does not have access to, so we can't know if a property is writable at the moment
@@ -261,7 +262,6 @@ class _JapcConnection(PyDMConnection):
 
     def _on_async_get(self, initial_value: Any):
         logger.debug(f'Received async GET callback on {self.protocol}://{self.address}')
-        self.online = True
         self._on_value_received(parameterName=self._device_prop, value=initial_value)
         logger.debug(f'Added one more listener to {self.protocol}://{self.address}')
 
@@ -306,6 +306,8 @@ class _JapcConnection(PyDMConnection):
     def _on_value_received(self, parameterName: str, value: Any, headerInfo=None):
         del parameterName, headerInfo  # Unused argument (https://google.github.io/styleguide/pyguide.html#214-decision)
 
+        self.online = True
+
         try:
             self.new_value_signal[type(value)].emit(value)
         except KeyError:
@@ -333,21 +335,11 @@ class _JapcConnection(PyDMConnection):
         japc = get_japc()
         if not self.online:
             logger.debug(f'Subscribing to JAPC at {self._device_prop}')
-            try:
-                japc.subscribeParam(parameterName=self._device_prop,
-                                    onValueReceived=self._on_value_received,
-                                    **self._japc_additional_args)
-                japc.startSubscriptions(parameterName=self._device_prop,
-                                        selector=self._selector)
-            except Exception as e:
-                # TODO: Catch more speicific Jpype errors here
-                logger.error(f'Unexpected error while subscribing to {self.address}'
-                               '. Please verify the parameters and make sure the address is in the form'
-                               f"'{self.protocol}:///device/property#field@selector' or"
-                               f"'{self.protocol}:///device/prop#field' or"
-                               f"'{self.protocol}:///device/property'. Underlying problem: {str(e)}")
-                return
-            self.online = True
+            japc.subscribeParam(parameterName=self._device_prop,
+                                onValueReceived=self._on_value_received,
+                                onException=self._on_subscription_exception,
+                                **self._japc_additional_args)
+            self._start_subscriptions()
         else:
             logger.debug(f'Initiating a single GET to {self._device_prop} to update the displayed value')
             # Artificially emit a single value to allow the UI update once because subscription
@@ -355,6 +347,30 @@ class _JapcConnection(PyDMConnection):
             japc.getParam(parameterName=self._device_prop,
                           onValueReceived=self._on_async_get,
                           **self._japc_additional_args)
+
+    def _start_subscriptions(self):
+        logger.debug(f'Starting subscriptions')
+        try:
+            get_japc().startSubscriptions(parameterName=self._device_prop, selector=self._selector)
+        except Exception as e:
+            # TODO: Catch more specific Jpype errors here
+            logger.exception(f'Unexpected error while subscribing to {self.address}'
+                             '. Please verify the parameters and make sure the address is in the form'
+                             f"'{self.protocol}:///device/property#field@selector' or"
+                             f"'{self.protocol}:///device/prop#field' or"
+                             f"'{self.protocol}:///device/property'. Underlying problem: {str(e)}")
+
+    def _on_subscription_exception(self, param_name: str, description: str, exception: Exception):
+        logger.exception(f'Exception {type(exception).__name__} triggered on {param_name}: {description}')
+        self._some_subscriptions_failed = True
+
+    def _on_japc_status_changed(self, logged_in: bool):
+        if logged_in and (not self.online or self._some_subscriptions_failed):
+            logger.debug(f'Reviving blocked subscriptions after login')
+            self._some_subscriptions_failed = False
+            # Need to stop subscriptions before restarting, otherwise they will not start
+            get_japc().stopSubscriptions(parameterName=self._device_prop, selector=self._selector)
+            self._start_subscriptions()
 
 
 class JapcPlugin(PyDMPlugin):

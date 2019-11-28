@@ -13,6 +13,12 @@ class RBACLoginStatus(IntEnum):
     LOGGED_IN_BY_CREDENTIALS = 2
 
 
+class RBACStartupLoginPolicy(IntEnum):
+    LOGIN_BY_LOCATION = 0
+    LOGIN_BY_CREDENTIALS = 1
+    NO_LOGIN = 2
+
+
 class RBACState(QObject):
 
     rbac_login_by_location = Signal()
@@ -35,6 +41,7 @@ class RBACState(QObject):
         super().__init__(parent)
         self._status = RBACLoginStatus.LOGGED_OUT
         self.user: Optional[str] = None
+        self.startup_login_policy = RBACStartupLoginPolicy.LOGIN_BY_LOCATION
 
     @property
     def status(self) -> RBACLoginStatus:
