@@ -1,11 +1,12 @@
+import functools
+import weakref
 import logging
 from weakref import ReferenceType
 from typing import List, Dict, Any, Optional, cast
-from types import MethodType
 from enum import IntEnum
 from qtpy.QtWidgets import QWidget
 from qtpy.QtCore import QMutexLocker, Property
-from pydm.widgets.rules import RulesDispatcher, RulesEngine
+from pydm.widgets.rules import RulesDispatcher, RulesEngine as PyDMRulesEngine
 from pydm.widgets.channel import PyDMChannel
 from pydm.widgets.base import PyDMWidget
 from pydm.data_plugins import plugin_for_address
@@ -18,25 +19,40 @@ logger = logging.getLogger(__name__)
 
 
 Rule = Dict[str, Any]
+"""Rule data structure in the JSON format."""
 
 
 class RuleType(IntEnum):
+    """All available rule setting modes."""
+
     NUM_RANGE = 0
+    """Numeric range where user defines lower and upper numeric
+     boundaries and associates property value with each range."""
+
     PY_EXPR = 1
+    """User defines Python expression that can read multiple channels and produce a desired property value."""
 
 
 class ChannelException(Exception):
+    """Custom exception types to catch rule/channel-related exceptions."""
     pass
 
 
 class WidgetRulesMixin:
+    """
+    Common rules mixin for all ComRAD widgets that limits the amount of properties for our widgets
+    and ensures the synchronization between channel setter and rules setter regardless of the order.
+    """
+
     DEFAULT_RULE_PROPERTY = 'Visibility'
+    """Default rule property visible in the dialog."""
+
     RULE_PROPERTIES = {
         'Enabled': ['setEnabled', bool],
         'Visibility': ['setVisible', bool],
         'Opacity': ['set_opacity', float],
     }
-    # __CHANNEL_SETTER_SUBSTITUTED: bool = False
+    """All available rule properties with associated callbacks and data types."""
 
     def default_rule_channel(self) -> str:
         """
@@ -55,13 +71,10 @@ class WidgetRulesMixin:
     # the order of reading out these properties does not impact how they are processed.
     @PyDMWidget.channel.setter
     def channel(self, value: str):
-        logger.debug(f'Substituted channel setter called. Setting channel first')
         PyDMWidget.channel.fset(self, value)
-        # cast(PyDMWidget, super()).channel = value
         # Reset the rules once again (the inner data structure should have been reset, that
         # setter logic works again
         if value is not None:
-            logger.debug(f'Now setting the rules')
             base = cast(PyDMWidget, self)
             rules = base._rules
             base._rules = None
@@ -76,27 +89,6 @@ class WidgetRulesMixin:
             # Set internal data structure without activating property setter behavior
             base = cast(PyDMWidget, self)
             base._rules = new_rules
-            # # We probably have not read the channel yet, we'll retry again after the channel is set
-            # if not self.__CHANNEL_SETTER_SUBSTITUTED:
-            #     self.__CHANNEL_SETTER_SUBSTITUTED = True
-            #
-            #     orig_channel = PyDMWidget.channel.fset
-            #
-            #     def substituted_channel(obj: PyDMWidget, value: str):
-            #         logger.debug(f'Substituted channel setter called. Setting channel first')
-            #         orig_channel(obj, value)
-            #         logger.debug(f'Now setting the rules')
-            #         # Reset the rules once again (the inner data structure should have been reset, that
-            #         # setter logic works again
-            #         obj.rules = obj.rules
-            #
-            #     logger.debug(f'Substituting the channel setter to reset the rules afterwards')
-            #     # PyDMWidget.channel.fset = substituted_channel
-            #     # functools.partial(PyDMWidget.channel.fset, self) = MethodType(substituted_channel, self)
-            #     PyDMWidget.channel = Property(type=str,
-            #                                   fget=PyDMWidget.channel.fget,
-            #                                   fset=substituted_channel,
-            #                                   designable=False)
 
 
 class ColorRulesMixin(WidgetRulesMixin):
@@ -121,17 +113,18 @@ class ColorRulesMixin(WidgetRulesMixin):
         self._color = val
 
 
-_ENGINE_REPLACED: bool = False
-if not _ENGINE_REPLACED:
-    # We have a different format of the rules because they are different from the standard PyDM.
-    # We just replace the way Rule Engine evaluates them to account for the new format.
-    logger.debug(f'Replacing PyDM rule engine with ComRAD')
-    _ENGINE_REPLACED = True
+# Monkey-patch the rules engine to have our custom rule format
+class RulesEngine(PyDMRulesEngine):
 
-    import functools
-    import weakref
+    def __init__(self):
+        """
+        RulesEngine inherits from QThread and is responsible evaluating the rules
+        for all the widgets in the application.
+        """
+        logger.debug(f'Instantiating custom rules engine')
+        super().__init__()
 
-    def substituted_register(self: RulesEngine, widget: QWidget, rules: List[Rule]):
+    def register(self: PyDMRulesEngine, widget: QWidget, rules: List[Rule]):
 
         if is_qt_designer() and not config.DESIGNER_ONLINE:
             logger.debug(f'Not registering rules because channels won\'t be connected in the offline designer')
@@ -222,7 +215,7 @@ if not _ENGINE_REPLACED:
 
                 self.widget_map[widget_ref].append(item)
 
-    def substituted_calculate(self: RulesEngine, widget_ref: ReferenceType, rule: Rule):
+    def calculate_expression(self: PyDMRulesEngine, widget_ref: ReferenceType, rule: Rule):
         rule['calculate'] = False
 
         rule_dict = rule['rule']
@@ -270,6 +263,6 @@ if not _ENGINE_REPLACED:
             logger.exception(f'Unsupported rule type: {rule_type}')
             return
 
-    engine = RulesDispatcher().rules_engine
-    engine.register = MethodType(substituted_register, engine)
-    engine.calculate_expression = MethodType(substituted_calculate, engine)
+
+import pydm.widgets.rules
+pydm.widgets.rules.RulesEngine = RulesEngine
