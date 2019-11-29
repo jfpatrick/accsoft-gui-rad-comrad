@@ -8,7 +8,8 @@ import os
 import sys
 from typing import Optional, Iterable, cast, Tuple, Dict, List
 from pydm.utilities.macro import parse_macro_string
-from comrad import __version__, CApplication
+from comrad import __version__
+from comrad.qt.application import CApplication
 from comrad.utils import ccda_map
 from comrad.examples.__main__ import populate_parser as populate_examples_parser, run_browser as run_examples_browser
 
