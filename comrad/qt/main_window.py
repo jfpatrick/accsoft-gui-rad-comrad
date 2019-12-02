@@ -149,5 +149,5 @@ class CUiMainWindow(Ui_MainWindow, MonkeyPatchedClass):
         _translate = QCoreApplication.translate
         self._overridden_methods['retranslateUi'](self, MainWindow)
         MainWindow.setWindowTitle(_translate('MainWindow', 'ComRAD Main Window'))
-        self.actionAbout_PyDM.setText(_translate('MainWindow', 'About PyDM'))
+        self.actionAbout_PyDM.setText(_translate('MainWindow', 'About ComRAD'))
         self.action_exit.setText(_translate('MainWindow', 'Exit'))
