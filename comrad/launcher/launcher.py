@@ -323,6 +323,7 @@ def _run_comrad(args: argparse.Namespace) -> bool:
                        command_line_args=args.display_args,
                        use_inca=not args.no_inca,
                        ccda_endpoint=ccda_endpoint,
+                       cmw_env=args.cmw_env,
                        java_env=java_env,
                        perfmon=args.perfmon,
                        hide_nav_bar=args.hide_nav_bar,

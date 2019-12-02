@@ -31,6 +31,7 @@ class CApplication(PyDMApplication):
                  command_line_args: Optional[List[str]] = None,
                  display_args: Optional[List[str]] = None,
                  use_inca: bool = True,
+                 cmw_env: Optional[str] = None,
                  java_env: Optional[Dict[str, str]] = None,
                  perfmon: bool = False,
                  hide_nav_bar: bool = False,
@@ -63,6 +64,8 @@ class CApplication(PyDMApplication):
                 probably isn't something you will ever need to use when writing
                 code that instantiates CApplication.
             use_inca: Whether to route JAPC connection through known InCA servers.
+            cmw_env: Original CMW environment. While it is not directly used in this instance, instead relying on
+                "java_env" and "ccda_endpoint", it will be passed to any child ComRAD processes.
             java_env: JVM flags to be passed to the control system libraries.
             perfmon: Whether or not to enable performance monitoring using 'psutil'.
                 When enabled, CPU load information on a per-thread basis is
@@ -90,6 +93,7 @@ class CApplication(PyDMApplication):
         args.extend(command_line_args or [])
         self.rbac = RBACState()  # We must keep it before super because dependant plugins will be initialized in super()
         self.ccda_endpoint = ccda_endpoint
+        self._cmw_env = cmw_env
         self.use_inca = use_inca
         self.jvm_flags = java_env
         super().__init__(ui_file=ui_file,
@@ -185,6 +189,15 @@ class CApplication(PyDMApplication):
             args.extend(['--stylesheet', self._stylesheet_path])
         if macros is not None:
             args.extend(['-m', json.dumps(macros)])
+        if not self.use_inca:
+            args.append('--no-inca')
+        if self.jvm_flags:
+            java_env = '--java-env'
+            for key, val in self.jvm_flags:
+                java_env += f' {key}={val}'
+            args.append(java_env)
+        if self._cmw_env:
+            args.extend(['--cmw-env', self._cmw_env])
         if self._nav_bar_plugin_path:
             args.extend(['--nav-plugin-path', self._nav_bar_plugin_path])
         if self._status_bar_plugin_path:
