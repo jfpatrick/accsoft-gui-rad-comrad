@@ -3,8 +3,8 @@ import os
 import platform
 import subprocess
 from typing import Optional, Union, Iterable, cast
-from qtpy.QtWidgets import QWidget, QMenu
-from qtpy.QtCore import QCoreApplication
+from qtpy.QtWidgets import QWidget, QMenu, QAction, QMainWindow
+from qtpy.QtCore import QCoreApplication, Qt
 from pydm.pydm_ui import Ui_MainWindow
 from pydm.main_window import PyDMMainWindow
 from pydm.data_plugins import is_read_only
@@ -39,6 +39,7 @@ class CMainWindow(PyDMMainWindow, MonkeyPatchedClass):
                                              hide_menu_bar=hide_menu_bar,
                                              hide_status_bar=hide_status_bar,
                                              **kwargs)
+        self.ui.action_exit.triggered.connect(self.close)
 
     def update_window_title(self):
         """Overridden method to enable ComRAD branding."""
@@ -135,8 +136,18 @@ class CUiMainWindow(Ui_MainWindow, MonkeyPatchedClass):
     possible to not confuse the user with naming.
     """
 
-    def retranslateUi(self, MainWindow):
+    def setupUi(self, MainWindow: QMainWindow):
+        self.action_exit = QAction(MainWindow)
+        self.action_exit.setEnabled(True)
+        self.action_exit.setShortcutContext(Qt.ApplicationShortcut)
+        self.action_exit.setObjectName('action_exit')
+        self._overridden_methods['setupUi'](self, MainWindow)
+        self.menuFile.addSeparator()
+        self.menuFile.addAction(self.action_exit)
+
+    def retranslateUi(self, MainWindow: QMainWindow):
         _translate = QCoreApplication.translate
         self._overridden_methods['retranslateUi'](self, MainWindow)
         MainWindow.setWindowTitle(_translate('MainWindow', 'ComRAD Main Window'))
         self.actionAbout_PyDM.setText(_translate('MainWindow', 'About PyDM'))
+        self.action_exit.setText(_translate('MainWindow', 'Exit'))
