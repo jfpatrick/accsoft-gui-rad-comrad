@@ -296,7 +296,7 @@ def _run_comrad(args: argparse.Namespace) -> bool:
             logger.setLevel(level)
 
     try:
-        _, java_env = _parse_control_env(args)
+        ccda_endpoint, java_env = _parse_control_env(args)
     except EnvironmentError as e:
         logger.exception(str(e))
         return False
@@ -322,6 +322,7 @@ def _run_comrad(args: argparse.Namespace) -> bool:
     app = CApplication(ui_file=args.display_file,
                        command_line_args=args.display_args,
                        use_inca=not args.no_inca,
+                       ccda_endpoint=ccda_endpoint,
                        java_env=java_env,
                        perfmon=args.perfmon,
                        hide_nav_bar=args.hide_nav_bar,

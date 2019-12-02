@@ -10,7 +10,8 @@ def run_designer(ccda_env: str,
                  server: bool = False,
                  client: Optional[int] = None,
                  resource_dir: Optional[str] = None,
-                 enable_internal_props: bool = False):
+                 enable_internal_props: bool = False,
+                 blocking: bool = True):
     """
     Runs the Qt Designer with ComRAD modifications.
 
@@ -24,6 +25,7 @@ def run_designer(ccda_env: str,
         client: port to use when run in the client mode (standard feature).
         resource_dir: custom resource directory (standard feature).
         enable_internal_props: enable internal dynamic properties (standard feature).
+        blocking: wait for the Designer to close before returning from the method.
 
     Returns:
         CompletedProcess instance returned from subprocess.run()
@@ -59,8 +61,13 @@ def run_designer(ccda_env: str,
     if files:
         cmd.extend(files)
 
+    env = dict(os.environ, **env)
+
     import subprocess
-    try:
-        return subprocess.run(args=cmd, shell=False, env=dict(os.environ, **env), check=True)
-    except subprocess.CalledProcessError as e:
-        exit(e.returncode)
+    if blocking:
+        try:
+            return subprocess.run(args=cmd, shell=False, env=env, check=True)
+        except subprocess.CalledProcessError as e:
+            exit(e.returncode)
+    else:
+        _ = subprocess.Popen(args=cmd, shell=False, env=env)

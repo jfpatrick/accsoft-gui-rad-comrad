@@ -390,7 +390,8 @@ class ExamplesWindow(QMainWindow):
     def _open_designer_file(file_path: PathLike):
         """Opens *.ui file in Qt Designer"""
         from comrad.launcher.designer import run_designer
-        run_designer(files=[cast(str, file_path)])
+        from comrad.utils import ccda_map
+        run_designer(files=[cast(str, file_path)], ccda_env=ccda_map['PRO'])
 
 
 class DesignerTab(QWidget):

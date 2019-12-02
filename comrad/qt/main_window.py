@@ -1,4 +1,7 @@
 import logging
+import os
+import platform
+import subprocess
 from typing import Optional, Union, Iterable, cast
 from qtpy.QtWidgets import QWidget, QMenu
 from qtpy.QtCore import QCoreApplication
@@ -53,6 +56,13 @@ class CMainWindow(PyDMMainWindow, MonkeyPatchedClass):
         # TODO: Need a subclass of the about window with our custom layout
         AboutWindow(self).show()
 
+    def edit_in_designer(self, checked):
+        ui_file, py_file = self.get_files_in_display()
+        if py_file is not None and py_file != "":
+            self._open_editor_generic(py_file)
+        if ui_file is not None and ui_file != "":
+            self._open_editor_ui(ui_file)
+
     def get_or_create_menu(self, name: Union[str, Iterable[str]]) -> QMenu:
         """Retrieves existing menu or creates a new one, if does not exist.
 
@@ -89,6 +99,33 @@ class CMainWindow(PyDMMainWindow, MonkeyPatchedClass):
             for sub_name in name:
                 menu = self._get_or_create_menu(name=sub_name, parent=menu, full_path=full_path)
             return menu
+
+    def _open_editor_ui(self, filename: str):
+        """Overridden of PyDM's main_window.edit_in_designer.open_editor_ui inner method."""
+        if not filename:
+            return
+        from comrad.launcher.designer import run_designer
+        from comrad.qt.application import CApplication
+        self.statusBar().showMessage(f"Launching '{filename}' in ComRAD Designer...", 5000)
+        app = cast(CApplication, QCoreApplication.instance())
+        run_designer(files=[filename],
+                     blocking=False,
+                     ccda_env=app.ccda_endpoint,
+                     use_inca=app.use_inca,
+                     java_env=app.jvm_flags)
+
+    def _open_editor_generic(self, filename: str):
+        """
+        We only care about Linux, but this is (more or less) a direct copy-paste of PyDM's
+        main_window.edit_in_designer.open_editor_generic inner method.
+        """
+        system = platform.system()
+        if system == "Linux":
+            subprocess.call(('xdg-open', filename))
+        elif system == "Darwin":
+            subprocess.call(('open', filename))
+        elif system == "Windows":
+            os.startfile(filename)
 
 
 @modify_in_place

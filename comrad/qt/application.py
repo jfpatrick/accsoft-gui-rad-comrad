@@ -25,7 +25,9 @@ _APP_NAME = 'ComRAD'
 
 class CApplication(PyDMApplication):
 
-    def __init__(self, ui_file: Optional[str] = None,
+    def __init__(self,
+                 ccda_endpoint: str,
+                 ui_file: Optional[str] = None,
                  command_line_args: Optional[List[str]] = None,
                  display_args: Optional[List[str]] = None,
                  use_inca: bool = True,
@@ -51,6 +53,7 @@ class CApplication(PyDMApplication):
         connections to channels via data plugins.
 
         Args:
+            ccda_endpoint: Location of CCDA web service.
             ui_file: The file path to a PyDM display file (.ui or .py).
             command_line_args: A list of strings representing arguments supplied at the command
                 line.  All arguments in this list are handled by QApplication, in addition to CApplication.
@@ -86,6 +89,7 @@ class CApplication(PyDMApplication):
         args = [_APP_NAME]
         args.extend(command_line_args or [])
         self.rbac = RBACState()  # We must keep it before super because dependant plugins will be initialized in super()
+        self.ccda_endpoint = ccda_endpoint
         self.use_inca = use_inca
         self.jvm_flags = java_env
         super().__init__(ui_file=ui_file,
