@@ -29,19 +29,26 @@ def modify_in_place(new_cls: Type):
                  (it will take the first superclass in the list in case of multiple inheritance).
 
     Returns:
-        Subclass instance.
+        Modified superclass instance.
     """
-    orig_class = new_cls.__mro__[1]
-    orig_methods = dict(inspect.getmembers(object=orig_class, predicate=inspect.isfunction))
-    new_methods = dict(inspect.getmembers(object=new_cls, predicate=inspect.isfunction))
-    modified_methods = {name: impl for name, impl in new_methods.items()
-                        if impl is not orig_methods.get(name, impl)}
+    super_class = new_cls.__mro__[1]
+    super_methods: Dict[str, Callable] = dict(inspect.getmembers(object=super_class, predicate=inspect.isfunction))
+    sub_methods: Dict[str, Callable] = dict(inspect.getmembers(object=new_cls, predicate=inspect.isfunction))
+    new_methods: Dict[str, Callable] = {}
+    modified_methods: Dict[str, Callable] = {}
+    for name, impl in sub_methods.items():
+        if name not in super_methods:
+            new_methods[name] = impl
+        elif impl is not super_methods.get(name, impl):
+            modified_methods[name] = impl
 
-    orig_class = cast(MonkeyPatchedClass, orig_class)
-    orig_class._overridden_methods = {}
+    super_class = cast(MonkeyPatchedClass, super_class)
+    super_class._overridden_methods = {}
     for name, impl in modified_methods.items():
-        setattr(orig_class, name, impl)
-        orig_class._overridden_methods[name] = orig_methods[name]
-        logger.debug(f'Class {orig_class.__name__} received an overridden method "{name}"')
+        setattr(super_class, name, impl)
+        super_class._overridden_methods[name] = super_methods[name]
+        logger.debug(f'Class {super_class.__name__} received an overridden method "{name}"')
+    for name, impl in new_methods.items():
+        setattr(super_class, name, impl)
 
-    return new_cls
+    return super_class
