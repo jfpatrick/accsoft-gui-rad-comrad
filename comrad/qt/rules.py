@@ -6,13 +6,14 @@ from typing import List, Dict, Any, Optional, cast
 from enum import IntEnum
 from qtpy.QtWidgets import QWidget
 from qtpy.QtCore import QMutexLocker, Property
-from pydm.widgets.rules import RulesDispatcher, RulesEngine as PyDMRulesEngine
+from pydm.widgets.rules import RulesEngine as PyDMRulesEngine
 from pydm.widgets.channel import PyDMChannel
 from pydm.widgets.base import PyDMWidget
 from pydm.data_plugins import plugin_for_address
 from pydm.data_plugins.plugin import PyDMPlugin, PyDMConnection
 from pydm.utilities import is_qt_designer
 from pydm import config
+from .monkey import modify_in_place, MonkeyPatchedClass
 
 
 logger = logging.getLogger(__name__)
@@ -113,8 +114,8 @@ class ColorRulesMixin(WidgetRulesMixin):
         self._color = val
 
 
-# Monkey-patch the rules engine to have our custom rule format
-class RulesEngine(PyDMRulesEngine):
+@modify_in_place
+class RulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
 
     def __init__(self):
         """
@@ -122,7 +123,7 @@ class RulesEngine(PyDMRulesEngine):
         for all the widgets in the application.
         """
         logger.debug(f'Instantiating custom rules engine')
-        super().__init__()
+        self._overridden_methods['__init__'](self)
 
     def register(self: PyDMRulesEngine, widget: QWidget, rules: List[Rule]):
 
@@ -262,7 +263,3 @@ class RulesEngine(PyDMRulesEngine):
         else:
             logger.exception(f'Unsupported rule type: {rule_type}')
             return
-
-
-import pydm.widgets.rules
-pydm.widgets.rules.RulesEngine = RulesEngine
