@@ -6,8 +6,8 @@ from itertools import chain
 from typing import Optional, List, Dict, Iterable, Type, Union, cast, Tuple
 from qtpy.QtWidgets import QAction, QMenu, QSpacerItem, QSizePolicy, QWidget, QHBoxLayout, QMessageBox
 from qtpy.QtCore import Qt, QObject
+from .main_window import CMainWindow  # This has to be above PyDMApplication to ensure monkey-patching
 from pydm.application import PyDMApplication
-from pydm.main_window import PyDMMainWindow
 from pydm.utilities import path_info, which
 from pydm.data_plugins import is_read_only
 from comrad.utils import icon
@@ -46,6 +46,10 @@ class CApplication(PyDMApplication):
                  plugin_blacklist: Optional[Iterable[str]] = None,
                  fullscreen: bool = False):
         """
+        CApplication handles loading ComRAD display files, opening
+        new windows, and most importantly, establishing and managing
+        connections to channels via data plugins.
+
         Args:
             ui_file: The file path to a PyDM display file (.ui or .py).
             command_line_args: A list of strings representing arguments supplied at the command
@@ -96,10 +100,9 @@ class CApplication(PyDMApplication):
                          use_main_window=use_main_window,
                          stylesheet_path=stylesheet_path,
                          fullscreen=fullscreen)
-        self.main_window: PyDMMainWindow = self.main_window  # Just to make code completion work
+        self.main_window: CMainWindow = self.main_window  # Just to make code completion work
         self._plugins_menu: Optional[QMenu] = None
         self.setWindowIcon(icon('app', file_path=__file__))
-        self.main_window.setWindowTitle('ComRAD Main Window')
 
         # Useful for subprocesses
         self._stylesheet_path = stylesheet_path
@@ -109,14 +112,6 @@ class CApplication(PyDMApplication):
         self._toolbar_order = toolbar_order
         self._plugin_whitelist = plugin_whitelist
         self._plugin_blacklist = plugin_blacklist
-
-        # TODO: We need a completely new action here instead, which will launch a subclass of the about dialog with our info
-        try:
-            action = next(x for x in reversed(self._get_or_create_menu(name=('File')).actions())
-                          if x.text() == 'About PyDM')
-            action.setText('About ComRAD')
-        except StopIteration:
-            pass
 
         self._stored_plugins: List[CPlugin] = []  # Reference plugins to keep the objects alive
 
@@ -330,32 +325,6 @@ class CApplication(PyDMApplication):
 
         return stored_plugins
 
-    def _get_or_create_menu(self,
-                            name: Union[str, Iterable[str]],
-                            parent: Optional[QMenu] = None,
-                            full_path: Optional[str] = None) -> QMenu:
-        parent_menu: QMenu = parent or self.main_window.menuBar()
-        full_path = full_path or cast(str, name)
-        if isinstance(name, str):
-            try:
-                menu = next((a.menu() for a in parent_menu.actions() if a.text() == name))
-            except StopIteration:
-                if isinstance(parent_menu, QMenu):
-                    logger.debug(f'Adding new menu "{name}" to parent "{parent_menu.title()}"')
-                else:
-                    logger.debug(f'Adding new menu "{name}" to menu bar')
-                return parent_menu.addMenu(name)
-            if menu is None:
-                path = full_path if isinstance(full_path, str) else '->'.join(full_path)
-                raise ValueError(f'Cannot create submenu "{path}". Another action (not submenu) with '
-                                 'this name already exists')
-            return menu
-        else:
-            menu = parent_menu
-            for sub_name in name:
-                menu = self._get_or_create_menu(name=sub_name, parent=menu, full_path=full_path)
-            return menu
-
     def _load_menubar_plugins(self,
                               cmd_line_paths: Optional[str],
                               whitelist: Optional[List[str]] = None,
@@ -374,7 +343,7 @@ class CApplication(PyDMApplication):
                                                                    blacklist=blacklist):
             plugin: CMenuBarPlugin = plugin_type()
             try:
-                menu = self._get_or_create_menu(name=plugin.top_level())
+                menu = self.main_window.get_or_create_menu(plugin.top_level())
             except ValueError as ex:
                 logger.exception(ex)
                 continue
