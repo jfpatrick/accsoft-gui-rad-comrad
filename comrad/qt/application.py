@@ -145,7 +145,6 @@ class CApplication(PyDMApplication):
         self._stored_plugins.extend(self._load_status_bar_plugins(status_bar_plugin_path,
                                                                   whitelist=plugin_whitelist,
                                                                   blacklist=plugin_blacklist) or [])
-        # TODO: Add exit menu item
 
     def new_pydm_process(self,
                          ui_file: str,
