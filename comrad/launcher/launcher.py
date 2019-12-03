@@ -11,6 +11,7 @@ from pydm.utilities.macro import parse_macro_string
 from comrad import __version__
 from comrad.qt.application import CApplication
 from comrad.utils import ccda_map
+from comrad.info import COMRAD_DESCRIPTION, get_versions_info
 from comrad.examples.__main__ import populate_parser as populate_examples_parser, run_browser as run_examples_browser
 
 
@@ -32,18 +33,34 @@ def run():
         'add_help': False,  # Will be added manually (with consistent formatting)
         'formatter_class': argparse.RawDescriptionHelpFormatter,
     }
-    parser = argparse.ArgumentParser(description=f'{logo}\n\n'
-                                                 f'  ComRAD (CO Multi-purpose Rapid Application Development '
-                                                 f'environment)\n\n'
-                                                 f'  ComRAD framework seeks to streamline development of operational\n'
-                                                 f'  applications for operators of CERN accelerators and machine design\n'
-                                                 f'  experts. It offers a set of tools to develop and run applications\n'
-                                                 f'  without the need to be an expert in software engineering domain.',
-                                     **common_parser_args)
+    parser = argparse.ArgumentParser(description=logo + '\n\n' + COMRAD_DESCRIPTION, **common_parser_args)
+
+    versions = get_versions_info()
+    version_str = f'''ComRAD {versions.comrad}
+    
+Based on:
+---------
+Acc-py Widgets v{versions.widgets}
+PyJAPC v{versions.pyjapc}
+Java Dependency Manager v{versions.cmmn_build}
+PyDM v{versions.pydm}
+NumPy v{versions.np}
+PyQtGraph v{versions.pg}
+
+Environment:
+------------\n'''
+
+    if versions.accpy:
+        version_str += f'Acc-py PyQt {versions.accpy.pyqt} (PyQt v{versions.pyqt}, Qt v{versions.qt})\n' + \
+                       f'Acc-py Python {versions.accpy.py} (Python v{versions.python})'
+    else:
+        version_str += f'PyQt v{versions.pyqt}\n' + \
+                       f'Qt v{versions.qt}\n' + \
+                       f'Python v{versions.python}'
 
     parser.add_argument('-V', '--version',
                         action='version',
-                        version=f'ComRAD {__version__}',
+                        version=version_str,
                         help="Show ComRAD's version number and exit.")
     _install_help(parser)
 

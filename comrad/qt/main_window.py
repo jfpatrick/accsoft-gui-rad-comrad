@@ -8,8 +8,8 @@ from qtpy.QtCore import QCoreApplication, Qt
 from pydm.pydm_ui import Ui_MainWindow
 from pydm.main_window import PyDMMainWindow
 from pydm.data_plugins import is_read_only
-from pydm.about_pydm.about import AboutWindow
 from .monkey import modify_in_place, MonkeyPatchedClass
+from .about import AboutDialog
 
 
 logger = logging.getLogger(__name__)
@@ -54,8 +54,7 @@ class CMainWindow(PyDMMainWindow, MonkeyPatchedClass):
         self.setWindowTitle(title)
 
     def show_about_window(self, _: bool):
-        # TODO: Need a subclass of the about window with our custom layout
-        AboutWindow(self).show()
+        AboutDialog(self).show()
 
     def edit_in_designer(self, checked):
         ui_file, py_file = self.get_files_in_display()
