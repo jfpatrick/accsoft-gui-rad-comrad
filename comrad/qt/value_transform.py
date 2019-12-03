@@ -115,7 +115,7 @@ class ValueTransformationBase(FileTracking):
         return self._value_transform_fn
 
 
-class ValueTransformer(ValueTransformationBase):
+class ValueTransformerMixin(ValueTransformationBase):
 
     def getValueTransformation(self) -> str:
         return ValueTransformationBase.getValueTransformation(self)
@@ -185,7 +185,7 @@ __builtins__['output'] = {output_func_name}
     del global_base['macro']
     del global_base['ValueTransformationBase']
     del global_base['FileTracking']
-    del global_base['ValueTransformer']
+    del global_base['ValueTransformerMixin']
     del global_base['create_transformation_function']
 
     def __comrad_dcode_wrapper__(**inputs) -> Any:

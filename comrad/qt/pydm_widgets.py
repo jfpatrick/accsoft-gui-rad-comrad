@@ -21,16 +21,29 @@ from pydm.widgets.enum_button import PyDMEnumButton
 from pydm.widgets.enum_combo_box import PyDMEnumComboBox
 from pydm.widgets.byte import PyDMByteIndicator
 from pydm.widgets.checkbox import PyDMCheckbox
+from pydm import data_plugins
 # from pydm.widgets.tab_bar import PyDMTabWidget
 from qtpy.QtWidgets import QWidget
 from qtpy.QtCore import Slot
 from qtpy.QtGui import QIcon
-from .value_transform import ValueTransformer
+from .value_transform import ValueTransformerMixin
 from .rules import ColorRulesMixin, WidgetRulesMixin
 from typing import List, Tuple, Union, Optional
 
+class CustomizedTooltipMixin:
+    """Mixin that customizes the message passed into the tooltip."""
 
-class CWaveFormTable(WidgetRulesMixin, PyDMWaveformTable):
+    def setToolTip(self, tooltip: str):
+        """
+        Re-implements Qt method to look for specific keywords and replace them.
+
+        Args:
+            tooltip:  widget's tooltip.
+        """
+        super().setToolTip(tooltip.replace('PyDM', 'ComRAD').replace('PV ', 'Device Property '))
+
+
+class CWaveFormTable(WidgetRulesMixin, CustomizedTooltipMixin, PyDMWaveformTable):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -46,10 +59,11 @@ class CWaveFormTable(WidgetRulesMixin, PyDMWaveformTable):
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
         WidgetRulesMixin.__init__(self)
+        CustomizedTooltipMixin.__init__(self)
         PyDMWaveformTable.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
 
 
-class CLabel(ColorRulesMixin, ValueTransformer, PyDMLabel):
+class CLabel(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyDMLabel):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -66,12 +80,13 @@ class CLabel(ColorRulesMixin, ValueTransformer, PyDMLabel):
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
         ColorRulesMixin.__init__(self)
+        CustomizedTooltipMixin.__init__(self)
         PyDMLabel.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
-        ValueTransformer.__init__(self)
+        ValueTransformerMixin.__init__(self)
 
     def setNum(self, new_val: Union[float, int]):
         """
-        Callback transforms the directly set numeric value through the :attr:`ValueTransformer.valueTransformation`
+        Callback transforms the directly set numeric value through the :attr:`ValueTransformerMixin.valueTransformation`
         code before displaying it in a standard way.
 
         Args:
@@ -99,7 +114,7 @@ class CLabel(ColorRulesMixin, ValueTransformer, PyDMLabel):
 #     pass
 
 
-class CByteIndicator(WidgetRulesMixin, ValueTransformer, PyDMByteIndicator):
+class CByteIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyDMByteIndicator):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -112,8 +127,9 @@ class CByteIndicator(WidgetRulesMixin, ValueTransformer, PyDMByteIndicator):
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
         WidgetRulesMixin.__init__(self)
+        CustomizedTooltipMixin.__init__(self)
         PyDMByteIndicator.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
-        ValueTransformer.__init__(self)
+        ValueTransformerMixin.__init__(self)
 
     @Slot(list)
     @Slot(bool)
@@ -150,7 +166,7 @@ class CByteIndicator(WidgetRulesMixin, ValueTransformer, PyDMByteIndicator):
             PyDMByteIndicator.channelValueChanged(self, int(new_val))
 
 
-class CCheckBox(WidgetRulesMixin, ValueTransformer, PyDMCheckbox):
+class CCheckBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyDMCheckbox):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -162,8 +178,9 @@ class CCheckBox(WidgetRulesMixin, ValueTransformer, PyDMCheckbox):
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
         WidgetRulesMixin.__init__(self)
+        CustomizedTooltipMixin.__init__(self)
         PyDMCheckbox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
-        ValueTransformer.__init__(self)
+        ValueTransformerMixin.__init__(self)
 
 
 class CEmbeddedDisplay(PyDMEmbeddedDisplay):
@@ -179,7 +196,7 @@ class CEmbeddedDisplay(PyDMEmbeddedDisplay):
         super().__init__(parent=parent, **kwargs)
 
 
-class CEnumButton(WidgetRulesMixin, ValueTransformer, PyDMEnumButton):
+class CEnumButton(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyDMEnumButton):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -197,11 +214,12 @@ class CEnumButton(WidgetRulesMixin, ValueTransformer, PyDMEnumButton):
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
         WidgetRulesMixin.__init__(self)
+        CustomizedTooltipMixin.__init__(self)
         PyDMEnumButton.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
-        ValueTransformer.__init__(self)
+        ValueTransformerMixin.__init__(self)
 
 
-class CEnumComboBox(WidgetRulesMixin, ValueTransformer, PyDMEnumComboBox):
+class CEnumComboBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyDMEnumComboBox):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -219,11 +237,12 @@ class CEnumComboBox(WidgetRulesMixin, ValueTransformer, PyDMEnumComboBox):
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
         WidgetRulesMixin.__init__(self)
+        CustomizedTooltipMixin.__init__(self)
         PyDMEnumComboBox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
-        ValueTransformer.__init__(self)
+        ValueTransformerMixin.__init__(self)
 
 
-class CImageView(WidgetRulesMixin, PyDMImageView):
+class CImageView(WidgetRulesMixin, CustomizedTooltipMixin, PyDMImageView):
 
     def __init__(self,
                  parent: Optional[QWidget] = None,
@@ -250,13 +269,14 @@ class CImageView(WidgetRulesMixin, PyDMImageView):
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
         WidgetRulesMixin.__init__(self)
+        CustomizedTooltipMixin.__init__(self)
         PyDMImageView.__init__(self, parent=parent, image_channel=image_channel, width_channel=width_channel, **kwargs)
 
     def default_rule_channel(self) -> str:
         return self.imageChannel
 
 
-class CLineEdit(ColorRulesMixin, ValueTransformer, PyDMLineEdit):
+class CLineEdit(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyDMLineEdit):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -271,8 +291,9 @@ class CLineEdit(ColorRulesMixin, ValueTransformer, PyDMLineEdit):
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
         ColorRulesMixin.__init__(self)
+        CustomizedTooltipMixin.__init__(self)
         PyDMLineEdit.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
-        ValueTransformer.__init__(self)
+        ValueTransformerMixin.__init__(self)
 
     def set_color(self, val: str):
         """Overridden method of :class:`ColorRulesMixin`.
@@ -307,7 +328,7 @@ class CLogDisplay(PyDMLogDisplay):
         super().__init__(parent=parent, logname=log_name, level=level, **kwargs)
 
 
-class CPushButton(WidgetRulesMixin, PyDMPushButton):
+class CPushButton(WidgetRulesMixin, CustomizedTooltipMixin, PyDMPushButton):
 
     def __init__(self,
                  parent: Optional[QWidget] = None,
@@ -340,6 +361,7 @@ class CPushButton(WidgetRulesMixin, PyDMPushButton):
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
         WidgetRulesMixin.__init__(self)
+        CustomizedTooltipMixin.__init__(self)
         PyDMPushButton.__init__(self, parent=parent,
                                 label=label,
                                 icon=icon,
@@ -377,7 +399,7 @@ class CShellCommand(PyDMShellCommand):
         super().__init__(parent=parent, command=command, **kwargs)
 
 
-class CSlider(WidgetRulesMixin, ValueTransformer, PyDMSlider):
+class CSlider(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyDMSlider):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -389,11 +411,12 @@ class CSlider(WidgetRulesMixin, ValueTransformer, PyDMSlider):
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
         WidgetRulesMixin.__init__(self)
+        CustomizedTooltipMixin.__init__(self)
         PyDMSlider.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
-        ValueTransformer.__init__(self)
+        ValueTransformerMixin.__init__(self)
 
 
-class CSpinBox(WidgetRulesMixin, ValueTransformer, PyDMSpinbox):
+class CSpinBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyDMSpinbox):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -405,11 +428,12 @@ class CSpinBox(WidgetRulesMixin, ValueTransformer, PyDMSpinbox):
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
         WidgetRulesMixin.__init__(self)
+        CustomizedTooltipMixin.__init__(self)
         PyDMSpinbox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
-        ValueTransformer.__init__(self)
+        ValueTransformerMixin.__init__(self)
 
 
-class CScaleIndicator(WidgetRulesMixin, ValueTransformer, PyDMScaleIndicator):
+class CScaleIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyDMScaleIndicator):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -424,8 +448,9 @@ class CScaleIndicator(WidgetRulesMixin, ValueTransformer, PyDMScaleIndicator):
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
         WidgetRulesMixin.__init__(self)
+        CustomizedTooltipMixin.__init__(self)
         PyDMScaleIndicator.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
-        ValueTransformer.__init__(self)
+        ValueTransformerMixin.__init__(self)
 
 
 class CTemplateRepeater(PyDMTemplateRepeater):
