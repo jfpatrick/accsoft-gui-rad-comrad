@@ -3,7 +3,7 @@ import os
 import platform
 import subprocess
 from typing import Optional, Union, Iterable, cast
-from qtpy.QtWidgets import QWidget, QMenu, QAction, QMainWindow
+from qtpy.QtWidgets import QWidget, QMenu, QAction, QMainWindow, QFileDialog, QApplication
 from qtpy.QtCore import QCoreApplication, Qt
 from pydm.pydm_ui import Ui_MainWindow
 from pydm.main_window import PyDMMainWindow
@@ -56,12 +56,35 @@ class CMainWindow(PyDMMainWindow, MonkeyPatchedClass):
     def show_about_window(self, _: bool):
         AboutDialog(self).show()
 
-    def edit_in_designer(self, checked):
+    def edit_in_designer(self, _: bool):
+        """Overridden slot to open current file in Qt Designer and/or Text editor based on the file type."""
         ui_file, py_file = self.get_files_in_display()
         if py_file is not None and py_file != "":
             self._open_editor_generic(py_file)
         if ui_file is not None and ui_file != "":
             self._open_editor_ui(ui_file)
+
+    def open_file_action(self, _: bool):
+        """Overridden slot to open file that substitutes the name of the file type visible in the dialog."""
+        modifiers = QApplication.keyboardModifiers()
+        try:
+            curr_file: str = self.current_file()
+            folder: str = os.path.dirname(curr_file)
+        except IndexError:
+            folder: str = os.getcwd()
+
+        filename = QFileDialog.getOpenFileName(self, 'Open File...', folder, 'ComRAD Files (*.ui *.py)')
+        filename: str = filename[0] if isinstance(filename, (list, tuple)) else filename
+
+        if filename:
+            filename = str(filename)
+            try:
+                if modifiers == Qt.ShiftModifier:
+                    self.app.new_window(filename)
+                else:
+                    self.open_file(filename)
+            except (IOError, OSError, ValueError, ImportError) as e:
+                self.handle_open_file_error(filename, e)
 
     def get_or_create_menu(self, name: Union[str, Iterable[str]]) -> QMenu:
         """Retrieves existing menu or creates a new one, if does not exist.
