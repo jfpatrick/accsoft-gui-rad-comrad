@@ -93,7 +93,7 @@ class CApplication(PyDMApplication):
         args.extend(command_line_args or [])
         self.rbac = RBACState()  # We must keep it before super because dependant plugins will be initialized in super()
         self.ccda_endpoint = ccda_endpoint
-        self._cmw_env = cmw_env
+        self.cmw_env = cmw_env
         self.use_inca = use_inca
         self.jvm_flags = java_env
         super().__init__(ui_file=ui_file,
@@ -195,8 +195,8 @@ class CApplication(PyDMApplication):
             for key, val in self.jvm_flags:
                 java_env += f' {key}={val}'
             args.append(java_env)
-        if self._cmw_env:
-            args.extend(['--cmw-env', self._cmw_env])
+        if self.cmw_env:
+            args.extend(['--cmw-env', self.cmw_env])
         if self._nav_bar_plugin_path:
             args.extend(['--nav-plugin-path', self._nav_bar_plugin_path])
         if self._status_bar_plugin_path:
