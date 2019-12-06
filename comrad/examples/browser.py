@@ -442,16 +442,9 @@ class EditorTab(QWidget):
             # (which looks like a subset of Python lists/dictionaries)
             lexer = QsciLexerPython(editor)
             editor.setLexer(lexer)
-            editor.setIndentationsUseTabs(False)
-            editor.setIndentationGuides(True)
-            editor.setTabWidth(4)
-            editor.setEolMode(QsciScintilla.EolUnix)
-            editor.setCaretLineVisible(True)
-            editor.setCaretLineBackgroundColor(QColor('#efefef'))
-            editor.setMargins(1)
-            editor.setMarginType(0, QsciScintilla.NumberMargin)
-            editor.setMarginWidth(0, 40)
-            editor.setUtf8(True)
+
+            from comrad.qsci import configure_common_qsci
+            configure_common_qsci(editor)
             editor.setReadOnly(True)
             self.code_viewer = editor
         else:

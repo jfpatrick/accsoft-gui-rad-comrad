@@ -8,6 +8,7 @@ from typing import Optional, Union, List, Any, Dict, cast, Tuple, Type, Callable
 from pydm.widgets.rules_editor import RulesEditor as PyDMRulesEditor
 from pydm.utilities.iconfont import IconFont
 from qtpy import QtWidgets, QtCore, QtGui, QtDesigner
+from PyQt5.Qsci import QsciScintilla, QsciLexerJSON
 from qtpy.QtWidgets import (QDialog, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QColorDialog, QToolButton, QSpacerItem,
                             QPushButton, QListWidget, QSizePolicy, QFormLayout, QListWidgetItem,
                             QLabel, QLineEdit, QComboBox, QTabWidget, QTableWidget, QGroupBox, QStackedWidget,
@@ -17,6 +18,7 @@ from qtpy.QtGui import QColor, QFont
 from qtpy.QtDesigner import QDesignerFormWindowInterface
 from qtpy.uic import loadUi
 from comrad.qt.rules import WidgetRulesMixin, Rule, RuleType
+from comrad.qsci import configure_common_qsci, QSCI_INDENTATION
 
 
 logger = logging.getLogger(__name__)
@@ -47,6 +49,7 @@ class NewRulesEditor(QDialog):
         self.base_type_frame: QFrame = None
         self.base_type: QLabel = None
         self.details_frame: QFrame = None
+        self.source_ranges: QsciScintilla = None
 
         loadUi(os.path.join(os.path.dirname(__file__), 'rules_editor.ui'), self)
 
@@ -67,6 +70,11 @@ class NewRulesEditor(QDialog):
         self._widget = widget
         self._current_rule: Optional[QListWidgetItem] = None
         self._loading_data: bool = True
+
+        lexer = QsciLexerJSON(self.source_ranges)
+        self.source_ranges.setLexer(lexer)
+        configure_common_qsci(self.source_ranges)
+        self.source_ranges.setReadOnly(False)
 
         try:
             self._rules: List[Rule] = json.loads(widget.rules)
@@ -104,6 +112,11 @@ class NewRulesEditor(QDialog):
                                   'Work in progress...',
                                   'In the future, this will allow you to look up channel address from CCDB.',
                                   QMessageBox.Ok)
+
+    def _update_source_view(self):
+        data = self._get_current_rule()
+        # TODO: Connect QSci to signals and when editing, update table
+        self.source_ranges.setText(json.dumps(data['body'], indent=QSCI_INDENTATION))
 
     def _add_state(self):
         """Add a new empty state to the table."""
@@ -203,6 +216,7 @@ class NewRulesEditor(QDialog):
             return
 
         # TODO: Update inner data structure here
+        self._update_source_view()
 
     def _load_from_list(self):
         item = self.rules_list.currentItem()
@@ -256,6 +270,7 @@ class NewRulesEditor(QDialog):
                                                                                         prop_name=rule_prop,
                                                                                         current_rule=rule))
                 self.state_table.setCellWidget(row_idx, 1, self._make_range_widget(row=row_idx, rule=rule))
+            self._update_source_view()
         else:
             logger.exception(f'Unsupported rule type: {rule_type}')
 
