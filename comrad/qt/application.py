@@ -120,6 +120,7 @@ class CApplication(PyDMApplication):
         self._toolbar_order = toolbar_order
         self._plugin_whitelist = plugin_whitelist
         self._plugin_blacklist = plugin_blacklist
+        self._perfmon = perfmon
 
         self._stored_plugins: List[CPlugin] = []  # Reference plugins to keep the objects alive
 
@@ -184,6 +185,8 @@ class CApplication(PyDMApplication):
             args.append('--fullscreen')
         if is_read_only():
             args.append('--read-only')
+        if self._perfmon:
+            args.append('--perfmon')
         if self._stylesheet_path:
             args.extend(['--stylesheet', self._stylesheet_path])
         if macros is not None:
