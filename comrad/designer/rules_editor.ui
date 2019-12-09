@@ -66,7 +66,7 @@
           </spacer>
          </item>
          <item>
-          <widget class="QPushButton" name="rules_add">
+          <widget class="QPushButton" name="rules_add_btn">
            <property name="focusPolicy">
             <enum>Qt::WheelFocus</enum>
            </property>
@@ -83,7 +83,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="rules_del">
+          <widget class="QPushButton" name="rules_del_btn">
            <property name="text">
             <string/>
            </property>
@@ -99,7 +99,7 @@
         </layout>
        </item>
        <item>
-        <widget class="QListWidget" name="rules_list">
+        <widget class="QListWidget" name="rules_list_widget">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
            <horstretch>0</horstretch>
@@ -199,7 +199,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QPushButton" name="custom_channel_search">
+               <widget class="QPushButton" name="custom_channel_search_btn">
                 <property name="text">
                  <string/>
                 </property>
@@ -255,7 +255,7 @@
                </widget>
               </item>
               <item row="0" column="1">
-               <widget class="QLabel" name="base_type">
+               <widget class="QLabel" name="base_type_lbl">
                 <property name="styleSheet">
                  <string notr="true">color: #2a5ebf</string>
                 </property>
@@ -313,7 +313,7 @@
          <item row="0" column="1">
           <layout class="QHBoxLayout" name="horizontalLayout_6">
            <item>
-            <widget class="QComboBox" name="eval_type"/>
+            <widget class="QComboBox" name="eval_type_combobox"/>
            </item>
            <item>
             <spacer name="horizontalSpacer_4">
@@ -333,7 +333,7 @@
         </layout>
        </item>
        <item>
-        <widget class="QStackedWidget" name="eval_stack">
+        <widget class="QStackedWidget" name="eval_stack_widget">
          <property name="currentIndex">
           <number>0</number>
          </property>
@@ -384,7 +384,7 @@
                   </spacer>
                  </item>
                  <item>
-                  <widget class="QPushButton" name="state_add">
+                  <widget class="QPushButton" name="range_add_btn">
                    <property name="text">
                     <string/>
                    </property>
@@ -398,7 +398,7 @@
                   </widget>
                  </item>
                  <item>
-                  <widget class="QPushButton" name="state_del">
+                  <widget class="QPushButton" name="range_del_btn">
                    <property name="text">
                     <string/>
                    </property>
@@ -414,7 +414,7 @@
                 </layout>
                </item>
                <item>
-                <widget class="QTableWidget" name="state_table">
+                <widget class="QTableWidget" name="range_table">
                  <property name="minimumSize">
                   <size>
                    <width>350</width>
@@ -453,7 +453,7 @@
               </attribute>
               <layout class="QHBoxLayout" name="horizontalLayout_4">
                <item>
-                <widget class="QsciScintilla" name="source_ranges">
+                <widget class="QsciScintilla" name="source_ranges_editor">
                  <property name="toolTip">
                   <string/>
                  </property>
@@ -508,17 +508,17 @@
   </customwidget>
  </customwidgets>
  <tabstops>
-  <tabstop>rules_list</tabstop>
-  <tabstop>rules_add</tabstop>
-  <tabstop>rules_del</tabstop>
+  <tabstop>rules_list_widget</tabstop>
+  <tabstop>rules_add_btn</tabstop>
+  <tabstop>rules_del_btn</tabstop>
   <tabstop>rule_name_edit</tabstop>
   <tabstop>prop_combobox</tabstop>
   <tabstop>default_channel_checkbox</tabstop>
   <tabstop>custom_channel_edit</tabstop>
-  <tabstop>custom_channel_search</tabstop>
-  <tabstop>eval_type</tabstop>
-  <tabstop>state_add</tabstop>
-  <tabstop>state_del</tabstop>
+  <tabstop>custom_channel_search_btn</tabstop>
+  <tabstop>eval_type_combobox</tabstop>
+  <tabstop>range_add_btn</tabstop>
+  <tabstop>range_del_btn</tabstop>
  </tabstops>
  <resources/>
  <connections>

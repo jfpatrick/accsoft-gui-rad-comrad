@@ -15,19 +15,22 @@ from pydm.data_plugins import plugin_for_address
 from pydm.data_plugins.plugin import PyDMPlugin, PyDMConnection
 from pydm.utilities import is_qt_designer
 from pydm import config
+from comrad.json import JSONSerializable
 from .monkey import modify_in_place, MonkeyPatchedClass
 
 
 logger = logging.getLogger(__name__)
 
+
 RangeValue = Union[str, bool, float]
 
-class RuleRange:
+
+class RuleRange(JSONSerializable):
 
     range_changed = Signal()
     """Fired when range boundaries or its property value is changed."""
 
-    def __init__(self, min_val: float, max_val: float, prop_val: RangeValue):
+    def __init__(self, min_val: float, max_val: float, prop_val: Optional[RangeValue] = None):
         """
         Describes a single entry in the numeric ranges rules.
 
@@ -70,42 +73,27 @@ class RuleRange:
         self._prop_val = new_val
         self.range_changed.emit()
 
-    @staticmethod
-    def from_json(contents: Dict[str, Any]) -> 'RuleRange':
-        """
-        Factory to construct the rule from JSON string.
-
-        Args:
-            contents: JSON object.
-
-        Returns:
-            New range object.
-        """
+    @classmethod
+    def from_json(cls, contents):
         logger.debug(f'Unpacking JSON range: {contents}')
         min_val: float = contents['min']
         max_val: float = contents['max']
         value: RangeValue = contents['value']
 
         if not isinstance(min_val, float):
-            raise TypeError(f'Can\'t parse range JSON: "min" is not float, "{type(min_val).__name__}" given.')
+            raise json.JSONDecodeError(f'Can\'t parse range JSON: "min" is not float, "{type(min_val).__name__}" given.')
         if not isinstance(max_val, float):
-            raise TypeError(f'Can\'t parse range JSON: "max" is not float, "{type(max_val).__name__}" given.')
+            raise json.JSONDecodeError(f'Can\'t parse range JSON: "max" is not float, "{type(max_val).__name__}" given.')
         if not isinstance(value, float) and not isinstance(value, str) and not isinstance(value, bool):
-            raise TypeError(f'Can\'t parse range JSON: "value" has unsupported type "{type(value).__name__}".')
+            raise json.JSONDecodeError(f'Can\'t parse range JSON: "value" has unsupported type "{type(value).__name__}".')
         return RuleRange(min_val=min_val, max_val=max_val, prop_val=value)
 
-    def to_json(self) -> str:
-        """
-        Encode the object as JSON.
-
-        Returns:
-            JSON-encoded string.
-        """
-        return json.dumps({
+    def to_json(self):
+        return {
             'min': self._min_val,
             'max': self._max_val,
             'value': self._prop_val,
-        })
+        }
 
     def validate(self):
         """
@@ -132,7 +120,7 @@ class RuleType(IntEnum):
     """User defines Python expression that can read multiple channels and produce a desired property value."""
 
 
-class BaseRule(metaclass=ABCMeta):
+class BaseRule(JSONSerializable, metaclass=ABCMeta):
 
     name_changed = Property(str)
     """Name of the rule has been modified."""
@@ -159,30 +147,6 @@ class BaseRule(metaclass=ABCMeta):
         self._prop = prop
         self.channel = channel
         self.body: Union[List[RuleRange], Dict[str, str], None] = None
-
-    @staticmethod
-    @abstractmethod
-    def from_json(contents: Dict[str, Any]) -> 'Rule':
-        """
-        Factory to construct the rule from JSON string.
-
-        Args:
-            contents: JSON-encoded string.
-
-        Returns:
-            New rule object.
-        """
-        pass
-
-    @abstractmethod
-    def to_json(self) -> str:
-        """
-        Encode the object as JSON.
-
-        Returns:
-            JSON-encoded string.
-        """
-        pass
 
     def validate(self):
         """
@@ -251,10 +215,10 @@ class ExpressionRule(BaseRule):
         self.expr = expression
 
     @staticmethod
-    def from_json(contents: Dict[str, Any]) -> 'ExpressionRule':
+    def from_json(contents: Dict[str, Any]):
         raise NotImplementedError()
 
-    def to_json(self) -> str:
+    def to_json(self):
         raise NotImplementedError()
 
 
@@ -284,34 +248,34 @@ class NumRangeRule(BaseRule):
         self.ranges: List[RuleRange] = ranges if isinstance(ranges, list) else list(ranges)
 
     @staticmethod
-    def from_json(contents: Dict[str, Any]) -> 'NumRangeRule':
+    def from_json(contents: Dict[str, Any]):
         logger.debug(f'Unpacking JSON rule: {contents}')
         name: str = contents['name']
         prop: str = contents['prop']
         channel: str = contents['channel']
 
         if not isinstance(name, str):
-            raise TypeError(f'Can\'t parse range JSON: "name" is not a string, "{type(name).__name__}" given.')
+            raise json.JSONDecodeError(f'Can\'t parse range JSON: "name" is not a string, "{type(name).__name__}" given.')
         if not isinstance(prop, str):
-            raise TypeError(f'Can\'t parse range JSON: "prop" is not a string, "{type(prop).__name__}" given.')
+            raise json.JSONDecodeError(f'Can\'t parse range JSON: "prop" is not a string, "{type(prop).__name__}" given.')
         if not isinstance(channel, str):
-            raise TypeError(f'Can\'t parse range JSON: "channel" is not a string, "{type(channel).__name__}" given.')
+            raise json.JSONDecodeError(f'Can\'t parse range JSON: "channel" is not a string, "{type(channel).__name__}" given.')
 
         json_ranges: List[Any] = contents['ranges']
 
         if not isinstance(json_ranges, list):
-            raise TypeError(f'Can\'t parse range JSON: "ranges" is not a list, "{type(json_ranges).__name__}" given.')
+            raise json.JSONDecodeError(f'Can\'t parse range JSON: "ranges" is not a list, "{type(json_ranges).__name__}" given.')
 
         ranges: Iterator[RuleRange] = map(RuleRange.from_json, json_ranges)
         return NumRangeRule(name==name, prop=prop, channel=channel, ranges=ranges)
 
-    def to_json(self) -> str:
-        return json.dumps({
+    def to_json(self):
+        return {
             'name': self.name,
             'prop': self.prop,
             'channel': self.channel,
-            'ranges': map(RuleRange.to_json, self.ranges),
-        })
+            'ranges': self.ranges,
+        }
 
     def validate(self):
         errors: List[str] = []
@@ -424,8 +388,8 @@ class WidgetRulesMixin:
         if isinstance(new_rules, str):
             try:
                 new_rules = _unpack_rules(new_rules)
-            except json.decoder.JSONDecodeError:
-                logger.exception('Invalid JSON format for rules')
+            except json.JSONDecodeError as e:
+                logger.exception(f'Invalid JSON format for rules: {str(e)}')
                 return
         cast(PyDMWidget, self)._rules = new_rules
         if new_rules is None:
@@ -482,32 +446,6 @@ class RulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
         if widget_ref in self.widget_map:
             self.unregister(widget_ref)
 
-        # The data structure for the rules is:
-        #   {
-        #       name: str  # name of the rule, as presented in the rules list (of the rules dialog)
-        #       property: str  # property name corresponding to the key in RULE_PROPERTIES
-        #       channel: str         # name of the channel (e.g. japc:///dev/prop#field), or reserved keyword "__auto__"
-        #                            # for using the default channel of the widget. Can be omitted for cases, where
-        #                            # rule body is responsible to collecting the channel information, e.g. in
-        #                            # Python expressions. In such case, the name should be "__skip__". We never set it
-        #                            # to None, to not confuse with absent value because of the bug.
-        #       type: int  # type of the rule: 0 - numerical ranges, 1 - Python expression
-        #       body: list / dict # type-specific information. for numerical ranges, this will be list
-        #                         # of boundaries, see below
-        #   }
-        #
-        # The data structure for the body of numerical ranges:
-        #   [
-        #       {
-        #           min: float / None  # minimum boundary of the range (can be absent,
-        #                              # if no minimum boundary is specified)
-        #           max: float / None  # maximum boundary of the range (can be absent,
-        #                              # if no maximum boundary is specified)
-        #           value: bool / str / float  # property-specific value, depending on the base type of the
-        #                                      # property, this will contain the value to set
-        #       }
-        #   ]
-        #
         with QMutexLocker(self.map_lock):
             self.widget_map[widget_ref] = []
             for idx, rule in enumerate(rules):
