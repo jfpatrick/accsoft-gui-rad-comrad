@@ -274,6 +274,13 @@ class CNumRangeRule(BaseRule):
             raise JSONDeserializeError(f'Can\'t parse range JSON: "ranges" is not a list, "{type(json_ranges).__name__}" given.', None, 0)
 
         ranges: Iterator['CNumRangeRule.Range'] = map(CNumRangeRule.Range.from_json, json_ranges)
+
+        # If a string corresponds to enum, try to extract it
+        try:
+            channel = BaseRule.Channel(channel)
+        except ValueError:
+            pass
+        
         return cls(name=name, prop=prop, channel=channel, ranges=ranges)
 
     def to_json(self):

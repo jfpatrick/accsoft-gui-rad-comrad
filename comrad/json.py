@@ -2,6 +2,7 @@ import logging
 from abc import ABCMeta, abstractmethod
 from typing import Dict, Any, TypeVar, Type, cast
 from json import JSONEncoder
+from enum import Enum
 
 
 logger = logging.getLogger(__name__)
@@ -50,4 +51,6 @@ class ComRADJSONEncoder(JSONEncoder):
         if isinstance(o, JSONSerializable):
             logger.debug(f'Encoding serializable ComRAD object: {o}')
             return cast(JSONSerializable, o).to_json()
+        elif isinstance(o, Enum):
+            return cast(Enum, o).value
         return JSONEncoder.default(self, o)
