@@ -8,11 +8,10 @@ import os
 import sys
 from typing import Optional, Iterable, cast, Tuple, Dict, List
 from pydm.utilities.macro import parse_macro_string
-from comrad import __version__
 from comrad.qt.application import CApplication
-from comrad.utils import ccda_map
+from comrad.utils import ccda_map, install_logger_level
 from comrad.info import COMRAD_DESCRIPTION, get_versions_info
-from comrad.examples.__main__ import populate_parser as populate_examples_parser, run_browser as run_examples_browser
+from comrad.examples.browser import run_browser as run_examples_browser
 
 
 logging.basicConfig()
@@ -141,6 +140,13 @@ def _install_controls_arguments(parser: argparse.ArgumentParser):
                         nargs=argparse.ONE_OR_MORE)
 
 
+def _install_debug_arguments(parser: argparse.ArgumentParser):
+    parser.add_argument('--log-level',
+                        help='Configure level of log display (default: INFO).',
+                        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+                        default='INFO')
+
+
 def _run_subcommand(parser: argparse.ArgumentParser):
     required_group = parser.add_argument_group('Required arguments')
     required_group.add_argument('display_file',
@@ -247,10 +253,7 @@ def _run_subcommand(parser: argparse.ArgumentParser):
                               default=None)
 
     debug_group = parser.add_argument_group('Debugging')
-    debug_group.add_argument('--log-level',
-                             help='Configure level of log display (default: INFO).',
-                             choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-                             default='INFO')
+    _install_debug_arguments(debug_group)
     debug_group.add_argument('--perfmon',
                              action='store_true',
                              help='Enable performance monitoring, and print CPU usage to the terminal.')
@@ -260,7 +263,7 @@ def _run_subcommand(parser: argparse.ArgumentParser):
 
 
 def _examples_subcommand(parser: argparse.ArgumentParser):
-    populate_examples_parser(parser)
+    _install_debug_arguments(parser)
     _install_help(parser)
 
 
@@ -275,6 +278,7 @@ def __designer_subcommand(parser: argparse.ArgumentParser):
                               action='store_true',
                               help='Launch ComRAD Designer displaying live data from the control system.')
     _install_help(comrad_group)
+    _install_debug_arguments(comrad_group)
     _install_controls_arguments(comrad_group)
 
     qt_group = parser.add_argument_group('Standard Qt Designer arguments')
@@ -298,19 +302,8 @@ def _run_comrad(args: argparse.Namespace) -> bool:
 
     macros = parse_macro_string(args.macro) if args.macro is not None else None
 
-    if args.log_level:
-        level_name: str = args.log_level.upper()
-        level: Optional[int]
-        logger = logging.getLogger('')
-        try:
-            level = getattr(logging, level_name)
-        except AttributeError as ex:
-            logger.exception(f'Invalid logging level specified ("{level_name}"): {str(ex)}')
-            level = None
-
-        if level:
-            # Redefine the level of the root logger
-            logger.setLevel(level)
+    install_logger_level(args.log_level)
+    logger = logging.getLogger('')
 
     try:
         ccda_endpoint, java_env = _parse_control_env(args)
@@ -377,6 +370,7 @@ def _run_designer(args: argparse.Namespace) -> bool:
                  server=args.server,
                  client=args.client,
                  resource_dir=args.resourcedir,
+                 log_level=args.log_level,
                  enable_internal_props=args.enableinternaldynamicproperties)
     return True
 

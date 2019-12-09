@@ -2,9 +2,13 @@
 Utility functions to be used across different ComRAD modules.
 """
 import os
+import logging
 from types import ModuleType
 from typing import Optional, Dict
 from qtpy.QtGui import QIcon, QPixmap
+
+
+logger = logging.getLogger(__name__)
 
 
 def icon(name: str, file_path: Optional[str] = None, module_path: Optional[ModuleType] = None) -> QIcon:
@@ -30,9 +34,31 @@ def icon(name: str, file_path: Optional[str] = None, module_path: Optional[Modul
     icon_path = os.path.join(storage_dir, 'icons', f'{name}.ico')
 
     if not os.path.isfile(icon_path):
-        print(f'Warning: Icon "{name}" cannot be found at {str(icon_path)}')
+        logger.warning(f'Warning: Icon "{name}" cannot be found at {str(icon_path)}')
     pixmap = QPixmap(icon_path)
     return QIcon(pixmap)
+
+
+def install_logger_level(level: Optional[str]):
+    """Sets the root logger level according to the command line parameters.
+
+    Args:
+        level: Name of the logging level, e.g. DEBUG or INFO.
+    """
+    if level:
+        import logging
+        level_name: str = level.upper()
+        level_idx: Optional[int]
+        logger = logging.getLogger('')
+        try:
+            level_idx = getattr(logging, level_name)
+        except AttributeError as ex:
+            logger.exception(f'Invalid logging level specified ("{level_name}"): {str(ex)}')
+            level_idx = None
+
+        if level_idx:
+            # Redefine the level of the root logger
+            logger.setLevel(level_idx)
 
 
 ccda_map: Dict[str, str] = {

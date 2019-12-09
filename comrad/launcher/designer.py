@@ -2,6 +2,9 @@ import os
 from typing import Optional, List, Dict
 
 
+# TODO: Need to properly kill designer on Ctrl+C
+
+
 def run_designer(ccda_env: str,
                  files: Optional[List[str]] = None,
                  online: bool = False,
@@ -11,6 +14,7 @@ def run_designer(ccda_env: str,
                  client: Optional[int] = None,
                  resource_dir: Optional[str] = None,
                  enable_internal_props: bool = False,
+                 log_level: Optional[str] = None,
                  blocking: bool = True):
     """
     Runs the Qt Designer with ComRAD modifications.
@@ -25,6 +29,7 @@ def run_designer(ccda_env: str,
         client: port to use when run in the client mode (standard feature).
         resource_dir: custom resource directory (standard feature).
         enable_internal_props: enable internal dynamic properties (standard feature).
+        log_level: logging level passed to Python widgets.
         blocking: wait for the Designer to close before returning from the method.
 
     Returns:
@@ -43,6 +48,8 @@ def run_designer(ccda_env: str,
         env['QT_DESIGNER_RAD_INCA'] = str(int(use_inca))
         if java_env:
             env['QT_DESIGNER_RAD_JVM'] = ';'.join((f'{key}:{value}' for key, value in java_env.items()))
+    if log_level:
+        env['COMRAD_DESIGNER_LOG_LEVEL'] = log_level
 
     cmd: List[str] = ['designer']
 

@@ -17,7 +17,7 @@ from qtpy.QtGui import QColor, QShowEvent
 from qtpy.QtWidgets import (QMainWindow, QTreeWidgetItem, QTreeWidget, QStackedWidget, QTabWidget, QApplication,
                             QAbstractScrollArea, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit)
 from comrad import __version__, __author__
-from comrad.utils import icon
+from comrad.utils import icon, install_logger_level
 
 try:
     from PyQt5.Qsci import QsciScintilla, QsciLexerPython
@@ -463,19 +463,6 @@ class EditorTab(QWidget):
         self.setLayout(layout)
 
 
-def populate_parser(parser: argparse.ArgumentParser):
-    """This is a reusable parser builder to facilitate main parser as well as subparsers
-
-    Args:
-        parser: parser to populate
-    """
-    parser.add_argument('--debug',
-                        help='enable debug output of this example launcher',
-                        dest='debug',
-                        action='store_true')
-    parser.set_defaults(debug=False)
-
-
 def run_browser(args: argparse.Namespace):
     """Runs the examples browser with the given command-line arguments.
 
@@ -483,9 +470,9 @@ def run_browser(args: argparse.Namespace):
         args: parsed command line arguments
     """
     import sys
-    # Set explicitly because root one is NOTSET
-    # When used from ComRAD main entry point
-    logging.getLogger('').setLevel(logging.DEBUG if args.debug else logging.WARNING)
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    install_logger_level(args.log_level)
     app_args = ['ComRAD examples']
     app_args.extend(sys.argv)
     app = QApplication(app_args)
