@@ -4,6 +4,7 @@
 
 import logging
 import numpy as np
+from typing import List, Tuple, Union, Optional
 from pydm.widgets.waveformtable import PyDMWaveformTable
 from pydm.widgets.scale import PyDMScaleIndicator
 from pydm.widgets.template_repeater import PyDMTemplateRepeater
@@ -26,9 +27,8 @@ from pydm import data_plugins
 from qtpy.QtWidgets import QWidget
 from qtpy.QtCore import Slot
 from qtpy.QtGui import QIcon
+from comrad.rules import ColorRulesMixin, WidgetRulesMixin
 from .value_transform import ValueTransformerMixin
-from .rules import ColorRulesMixin, WidgetRulesMixin
-from typing import List, Tuple, Union, Optional
 
 class CustomizedTooltipMixin:
     """Mixin that customizes the message passed into the tooltip."""

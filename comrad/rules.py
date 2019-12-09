@@ -4,7 +4,7 @@ import logging
 import json
 from weakref import ReferenceType
 from typing import List, Dict, Any, Optional, cast, Union, Iterator, Iterable
-from enum import IntEnum
+from enum import IntEnum, Enum
 from abc import ABCMeta
 from qtpy.QtWidgets import QWidget
 from qtpy.QtCore import QMutexLocker, Property
@@ -25,116 +25,58 @@ logger = logging.getLogger(__name__)
 RangeValue = Union[str, bool, float]
 
 
-class RuleType(IntEnum):
-    """All available rule setting modes."""
-
-    NUM_RANGE = 0
-    """Numeric range where user defines lower and upper numeric
-     boundaries and associates property value with each range."""
-
-    PY_EXPR = 1
-    """User defines Python expression that can read multiple channels and produce a desired property value."""
-
-
-class RuleRange(JSONSerializable):
-
-    def __init__(self, min_val: float, max_val: float, prop_val: Optional[RangeValue] = None):
-        """
-        Describes a single entry in the numeric ranges rules.
-
-        Args:
-            min_val: Lower boundary of the range (included in the range).
-            max_val: Upper boundary of the range (excluded from the range).
-            prop_val: Value to be applied to the property in this range.
-        """
-        self._min_val = min_val
-        self._max_val = max_val
-        self._prop_val = prop_val
-
-    @property
-    def min_val(self) -> float:
-        """Lower boundary of the range (included in the range)."""
-        return self._min_val
-
-    @min_val.setter
-    def min_val(self, new_val: float):
-        self._min_val = new_val
-
-    @property
-    def max_val(self) -> float:
-        """Upper boundary of the range (excluded from the range)."""
-        return self._max_val
-
-    @max_val.setter
-    def max_val(self, new_val: float):
-        self._max_val = new_val
-
-    @property
-    def prop_val(self) -> float:
-        """Value to be applied to the property in this range."""
-        return self._prop_val
-
-    @prop_val.setter
-    def prop_val(self, new_val: float):
-        self._prop_val = new_val
-
-    @classmethod
-    def from_json(cls, contents):
-        logger.debug(f'Unpacking JSON range: {contents}')
-        min_val: float = contents.get('min', None)
-        max_val: float = contents.get('max', None)
-        value: RangeValue = contents.get('value', None)
-
-        if not isinstance(min_val, float):
-            raise JSONDeserializeError(f'Can\'t parse range JSON: "min" is not float, "{type(min_val).__name__}" given.', None, 0)
-        if not isinstance(max_val, float):
-            raise JSONDeserializeError(f'Can\'t parse range JSON: "max" is not float, "{type(max_val).__name__}" given.', None, 0)
-        if not isinstance(value, float) and not isinstance(value, str) and not isinstance(value, bool):
-            raise JSONDeserializeError(f'Can\'t parse range JSON: "value" has unsupported type "{type(value).__name__}".', None, 0)
-        return RuleRange(min_val=min_val, max_val=max_val, prop_val=value)
-
-    def to_json(self):
-        return {
-            'min': self._min_val,
-            'max': self._max_val,
-            'value': self._prop_val,
-        }
-
-    def validate(self):
-        """
-        Ensure that the range does not violate any common sense.
-
-        Raises:
-            TypeError: If any of the range properties do not make sense.
-        """
-        if self.min_val is not None and self.max_val is not None and self.min_val > self.max_val:
-            raise TypeError('Some ranges have inverted boundaries (max < min)')
-
-    def __repr__(self) -> str:
-        return f'<{type(self).__name__} {self.min_val}:{self.max_val} => {self.prop_val}>'
-
-
 class BaseRule(JSONSerializable, metaclass=ABCMeta):
 
-    DEFAULT_CHANNEL = '__auto__'
-    NOT_IMPORTANT_CHANNEL = '__skip__'
+    class Channel(Enum):
+        """Predefined channel values."""
+        DEFAULT = '__auto__'
+        """Take value from the default channel specified by the widget via `default_rule_channel()` method."""
 
-    def __init__(self, name: str, prop: str, channel: Union[str, DEFAULT_CHANNEL, NOT_IMPORTANT_CHANNEL]):
+        NOT_IMPORTANT = '__skip__'
+        """Indicates that channel is used to aggregate value but does not act as a trigger for recalculating the rule."""
+
+    class Type(IntEnum):
+        """All available rule setting modes."""
+
+        NUM_RANGE = 0
+        """Numeric range where user defines lower and upper numeric
+         boundaries and associates property value with each range."""
+
+        PY_EXPR = 1
+        """User defines Python expression that can read multiple channels and produce a desired property value."""
+
+    class Property(Enum):
+        """Predefined properties that can be controlled by rules."""
+
+        ENABLED = 'Enabled'
+        """Boolean flag to enable or disable the widget based on the incoming value."""
+
+        VISIBILITY = 'Visibility'
+        """Boolean flag to make the widget visible or make it disappear based on the incoming value."""
+
+        OPACITY = 'Opacity'
+        """Float value to set the transparency on the widget based on the incoming value."""
+
+        COLOR = 'Color'
+        """String value with HEX code of the RGB color to be applied on the widget."""
+
+    def __init__(self, name: str, prop: Union['BaseRule.Property', str], channel: Union[str, Channel]):
         """
         Rule that can be applied to widgets to change their behavior based on incoming value.
 
         Args:
             name: Name of the rule as it's visible in the rules list.
             prop: Name corresponding to the key in RULE_PROPERTIES.
-            channel: Channel address. Use :attr:`DEFAULT_CHANNEL` to use the default channel of the widget
-                     or :attr:`NOT_IMPORTANT_CHANNEL` if the rule body is responsible for collecting the channel
+            channel: Channel address. Use :attr:`Channel.DEFAULT` to use the default channel of the widget
+                     or :attr:`Channel.NOT_IMPORTANT` if the rule body is responsible for collecting the channel
                      information, e.g. in Python expressions. We never set it to None, to not confuse with absent
                      value because of the bug.
         """
         self._name = name
+        if isinstance(prop, BaseRule.Property):
+            prop = prop.value
         self._prop = prop
         self.channel = channel
-        self.body: Union[List[RuleRange], Dict[str, str], None] = None
 
     def validate(self):
         """
@@ -169,20 +111,20 @@ class BaseRule(JSONSerializable, metaclass=ABCMeta):
         self._prop = new_val
 
     @property
-    def type(self) -> RuleType:
+    def type(self) -> 'BaseRule.Type':
         return self._type
 
     @type.setter
-    def type(self, new_val: RuleType):
+    def type(self, new_val: 'BaseRule.Type'):
         self._type = new_val
 
 
-class ExpressionRule(BaseRule):
+class CExpressionRule(BaseRule):
 
     def __init__(self,
                  name: str,
                  prop: str,
-                 channel: Union[str, BaseRule.DEFAULT_CHANNEL, BaseRule.NOT_IMPORTANT_CHANNEL],
+                 channel: Union[str, BaseRule.Channel],
                  expression: str):
         """
         Rule that evaluates Python expressions.
@@ -190,8 +132,8 @@ class ExpressionRule(BaseRule):
         Args:
             name: Name of the rule as it's visible in the rules list.
             prop: Name corresponding to the key in RULE_PROPERTIES.
-            channel: Channel address. Use :attr:`DEFAULT_CHANNEL` to use the default channel of the widget
-                     or :attr:`NOT_IMPORTANT_CHANNEL` if the rule body is responsible for collecting the channel
+            channel: Channel address. Use :attr:`BaseRule.Channel.DEFAULT` to use the default channel of the widget
+                     or :attr:`BaseRule.Channel.NOT_IMPORTANT` if the rule body is responsible for collecting the channel
                      information, e.g. in Python expressions. We never set it to None, to not confuse with absent
                      value because of the bug.
             expression: Python expression.
@@ -207,21 +149,101 @@ class ExpressionRule(BaseRule):
         raise NotImplementedError()
 
 
-class NumRangeRule(BaseRule):
+class CNumRangeRule(BaseRule):
+
+    class Range(JSONSerializable):
+
+        def __init__(self, min_val: float, max_val: float, prop_val: Optional[RangeValue] = None):
+            """
+            Describes a single entry in the numeric ranges rules.
+
+            Args:
+                min_val: Lower boundary of the range (included in the range).
+                max_val: Upper boundary of the range (excluded from the range).
+                prop_val: Value to be applied to the property in this range.
+            """
+            self._min_val = min_val
+            self._max_val = max_val
+            self._prop_val = prop_val
+
+        @property
+        def min_val(self) -> float:
+            """Lower boundary of the range (included in the range)."""
+            return self._min_val
+
+        @min_val.setter
+        def min_val(self, new_val: float):
+            self._min_val = new_val
+
+        @property
+        def max_val(self) -> float:
+            """Upper boundary of the range (excluded from the range)."""
+            return self._max_val
+
+        @max_val.setter
+        def max_val(self, new_val: float):
+            self._max_val = new_val
+
+        @property
+        def prop_val(self) -> float:
+            """Value to be applied to the property in this range."""
+            return self._prop_val
+
+        @prop_val.setter
+        def prop_val(self, new_val: float):
+            self._prop_val = new_val
+
+        @classmethod
+        def from_json(cls, contents):
+            logger.debug(f'Unpacking JSON range: {contents}')
+            min_val: float = contents.get('min', None)
+            max_val: float = contents.get('max', None)
+            value: RangeValue = contents.get('value', None)
+
+            if not isinstance(min_val, float):
+                raise JSONDeserializeError(
+                    f'Can\'t parse range JSON: "min" is not float, "{type(min_val).__name__}" given.', None, 0)
+            if not isinstance(max_val, float):
+                raise JSONDeserializeError(
+                    f'Can\'t parse range JSON: "max" is not float, "{type(max_val).__name__}" given.', None, 0)
+            if not isinstance(value, float) and not isinstance(value, str) and not isinstance(value, bool):
+                raise JSONDeserializeError(
+                    f'Can\'t parse range JSON: "value" has unsupported type "{type(value).__name__}".', None, 0)
+            return cls(min_val=min_val, max_val=max_val, prop_val=value)
+
+        def to_json(self):
+            return {
+                'min': self._min_val,
+                'max': self._max_val,
+                'value': self._prop_val,
+            }
+
+        def validate(self):
+            """
+            Ensure that the range does not violate any common sense.
+
+            Raises:
+                TypeError: If any of the range properties do not make sense.
+            """
+            if self.min_val is not None and self.max_val is not None and self.min_val > self.max_val:
+                raise TypeError('Some ranges have inverted boundaries (max < min)')
+
+        def __repr__(self) -> str:
+            return f'<{type(self).__name__} {self.min_val}:{self.max_val} => {self.prop_val}>'
 
     def __init__(self,
                  name: str,
                  prop: str,
-                 channel: Union[str, BaseRule.DEFAULT_CHANNEL, BaseRule.NOT_IMPORTANT_CHANNEL],
-                 ranges: Optional[Iterable[RuleRange]] = None):
+                 channel: Union[str, BaseRule.Channel] = BaseRule.Channel.DEFAULT,
+                 ranges: Optional[Iterable['CNumRangeRule.Range']] = None):
         """
         Rule that evaluates property based on a number of ranges, given that connected channel produces a number.
 
         Args:
             name: Name of the rule as it's visible in the rules list.
             prop: Name corresponding to the key in RULE_PROPERTIES.
-            channel: Channel address. Use :attr:`DEFAULT_CHANNEL` to use the default channel of the widget
-                     or :attr:`NOT_IMPORTANT_CHANNEL` if the rule body is responsible for collecting the channel
+            channel: Channel address. Use :attr:`BaseRule.Channel.DEFAULT` to use the default channel of the widget
+                     or :attr:`BaseRule.Channel.NOT_IMPORTANT` if the rule body is responsible for collecting the channel
                      information, e.g. in Python expressions. We never set it to None, to not confuse with absent
                      value because of the bug.
             ranges: A list of numerical ranges that define which value should be set to the property when an incoming
@@ -230,10 +252,10 @@ class NumRangeRule(BaseRule):
         super().__init__(name=name, prop=prop, channel=channel)
         if ranges is None:
             ranges = []
-        self.ranges: List[RuleRange] = ranges if isinstance(ranges, list) else list(ranges)
+        self.ranges: List['CNumRangeRule.Range'] = ranges if isinstance(ranges, list) else list(ranges)
 
-    @staticmethod
-    def from_json(contents: Dict[str, Any]):
+    @classmethod
+    def from_json(cls, contents: Dict[str, Any]):
         logger.debug(f'Unpacking JSON rule: {contents}')
         name: str = contents.get('name', None)
         prop: str = contents.get('prop', None)
@@ -251,14 +273,14 @@ class NumRangeRule(BaseRule):
         if not isinstance(json_ranges, list):
             raise JSONDeserializeError(f'Can\'t parse range JSON: "ranges" is not a list, "{type(json_ranges).__name__}" given.', None, 0)
 
-        ranges: Iterator[RuleRange] = map(RuleRange.from_json, json_ranges)
-        return NumRangeRule(name=name, prop=prop, channel=channel, ranges=ranges)
+        ranges: Iterator['CNumRangeRule.Range'] = map(CNumRangeRule.Range.from_json, json_ranges)
+        return cls(name=name, prop=prop, channel=channel, ranges=ranges)
 
     def to_json(self):
         return {
             'name': self.name,
             'prop': self.prop,
-            'type': RuleType.NUM_RANGE,
+            'type': BaseRule.Type.NUM_RANGE,
             'channel': self.channel,
             'ranges': self.ranges,
         }
@@ -323,10 +345,10 @@ def unpack_rules(contents: str) -> List[BaseRule]:
             rule_type: int = json_rule['type']
             if not isinstance(rule_type, int):
                 raise JSONDeserializeError(f'Rule {json_rule} must have integer type, given {type(rule_type).__name__}.')
-            if rule_type == RuleType.NUM_RANGE:
-                res.append(NumRangeRule.from_json(json_rule))
-            elif rule_type == RuleType.PY_EXPR:
-                res.append(ExpressionRule.from_json(json_rule))
+            if rule_type == BaseRule.Type.NUM_RANGE:
+                res.append(CNumRangeRule.from_json(json_rule))
+            elif rule_type == BaseRule.Type.PY_EXPR:
+                res.append(CExpressionRule.from_json(json_rule))
             else:
                 raise JSONDeserializeError(f'Unknown rule type {rule_type} for JSON {json_rule}')
     elif contents is not None:
@@ -334,7 +356,7 @@ def unpack_rules(contents: str) -> List[BaseRule]:
     return res
 
 
-class ChannelException(Exception):
+class CChannelException(Exception):
     """Custom exception types to catch rule/channel-related exceptions."""
     pass
 
@@ -349,9 +371,9 @@ class WidgetRulesMixin:
     """Default rule property visible in the dialog."""
 
     RULE_PROPERTIES = {
-        'Enabled': ['setEnabled', bool],
-        'Visibility': ['setVisible', bool],
-        'Opacity': ['set_opacity', float],
+        BaseRule.Property.ENABLED.value: ['setEnabled', bool],
+        BaseRule.Property.VISIBILITY.value: ['setVisible', bool],
+        BaseRule.Property.OPACITY.value: ['set_opacity', float],
     }
     """All available rule properties with associated callbacks and data types."""
 
@@ -399,7 +421,7 @@ class WidgetRulesMixin:
             return
         try:
             RulesDispatcher().register(widget=self, rules=new_rules)
-        except ChannelException:
+        except CChannelException:
             logger.debug(f'Rules setting failed. We do not have the channel yet, will have to be repeated')
             # Set internal data structure without activating property setter behavior
             cast(PyDMWidget, self)._rules = new_rules
@@ -415,7 +437,7 @@ class WidgetRulesMixin:
 
 class ColorRulesMixin(WidgetRulesMixin):
 
-    RULE_PROPERTIES = dict(Color=['set_color', str],
+    RULE_PROPERTIES = dict(**{BaseRule.Property.COLOR.value: ['set_color', str]},
                            **WidgetRulesMixin.RULE_PROPERTIES)
 
     def __init__(self):
@@ -436,7 +458,7 @@ class ColorRulesMixin(WidgetRulesMixin):
 
 
 @modify_in_place
-class RulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
+class _RulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
 
     def __init__(self):
         """
@@ -470,15 +492,15 @@ class RulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
                     continue
 
                 # TODO: Will this work with wildcard channel? Certainly not dynamically changing one because it's evaluated once
-                if rule.channel == BaseRule.DEFAULT_CHANNEL:
+                if rule.channel == BaseRule.Channel.DEFAULT:
                     default_channel = widget_ref().default_rule_channel()
                     if default_channel is None:
-                        raise ChannelException(f'Default channel on the widget is not defined yet. We won\' register it for now...')
+                        raise CChannelException(f'Default channel on the widget is not defined yet. We won\' register it for now...')
                     channels_list = [{
                         'channel': default_channel,
                         'trigger': True,
                     }]
-                elif rule.channel == BaseRule.NOT_IMPORTANT_CHANNEL:
+                elif rule.channel == BaseRule.Channel.NOT_IMPORTANT:
                     # TODO: This is probably Python expression. Handle it differently from the body
                     logger.warning(f'Rules without explicit channel cannot be handled yet')
                     continue
@@ -529,7 +551,7 @@ class RulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
             }
             obj.rule_signal.emit(payload)
 
-        if isinstance(rule, ExpressionRule):
+        if isinstance(rule, CExpressionRule):
             logger.warning(f'Python expressions are not supported for evaluation yet')
             # TODO: Handle Python expression here
             # eval_env = {
@@ -542,7 +564,7 @@ class RulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
             #     notify_value(val)
             # except Exception as e:
             #     logger.exception(f'Error while evaluating Rule: {e}')
-        elif isinstance(rule, NumRangeRule):
+        elif isinstance(rule, CNumRangeRule):
             _, base_type = cast(WidgetRulesMixin, widget_ref()).RULE_PROPERTIES[rule.prop]
             val = float(job_unit['values'][0])
             for range in rule.ranges:

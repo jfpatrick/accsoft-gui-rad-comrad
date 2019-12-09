@@ -13,7 +13,7 @@ from qtpy.QtCore import Qt
 from qtpy.QtGui import QColor, QFont
 from qtpy.QtDesigner import QDesignerFormWindowInterface
 from qtpy.uic import loadUi
-from comrad.qt.rules import WidgetRulesMixin, RuleType, BaseRule, NumRangeRule, RuleRange, ExpressionRule, unpack_rules
+from comrad.rules import WidgetRulesMixin, BaseRule, CNumRangeRule, CExpressionRule, unpack_rules
 from comrad.qsci import configure_common_qsci, QSCI_INDENTATION
 from comrad.json import ComRADJSONEncoder, JSONDeserializeError
 
@@ -92,8 +92,8 @@ class NewRulesEditor(QDialog):
         for name, prop in widget.RULE_PROPERTIES.items():
             self.prop_combobox.addItem(name, prop)
 
-        self.eval_type_combobox.addItem('Numeric ranges', RuleType.NUM_RANGE)
-        # self.eval_type.addItem('Python expression', RuleType.PY_EXPR) # TODO: Uncomment when python ready
+        self.eval_type_combobox.addItem('Numeric ranges', BaseRule.Type.NUM_RANGE)
+        # self.eval_type.addItem('Python expression', BaseRule.Type.PY_EXPR) # TODO: Uncomment when python ready
 
         self.default_channel_checkbox.stateChanged.connect(
             lambda check: self.custom_channel_frame.setHidden(check))
@@ -120,7 +120,7 @@ class NewRulesEditor(QDialog):
                                   QMessageBox.Ok)
 
     def _update_source_view(self):
-        rule = cast(NumRangeRule, self._get_current_rule())
+        rule = cast(CNumRangeRule, self._get_current_rule())
         self._loading_data = True
         self.source_ranges_editor.setText(json.dumps(rule.ranges, cls=ComRADJSONEncoder, indent=QSCI_INDENTATION))
         self._loading_data = False
@@ -129,7 +129,7 @@ class NewRulesEditor(QDialog):
     def _add_range(self):
         """Add a new empty state to the table."""
         try:
-            rule = cast(NumRangeRule, self._get_current_rule())
+            rule = cast(CNumRangeRule, self._get_current_rule())
         except IndexError:
             raise RuntimeError('Cannot create a dynamic state for non-existing rule')
 
@@ -171,9 +171,9 @@ class NewRulesEditor(QDialog):
         default_name = 'New Rule'
         default_prop = self._widget.DEFAULT_RULE_PROPERTY
         _, prop_type = self._widget.RULE_PROPERTIES[self._widget.DEFAULT_RULE_PROPERTY]
-        new_rule = NumRangeRule(name=default_name,
-                                prop=default_prop,
-                                channel=BaseRule.DEFAULT_CHANNEL)
+        new_rule = CNumRangeRule(name=default_name,
+                                 prop=default_prop,
+                                 channel=BaseRule.Channel.DEFAULT)
         self._rules.append(new_rule)
         self._current_rule_item = QListWidgetItem()
         self._current_rule_item.setText(default_name)
@@ -224,10 +224,10 @@ class NewRulesEditor(QDialog):
         self.rule_name_edit.setText(rule.name)
         rule_prop = rule.prop
         self.prop_combobox.setCurrentText(rule_prop)
-        rule_type = 0 if isinstance(rule, NumRangeRule) else 1
+        rule_type = 0 if isinstance(rule, CNumRangeRule) else 1
         self.eval_type_combobox.setCurrentIndex(rule_type)
         self.eval_stack_widget.setCurrentIndex(rule_type)
-        if isinstance(rule, ExpressionRule):
+        if isinstance(rule, CExpressionRule):
             # TODO: Handle Python expression here
             #         if 'manual_rule' in data.keys():
             #             self.txt_expression.setText(self._get_entry(data, 'manual_rule.expression', ''))
@@ -248,7 +248,7 @@ class NewRulesEditor(QDialog):
             #                     checkBoxItem.setCheckState(QtCore.Qt.Unchecked)
             #                 self.tbl_channels.setItem(row, 1, checkBoxItem)
             pass
-        elif isinstance(rule, NumRangeRule):
+        elif isinstance(rule, CNumRangeRule):
             if self.range_tabs.currentIndex() == self.TAB_DECLARATIVE_VIEW:
                 self._populate_range_table()
             elif self.range_tabs.currentIndex() == self.TAB_SOURCE_VIEW:
@@ -264,7 +264,7 @@ class NewRulesEditor(QDialog):
         """Save the new rules at the widget `rules` property."""
 
         if self._get_current_index() != -1:
-            if (isinstance(self._get_current_rule(), NumRangeRule)
+            if (isinstance(self._get_current_rule(), CNumRangeRule)
                     and self.range_tabs.currentIndex() == self.TAB_SOURCE_VIEW
                     and not self._source_valid):
                 QMessageBox.critical(self,
@@ -309,25 +309,25 @@ class NewRulesEditor(QDialog):
         self.base_type_frame.setHidden(False)
 
 
-        if isinstance(curr_rule, NumRangeRule):
+        if isinstance(curr_rule, CNumRangeRule):
             _, prev_prop_type = self._widget.RULE_PROPERTIES[prev_prop]
             if prop_type != prev_prop_type:
                 # Clear the state table because we can't map
                 # different data types directly and it does not make sense
-                cast(NumRangeRule, curr_rule).ranges.clear()
+                cast(CNumRangeRule, curr_rule).ranges.clear()
                 if self.range_tabs.currentIndex() == self.TAB_DECLARATIVE_VIEW:
                     self._populate_range_table()
                 elif self.range_tabs.currentIndex() == self.TAB_SOURCE_VIEW:
                     self._update_source_view()
 
     def _eval_type_changed(self):
-        eval_type: RuleType = self.eval_type_combobox.currentData()
+        eval_type: BaseRule.Type = self.eval_type_combobox.currentData()
         self.eval_stack_widget.setCurrentIndex(eval_type.value())
         curr_rule = self._get_current_rule()
-        if eval_type == RuleType.NUM_RANGE:
-            new_rule = NumRangeRule(name=curr_rule.name,
-                                    prop=curr_rule.prop,
-                                    channel=curr_rule.channel)
+        if eval_type == BaseRule.Type.NUM_RANGE:
+            new_rule = CNumRangeRule(name=curr_rule.name,
+                                     prop=curr_rule.prop,
+                                     channel=curr_rule.channel)
         else:
             raise NotImplementedError()
         idx = self._get_current_index()
@@ -360,7 +360,7 @@ class NewRulesEditor(QDialog):
         idx = self._get_current_index()
         return self._rules[idx]
 
-    def _make_range_widget(self, row: int, rule_range: RuleRange):
+    def _make_range_widget(self, row: int, rule_range: CNumRangeRule.Range):
         range_widget = QWidget()
         range_layout = QHBoxLayout()
         range_layout.setContentsMargins(0, 0, 0, 0)
@@ -393,7 +393,7 @@ class NewRulesEditor(QDialog):
                                 row: int,
                                 type_name: Optional[str] = None,
                                 prop_name: Optional[str] = None,
-                                current_range: Optional[RuleRange] = None):
+                                current_range: Optional[CNumRangeRule.Range] = None):
         if not prop_name:
             prop_name = self.prop_combobox.currentText()
 
@@ -402,7 +402,7 @@ class NewRulesEditor(QDialog):
             type_name = prop[1].__name__
 
         try:
-            rule = cast(NumRangeRule, self._get_current_rule())
+            rule = cast(CNumRangeRule, self._get_current_rule())
         except IndexError:
             raise RuntimeError('Cannot create a dynamic state for non-existing rule')
 
@@ -411,7 +411,7 @@ class NewRulesEditor(QDialog):
             try:
                 current_range = range_list[row]
             except IndexError:
-                current_range = RuleRange(min_val=0.0, max_val=1.0)
+                current_range = CNumRangeRule.Range(min_val=0.0, max_val=1.0)
                 range_list.append(current_range)
 
         if type_name == 'bool':
@@ -498,7 +498,7 @@ class NewRulesEditor(QDialog):
             raise TypeError(f'Unsupported property type: {type_name}')
 
     def _open_color_dialog(self):
-        rule = cast(NumRangeRule, self._get_current_rule())
+        rule = cast(CNumRangeRule, self._get_current_rule())
         rule_range = rule.ranges[self.sender().row_idx]
         value = rule_range.prop_val
         new_color = QColorDialog.getColor(QColor(value))
@@ -509,7 +509,7 @@ class NewRulesEditor(QDialog):
         self._reload_range_table()
 
     def _range_changed(self, new_val: str):
-        rule = cast(NumRangeRule, self._get_current_rule())
+        rule = cast(CNumRangeRule, self._get_current_rule())
         rule_range = rule.ranges[self.sender().row_idx]
         try:
             if self.sender().is_max:
@@ -520,7 +520,7 @@ class NewRulesEditor(QDialog):
             pass
 
     def _edit_value_changed(self, caster: Callable, new_val: str):
-        rule = cast(NumRangeRule, self._get_current_rule())
+        rule = cast(CNumRangeRule, self._get_current_rule())
         rule_range = rule.ranges[self.sender().row_idx]
         try:
             rule_range.prop_val = caster(new_val)
@@ -548,7 +548,7 @@ class NewRulesEditor(QDialog):
 
     def _populate_range_table(self):
         self.range_table.clearContents()
-        rule = cast(NumRangeRule, self._get_current_rule())
+        rule = cast(CNumRangeRule, self._get_current_rule())
         ranges = rule.ranges
         self.range_table.setRowCount(len(ranges))
         row_labels = [f' {x} ' for x in range(len(ranges))]
@@ -569,8 +569,9 @@ class NewRulesEditor(QDialog):
             contents = json.loads(self.source_ranges_editor.text())
             if not isinstance(contents, list):
                 raise JSONDeserializeError(f'Expected list of rules, got {type(contents).__name__}', None, 0)
-            cast(NumRangeRule, self._get_current_rule()).ranges = list(map(RuleRange.from_json, contents))
+            cast(CNumRangeRule, self._get_current_rule()).ranges = list(map(CNumRangeRule.Range.from_json, contents))
         except (JSONDeserializeError, json.JSONDecodeError):
             self._source_valid = False
             return
         self._source_valid = True
+

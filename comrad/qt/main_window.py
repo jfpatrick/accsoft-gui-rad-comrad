@@ -8,7 +8,7 @@ from qtpy.QtCore import QCoreApplication, Qt
 from pydm.pydm_ui import Ui_MainWindow
 from pydm.main_window import PyDMMainWindow
 from pydm.data_plugins import is_read_only
-from .monkey import modify_in_place, MonkeyPatchedClass
+from comrad.monkey import modify_in_place, MonkeyPatchedClass
 from .about import AboutDialog
 
 

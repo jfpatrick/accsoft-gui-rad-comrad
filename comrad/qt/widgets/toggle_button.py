@@ -4,7 +4,7 @@ from pydm.widgets.pushbutton import PyDMPushButton
 from qtpy.QtCore import Property, Signal
 from qtpy.QtWidgets import QWidget
 from qtpy.QtGui import QIcon
-from ..rules import WidgetRulesMixin
+from comrad.rules import WidgetRulesMixin
 
 
 logger = logging.getLogger(__name__)
