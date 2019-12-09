@@ -1,9 +1,17 @@
+import logging
 from abc import ABCMeta, abstractmethod
 from typing import Dict, Any, TypeVar, Type, cast
 from json import JSONEncoder
 
 
+logger = logging.getLogger(__name__)
+
+
 _T = TypeVar('_T', bound='JSONSerializable')
+
+
+class JSONDeserializeError(ValueError):
+    pass
 
 
 class JSONSerializable(metaclass=ABCMeta):
@@ -19,6 +27,9 @@ class JSONSerializable(metaclass=ABCMeta):
 
         Returns:
             New object.
+
+        Raises:
+            JSONDeserializeError: when parsing fails.
         """
         pass
 
@@ -37,5 +48,6 @@ class ComRADJSONEncoder(JSONEncoder):
 
     def default(self, o: object) -> Dict[str, Any]:
         if isinstance(o, JSONSerializable):
+            logger.debug(f'Encoding serializable ComRAD object: {o}')
             return cast(JSONSerializable, o).to_json()
         return JSONEncoder.default(self, o)

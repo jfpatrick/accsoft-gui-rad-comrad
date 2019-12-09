@@ -5,9 +5,9 @@ import json
 from weakref import ReferenceType
 from typing import List, Dict, Any, Optional, cast, Union, Iterator, Iterable
 from enum import IntEnum
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 from qtpy.QtWidgets import QWidget
-from qtpy.QtCore import QMutexLocker, Property, Signal
+from qtpy.QtCore import QMutexLocker, Property
 from pydm.widgets.rules import RulesEngine as PyDMRulesEngine, RulesDispatcher
 from pydm.widgets.channel import PyDMChannel
 from pydm.widgets.base import PyDMWidget
@@ -15,7 +15,7 @@ from pydm.data_plugins import plugin_for_address
 from pydm.data_plugins.plugin import PyDMPlugin, PyDMConnection
 from pydm.utilities import is_qt_designer
 from pydm import config
-from comrad.json import JSONSerializable
+from comrad.json import JSONSerializable, ComRADJSONEncoder, JSONDeserializeError
 from .monkey import modify_in_place, MonkeyPatchedClass
 
 
@@ -25,10 +25,18 @@ logger = logging.getLogger(__name__)
 RangeValue = Union[str, bool, float]
 
 
-class RuleRange(JSONSerializable):
+class RuleType(IntEnum):
+    """All available rule setting modes."""
 
-    range_changed = Signal()
-    """Fired when range boundaries or its property value is changed."""
+    NUM_RANGE = 0
+    """Numeric range where user defines lower and upper numeric
+     boundaries and associates property value with each range."""
+
+    PY_EXPR = 1
+    """User defines Python expression that can read multiple channels and produce a desired property value."""
+
+
+class RuleRange(JSONSerializable):
 
     def __init__(self, min_val: float, max_val: float, prop_val: Optional[RangeValue] = None):
         """
@@ -51,7 +59,6 @@ class RuleRange(JSONSerializable):
     @min_val.setter
     def min_val(self, new_val: float):
         self._min_val = new_val
-        self.range_changed.emit()
 
     @property
     def max_val(self) -> float:
@@ -61,7 +68,6 @@ class RuleRange(JSONSerializable):
     @max_val.setter
     def max_val(self, new_val: float):
         self._max_val = new_val
-        self.range_changed.emit()
 
     @property
     def prop_val(self) -> float:
@@ -71,21 +77,20 @@ class RuleRange(JSONSerializable):
     @prop_val.setter
     def prop_val(self, new_val: float):
         self._prop_val = new_val
-        self.range_changed.emit()
 
     @classmethod
     def from_json(cls, contents):
         logger.debug(f'Unpacking JSON range: {contents}')
-        min_val: float = contents['min']
-        max_val: float = contents['max']
-        value: RangeValue = contents['value']
+        min_val: float = contents.get('min', None)
+        max_val: float = contents.get('max', None)
+        value: RangeValue = contents.get('value', None)
 
         if not isinstance(min_val, float):
-            raise json.JSONDecodeError(f'Can\'t parse range JSON: "min" is not float, "{type(min_val).__name__}" given.')
+            raise JSONDeserializeError(f'Can\'t parse range JSON: "min" is not float, "{type(min_val).__name__}" given.', None, 0)
         if not isinstance(max_val, float):
-            raise json.JSONDecodeError(f'Can\'t parse range JSON: "max" is not float, "{type(max_val).__name__}" given.')
+            raise JSONDeserializeError(f'Can\'t parse range JSON: "max" is not float, "{type(max_val).__name__}" given.', None, 0)
         if not isinstance(value, float) and not isinstance(value, str) and not isinstance(value, bool):
-            raise json.JSONDecodeError(f'Can\'t parse range JSON: "value" has unsupported type "{type(value).__name__}".')
+            raise JSONDeserializeError(f'Can\'t parse range JSON: "value" has unsupported type "{type(value).__name__}".', None, 0)
         return RuleRange(min_val=min_val, max_val=max_val, prop_val=value)
 
     def to_json(self):
@@ -103,30 +108,13 @@ class RuleRange(JSONSerializable):
             TypeError: If any of the range properties do not make sense.
         """
         if self.min_val is not None and self.max_val is not None and self.min_val > self.max_val:
-            raise TypeError(f'Range {self} has inverted ranges (max < min)')
+            raise TypeError('Some ranges have inverted boundaries (max < min)')
 
     def __repr__(self) -> str:
         return f'<{type(self).__name__} {self.min_val}:{self.max_val} => {self.prop_val}>'
 
 
-class RuleType(IntEnum):
-    """All available rule setting modes."""
-
-    NUM_RANGE = 0
-    """Numeric range where user defines lower and upper numeric
-     boundaries and associates property value with each range."""
-
-    PY_EXPR = 1
-    """User defines Python expression that can read multiple channels and produce a desired property value."""
-
-
 class BaseRule(JSONSerializable, metaclass=ABCMeta):
-
-    name_changed = Property(str)
-    """Name of the rule has been modified."""
-
-    prop_changed = Property(str)
-    """Name of the related widget property has changed."""
 
     DEFAULT_CHANNEL = '__auto__'
     NOT_IMPORTANT_CHANNEL = '__skip__'
@@ -158,9 +146,9 @@ class BaseRule(JSONSerializable, metaclass=ABCMeta):
         errors: List[str] = []
 
         if not self.name:
-            errors.append(f'Rule {self} must have the name defined')
+            errors.append(f'Not every rule has a name')
         if not self.prop:
-            errors.append(f'Rule {self} must have the property defined')
+            errors.append(f'Rule "{self.name}"' if self.name else "Some rule" + ' is missing property definition')
         if errors:
             raise TypeError(';'.join(errors))
 
@@ -171,7 +159,6 @@ class BaseRule(JSONSerializable, metaclass=ABCMeta):
     @name.setter
     def name(self, new_val: str):
         self._name = new_val
-        self.name_changed.emit(new_val)
 
     @property
     def prop(self) -> str:
@@ -180,7 +167,6 @@ class BaseRule(JSONSerializable, metaclass=ABCMeta):
     @prop.setter
     def prop(self, new_val: str):
         self._prop = new_val
-        self.prop_changed.emit(new_val)
 
     @property
     def type(self) -> RuleType:
@@ -189,7 +175,6 @@ class BaseRule(JSONSerializable, metaclass=ABCMeta):
     @type.setter
     def type(self, new_val: RuleType):
         self._type = new_val
-        self.eval_type_changed.emit()
 
 
 class ExpressionRule(BaseRule):
@@ -250,29 +235,30 @@ class NumRangeRule(BaseRule):
     @staticmethod
     def from_json(contents: Dict[str, Any]):
         logger.debug(f'Unpacking JSON rule: {contents}')
-        name: str = contents['name']
-        prop: str = contents['prop']
-        channel: str = contents['channel']
+        name: str = contents.get('name', None)
+        prop: str = contents.get('prop', None)
+        channel: str = contents.get('channel', None)
 
         if not isinstance(name, str):
-            raise json.JSONDecodeError(f'Can\'t parse range JSON: "name" is not a string, "{type(name).__name__}" given.')
+            raise JSONDeserializeError(f'Can\'t parse range JSON: "name" is not a string, "{type(name).__name__}" given.', None, 0)
         if not isinstance(prop, str):
-            raise json.JSONDecodeError(f'Can\'t parse range JSON: "prop" is not a string, "{type(prop).__name__}" given.')
+            raise JSONDeserializeError(f'Can\'t parse range JSON: "prop" is not a string, "{type(prop).__name__}" given.', None, 0)
         if not isinstance(channel, str):
-            raise json.JSONDecodeError(f'Can\'t parse range JSON: "channel" is not a string, "{type(channel).__name__}" given.')
+            raise JSONDeserializeError(f'Can\'t parse range JSON: "channel" is not a string, "{type(channel).__name__}" given.', None, 0)
 
-        json_ranges: List[Any] = contents['ranges']
+        json_ranges: List[Any] = contents.get('ranges', None)
 
         if not isinstance(json_ranges, list):
-            raise json.JSONDecodeError(f'Can\'t parse range JSON: "ranges" is not a list, "{type(json_ranges).__name__}" given.')
+            raise JSONDeserializeError(f'Can\'t parse range JSON: "ranges" is not a list, "{type(json_ranges).__name__}" given.', None, 0)
 
         ranges: Iterator[RuleRange] = map(RuleRange.from_json, json_ranges)
-        return NumRangeRule(name==name, prop=prop, channel=channel, ranges=ranges)
+        return NumRangeRule(name=name, prop=prop, channel=channel, ranges=ranges)
 
     def to_json(self):
         return {
             'name': self.name,
             'prop': self.prop,
+            'type': RuleType.NUM_RANGE,
             'channel': self.channel,
             'ranges': self.ranges,
         }
@@ -285,7 +271,7 @@ class NumRangeRule(BaseRule):
             errors.append(str(e))
 
         if len(self.ranges) == 0:
-            errors.append(f'Rule {self} must have at least one range defined.')
+            errors.append(f'Rule "{self.name}" must have at least one range defined.')
         else:
             def is_overlapping(min1: float, max1: float, min2: float, max2: float) -> bool:
                 import sys
@@ -312,7 +298,7 @@ class NumRangeRule(BaseRule):
                                       max1=range.max_val,
                                       min2=another_range.min_val,
                                       max2=another_range.max_val):
-                        errors.append(f'Rule {self} has overlapping ranges')
+                        errors.append(f'Rule "{self.name}" has overlapping ranges')
         if errors:
             raise TypeError(';'.join(errors))
 
@@ -320,19 +306,31 @@ class NumRangeRule(BaseRule):
         return f'<{type(self).__name__} "{self.name}" [{self.prop}]>\n' + '\n'.join(map(repr, self.ranges))
 
 
-def _unpack_rules(contents: str) -> List[BaseRule]:
+def unpack_rules(contents: str) -> List[BaseRule]:
+    """Converts JSON-encoded string into a list of rule objects.
+
+    Args:
+        JSON-encoded string.
+
+    Returns:
+        Lis tof rule objects.
+    """
+    logger.debug(f'Unpacking JSON rules into the object: {contents}')
     contents: List[Dict[str, Any]] = json.loads(contents)
     res: List[BaseRule] = []
-    for json_rule in contents:
-        rule_type: int = json_rule['type']
-        if not isinstance(rule_type, int):
-            raise TypeError(f'Rule {json_rule} must have integer type, given {type(rule_type).__name__}.')
-        if rule_type == RuleType.NUM_RANGE:
-            res.append(NumRangeRule.from_json(json_rule))
-        elif rule_type == RuleType.PY_EXPR:
-            res.append(ExpressionRule.from_json(json_rule))
-        else:
-            raise TypeError(f'Unknown rule type {rule_type} for JSON {json_rule}')
+    if isinstance(contents, list):
+        for json_rule in contents:
+            rule_type: int = json_rule['type']
+            if not isinstance(rule_type, int):
+                raise JSONDeserializeError(f'Rule {json_rule} must have integer type, given {type(rule_type).__name__}.')
+            if rule_type == RuleType.NUM_RANGE:
+                res.append(NumRangeRule.from_json(json_rule))
+            elif rule_type == RuleType.PY_EXPR:
+                res.append(ExpressionRule.from_json(json_rule))
+            else:
+                raise JSONDeserializeError(f'Unknown rule type {rule_type} for JSON {json_rule}')
+    elif contents is not None:
+        raise JSONDeserializeError(f'Rules does not appear to be a list')
     return res
 
 
@@ -383,12 +381,17 @@ class WidgetRulesMixin:
             base._rules = None
             base.rules = rules
 
-    @PyDMWidget.rules.setter
-    def rules(self, new_rules: Union[str, List[BaseRule], None]):
+    def _get_custom_rules(self) -> List[BaseRule]:
+        rules = cast(PyDMWidget, self)._rules
+        if is_qt_designer():
+            return json.dumps(rules, cls=ComRADJSONEncoder)
+        return rules
+
+    def _set_custom_rules(self, new_rules: Union[str, List[BaseRule], None]):
         if isinstance(new_rules, str):
             try:
-                new_rules = _unpack_rules(new_rules)
-            except json.JSONDecodeError as e:
+                new_rules = unpack_rules(new_rules)
+            except (json.JSONDecodeError, JSONDeserializeError) as e:
                 logger.exception(f'Invalid JSON format for rules: {str(e)}')
                 return
         cast(PyDMWidget, self)._rules = new_rules
@@ -400,6 +403,14 @@ class WidgetRulesMixin:
             logger.debug(f'Rules setting failed. We do not have the channel yet, will have to be repeated')
             # Set internal data structure without activating property setter behavior
             cast(PyDMWidget, self)._rules = new_rules
+
+    rules: List[BaseRule] = Property(type=str, fget=_get_custom_rules, fset=_set_custom_rules, designable=False)
+    """
+    This property will appear as a list of object oriented rules when used programmatically.
+
+    However, it is converted into JSON-encoded string when used from Qt Designer, because Qt Designer
+    cannot understand custom object format.
+    """
 
 
 class ColorRulesMixin(WidgetRulesMixin):
