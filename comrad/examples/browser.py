@@ -13,10 +13,10 @@ import importlib.machinery
 from typing import List, Optional, Tuple, cast, Union
 from qtpy import uic
 from qtpy.QtCore import Qt, Signal
-from qtpy.QtGui import QColor, QShowEvent
+from qtpy.QtGui import QShowEvent
 from qtpy.QtWidgets import (QMainWindow, QTreeWidgetItem, QTreeWidget, QStackedWidget, QTabWidget, QApplication,
-                            QAbstractScrollArea, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit)
-from comrad import __version__, __author__
+                            QAbstractScrollArea, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit, QFrame)
+from pydm.utilities.iconfont import IconFont
 from comrad.utils import icon, install_logger_level
 from comrad.qt.about import AboutDialog
 
@@ -56,6 +56,9 @@ class ExamplesWindow(QMainWindow):
         self.example_desc_label: QLabel = None
         self.example_title_label: QLabel = None
         self.example_run_btn: QPushButton = None
+        self.arg_lbl: QLabel = None
+        self.arg_frame: QFrame = None
+        self.alert_icon_lbl: QLabel = None
         self.tabs: QTabWidget = None
 
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'main.ui'), self)
@@ -64,6 +67,9 @@ class ExamplesWindow(QMainWindow):
         self._selected_example_entrypoint: Optional[str] = None
         self._selected_example_japc_generator: Optional[str] = None
         self._selected_example_args: Optional[List[str]] = None
+
+        self.alert_icon_lbl.setPixmap(IconFont().icon('exclamation-triangle').pixmap(self.alert_icon_lbl.minimumSize()))
+        self.arg_frame.hide()
 
         self.example_details.setCurrentIndex(_EXAMPLE_DETAILS_INTRO_PAGE)
 
@@ -263,6 +269,12 @@ class ExamplesWindow(QMainWindow):
         self.example_desc_label.setText(example_description)
 
         self.example_details.setCurrentIndex(_EXAMPLE_DETAILS_DETAILS_PAGE)
+
+        if example_args:
+            self.arg_frame.show()
+            self.arg_lbl.setText('\n'.join(example_args))
+        else:
+            self.arg_frame.hide()
 
         bundle_files: List[str] = []
 
