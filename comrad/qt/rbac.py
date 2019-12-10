@@ -1,6 +1,6 @@
 import logging
 from typing import Optional, Tuple
-from enum import IntEnum
+from enum import IntEnum, auto
 from qtpy.QtCore import Signal, QObject
 
 
@@ -14,9 +14,9 @@ class RBACLoginStatus(IntEnum):
 
 
 class RBACStartupLoginPolicy(IntEnum):
-    LOGIN_BY_LOCATION = 0
-    LOGIN_BY_CREDENTIALS = 1
-    NO_LOGIN = 2
+    LOGIN_BY_LOCATION = auto()
+    LOGIN_BY_CREDENTIALS = auto()
+    NO_LOGIN = auto()
 
 
 class RBACState(QObject):

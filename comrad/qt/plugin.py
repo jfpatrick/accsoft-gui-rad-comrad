@@ -1,6 +1,6 @@
 import abc
 from typing import Optional, Union, Iterable
-from enum import Enum
+from enum import Enum, auto, unique
 from qtpy.QtWidgets import QWidget, QAction, QMenu
 from qtpy.QtGui import QIcon
 
@@ -18,10 +18,10 @@ class CPlugin(metaclass=abc.ABCMeta):
 class CPluginPosition(Enum):
     """Position of the plugin's widget/button in the toolbar/statusbar."""
 
-    LEFT = 0
+    LEFT = auto()
     """Positioned on the left items will follow standard items but will be aligned left after them."""
 
-    RIGHT = 1
+    RIGHT = auto()
     """Positioned on the right items will be sticking to the right edge of the application."""
 
 
@@ -52,6 +52,7 @@ class CActionPlugin(CPlugin, metaclass=abc.ABCMeta):
         pass
 
 
+@unique
 class CToolbarID(Enum):
 
     SEPARATOR = 'comrad.sep'
