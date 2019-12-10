@@ -4,7 +4,8 @@ import pydm
 import inspect
 from typing import Optional, Dict, Union, cast
 from qtpy import uic
-from qtpy.QtWidgets import QWidget, QLabel, QListWidget, QGroupBox, QTableWidget, QTableWidgetItem, QFormLayout
+from qtpy.QtWidgets import (QWidget, QLabel, QListWidget, QGroupBox, QTableWidget,
+                            QTableWidgetItem, QFormLayout, QTabWidget)
 from qtpy.QtCore import Qt
 from pydm.tools import ExternalTool
 
@@ -36,6 +37,7 @@ class AboutDialog(QWidget):
         self.cmw_env: QLabel = None
         self.cmmn_build_list: QListWidget = None
         self.jvm_list: QListWidget = None
+        self.tabs: QTabWidget = None
 
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'about.ui'), self)
 
@@ -71,10 +73,20 @@ class AboutDialog(QWidget):
                         string=comrad.__author__)
         self.support.setText(str(self.support.text()).format(author=author))
 
-        self._add_tools_to_list(pydm.tools.ext_tools)
-        self._populate_plugin_list()
+        from comrad.qt.application import CApplication
+        self.app = cast(CApplication, CApplication.instance())
+
         self._populate_credits()
-        self._populate_japc()
+
+        if not isinstance(CApplication.instance(), CApplication):
+            # Not a CApplication, must be running this about dialog from somewhere else, e.g. Examples browser
+            self.tabs.removeTab(1)  # Remove JAPC tab
+            self.tabs.removeTab(1)  # Remove Tools tab
+            self.tabs.removeTab(1)  # Remove Data plugins tab
+        else:
+            self._add_tools_to_list(pydm.tools.ext_tools)
+            self._populate_plugin_list()
+            self._populate_japc()
 
     def _add_tools_to_list(self, tools: Union[ExternalTool, Dict[str, ExternalTool]]):
         for name, tool in tools.items():
@@ -116,14 +128,11 @@ class AboutDialog(QWidget):
                 )
 
     def _populate_japc(self):
-        from comrad.qt.application import CApplication
-        app = cast(CApplication, CApplication.instance())
+        self.inca_enabled.setText('Yes' if self.app.use_inca else 'No')
+        self.cmw_env.setText(self.app.cmw_env)
+        self.ccda_endpoint.setText(self.app.ccda_endpoint)
 
-        self.inca_enabled.setText('Yes' if app.use_inca else 'No')
-        self.cmw_env.setText(app.cmw_env)
-        self.ccda_endpoint.setText(app.ccda_endpoint)
-
-        for key, val in app.jvm_flags.items():
+        for key, val in self.app.jvm_flags.items():
             self.jvm_list.addItem(f'{key}={val}')
 
         import pyjapc

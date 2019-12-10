@@ -18,6 +18,7 @@ from qtpy.QtWidgets import (QMainWindow, QTreeWidgetItem, QTreeWidget, QStackedW
                             QAbstractScrollArea, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit)
 from comrad import __version__, __author__
 from comrad.utils import icon, install_logger_level
+from comrad.qt.about import AboutDialog
 
 try:
     from PyQt5.Qsci import QsciScintilla, QsciLexerPython
@@ -100,23 +101,8 @@ class ExamplesWindow(QMainWindow):
     def _show_about(self):  # pylint: disable=no-self-use   # It has to be instance method, as it is connected as a slot
         """
         Opens 'About' dialog.
-
-        The information shown in the dialog is parsed from the 'comrad' package.
-        In addition, email of the author is parsed to create a clickable link for support.
         """
-        dialog = uic.loadUi(os.path.join(os.path.dirname(__file__), 'about.ui'))
-        dialog.version_label.setText(str(__version__))
-
-        # Parse email to create a link
-        import re
-        match = re.match(pattern='([^<]*)(<([^>]*)>)', string=__author__)
-        support = match.group(1).strip()
-        if len(match.groups()) > 2:
-            email = match.group(3)
-            support += f' &lt;<a href="mailto:{email}">{email}</a>&gt;'
-
-        dialog.support_label.setText(support)
-        dialog.exec_()
+        AboutDialog(self).show()
 
     @staticmethod
     def _find_runnable_examples() -> List[str]:
