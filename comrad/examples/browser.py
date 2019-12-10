@@ -63,6 +63,7 @@ class ExamplesWindow(QMainWindow):
         self._selected_example_path: Optional[str] = None
         self._selected_example_entrypoint: Optional[str] = None
         self._selected_example_japc_generator: Optional[str] = None
+        self._selected_example_args: Optional[List[str]] = None
 
         self.example_details.setCurrentIndex(_EXAMPLE_DETAILS_INTRO_PAGE)
 
@@ -246,11 +247,18 @@ class ExamplesWindow(QMainWindow):
         except AttributeError:
             example_fgen = None
 
+        example_args: Optional[List[str]]
+        try:
+            example_args = module.launch_arguments # type: ignore
+        except AttributeError:
+            example_args = None
+
         self._selected_example_japc_generator = (
             f'{ExamplesWindow._absolute_module_id(basedir=basedir)}.{example_fgen}'
             if example_fgen else None
         )
         self._selected_example_entrypoint = example_entrypoint
+        self._selected_example_args = example_args
         self.example_title_label.setText(example_title)
         self.example_desc_label.setText(example_description)
 
@@ -361,7 +369,11 @@ class ExamplesWindow(QMainWindow):
 
         # We must run it as an external process, because event loop is already running
         file_path = os.path.join(self._selected_example_path, self._selected_example_entrypoint)
-        args: List[str] = ['comrad', 'run', file_path]
+        args: List[str] = ['comrad', 'run']
+        if self._selected_example_args is not None:
+            args.extend(self._selected_example_args)
+        args.append(file_path)
+        logger.debug(f'Launching app with args: {args}')
         env = dict(os.environ, PYJAPC_SIMULATION_INIT=(self._selected_example_japc_generator or ''))
         python_path = env.get('PYTHONPATH', '')
         env['PYTHONPATH'] = f'{_CURR_DIR}:{python_path}'
