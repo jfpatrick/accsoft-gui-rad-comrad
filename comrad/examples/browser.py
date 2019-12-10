@@ -274,7 +274,7 @@ class ExamplesWindow(QMainWindow):
 
         def is_file_allowed(file: PathLike) -> bool:
             _, ext = os.path.splitext(file)
-            return ext in ('.py', '.ui', '.json')
+            return ext in ('.py', '.ui', '.json', '.qss')
 
         for root, dirs, files in os.walk(basedir):
             try:
