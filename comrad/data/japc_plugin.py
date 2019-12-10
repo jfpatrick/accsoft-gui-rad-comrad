@@ -236,7 +236,12 @@ class _JapcConnection(PyDMConnection):
         self.connection_state_signal.emit(self.online)
 
         # Start receiving values
-        self._create_subscription()
+        if channel.value_slot is not None:
+            self._create_subscription()
+        else:
+            # Value is never to be received (for instance on buttons that work with commands)
+            # We still need to notify the system that we are "connected"
+            self.online = True
 
     def remove_listener(self, channel: PyDMChannel, destroying: bool = False):
         # Superclass does not implement signal for bool values
