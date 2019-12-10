@@ -7,12 +7,20 @@ from qtpy import uic
 from qtpy.QtWidgets import (QWidget, QLabel, QListWidget, QGroupBox, QTableWidget,
                             QTableWidgetItem, QFormLayout, QTabWidget)
 from qtpy.QtCore import Qt
+from qtpy.QtGui import QIcon
 from pydm.tools import ExternalTool
 
 
 class AboutDialog(QWidget):
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: Optional[QWidget] = None, icon: Optional[QIcon] = None):
+        """
+        About dialog that shows information about ComRAD framework and its environment.
+
+        Args:
+            parent: Parent widget to own the dialog.
+            icon: Custom icon to be placed instead of the standard one.
+        """
         super().__init__(parent, Qt.Window)
 
         self.description: QLabel = None
@@ -38,8 +46,12 @@ class AboutDialog(QWidget):
         self.cmmn_build_list: QListWidget = None
         self.jvm_list: QListWidget = None
         self.tabs: QTabWidget = None
+        self.icon_lbl: QLabel = None
 
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'about.ui'), self)
+
+        if icon is not None:
+            self.icon_lbl.setPixmap(icon.pixmap(self.icon_lbl.maximumSize()))
 
         from comrad.info import COMRAD_DESCRIPTION, get_versions_info
         versions = get_versions_info()

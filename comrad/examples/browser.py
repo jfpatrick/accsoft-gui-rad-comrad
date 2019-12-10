@@ -102,7 +102,7 @@ class ExamplesWindow(QMainWindow):
         """
         Opens 'About' dialog.
         """
-        AboutDialog(self).show()
+        AboutDialog(parent=self, icon=self.windowIcon()).show()
 
     @staticmethod
     def _find_runnable_examples() -> List[str]:
@@ -463,6 +463,6 @@ def run_browser(args: argparse.Namespace):
     app_args.extend(sys.argv)
     app = QApplication(app_args)
     import comrad.qt
-    app.setWindowIcon(icon('app', module_path=comrad.qt.application))
+    app.setWindowIcon(icon('examples', module_path=comrad.qt.application))
     _ = ExamplesWindow()
     sys.exit(app.exec_())
