@@ -38,6 +38,7 @@ class CCommandButton(CustomizedTooltipMixin, QPushButton, PyDMWritableWidget):
             QPushButton.__init__(self, parent)
         CustomizedTooltipMixin.__init__(self)
         PyDMWritableWidget.__init__(self, init_channel=init_channel)
+        self._alarm_sensitive_border = False
         self.clicked.connect(self._send_cmd)
 
     channelValueChanged = None  # Prevent widget from subscribing

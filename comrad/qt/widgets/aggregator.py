@@ -37,6 +37,7 @@ class CValueAggregator(QWidget, PyDMWidget, ValueTransformationBase, GeneratorTr
         QWidget.__init__(self, parent)
         PyDMWidget.__init__(self)
         ValueTransformationBase.__init__(self)
+        self._alarm_sensitive_border = False
         self._channel_ids: List[str] = []
         self._active: bool = True
         # This type defines how often an update is fired and when cached values get overwritten

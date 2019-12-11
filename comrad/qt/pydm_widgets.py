@@ -65,6 +65,7 @@ class CWaveFormTable(WidgetRulesMixin, CustomizedTooltipMixin, PyDMWaveformTable
         WidgetRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
         PyDMWaveformTable.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
+        self._alarm_sensitive_border = False
 
 
 class CLabel(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyDMLabel):
@@ -87,6 +88,7 @@ class CLabel(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyD
         CustomizedTooltipMixin.__init__(self)
         PyDMLabel.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
+        self._alarm_sensitive_border = False
 
     def setNum(self, new_val: Union[float, int]):
         """
@@ -134,6 +136,7 @@ class CByteIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipM
         CustomizedTooltipMixin.__init__(self)
         PyDMByteIndicator.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
+        self._alarm_sensitive_border = False
 
     @Slot(list)
     @Slot(bool)
@@ -185,6 +188,7 @@ class CCheckBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin,
         CustomizedTooltipMixin.__init__(self)
         PyDMCheckbox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
+        self._alarm_sensitive_border = False
 
 
 class CEmbeddedDisplay(PyDMEmbeddedDisplay):
@@ -221,6 +225,7 @@ class CEnumButton(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixi
         CustomizedTooltipMixin.__init__(self)
         PyDMEnumButton.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
+        self._alarm_sensitive_border = False
 
 
 class CEnumComboBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyDMEnumComboBox):
@@ -244,6 +249,7 @@ class CEnumComboBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMi
         CustomizedTooltipMixin.__init__(self)
         PyDMEnumComboBox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
+        self._alarm_sensitive_border = False
 
 
 class CImageView(WidgetRulesMixin, CustomizedTooltipMixin, PyDMImageView):
@@ -275,6 +281,7 @@ class CImageView(WidgetRulesMixin, CustomizedTooltipMixin, PyDMImageView):
         WidgetRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
         PyDMImageView.__init__(self, parent=parent, image_channel=image_channel, width_channel=width_channel, **kwargs)
+        self._alarm_sensitive_border = False
 
     def default_rule_channel(self) -> str:
         return self.imageChannel
@@ -298,6 +305,7 @@ class CLineEdit(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, 
         CustomizedTooltipMixin.__init__(self)
         PyDMLineEdit.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
+        self._alarm_sensitive_border = False
 
     def set_color(self, val: str):
         """Overridden method of :class:`ColorRulesMixin`.
@@ -455,6 +463,7 @@ class CScaleIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltip
         CustomizedTooltipMixin.__init__(self)
         PyDMScaleIndicator.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
+        self._alarm_sensitive_border = False
 
 
 class CTemplateRepeater(PyDMTemplateRepeater):
