@@ -193,7 +193,7 @@ class _JapcConnection(PyDMConnection):
     """ PyDM adaptation for JAPC protocol. """
 
     # Superclass does not implement signal for bool values
-    new_value_signal = Signal([float], [int], [str], [np.ndarray], [bool], [QVariant], [list], [dict])
+    new_value_signal = Signal([float], [int], [str], [np.ndarray], [bool], [QVariant], [list])
 
     def __init__(self, channel: PyDMChannel, address: str, protocol: Optional[str] = None, parent: Optional[QObject] = None, *args, **kwargs):
         super().__init__(channel=channel,
@@ -260,10 +260,6 @@ class _JapcConnection(PyDMConnection):
                     self.new_value_signal[list].disconnect(channel.value_slot)
                 except (KeyError, TypeError):
                     pass
-                try:
-                    self.new_value_signal[dict].disconnect(channel.value_slot)
-                except (KeyError, TypeError):
-                    pass
             if channel.value_signal is not None:
                 channel.value_signal.disconnect(self._on_set_device_property)
                 try:
@@ -280,10 +276,6 @@ class _JapcConnection(PyDMConnection):
                     pass
                 try:
                     channel.value_signal[float].disconnect(self._on_set_device_property)
-                except (KeyError, TypeError):
-                    pass
-                try:
-                    channel.value_signal[dict].disconnect(self._on_set_device_property)
                 except (KeyError, TypeError):
                     pass
                 try:
@@ -319,43 +311,43 @@ class _JapcConnection(PyDMConnection):
             except (KeyError, TypeError):
                 pass
             try:
-                self.new_value_signal[dict].connect(channel.value_slot, Qt.QueuedConnection)
-            except (KeyError, TypeError):
-                pass
-            try:
                 self.new_value_signal[QVariant].connect(channel.value_slot, Qt.QueuedConnection)
             except (KeyError, TypeError):
                 pass
 
     def _connect_write_slots(self, signal: Signal):
+        set_slot_connected: bool = False
         try:
             signal[str].connect(slot=self._on_set_device_property, type=Qt.QueuedConnection)
+            set_slot_connected = True
         except (KeyError, TypeError):
             pass
         try:
             signal[bool].connect(slot=self._on_set_device_property, type=Qt.QueuedConnection)
+            set_slot_connected = True
         except (KeyError, TypeError):
             pass
         try:
             signal[int].connect(slot=self._on_set_device_property, type=Qt.QueuedConnection)
+            set_slot_connected = True
         except (KeyError, TypeError):
             pass
         try:
             signal[float].connect(slot=self._on_set_device_property, type=Qt.QueuedConnection)
-        except (KeyError, TypeError):
-            pass
-        try:
-            signal[dict].connect(slot=self._on_set_device_property, type=Qt.QueuedConnection)
+            set_slot_connected = True
         except (KeyError, TypeError):
             pass
         try:
             signal[np.ndarray].connect(slot=self._on_set_device_property, type=Qt.QueuedConnection)
+            set_slot_connected = True
         except (KeyError, TypeError):
             pass
-        try:
-            signal.connect(slot=self._on_device_command, type=Qt.QueuedConnection)
-        except (KeyError, TypeError):
-            pass
+
+        if not set_slot_connected:
+            try:
+                signal.connect(slot=self._on_device_command, type=Qt.QueuedConnection)
+            except (KeyError, TypeError):
+                pass
 
     def _on_get_device_property(self, parameterName: str, value: Any, headerInfo=None):
         del parameterName, headerInfo  # Unused argument (https://google.github.io/styleguide/pyguide.html#214-decision)
@@ -378,7 +370,6 @@ class _JapcConnection(PyDMConnection):
     @Slot(bool)
     @Slot(int)
     @Slot(float)
-    @Slot(dict)
     @Slot(np.ndarray)
     def _on_set_device_property(self, new_val: Any):
         get_japc().setParam(parameterName=self._device_prop,
