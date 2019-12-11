@@ -193,7 +193,7 @@ class _JapcConnection(PyDMConnection):
     """ PyDM adaptation for JAPC protocol. """
 
     # Superclass does not implement signal for bool values
-    new_value_signal = Signal([float], [int], [str], [np.ndarray], [bool], [QVariant], [list])
+    new_value_signal = Signal([float], [int], [str], [np.ndarray], [bool], [QVariant], [list], [dict])
 
     def __init__(self, channel: PyDMChannel, address: str, protocol: Optional[str] = None, parent: Optional[QObject] = None, *args, **kwargs):
         super().__init__(channel=channel,
@@ -250,18 +250,46 @@ class _JapcConnection(PyDMConnection):
             if channel.value_slot is not None:
                 try:
                     self.new_value_signal[bool].disconnect(channel.value_slot)
-                except TypeError:
+                except (KeyError, TypeError):
                     pass
                 try:
                     self.new_value_signal[QVariant].disconnect(channel.value_slot)
-                except TypeError:
+                except (KeyError, TypeError):
                     pass
                 try:
                     self.new_value_signal[list].disconnect(channel.value_slot)
-                except TypeError:
+                except (KeyError, TypeError):
+                    pass
+                try:
+                    self.new_value_signal[dict].disconnect(channel.value_slot)
+                except (KeyError, TypeError):
                     pass
             if channel.value_signal is not None:
-                channel.value_signal.disconnect(self._on_value_updated)
+                channel.value_signal.disconnect(self._on_set_device_property)
+                try:
+                    channel.value_signal[str].disconnect(self._on_set_device_property)
+                except (KeyError, TypeError):
+                    pass
+                try:
+                    channel.value_signal[bool].disconnect(self._on_set_device_property)
+                except (KeyError, TypeError):
+                    pass
+                try:
+                    channel.value_signal[int].disconnect(self._on_set_device_property)
+                except (KeyError, TypeError):
+                    pass
+                try:
+                    channel.value_signal[float].disconnect(self._on_set_device_property)
+                except (KeyError, TypeError):
+                    pass
+                try:
+                    channel.value_signal[dict].disconnect(self._on_set_device_property)
+                except (KeyError, TypeError):
+                    pass
+                try:
+                    channel.value_signal[np.ndarray].disconnect(self._on_set_device_property)
+                except (KeyError, TypeError):
+                    pass
         else:
             logger.debug(f'Removing a listener for {self.protocol}://{self.address} and destroying channel connection')
         super().remove_listener(channel=channel, destroying=destroying)
@@ -276,7 +304,7 @@ class _JapcConnection(PyDMConnection):
 
     def _on_async_get(self, initial_value: Any):
         logger.debug(f'Received async GET callback on {self.protocol}://{self.address}')
-        self._on_value_received(parameterName=self._device_prop, value=initial_value)
+        self._on_get_device_property(parameterName=self._device_prop, value=initial_value)
         logger.debug(f'Added one more listener to {self.protocol}://{self.address}')
 
     def _connect_extra_signal_types(self, channel: PyDMChannel):
@@ -284,40 +312,52 @@ class _JapcConnection(PyDMConnection):
         if channel.value_slot is not None:
             try:
                 self.new_value_signal[bool].connect(channel.value_slot, Qt.QueuedConnection)
-            except TypeError:
+            except (KeyError, TypeError):
                 pass
             try:
                 self.new_value_signal[list].connect(channel.value_slot, Qt.QueuedConnection)
-            except TypeError:
+            except (KeyError, TypeError):
+                pass
+            try:
+                self.new_value_signal[dict].connect(channel.value_slot, Qt.QueuedConnection)
+            except (KeyError, TypeError):
                 pass
             try:
                 self.new_value_signal[QVariant].connect(channel.value_slot, Qt.QueuedConnection)
-            except TypeError:
+            except (KeyError, TypeError):
                 pass
 
     def _connect_write_slots(self, signal: Signal):
         try:
-            signal[str].connect(slot=self._on_value_updated, type=Qt.QueuedConnection)
-        except TypeError:
+            signal[str].connect(slot=self._on_set_device_property, type=Qt.QueuedConnection)
+        except (KeyError, TypeError):
             pass
         try:
-            signal[bool].connect(slot=self._on_value_updated, type=Qt.QueuedConnection)
-        except TypeError:
+            signal[bool].connect(slot=self._on_set_device_property, type=Qt.QueuedConnection)
+        except (KeyError, TypeError):
             pass
         try:
-            signal[int].connect(slot=self._on_value_updated, type=Qt.QueuedConnection)
-        except TypeError:
+            signal[int].connect(slot=self._on_set_device_property, type=Qt.QueuedConnection)
+        except (KeyError, TypeError):
             pass
         try:
-            signal[float].connect(slot=self._on_value_updated, type=Qt.QueuedConnection)
-        except TypeError:
+            signal[float].connect(slot=self._on_set_device_property, type=Qt.QueuedConnection)
+        except (KeyError, TypeError):
             pass
         try:
-            signal[np.ndarray].connect(slot=self._on_value_updated, type=Qt.QueuedConnection)
-        except TypeError:
+            signal[dict].connect(slot=self._on_set_device_property, type=Qt.QueuedConnection)
+        except (KeyError, TypeError):
+            pass
+        try:
+            signal[np.ndarray].connect(slot=self._on_set_device_property, type=Qt.QueuedConnection)
+        except (KeyError, TypeError):
+            pass
+        try:
+            signal.connect(slot=self._on_device_command, type=Qt.QueuedConnection)
+        except (KeyError, TypeError):
             pass
 
-    def _on_value_received(self, parameterName: str, value: Any, headerInfo=None):
+    def _on_get_device_property(self, parameterName: str, value: Any, headerInfo=None):
         del parameterName, headerInfo  # Unused argument (https://google.github.io/styleguide/pyguide.html#214-decision)
 
         self.online = True
@@ -328,7 +368,19 @@ class _JapcConnection(PyDMConnection):
             logger.warning(f'Cannot propagate JAPC value ({type(value)}) to the widget. '
                              f'Signal override is not defined.')
 
-    def _on_value_updated(self, new_val: Any):
+    @Slot()
+    def _on_device_command(self):
+        get_japc().setParam(parameterName=self._device_prop,
+                            parameterValue={},
+                            **self._japc_additional_args)
+
+    @Slot(str)
+    @Slot(bool)
+    @Slot(int)
+    @Slot(float)
+    @Slot(dict)
+    @Slot(np.ndarray)
+    def _on_set_device_property(self, new_val: Any):
         get_japc().setParam(parameterName=self._device_prop,
                             parameterValue=new_val,
                             **self._japc_additional_args)
@@ -350,7 +402,7 @@ class _JapcConnection(PyDMConnection):
         if not self.online:
             logger.debug(f'Subscribing to JAPC at {self._device_prop}')
             japc.subscribeParam(parameterName=self._device_prop,
-                                onValueReceived=self._on_value_received,
+                                onValueReceived=self._on_get_device_property,
                                 onException=self._on_subscription_exception,
                                 **self._japc_additional_args)
             self._start_subscriptions()
