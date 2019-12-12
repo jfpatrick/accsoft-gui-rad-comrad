@@ -63,7 +63,7 @@ Checkbox = qtplugin_factory(CCheckBox, group=_COMRAD_GROUP_BUTTONS, icon=load_ic
 
 EnumButton = qtplugin_factory(CEnumButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('enum_btn'), extensions=_BASE_EXTENSIONS)
 PushButton = qtplugin_factory(CPushButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('push_btn'), extensions=_BASE_EXTENSIONS)
-CommandButton = qtplugin_factory(CCommandButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('push_btn'))
+CommandButton = qtplugin_factory(CCommandButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('cmd_btn'))
 RelatedDisplayButton = qtplugin_factory(CRelatedDisplayButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('related_display'))
 ShellCommand = qtplugin_factory(CShellCommand, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('shell_cmd'))
 # ToggleButton = qtplugin_factory(CToggleButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('toggle'), extensions=_BASE_EXTENSIONS)
