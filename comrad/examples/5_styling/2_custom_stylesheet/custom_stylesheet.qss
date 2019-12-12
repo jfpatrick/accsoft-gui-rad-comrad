@@ -1,0 +1,8 @@
+QLabel {
+    color: red;
+}
+
+QPlainTextEdit {
+    color: yellow;
+    background-color: black;
+}
