@@ -11,6 +11,7 @@ import importlib
 import importlib.util
 import importlib.machinery
 from typing import List, Optional, Tuple, cast, Union
+from enum import Enum, auto
 from qtpy import uic
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QShowEvent
@@ -21,7 +22,7 @@ from comrad.utils import icon, install_logger_level
 from comrad.qt.about import AboutDialog
 
 try:
-    from PyQt5.Qsci import QsciScintilla, QsciLexerPython
+    from PyQt5.Qsci import QsciScintilla, QsciLexerPython, QsciLexerJSON, QsciLexerCSS
     _QSCI_AVAILABLE = True
 except ImportError:
     _QSCI_AVAILABLE = False
@@ -254,8 +255,15 @@ class ExamplesWindow(QMainWindow):
             example_fgen = None
 
         example_args: Optional[List[str]]
+
+        def expand_args(arg: str) -> str:
+            import re
+            return re.sub(pattern=r'^~example',
+                          repl=basedir,
+                          string=arg)
+
         try:
-            example_args = module.launch_arguments # type: ignore
+            example_args = list(map(expand_args, module.launch_arguments)) # type: ignore
         except AttributeError:
             example_args = None
 
@@ -310,10 +318,10 @@ class ExamplesWindow(QMainWindow):
             widget: QWidget
             filename = os.path.relpath(path=file_path, start=basedir)
             _, ext = os.path.splitext(filename)
-            if ext in ('.py', '.json'):
-                widget = EditorTab(file_path, self.tabs)
+            if ext in ('.py', '.json', '.qss'):
+                widget = EditorTab(file_path=file_path, file_type=ext, parent=self.tabs)
             elif ext == '.ui':
-                tab = DesignerTab(file_path, self.tabs)
+                tab = DesignerTab(file_path=file_path, parent=self.tabs)
                 tab.designer_opened.connect(ExamplesWindow._open_designer_file)
                 widget = tab
             self.tabs.addTab(widget, filename)
@@ -433,9 +441,10 @@ class DesignerTab(QWidget):
 class EditorTab(QWidget):
     """Page for the text file editor in the example details."""
 
-    def __init__(self, file_path: PathLike, parent: Optional[QWidget] = None, *args):
+    def __init__(self, file_path: PathLike, file_type: str, parent: Optional[QWidget] = None, *args):
         super().__init__(parent, *args)
         self._file_path = file_path
+        self._file_type = file_type
         self.code_viewer: Optional[QAbstractScrollArea] = None
 
     def showEvent(self, event: QShowEvent) -> None:
@@ -448,10 +457,18 @@ class EditorTab(QWidget):
 
         if _QSCI_AVAILABLE:
             editor = QsciScintilla()
-            # Python lexer should cover all our use-cases: Python code + JSON
-            # (which looks like a subset of Python lists/dictionaries)
-            lexer = QsciLexerPython(editor)
-            editor.setLexer(lexer)
+
+            if self._file_type == '.py':
+                lexer = QsciLexerPython(editor)
+                editor.setLexer(lexer)
+            elif self._file_type == '.json':
+                lexer = QsciLexerJSON(editor)
+                editor.setLexer(lexer)
+            elif self._file_type == '.qss':
+                lexer = QsciLexerCSS(editor)
+                editor.setLexer(lexer)
+            else:
+                raise TypeError(f'Unsupported file extension "{self._file_type}" in editor tab')
 
             from comrad.qsci import configure_common_qsci
             configure_common_qsci(editor)
