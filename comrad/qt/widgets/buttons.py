@@ -43,6 +43,10 @@ class CCommandButton(CustomizedTooltipMixin, QPushButton, PyDMWritableWidget):
 
     channelValueChanged = None  # Prevent widget from subscribing
 
+    def init_for_designer(self):
+        super().init_for_designer()
+        self.setText('RAD CommandButton')
+
     def _send_cmd(self):
         # Commands are supposed to be properties without fields, thus we are
         # sending signal without value, that will be recognized by japc_plugin
@@ -87,6 +91,11 @@ class CCommandButton(CustomizedTooltipMixin, QPushButton, PyDMWritableWidget):
 #         self._unchecked_text: str = self.text
 #         self._checked_text: str = self.text
 #         self.toggled.connect(self._on_checked)
+#
+#     def init_for_designer(self):
+#         super().init_for_designer()
+#         self.setUncheckedText('RAD Toggle Released')
+#         self.setCheckedText('RAD Toggle Pressed')
 #
 #     def _getCheckedText(self) -> str:
 #         return self._checked_text

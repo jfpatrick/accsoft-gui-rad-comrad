@@ -90,6 +90,10 @@ class CLabel(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyD
         ValueTransformerMixin.__init__(self)
         self._alarm_sensitive_border = False
 
+    def init_for_designer(self):
+        super().init_for_designer()
+        self.setText('RAD TextLabel')
+
     def setNum(self, new_val: Union[float, int]):
         """
         Callback transforms the directly set numeric value through the :attr:`ValueTransformerMixin.valueTransformation`
@@ -190,6 +194,10 @@ class CCheckBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin,
         ValueTransformerMixin.__init__(self)
         self._alarm_sensitive_border = False
 
+    def init_for_designer(self):
+        super().init_for_designer()
+        self.setText('RAD CheckBox')
+
 
 class CEmbeddedDisplay(PyDMEmbeddedDisplay):
 
@@ -226,6 +234,10 @@ class CEnumButton(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixi
         PyDMEnumButton.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
         self._alarm_sensitive_border = False
+
+    def init_for_designer(self):
+        super().init_for_designer()
+        self.items = ['RAD Item 1', 'RAD Item 2', 'RAD Item ...']
 
 
 class CEnumComboBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyDMEnumComboBox):
@@ -381,6 +393,10 @@ class CPushButton(WidgetRulesMixin, CustomizedTooltipMixin, PyDMPushButton):
                                 relative=relative,
                                 init_channel=init_channel,
                                 **kwargs)
+
+    def init_for_designer(self):
+        super().init_for_designer()
+        self.setText('RAD PushButton')
 
 
 class CRelatedDisplayButton(PyDMRelatedDisplayButton):

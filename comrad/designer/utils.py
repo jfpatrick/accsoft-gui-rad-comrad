@@ -13,7 +13,6 @@ def qtplugin_factory(cls: Type,
                      is_container: bool = False,
                      icon: QIcon = None,
                      group: str = 'ComRAD Widgets',
-                     on_widget_create: Optional[Callable[[QWidget], None]] = None,
                      extensions: Optional[List[RulesExtension]] = None):
     """
     Helper function to create a generic PyDMDesignerPlugin class.
@@ -42,12 +41,6 @@ def qtplugin_factory(cls: Type,
 
         def icon(self):
             return self._icon or super().icon()
-
-        def createWidget(self, parent: QWidget) -> QWidget:
-            widget: QWidget = super().createWidget(parent)
-            if on_widget_create is not None:
-                on_widget_create(widget)
-            return widget
 
         def domXml(self):
             """

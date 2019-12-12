@@ -58,25 +58,15 @@ _COMRAD_GROUP_VIRTUAL = 'Invisible Widgets'
 
 
 # Buttons
-Checkbox = qtplugin_factory(CCheckBox, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('checkbox'), extensions=_BASE_EXTENSIONS, on_widget_create=lambda widget: widget.setText('RAD CheckBox'))
+Checkbox = qtplugin_factory(CCheckBox, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('checkbox'), extensions=_BASE_EXTENSIONS)
 
 
-def _enum_btn_init(widget: CEnumButton):
-    widget.items = ['RAD Item 1', 'RAD Item 2', 'RAD Item ...']
-
-
-# def _toggle_btn_init(widget: CToggleButton):
-#     widget.setUncheckedText('RAD Toggle Released')
-#     widget.setCheckedText('RAD Toggle Pressed')
-
-# TODO: Change on_widget_create to per-widget defined init_for_designer from PyDM?
-
-EnumButton = qtplugin_factory(CEnumButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('enum_btn'), extensions=_BASE_EXTENSIONS, on_widget_create=_enum_btn_init)
-PushButton = qtplugin_factory(CPushButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('push_btn'), extensions=_BASE_EXTENSIONS, on_widget_create=lambda w: w.setText('RAD PushButton'))
-CommandButton = qtplugin_factory(CCommandButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('push_btn'), on_widget_create=lambda w: w.setText('RAD CommandButton'))
+EnumButton = qtplugin_factory(CEnumButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('enum_btn'), extensions=_BASE_EXTENSIONS)
+PushButton = qtplugin_factory(CPushButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('push_btn'), extensions=_BASE_EXTENSIONS)
+CommandButton = qtplugin_factory(CCommandButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('push_btn'))
 RelatedDisplayButton = qtplugin_factory(CRelatedDisplayButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('related_display'))
 ShellCommand = qtplugin_factory(CShellCommand, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('shell_cmd'))
-# ToggleButton = qtplugin_factory(CToggleButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('toggle'), extensions=_BASE_EXTENSIONS, on_widget_create=_toggle_btn_init)
+# ToggleButton = qtplugin_factory(CToggleButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('toggle'), extensions=_BASE_EXTENSIONS)
 
 # Item Widgets
 WaveformTable = qtplugin_factory(CWaveFormTable, group=_COMRAD_GROUP_ITEM_VIEWS, icon=load_icon('waveform_table'), extensions=_BASE_EXTENSIONS)
@@ -94,7 +84,7 @@ Slider = qtplugin_factory(CSlider, group=_COMRAD_GROUP_INPUT, icon=load_icon('sl
 Spinbox = qtplugin_factory(CSpinBox, group=_COMRAD_GROUP_INPUT, icon=load_icon('spinbox'), extensions=_BASE_EXTENSIONS)
 
 # Display Widgets
-Label = qtplugin_factory(CLabel, group=_COMRAD_GROUP_DISPLAY, icon=load_icon('label'), extensions=_BASE_EXTENSIONS, on_widget_create=lambda w: w.setText('RAD TextLabel'))
+Label = qtplugin_factory(CLabel, group=_COMRAD_GROUP_DISPLAY, icon=load_icon('label'), extensions=_BASE_EXTENSIONS)
 ByteIndicator = qtplugin_factory(CByteIndicator, group=_COMRAD_GROUP_DISPLAY, icon=load_icon('byte_indicator'), extensions=_BASE_EXTENSIONS)
 ImageView = qtplugin_factory(CImageView, group=_COMRAD_GROUP_DISPLAY, icon=load_icon('image_view'), extensions=_BASE_EXTENSIONS)
 LogDisplay = qtplugin_factory(CLogDisplay, group=_COMRAD_GROUP_DISPLAY, icon=load_icon('log_viewer'), extensions=_BASE_EXTENSIONS)
