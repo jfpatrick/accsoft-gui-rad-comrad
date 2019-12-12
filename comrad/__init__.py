@@ -10,6 +10,7 @@ Operational GUI applications without much hassle.
 from .qt.pydm_api import *
 from .qt.pydm_widgets import *
 from .qt.cern_widgets import *
+from .qt.widgets import *
 from .qt.application import *
 
 

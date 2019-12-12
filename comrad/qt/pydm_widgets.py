@@ -22,13 +22,17 @@ from pydm.widgets.enum_button import PyDMEnumButton
 from pydm.widgets.enum_combo_box import PyDMEnumComboBox
 from pydm.widgets.byte import PyDMByteIndicator
 from pydm.widgets.checkbox import PyDMCheckbox
-from pydm import data_plugins
+# from pydm import data_plugins
 # from pydm.widgets.tab_bar import PyDMTabWidget
 from qtpy.QtWidgets import QWidget
-from qtpy.QtCore import Slot
+from qtpy.QtCore import Slot, Property
 from qtpy.QtGui import QIcon
 from comrad.rules import ColorRulesMixin, WidgetRulesMixin
 from .value_transform import ValueTransformerMixin
+
+
+logger = logging.getLogger(__name__)
+
 
 class CustomizedTooltipMixin:
     """Mixin that customizes the message passed into the tooltip."""

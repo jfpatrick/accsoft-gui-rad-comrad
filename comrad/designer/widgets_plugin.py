@@ -9,7 +9,7 @@ from comrad.utils import icon
 from comrad.designer.utils import qtplugin_factory
 from comrad.designer.rules_editor import NewRulesEditor as RulesEditor
 from comrad.qt.cern_widgets.graph import CScrollingPlot, CSlidingPlot, CPlottingItemEditorExtension
-from comrad.qt.widgets import CToggleButton, CValueAggregator
+from comrad.qt.widgets import CValueAggregator, CCommandButton
 from comrad.qt.pydm_widgets import (CScaleIndicator, CLogDisplay, CImageView, CEnumComboBox, CSlider,
                                     CSpinBox, CLabel, CByteIndicator, CLineEdit, CTemplateRepeater,
                                     CEmbeddedDisplay, CShellCommand, CRelatedDisplayButton, CPushButton, CEnumButton,
@@ -65,16 +65,18 @@ def _enum_btn_init(widget: CEnumButton):
     widget.items = ['RAD Item 1', 'RAD Item 2', 'RAD Item ...']
 
 
-def _toggle_btn_init(widget: CToggleButton):
-    widget.setUncheckedText('RAD Toggle Released')
-    widget.setCheckedText('RAD Toggle Pressed')
+# def _toggle_btn_init(widget: CToggleButton):
+#     widget.setUncheckedText('RAD Toggle Released')
+#     widget.setCheckedText('RAD Toggle Pressed')
 
+# TODO: Change on_widget_create to per-widget defined init_for_designer from PyDM?
 
 EnumButton = qtplugin_factory(CEnumButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('enum_btn'), extensions=_BASE_EXTENSIONS, on_widget_create=_enum_btn_init)
 PushButton = qtplugin_factory(CPushButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('push_btn'), extensions=_BASE_EXTENSIONS, on_widget_create=lambda w: w.setText('RAD PushButton'))
+CommandButton = qtplugin_factory(CCommandButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('push_btn'), on_widget_create=lambda w: w.setText('RAD CommandButton'))
 RelatedDisplayButton = qtplugin_factory(CRelatedDisplayButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('related_display'))
 ShellCommand = qtplugin_factory(CShellCommand, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('shell_cmd'))
-ToggleButton = qtplugin_factory(CToggleButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('toggle'), extensions=_BASE_EXTENSIONS, on_widget_create=_toggle_btn_init)
+# ToggleButton = qtplugin_factory(CToggleButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('toggle'), extensions=_BASE_EXTENSIONS, on_widget_create=_toggle_btn_init)
 
 # Item Widgets
 WaveformTable = qtplugin_factory(CWaveFormTable, group=_COMRAD_GROUP_ITEM_VIEWS, icon=load_icon('waveform_table'), extensions=_BASE_EXTENSIONS)
