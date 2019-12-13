@@ -35,6 +35,10 @@ As a way of hiding these auxiliary widgets from the user, we group them in a spe
 in widget box.
 """
 
+# Do not crash Qt Designer on Ctrl+C
+import signal
+signal.signal(signal.SIGINT, signal.SIG_DFL)
+
 # Has to be above first main comrad package import
 from _comrad_designer.logging import setup_logging
 setup_logging()

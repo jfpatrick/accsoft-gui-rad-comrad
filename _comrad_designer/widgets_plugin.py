@@ -1,6 +1,11 @@
 """
 Plugins for Qt Designer that are visible ComRAD widgets.
 """
+
+# Do not crash Qt Designer on Ctrl+C
+import signal
+signal.signal(signal.SIGINT, signal.SIG_DFL)
+
 import functools
 from qtpy.QtWidgets import QAction
 
@@ -12,7 +17,8 @@ setup_logging()
 from pydm.widgets.qtplugin_extensions import RulesExtension, PyDMExtension
 from comrad.utils import icon
 from comrad.qt.cern_widgets.graph import CScrollingPlot, CSlidingPlot, CPlottingItemEditorExtension
-from comrad.qt.widgets import CValueAggregator, CCommandButton
+from comrad.qt.widgets.aggregator import CValueAggregator
+from comrad.qt.widgets.buttons import CCommandButton
 from comrad.qt.pydm_widgets import (CScaleIndicator, CLogDisplay, CImageView, CEnumComboBox, CSlider,
                                     CSpinBox, CLabel, CByteIndicator, CLineEdit, CTemplateRepeater,
                                     CEmbeddedDisplay, CShellCommand, CRelatedDisplayButton, CPushButton, CEnumButton,

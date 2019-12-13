@@ -11,6 +11,11 @@ from .comrad_info import COMRAD_DESCRIPTION, get_versions_info
 from .logging import install_logger_level
 
 
+# Allow smooth exit on Ctrl+C
+import signal
+signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+
 def run():
     """Run ComRAD application and parse command-line arguments."""
     logo = """

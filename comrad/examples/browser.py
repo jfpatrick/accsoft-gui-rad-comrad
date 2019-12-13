@@ -495,8 +495,6 @@ def run_browser(_: argparse.Namespace):
         args: parsed command line arguments
     """
     import sys
-    import signal
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
     app_args = ['ComRAD examples']
     app_args.extend(sys.argv)
     app = QApplication(app_args)
