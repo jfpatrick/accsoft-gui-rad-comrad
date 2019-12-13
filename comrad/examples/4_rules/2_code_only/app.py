@@ -14,7 +14,6 @@ class DemoDisplay(Display):
 
         label = CLabel()
         label.displayFormat = CLabel.Decimal
-        label.precisionFromPV = False
         label.precision = 2
         label.channel = 'japc:///DemoDevice/Acquisition#Demo'
         label.rules = [

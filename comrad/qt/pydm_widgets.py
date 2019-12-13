@@ -28,7 +28,7 @@ from qtpy.QtWidgets import QWidget
 from qtpy.QtCore import Slot, Property
 from qtpy.QtGui import QIcon
 from comrad.rules import ColorRulesMixin, WidgetRulesMixin
-from .widgets.mixins import HideUnusedFeaturesMixin
+from .widgets.mixins import HideUnusedFeaturesMixin, NoPVTextFormatterMixin
 from .value_transform import ValueTransformerMixin
 
 
@@ -69,7 +69,7 @@ class CWaveFormTable(WidgetRulesMixin, CustomizedTooltipMixin, HideUnusedFeature
         PyDMWaveformTable.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
 
 
-class CLabel(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMLabel):
+class CLabel(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, NoPVTextFormatterMixin, PyDMLabel):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -88,6 +88,7 @@ class CLabel(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, Hid
         ColorRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
         HideUnusedFeaturesMixin.__init__(self)
+        NoPVTextFormatterMixin.__init__(self)
         PyDMLabel.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
 
@@ -300,7 +301,7 @@ class CImageView(WidgetRulesMixin, CustomizedTooltipMixin, HideUnusedFeaturesMix
         return self.imageChannel
 
 
-class CLineEdit(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMLineEdit):
+class CLineEdit(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, NoPVTextFormatterMixin, PyDMLineEdit):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -317,6 +318,7 @@ class CLineEdit(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, 
         ColorRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
         HideUnusedFeaturesMixin.__init__(self)
+        NoPVTextFormatterMixin.__init__(self)
         PyDMLineEdit.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
 
@@ -429,7 +431,7 @@ class CShellCommand(PyDMShellCommand):
         super().__init__(parent=parent, command=command, **kwargs)
 
 
-class CSlider(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMSlider):
+class CSlider(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, NoPVTextFormatterMixin, PyDMSlider):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -443,11 +445,12 @@ class CSlider(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, H
         WidgetRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
         HideUnusedFeaturesMixin.__init__(self)
+        NoPVTextFormatterMixin.__init__(self)
         PyDMSlider.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
 
 
-class CSpinBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMSpinbox):
+class CSpinBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, NoPVTextFormatterMixin, PyDMSpinbox):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -461,11 +464,12 @@ class CSpinBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, 
         WidgetRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
         HideUnusedFeaturesMixin.__init__(self)
+        NoPVTextFormatterMixin.__init__(self)
         PyDMSpinbox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
 
 
-class CScaleIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMScaleIndicator):
+class CScaleIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, NoPVTextFormatterMixin, PyDMScaleIndicator):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -482,6 +486,7 @@ class CScaleIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltip
         WidgetRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
         HideUnusedFeaturesMixin.__init__(self)
+        NoPVTextFormatterMixin.__init__(self)
         PyDMScaleIndicator.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
 

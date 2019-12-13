@@ -44,9 +44,6 @@
      <property name="precision" stdset="0">
       <number>2</number>
      </property>
-     <property name="precisionFromPV" stdset="0">
-      <bool>false</bool>
-     </property>
      <property name="channel" stdset="0">
       <string notr="true">japc:///DemoDevice/Settings#FloatVal</string>
      </property>
@@ -68,9 +65,6 @@
       <widget class="CLabel" name="CLabel">
        <property name="precision" stdset="0">
         <number>2</number>
-       </property>
-       <property name="precisionFromPV" stdset="0">
-        <bool>false</bool>
        </property>
        <property name="channel" stdset="0">
         <string notr="true">japc:///DemoDevice/Settings#FloatVal</string>

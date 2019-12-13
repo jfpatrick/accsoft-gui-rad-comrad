@@ -19,9 +19,6 @@
      <property name="precision" stdset="0">
       <number>2</number>
      </property>
-     <property name="precisionFromPV" stdset="0">
-      <bool>false</bool>
-     </property>
      <property name="displayFormat" stdset="0">
       <enum>PyDMLabel::Decimal</enum>
      </property>
