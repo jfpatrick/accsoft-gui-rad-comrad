@@ -5,12 +5,13 @@ from qtpy.QtWidgets import QWidget, QPushButton
 from qtpy.QtGui import QIcon
 from qtpy.QtCore import Signal
 from comrad.qt.pydm_widgets import CustomizedTooltipMixin
+from .mixins import HideUnusedFeaturesMixin
 
 
 logger = logging.getLogger(__name__)
 
 
-class CCommandButton(CustomizedTooltipMixin, QPushButton, PyDMWritableWidget):
+class CCommandButton(CustomizedTooltipMixin, QPushButton, HideUnusedFeaturesMixin, PyDMWritableWidget):
 
     send_value_signal = Signal()
     """Overridden channel to allow only dictionaries."""
@@ -37,8 +38,8 @@ class CCommandButton(CustomizedTooltipMixin, QPushButton, PyDMWritableWidget):
         else:
             QPushButton.__init__(self, parent)
         CustomizedTooltipMixin.__init__(self)
+        HideUnusedFeaturesMixin.__init__(self)
         PyDMWritableWidget.__init__(self, init_channel=init_channel)
-        self._alarm_sensitive_border = False
         self.clicked.connect(self._send_cmd)
 
     channelValueChanged = None  # Prevent widget from subscribing
@@ -55,7 +56,7 @@ class CCommandButton(CustomizedTooltipMixin, QPushButton, PyDMWritableWidget):
 
 
 # Do not use unless there's a use-case for that
-# class CToggleButton(WidgetRulesMixin, PyDMPushButton):
+# class CToggleButton(WidgetRulesMixin, HideUnusedFeaturesMixin, PyDMPushButton):
 #
 #     inverseToggled = Signal([bool])
 #
@@ -79,6 +80,7 @@ class CCommandButton(CustomizedTooltipMixin, QPushButton, PyDMWritableWidget):
 #             **kwargs: Any future extras that need to be passed down to PyDM.
 #         """
 #         WidgetRulesMixin.__init__(self)
+#         HideUnusedFeaturesMixin.__init__(self)
 #         PyDMPushButton.__init__(self,
 #                                 parent=parent,
 #                                 label=label,

@@ -7,6 +7,7 @@ from pydm.data_plugins.plugin import PyDMConnection
 from pydm.utilities import is_qt_designer
 from qtpy.QtWidgets import QWidget, QFrame, QVBoxLayout, QLabel
 from qtpy.QtCore import Property, Signal, Slot, Q_ENUM, Qt
+from .mixins import HideUnusedFeaturesMixin
 from ..value_transform import ValueTransformationBase
 
 
@@ -19,7 +20,7 @@ class GeneratorTrigger:
     AggregatedFirst = 2
 
 
-class CValueAggregator(QWidget, PyDMWidget, ValueTransformationBase, GeneratorTrigger):
+class CValueAggregator(QWidget, HideUnusedFeaturesMixin, PyDMWidget, ValueTransformationBase, GeneratorTrigger):
     Q_ENUM(GeneratorTrigger)
     GeneratorTrigger = GeneratorTrigger
 
@@ -35,9 +36,9 @@ class CValueAggregator(QWidget, PyDMWidget, ValueTransformationBase, GeneratorTr
             init_channel: The channel to be used by the widget.
         """
         QWidget.__init__(self, parent)
+        HideUnusedFeaturesMixin.__init__(self)
         PyDMWidget.__init__(self)
         ValueTransformationBase.__init__(self)
-        self._alarm_sensitive_border = False
         self._channel_ids: List[str] = []
         self._active: bool = True
         # This type defines how often an update is fired and when cached values get overwritten
@@ -207,24 +208,6 @@ class CValueAggregator(QWidget, PyDMWidget, ValueTransformationBase, GeneratorTr
 
     @channel.setter  # type: ignore
     def channel(self, ch):
-        return
-
-    @Property(str, designable=False)
-    def alarmSensitiveBorder(self):
-        return
-
-    @alarmSensitiveBorder.setter  # type: ignore
-    def alarmSensitiveBorder(self, ch):
-        logger.info(f'alarmSensitiveBorder property is disabled for the {type(self).__name__} widget.')
-        return
-
-    @Property(str, designable=False)
-    def alarmSensitiveContent(self):
-        return
-
-    @alarmSensitiveContent.setter  # type: ignore
-    def alarmSensitiveContent(self, ch):
-        logger.info(f'alarmSensitiveContent property is disabled for the {type(self).__name__} widget.')
         return
 
     @Property('QSize', designable=False)

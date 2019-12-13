@@ -11,5 +11,6 @@ from _comrad.comrad_info import COMRAD_AUTHOR as __author__, COMRAD_VERSION as _
 from .qt.pydm_api import *
 from .qt.pydm_widgets import *
 from .qt.cern_widgets import *
-from .qt.widgets import *
+from .qt.widgets.aggregator import *
+from .qt.widgets.buttons import *
 from .qt.application import *

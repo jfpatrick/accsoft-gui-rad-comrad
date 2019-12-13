@@ -28,6 +28,7 @@ from qtpy.QtWidgets import QWidget
 from qtpy.QtCore import Slot, Property
 from qtpy.QtGui import QIcon
 from comrad.rules import ColorRulesMixin, WidgetRulesMixin
+from .widgets.mixins import HideUnusedFeaturesMixin
 from .value_transform import ValueTransformerMixin
 
 
@@ -47,7 +48,7 @@ class CustomizedTooltipMixin:
         super().setToolTip(tooltip.replace('PyDM', 'ComRAD').replace('PV ', 'Device Property '))
 
 
-class CWaveFormTable(WidgetRulesMixin, CustomizedTooltipMixin, PyDMWaveformTable):
+class CWaveFormTable(WidgetRulesMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMWaveformTable):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -64,11 +65,11 @@ class CWaveFormTable(WidgetRulesMixin, CustomizedTooltipMixin, PyDMWaveformTable
         """
         WidgetRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
+        HideUnusedFeaturesMixin.__init__(self)
         PyDMWaveformTable.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
-        self._alarm_sensitive_border = False
 
 
-class CLabel(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyDMLabel):
+class CLabel(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMLabel):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -86,9 +87,9 @@ class CLabel(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyD
         """
         ColorRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
+        HideUnusedFeaturesMixin.__init__(self)
         PyDMLabel.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
-        self._alarm_sensitive_border = False
 
     def init_for_designer(self):
         super().init_for_designer()
@@ -124,7 +125,7 @@ class CLabel(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyD
 #     pass
 
 
-class CByteIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyDMByteIndicator):
+class CByteIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMByteIndicator):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -138,9 +139,9 @@ class CByteIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipM
         """
         WidgetRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
+        HideUnusedFeaturesMixin.__init__(self)
         PyDMByteIndicator.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
-        self._alarm_sensitive_border = False
 
     @Slot(list)
     @Slot(bool)
@@ -177,7 +178,7 @@ class CByteIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipM
             PyDMByteIndicator.channelValueChanged(self, int(new_val))
 
 
-class CCheckBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyDMCheckbox):
+class CCheckBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMCheckbox):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -190,9 +191,9 @@ class CCheckBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin,
         """
         WidgetRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
+        HideUnusedFeaturesMixin.__init__(self)
         PyDMCheckbox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
-        self._alarm_sensitive_border = False
 
     def init_for_designer(self):
         super().init_for_designer()
@@ -212,7 +213,7 @@ class CEmbeddedDisplay(PyDMEmbeddedDisplay):
         super().__init__(parent=parent, **kwargs)
 
 
-class CEnumButton(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyDMEnumButton):
+class CEnumButton(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMEnumButton):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -231,16 +232,16 @@ class CEnumButton(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixi
         """
         WidgetRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
+        HideUnusedFeaturesMixin.__init__(self)
         PyDMEnumButton.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
-        self._alarm_sensitive_border = False
 
     def init_for_designer(self):
         super().init_for_designer()
         self.items = ['RAD Item 1', 'RAD Item 2', 'RAD Item ...']
 
 
-class CEnumComboBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyDMEnumComboBox):
+class CEnumComboBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMEnumComboBox):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -259,12 +260,12 @@ class CEnumComboBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMi
         """
         WidgetRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
+        HideUnusedFeaturesMixin.__init__(self)
         PyDMEnumComboBox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
-        self._alarm_sensitive_border = False
 
 
-class CImageView(WidgetRulesMixin, CustomizedTooltipMixin, PyDMImageView):
+class CImageView(WidgetRulesMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMImageView):
 
     def __init__(self,
                  parent: Optional[QWidget] = None,
@@ -292,14 +293,14 @@ class CImageView(WidgetRulesMixin, CustomizedTooltipMixin, PyDMImageView):
         """
         WidgetRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
+        HideUnusedFeaturesMixin.__init__(self)
         PyDMImageView.__init__(self, parent=parent, image_channel=image_channel, width_channel=width_channel, **kwargs)
-        self._alarm_sensitive_border = False
 
     def default_rule_channel(self) -> str:
         return self.imageChannel
 
 
-class CLineEdit(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyDMLineEdit):
+class CLineEdit(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMLineEdit):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -315,9 +316,9 @@ class CLineEdit(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, 
         """
         ColorRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
+        HideUnusedFeaturesMixin.__init__(self)
         PyDMLineEdit.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
-        self._alarm_sensitive_border = False
 
     def set_color(self, val: str):
         """Overridden method of :class:`ColorRulesMixin`.
@@ -352,7 +353,7 @@ class CLogDisplay(PyDMLogDisplay):
         super().__init__(parent=parent, logname=log_name, level=level, **kwargs)
 
 
-class CPushButton(WidgetRulesMixin, CustomizedTooltipMixin, PyDMPushButton):
+class CPushButton(WidgetRulesMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMPushButton):
 
     def __init__(self,
                  parent: Optional[QWidget] = None,
@@ -386,6 +387,7 @@ class CPushButton(WidgetRulesMixin, CustomizedTooltipMixin, PyDMPushButton):
         """
         WidgetRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
+        HideUnusedFeaturesMixin.__init__(self)
         PyDMPushButton.__init__(self, parent=parent,
                                 label=label,
                                 icon=icon,
@@ -427,7 +429,7 @@ class CShellCommand(PyDMShellCommand):
         super().__init__(parent=parent, command=command, **kwargs)
 
 
-class CSlider(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyDMSlider):
+class CSlider(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMSlider):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -440,11 +442,12 @@ class CSlider(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, P
         """
         WidgetRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
+        HideUnusedFeaturesMixin.__init__(self)
         PyDMSlider.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
 
 
-class CSpinBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyDMSpinbox):
+class CSpinBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMSpinbox):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -457,11 +460,12 @@ class CSpinBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, 
         """
         WidgetRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
+        HideUnusedFeaturesMixin.__init__(self)
         PyDMSpinbox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
 
 
-class CScaleIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, PyDMScaleIndicator):
+class CScaleIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMScaleIndicator):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -477,9 +481,9 @@ class CScaleIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltip
         """
         WidgetRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
+        HideUnusedFeaturesMixin.__init__(self)
         PyDMScaleIndicator.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
-        self._alarm_sensitive_border = False
 
 
 class CTemplateRepeater(PyDMTemplateRepeater):
@@ -508,3 +512,4 @@ class CTemplateRepeater(PyDMTemplateRepeater):
 # TODO: Do we need this widget?
 # class CTabWidget(PyDMTabWidget):
 #     pass
+
