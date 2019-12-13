@@ -32,8 +32,10 @@ def modify_in_place(new_cls: Type):
         Modified superclass instance.
     """
     super_class = new_cls.__mro__[1]
-    super_methods: Dict[str, Callable] = dict(inspect.getmembers(object=super_class, predicate=inspect.isfunction))
-    sub_methods: Dict[str, Callable] = dict(inspect.getmembers(object=new_cls, predicate=inspect.isfunction))
+    logger.debug(f'Monkey-patching {super_class.__name__}...')
+    predicate = lambda x: inspect.isfunction(x) or inspect.isdatadescriptor(x)
+    super_methods: Dict[str, Callable] = dict(inspect.getmembers(object=super_class, predicate=predicate))
+    sub_methods: Dict[str, Callable] = dict(inspect.getmembers(object=new_cls, predicate=predicate))
     new_methods: Dict[str, Callable] = {}
     modified_methods: Dict[str, Callable] = {}
     for name, impl in sub_methods.items():
