@@ -1,5 +1,24 @@
 import logging
 from typing import Optional
+import colorlog
+
+
+def _setup_logging():
+    # Setup logging with colors
+    handler = colorlog.StreamHandler()
+    handler.setFormatter(colorlog.ColoredFormatter(
+        '%(log_color)s[%(levelname)s]: %(name)s => %(reset)s%(message)s',
+        reset=True,
+        datefmt='%H:%M:%S',
+        log_colors={
+            'DEBUG': 'cyan',
+            'INFO': 'green',
+            'WARNING': 'yellow',
+            'ERROR': 'red',
+            'CRITICAL': 'red,bg_white',
+        }
+    ))
+    logging.basicConfig(handlers=[handler])
 
 
 def install_logger_level(level: Optional[str]):
@@ -8,7 +27,6 @@ def install_logger_level(level: Optional[str]):
     Args:
         level: Name of the logging level, e.g. DEBUG or INFO.
     """
-    logging.basicConfig()
     if level:
         level_name: str = level.upper()
         level_idx: Optional[int]
@@ -22,4 +40,9 @@ def install_logger_level(level: Optional[str]):
         if level_idx:
             # Redefine the level of the root logger
             logger.setLevel(level_idx)
-        logger.debug(f'DEBUG logging is enabled')
+
+
+_LOGGING_SETUP: bool = False
+if not _LOGGING_SETUP:
+    _LOGGING_SETUP = True
+    _setup_logging()
