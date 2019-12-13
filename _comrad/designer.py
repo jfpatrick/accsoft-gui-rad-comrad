@@ -1,6 +1,9 @@
 import os
+import logging
 from typing import Optional, List, Dict
 
+
+logger = logging.getLogger(__name__)
 
 # TODO: Need to properly kill designer on Ctrl+C
 
@@ -35,8 +38,8 @@ def run_designer(ccda_env: str,
     Returns:
         CompletedProcess instance returned from subprocess.run()
     """
-    import comrad.designer
-    path_to_plugins = os.path.abspath(os.path.dirname(comrad.designer.__file__))
+    import _comrad_designer
+    path_to_plugins = os.path.abspath(os.path.dirname(_comrad_designer.__file__))
     env = {
         'PYQTDESIGNERPATH': path_to_plugins,
         'QT_DESIGNER_RAD_EXTRAS': '1',
@@ -67,6 +70,8 @@ def run_designer(ccda_env: str,
 
     if files:
         cmd.extend(files)
+
+    logger.debug(f'Launching command {cmd} with environment: {env}')
 
     env = dict(os.environ, **env)
 

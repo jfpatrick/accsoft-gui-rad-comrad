@@ -127,7 +127,7 @@ class CMainWindow(PyDMMainWindow, MonkeyPatchedClass):
         """Overridden of PyDM's main_window.edit_in_designer.open_editor_ui inner method."""
         if not filename:
             return
-        from comrad.launcher.designer import run_designer
+        from _comrad.designer import run_designer
         from comrad.qt.application import CApplication
         self.statusBar().showMessage(f"Launching '{filename}' in ComRAD Designer...", 5000)
         app = cast(CApplication, QCoreApplication.instance())

@@ -53,7 +53,7 @@ class AboutDialog(QWidget):
         if icon is not None:
             self.icon_lbl.setPixmap(icon.pixmap(self.icon_lbl.maximumSize()))
 
-        from comrad.info import COMRAD_DESCRIPTION, get_versions_info
+        from _comrad.comrad_info import COMRAD_DESCRIPTION, get_versions_info
         versions = get_versions_info()
 
         self.version.setText(str(self.version.text()).format(version=versions.comrad))

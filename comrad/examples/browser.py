@@ -11,14 +11,13 @@ import importlib
 import importlib.util
 import importlib.machinery
 from typing import List, Optional, Tuple, cast, Union
-from enum import Enum, auto
 from qtpy import uic
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QShowEvent
 from qtpy.QtWidgets import (QMainWindow, QTreeWidgetItem, QTreeWidget, QStackedWidget, QTabWidget, QApplication,
                             QAbstractScrollArea, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit, QFrame)
 from pydm.utilities.iconfont import IconFont
-from comrad.utils import icon, install_logger_level
+from comrad.utils import icon
 from comrad.qt.about import AboutDialog
 
 try:
@@ -28,7 +27,6 @@ except ImportError:
     _QSCI_AVAILABLE = False
 
 
-logging.basicConfig()  # Because can be run as a standalone module
 logger = logging.getLogger(__name__)
 
 
@@ -407,9 +405,9 @@ class ExamplesWindow(QMainWindow):
     @staticmethod
     def _open_designer_file(file_path: PathLike):
         """Opens *.ui file in Qt Designer"""
-        from comrad.launcher.designer import run_designer
-        from comrad.utils import ccda_map
-        run_designer(files=[cast(str, file_path)], ccda_env=ccda_map['PRO'])
+        from _comrad.designer import run_designer
+        from _comrad.comrad_info import CCDA_MAP
+        run_designer(files=[cast(str, file_path)], ccda_env=CCDA_MAP['PRO'])
 
 
 class DesignerTab(QWidget):
@@ -490,7 +488,7 @@ class EditorTab(QWidget):
         self.setLayout(layout)
 
 
-def run_browser(args: argparse.Namespace):
+def run_browser(_: argparse.Namespace):
     """Runs the examples browser with the given command-line arguments.
 
     Args:
@@ -499,7 +497,6 @@ def run_browser(args: argparse.Namespace):
     import sys
     import signal
     signal.signal(signal.SIGINT, signal.SIG_DFL)
-    install_logger_level(args.log_level)
     app_args = ['ComRAD examples']
     app_args.extend(sys.argv)
     app = QApplication(app_args)

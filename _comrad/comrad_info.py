@@ -1,4 +1,6 @@
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, Dict
+from ._version import get_versions as get_comrad_versions
+
 
 COMRAD_DESCRIPTION = \
     f'''  ComRAD (CO Multi-purpose Rapid Application Development environment)
@@ -7,6 +9,12 @@ COMRAD_DESCRIPTION = \
   applications for operators of CERN accelerators and machine design
   experts. It offers a set of tools to develop and run applications
   without the need to be an expert in software engineering domain.'''
+
+
+COMRAD_AUTHOR = 'Ivan Sinkarenko <ivan.sinkarenko@cern.ch>'
+
+
+COMRAD_VERSION = get_comrad_versions()['version']
 
 
 class AccPyEnv(NamedTuple):
@@ -34,7 +42,6 @@ def get_versions_info() -> Versions:
     import numpy as np
     import pydm
     import pyqtgraph as pg
-    import comrad
     import sys
     import pathlib
     import os
@@ -47,7 +54,7 @@ def get_versions_info() -> Versions:
     np_ver = np.__version__
     pydm_ver = pydm.__version__
     pg_ver = pg.__version__
-    comrad_ver = comrad.__version__
+    comrad_ver = COMRAD_VERSION
     pyjapc_ver = pyjapc.__version__
     cmmn_ver = cmmnbuild_dep_manager.__version__
     # TODO: Make widgets version when ready
@@ -70,3 +77,15 @@ def get_versions_info() -> Versions:
                     pyqt=pyqt_ver,
                     qt=qt_ver,
                     accpy=accpy)
+
+
+CCDA_MAP: Dict[str, str] = {
+    'PRO': 'https://ccda.cern.ch:8900/api/',
+    'PRO2': 'https://ccda.cern.ch:8901/api/',
+    'TEST': 'https://ccda-test.cern.ch:8902/api/',
+    'TEST2': 'https://ccda-test.cern.ch:8903/api/',
+    'INT': 'https://ccda-int.cern.ch:8904/api/',
+    'INT2': 'https://ccda-int.cern.ch:8905/api/',
+    'DEV': 'https://ccda-dev.cern.ch:8906/api/',
+    'DEV2': 'https://ccda-dev.cern.ch:8907/api/',
+}

@@ -1,20 +1,14 @@
 #!/usr/bin/env python
 # PYTHON_ARGCOMPLETE_OK
 # Feature to enable argcomplete when it looks into this file
+import logging
 import argparse
 import argcomplete
-import logging
 import os
 import sys
 from typing import Optional, Iterable, cast, Tuple, Dict, List
-from pydm.utilities.macro import parse_macro_string
-from comrad.qt.application import CApplication
-from comrad.utils import ccda_map, install_logger_level
-from comrad.info import COMRAD_DESCRIPTION, get_versions_info
-from comrad.examples.browser import run_browser as run_examples_browser
-
-
-logging.basicConfig()
+from .comrad_info import COMRAD_DESCRIPTION, get_versions_info
+from .logging import install_logger_level
 
 
 def run():
@@ -32,11 +26,11 @@ def run():
         'add_help': False,  # Will be added manually (with consistent formatting)
         'formatter_class': argparse.RawDescriptionHelpFormatter,
     }
-    parser = argparse.ArgumentParser(description=logo + '\n\n' + COMRAD_DESCRIPTION, **common_parser_args)
+
 
     versions = get_versions_info()
     version_str = f'''ComRAD {versions.comrad}
-    
+
 Based on:
 ---------
 Acc-py Widgets v{versions.widgets}
@@ -56,6 +50,8 @@ Environment:
         version_str += f'PyQt v{versions.pyqt}\n' + \
                        f'Qt v{versions.qt}\n' + \
                        f'Python v{versions.python}'
+
+    parser = argparse.ArgumentParser(description=logo + '\n\n' + COMRAD_DESCRIPTION, **common_parser_args)
 
     parser.add_argument('-V', '--version',
                         action='version',
@@ -93,7 +89,10 @@ Environment:
     argcomplete.autocomplete(parser)
 
     args = parser.parse_args()
+    install_logger_level(vars(args).get('log_level'))
     if args.cmd == 'examples':
+        # Importing it here to have a chance to setup root logger before
+        from comrad.examples.browser import run_browser as run_examples_browser
         run_examples_browser(args)
     else:
         if args.cmd == 'run':
@@ -104,11 +103,9 @@ Environment:
             parser.print_help()
 
 
-_PKG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-
-
-def _relative(file: str) -> str:
-    return os.path.join(_PKG_PATH, file)
+def _comrad_asset(file: str) -> str:
+    import comrad
+    return os.path.join(os.path.abspath(os.path.dirname(comrad.__file__)), file)
 
 
 def _install_help(parser: argparse.ArgumentParser):
@@ -300,9 +297,11 @@ def __designer_subcommand(parser: argparse.ArgumentParser):
 
 def _run_comrad(args: argparse.Namespace) -> bool:
 
+    # Importing stuff here and not in the beginning of the file to setup the root logger first.
+    from comrad.qt.application import CApplication
+    from pydm.utilities.macro import parse_macro_string
     macros = parse_macro_string(args.macro) if args.macro is not None else None
 
-    install_logger_level(args.log_level)
     logger = logging.getLogger('')
 
     try:
@@ -323,10 +322,10 @@ def _run_comrad(args: argparse.Namespace) -> bool:
     if args.disable_plugins:
         blacklist = cast(str, args.disable_plugins).split(',')
 
-    stylesheet: Optional[str] = _relative('dark.qss') if args.dark_mode else args.stylesheet
+    stylesheet: Optional[str] = _comrad_asset('dark.qss') if args.dark_mode else args.stylesheet
 
-    os.environ['PYDM_DATA_PLUGINS_PATH'] = _relative('data')
-    os.environ['PYDM_TOOLS_PATH'] = _relative('tools')
+    os.environ['PYDM_DATA_PLUGINS_PATH'] = _comrad_asset('data')
+    os.environ['PYDM_TOOLS_PATH'] = _comrad_asset('tools')
     os.environ['PYDM_DEFAULT_PROTOCOL'] = 'japc'
 
     app = CApplication(ui_file=args.display_file,
@@ -358,7 +357,7 @@ def _run_designer(args: argparse.Namespace) -> bool:
     try:
         ccda_endpoint, java_env = _parse_control_env(args)
     except EnvironmentError as e:
-        print(str(e))
+        logging.getLogger('').exception(str(e))
         return False
 
     from .designer import run_designer
@@ -376,10 +375,10 @@ def _run_designer(args: argparse.Namespace) -> bool:
 
 
 def _parse_control_env(args: argparse.Namespace) -> Tuple[str, Dict[str, str]]:
-
+    from .comrad_info import CCDA_MAP
     cmw_env: str = args.cmw_env
     try:
-        ccda_endpoint = ccda_map[cmw_env]
+        ccda_endpoint = CCDA_MAP[cmw_env]
     except KeyError:
         raise EnvironmentError(f'Invalid CMW environment specified: {cmw_env}')
 

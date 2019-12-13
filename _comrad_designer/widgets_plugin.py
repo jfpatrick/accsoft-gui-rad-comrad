@@ -3,18 +3,22 @@ Plugins for Qt Designer that are visible ComRAD widgets.
 """
 import functools
 from qtpy.QtWidgets import QAction
+
+# Has to be above first main comrad package import
+from _comrad_designer.logging import setup_logging
+setup_logging()
+
 # from pydm.widgets.tab_bar_qtplugin import TabWidgetPlugin as PyDMTabWidgetPlugin
 from pydm.widgets.qtplugin_extensions import RulesExtension, PyDMExtension
 from comrad.utils import icon
-from comrad.designer.utils import qtplugin_factory
-from comrad.designer.rules_editor import NewRulesEditor as RulesEditor
 from comrad.qt.cern_widgets.graph import CScrollingPlot, CSlidingPlot, CPlottingItemEditorExtension
 from comrad.qt.widgets import CValueAggregator, CCommandButton
 from comrad.qt.pydm_widgets import (CScaleIndicator, CLogDisplay, CImageView, CEnumComboBox, CSlider,
                                     CSpinBox, CLabel, CByteIndicator, CLineEdit, CTemplateRepeater,
                                     CEmbeddedDisplay, CShellCommand, CRelatedDisplayButton, CPushButton, CEnumButton,
                                     CWaveFormTable, CCheckBox)
-import comrad
+from _comrad_designer.utils import qtplugin_factory
+from _comrad_designer.rules_editor import NewRulesEditor as RulesEditor
 
 
 class RulesExtension(PyDMExtension):
@@ -34,15 +38,6 @@ class RulesExtension(PyDMExtension):
 
 load_icon = functools.partial(icon, file_path=__file__)  # pylint: disable=invalid-name
 
-
-print('\n\n'
-      ' ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
-      ' *** Welcome to ComRAD Designer! ***\n'
-      ' ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
-      f' ComRAD widgets version: {comrad.__version__}\n'
-      f' Support: {comrad.__author__}\n'
-      ' Project page: https://wikis.cern.ch/display/ACCPY/Rapid+Application+Development\n'
-      '\n')
 
 _BASE_EXTENSIONS = [RulesExtension]
 _PLOT_EXTENSIONS = [CPlottingItemEditorExtension]

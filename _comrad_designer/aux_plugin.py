@@ -34,11 +34,16 @@ Information is not lost, and UI loader will correctly resolve symbols.
 As a way of hiding these auxiliary widgets from the user, we group them in a specific category that is not displayed
 in widget box.
 """
+
+# Has to be above first main comrad package import
+from _comrad_designer.logging import setup_logging
+setup_logging()
+
 from comrad.qt.pydm_widgets import (PyDMLabel, PyDMCheckbox, PyDMEnumButton, PyDMPushButton, PyDMRelatedDisplayButton,
                                     PyDMShellCommand, PyDMWaveformTable, PyDMEmbeddedDisplay,
                                     PyDMTemplateRepeater, PyDMEnumComboBox, PyDMLineEdit, PyDMSlider, PyDMSpinbox,
                                     PyDMByteIndicator, PyDMImageView, PyDMLogDisplay, PyDMScaleIndicator)
-from comrad.designer.utils import qtplugin_factory
+from _comrad_designer.utils import qtplugin_factory
 
 
 # This is a special category name hardcoded into Qt Designer (not by me, but by Qt)

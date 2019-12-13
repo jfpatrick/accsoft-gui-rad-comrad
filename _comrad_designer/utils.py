@@ -2,9 +2,8 @@
 Utilities for Qt Designer intergation.
 """
 
-from typing import Type, List, Callable, Optional
+from typing import Type, List, Optional
 from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QWidget
 from pydm.widgets.qtplugin_extensions import RulesExtension
 from pydm.widgets.qtplugin_base import PyDMDesignerPlugin
 
