@@ -5,19 +5,28 @@ from pydm.widgets.base import PyDMWidget
 from pydm.widgets.channel import PyDMChannel
 from pydm.data_plugins.plugin import PyDMConnection
 from pydm.utilities import is_qt_designer
-from qtpy.QtWidgets import QWidget, QFrame, QVBoxLayout, QLabel
+from qtpy.QtWidgets import QWidget, QFrame, QVBoxLayout, QLabel, QSizePolicy
 from qtpy.QtCore import Property, Signal, Slot, Q_ENUM, Qt
-from .mixins import HideUnusedFeaturesMixin, InitializedMixin
+from .mixins import HideUnusedFeaturesMixin, InitializedMixin, superclass_deprecated
 from .value_transform import ValueTransformationBase
 
 
 logger = logging.getLogger(__name__)
 
 
+# This class cannot inherit from Enum or derivatives because it will cause Qt Designer to complain about
+# metaclass incompatibility when this class will be inherited by the widget class
 class GeneratorTrigger:
+    """Enum defining when generator sequence must be triggered."""
+
     Any = 0
+    """Any of the incoming values arriving."""
+
     AggregatedLast = 1
+    """All values have been updated since the last trigger."""
+
     AggregatedFirst = 2
+    """First new value arriving since the last trigger."""
 
 
 class CValueAggregator(QWidget, InitializedMixin, HideUnusedFeaturesMixin, PyDMWidget, ValueTransformationBase, GeneratorTrigger):
@@ -205,28 +214,58 @@ class CValueAggregator(QWidget, InitializedMixin, HideUnusedFeaturesMixin, PyDMW
             self._trigger_type = new_type
 
     @Property(str, designable=False)
-    def channel(self):
-        return
+    def channel(self) -> str:
+        return ""
 
     @channel.setter  # type: ignore
-    def channel(self, ch):
-        return
+    @superclass_deprecated
+    def channel(self, _):
+        pass
 
     @Property('QSize', designable=False)
-    def minimumSize(self):
+    def minimumSize(self) -> 'QSize':
         return super().minimumSize()
 
+    @minimumSize.setter  # type: ignore
+    @superclass_deprecated
+    def minimumSize(self, _):
+        pass
+
     @Property('QSize', designable=False)
-    def maximumSize(self):
+    def maximumSize(self) -> 'QSize':
         return super().maximumSize()
 
-    @Property('QSize', designable=False)
-    def baseSize(self):
-        return super().baseSize()
+    @maximumSize.setter  # type: ignore
+    @superclass_deprecated
+    def maximumSize(self, _):
+        pass
 
     @Property('QSize', designable=False)
-    def sizeIncrement(self):
+    def baseSize(self) -> 'QSize':
+        return super().baseSize()
+
+    @baseSize.setter  # type: ignore
+    @superclass_deprecated
+    def baseSize(self, _):
+        pass
+
+    @Property('QSize', designable=False)
+    def sizeIncrement(self) -> 'QSize':
         return super().sizeIncrement()
+
+    @sizeIncrement.setter
+    @superclass_deprecated
+    def sizeIncrement(self, _):
+        pass
+
+    @Property('QSizePolicy', designable=False)
+    def sizePolicy(self) -> QSizePolicy:
+        return QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+
+    @sizePolicy.setter
+    @superclass_deprecated
+    def sizePolicy(self, _):
+        pass
 
     def _trigger_update(self):
         if ((not self.valueTransformation and not self.snippetFilename)

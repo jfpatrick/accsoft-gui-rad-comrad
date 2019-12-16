@@ -22,7 +22,16 @@ class InitializedMixin:
         self.widget_initialized = False
 
 
-def _superclass_deprecated(method: MethodType):
+def superclass_deprecated(method: MethodType):
+    """
+    Decorator to deprecate properties exposed to Qt Designer that are actually defined in dependencies outside of ComRAD.
+
+    Args:
+        method: Method to decorate.
+
+    Returns:
+        Wrapper method with decorated logic.
+    """
 
     def _wrapper(self, *_, **__):
         if not is_qt_designer():
@@ -49,7 +58,7 @@ class HideUnusedFeaturesMixin:
         return False
 
     @alarmSensitiveBorder.setter  # type: ignore
-    @_superclass_deprecated
+    @superclass_deprecated
     def alarmSensitiveBorder(self, _: bool):
         pass
 
@@ -58,7 +67,7 @@ class HideUnusedFeaturesMixin:
         return False
 
     @alarmSensitiveContent.setter  # type: ignore
-    @_superclass_deprecated
+    @superclass_deprecated
     def alarmSensitiveContent(self, _: bool):
         pass
 
@@ -71,7 +80,7 @@ class NoPVTextFormatterMixin:
         return False
 
     @precisionFromPV.setter  # type: ignore
-    @_superclass_deprecated
+    @superclass_deprecated
     def precisionFromPV(self, _: bool):
         pass
 
@@ -81,7 +90,7 @@ class NoPVTextFormatterMixin:
         return False
 
     @showUnits.setter  # type: ignore
-    @_superclass_deprecated
+    @superclass_deprecated
     def showUnits(self, _: bool):
         pass
 
