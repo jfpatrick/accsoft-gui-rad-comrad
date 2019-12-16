@@ -6,7 +6,7 @@ from pydm.widgets.channel import PyDMChannel
 from pydm.data_plugins.plugin import PyDMConnection
 from pydm.utilities import is_qt_designer
 from qtpy.QtWidgets import QWidget, QFrame, QVBoxLayout, QLabel, QSizePolicy
-from qtpy.QtCore import Property, Signal, Slot, Q_ENUM, Qt
+from qtpy.QtCore import Property, Signal, Slot, Q_ENUM, Qt, QSize
 from .mixins import HideUnusedFeaturesMixin, InitializedMixin, superclass_deprecated
 from .value_transform import ValueTransformationBase
 
@@ -223,7 +223,7 @@ class CValueAggregator(QWidget, InitializedMixin, HideUnusedFeaturesMixin, PyDMW
         pass
 
     @Property('QSize', designable=False)
-    def minimumSize(self) -> 'QSize':
+    def minimumSize(self) -> QSize:
         return super().minimumSize()
 
     @minimumSize.setter  # type: ignore
@@ -232,7 +232,7 @@ class CValueAggregator(QWidget, InitializedMixin, HideUnusedFeaturesMixin, PyDMW
         pass
 
     @Property('QSize', designable=False)
-    def maximumSize(self) -> 'QSize':
+    def maximumSize(self) -> QSize:
         return super().maximumSize()
 
     @maximumSize.setter  # type: ignore
@@ -241,7 +241,7 @@ class CValueAggregator(QWidget, InitializedMixin, HideUnusedFeaturesMixin, PyDMW
         pass
 
     @Property('QSize', designable=False)
-    def baseSize(self) -> 'QSize':
+    def baseSize(self) -> QSize:
         return super().baseSize()
 
     @baseSize.setter  # type: ignore
@@ -250,10 +250,10 @@ class CValueAggregator(QWidget, InitializedMixin, HideUnusedFeaturesMixin, PyDMW
         pass
 
     @Property('QSize', designable=False)
-    def sizeIncrement(self) -> 'QSize':
+    def sizeIncrement(self) -> QSize:
         return super().sizeIncrement()
 
-    @sizeIncrement.setter
+    @sizeIncrement.setter  # type: ignore
     @superclass_deprecated
     def sizeIncrement(self, _):
         pass
@@ -262,7 +262,7 @@ class CValueAggregator(QWidget, InitializedMixin, HideUnusedFeaturesMixin, PyDMW
     def sizePolicy(self) -> QSizePolicy:
         return QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
-    @sizePolicy.setter
+    @sizePolicy.setter  # type: ignore
     @superclass_deprecated
     def sizePolicy(self, _):
         pass

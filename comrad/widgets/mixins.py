@@ -105,7 +105,7 @@ class CustomizedTooltipMixin:
         Args:
             tooltip:  widget's tooltip.
         """
-        super().setToolTip(tooltip.replace('PyDM', 'ComRAD').replace('PV ', 'Device Property '))
+        cast(QWidget, super()).setToolTip(tooltip.replace('PyDM', 'ComRAD').replace('PV ', 'Device Property '))
 
 
 class ValueTransformerMixin(ValueTransformationBase):
@@ -186,7 +186,7 @@ class WidgetRulesMixin:
     def _get_custom_rules(self) -> List[BaseRule]:
         rules = cast(PyDMWidget, self)._rules
         if is_qt_designer():
-            return json.dumps(rules, cls=ComRADJSONEncoder)
+            return cast(List[BaseRule], json.dumps(rules, cls=ComRADJSONEncoder))
         return rules
 
     def _set_custom_rules(self, new_rules: Union[str, List[BaseRule], None]):

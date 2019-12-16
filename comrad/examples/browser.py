@@ -256,9 +256,7 @@ class ExamplesWindow(QMainWindow):
 
         def expand_args(arg: str) -> str:
             import re
-            return re.sub(pattern=r'^~example',
-                          repl=basedir,
-                          string=arg)
+            return re.sub(pattern=r'^~example', repl=str(basedir), string=arg)
 
         try:
             example_args = list(map(expand_args, module.launch_arguments)) # type: ignore

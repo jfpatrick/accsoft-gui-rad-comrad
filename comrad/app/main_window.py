@@ -53,28 +53,29 @@ class CMainWindow(PyDMMainWindow, MonkeyPatchedClass):
             title += ' [Read Only]'
         self.setWindowTitle(title)
 
-    def show_about_window(self, _: bool):
+    def show_about_window(self, _):
         AboutDialog(self).show()
 
-    def edit_in_designer(self, _: bool):
+    def edit_in_designer(self, _):
         """Overridden slot to open current file in Qt Designer and/or Text editor based on the file type."""
         ui_file, py_file = self.get_files_in_display()
-        if py_file is not None and py_file != "":
+        if py_file:
             self._open_editor_generic(py_file)
-        if ui_file is not None and ui_file != "":
+        if ui_file:
             self._open_editor_ui(ui_file)
 
-    def open_file_action(self, _: bool):
+    def open_file_action(self, _):
         """Overridden slot to open file that substitutes the name of the file type visible in the dialog."""
         modifiers = QApplication.keyboardModifiers()
+        folder: str
         try:
             curr_file: str = self.current_file()
-            folder: str = os.path.dirname(curr_file)
+            folder = os.path.dirname(curr_file)
         except IndexError:
-            folder: str = os.getcwd()
+            folder = os.getcwd()
 
-        filename = QFileDialog.getOpenFileName(self, 'Open File...', folder, 'ComRAD Files (*.ui *.py)')
-        filename: str = filename[0] if isinstance(filename, (list, tuple)) else filename
+        dialog_res = QFileDialog.getOpenFileName(self, 'Open File...', folder, 'ComRAD Files (*.ui *.py)')
+        filename: str = dialog_res[0] if isinstance(dialog_res, (list, tuple)) else dialog_res
 
         if filename:
             filename = str(filename)
@@ -152,7 +153,7 @@ class CMainWindow(PyDMMainWindow, MonkeyPatchedClass):
 
 
 @modify_in_place
-class CUiMainWindow(Ui_MainWindow, MonkeyPatchedClass):
+class _UiMainWindow(Ui_MainWindow, MonkeyPatchedClass):
     """
     Monkey-patched generated UI file class to replace labels as early as
     possible to not confuse the user with naming.

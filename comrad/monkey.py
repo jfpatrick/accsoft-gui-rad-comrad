@@ -44,7 +44,7 @@ def modify_in_place(new_cls: Type):
         elif impl is not super_methods.get(name, impl):
             modified_methods[name] = impl
 
-    super_class = cast(MonkeyPatchedClass, super_class)
+    super_class = cast(Type[MonkeyPatchedClass], super_class)
     super_class._overridden_methods = {}
     for name, impl in modified_methods.items():
         setattr(super_class, name, impl)

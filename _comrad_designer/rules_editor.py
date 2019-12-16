@@ -78,9 +78,10 @@ class NewRulesEditor(QDialog):
         configure_common_qsci(self.source_ranges_editor)
         self.source_ranges_editor.setReadOnly(False)
 
-        rules = widget.rules
+        rules = cast(str, widget.rules) # In Qt Designer it's going to be JSON-encoded string
+        self._rules: List[BaseRule]
         if rules is None:
-            self._rules: List[BaseRule] = []
+            self._rules = []
         else:
             logger.debug(f'Loading widget rules into the editor: {rules}')
             self._rules = unpack_rules(rules)
@@ -128,17 +129,17 @@ class NewRulesEditor(QDialog):
         self._source_valid = True
 
     def _add_range(self):
-        """Add a new empty state to the table."""
+        """Add a new empty range to the table."""
         try:
             rule = cast(CNumRangeRule, self._get_current_rule())
         except IndexError:
-            raise RuntimeError('Cannot create a dynamic state for non-existing rule')
+            raise RuntimeError('Cannot create a dynamic range for non-existing rule')
 
         self._loading_data = True
 
         self.range_table.insertRow(self.range_table.rowCount())
         row = self.range_table.rowCount() - 1
-        self.range_table.setCellWidget(row, 0, self._get_dynamic_state_item(row))
+        self.range_table.setCellWidget(row, 0, self._get_dynamic_range_item(row))
 
         rule_range = rule.ranges[row]
         self.range_table.setCellWidget(row, 1, self._make_range_widget(row=row, rule_range=rule_range))
@@ -156,7 +157,7 @@ class NewRulesEditor(QDialog):
         if len(items) > 1:
             reply = QMessageBox().question(self,
                                            'Message',
-                                           f'Delete the selected states?',
+                                           f'Delete the selected ranges?',
                                            QMessageBox.Yes,
                                            QMessageBox.No)
 
@@ -313,7 +314,7 @@ class NewRulesEditor(QDialog):
         if isinstance(curr_rule, CNumRangeRule):
             _, prev_prop_type = self._widget.RULE_PROPERTIES[prev_prop]
             if prop_type != prev_prop_type:
-                # Clear the state table because we can't map
+                # Clear the range table because we can't map
                 # different data types directly and it does not make sense
                 cast(CNumRangeRule, curr_rule).ranges.clear()
                 if self.range_tabs.currentIndex() == self.TAB_DECLARATIVE_VIEW:
@@ -390,7 +391,7 @@ class NewRulesEditor(QDialog):
         range_widget.setLayout(range_layout)
         return range_widget
 
-    def _get_dynamic_state_item(self,
+    def _get_dynamic_range_item(self,
                                 row: int,
                                 type_name: Optional[str] = None,
                                 prop_name: Optional[str] = None,
@@ -405,7 +406,7 @@ class NewRulesEditor(QDialog):
         try:
             rule = cast(CNumRangeRule, self._get_current_rule())
         except IndexError:
-            raise RuntimeError('Cannot create a dynamic state for non-existing rule')
+            raise RuntimeError('Cannot create a dynamic range for non-existing rule')
 
         if not current_range:
             range_list = rule.ranges
@@ -416,12 +417,13 @@ class NewRulesEditor(QDialog):
                 range_list.append(current_range)
 
         if type_name == 'bool':
+            bool_val: bool
             if current_range.prop_val is None:
-                value = row == 0
-                current_range.prop_val = value
+                bool_val = row == 0
+                current_range.prop_val = bool_val
             else:
-                value = bool(current_range.prop_val)
-            value = Qt.Checked if value else Qt.Unchecked
+                bool_val = bool(current_range.prop_val)
+            value: Qt.CheckState = Qt.Checked if bool_val else Qt.Unchecked
 
             layout = QHBoxLayout()
             layout.setContentsMargins(0, 0, 0, 0)
@@ -541,7 +543,7 @@ class NewRulesEditor(QDialog):
 
     def _reload_range_table(self):
         for i in range(self.range_table.rowCount()):
-            self.range_table.setCellWidget(i, 0, self._get_dynamic_state_item(i))
+            self.range_table.setCellWidget(i, 0, self._get_dynamic_range_item(i))
 
     def _clear_range_table(self):
         for _ in range(self.range_table.rowCount()):
@@ -557,7 +559,7 @@ class NewRulesEditor(QDialog):
         _, base_type = self._widget.RULE_PROPERTIES[rule.prop]
         type_name = cast(Type, base_type).__name__
         for row_idx, rule_range in enumerate(ranges):
-            self.range_table.setCellWidget(row_idx, 0, self._get_dynamic_state_item(row=row_idx,
+            self.range_table.setCellWidget(row_idx, 0, self._get_dynamic_range_item(row=row_idx,
                                                                                     type_name=type_name,
                                                                                     prop_name=rule.prop,
                                                                                     current_range=rule_range))

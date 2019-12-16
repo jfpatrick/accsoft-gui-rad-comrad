@@ -72,9 +72,7 @@ class BaseRule(JSONSerializable, metaclass=ABCMeta):
                      value because of the bug.
         """
         self._name = name
-        if isinstance(prop, BaseRule.Property):
-            prop = prop.value
-        self._prop = prop
+        self._prop: str = prop.value if isinstance(prop, BaseRule.Property) else prop
         self.channel = channel
 
     def validate(self):
@@ -184,12 +182,12 @@ class CNumRangeRule(BaseRule):
             self._max_val = new_val
 
         @property
-        def prop_val(self) -> float:
+        def prop_val(self) -> Optional[RangeValue]:
             """Value to be applied to the property in this range."""
             return self._prop_val
 
         @prop_val.setter
-        def prop_val(self, new_val: float):
+        def prop_val(self, new_val: RangeValue):
             self._prop_val = new_val
 
         @classmethod
@@ -258,7 +256,7 @@ class CNumRangeRule(BaseRule):
         logger.debug(f'Unpacking JSON rule: {contents}')
         name: str = contents.get('name', None)
         prop: str = contents.get('prop', None)
-        channel: str = contents.get('channel', None)
+        channel: Union[str, BaseRule.Channel] = contents.get('channel', None)
 
         if not isinstance(name, str):
             raise JSONDeserializeError(f'Can\'t parse range JSON: "name" is not a string, "{type(name).__name__}" given.', None, 0)
@@ -344,10 +342,10 @@ def unpack_rules(contents: str) -> List[BaseRule]:
         Lis tof rule objects.
     """
     logger.debug(f'Unpacking JSON rules into the object: {contents}')
-    contents: List[Dict[str, Any]] = json.loads(contents)
+    parsed_contents: List[Dict[str, Any]] = json.loads(contents)
     res: List[BaseRule] = []
-    if isinstance(contents, list):
-        for json_rule in contents:
+    if isinstance(parsed_contents, list):
+        for json_rule in parsed_contents:
             rule_type: int = json_rule['type']
             if not isinstance(rule_type, int):
                 raise JSONDeserializeError(f'Rule {json_rule} must have integer type, given {type(rule_type).__name__}.')
@@ -357,7 +355,7 @@ def unpack_rules(contents: str) -> List[BaseRule]:
                 res.append(CExpressionRule.from_json(json_rule))
             else:
                 raise JSONDeserializeError(f'Unknown rule type {rule_type} for JSON {json_rule}')
-    elif contents is not None:
+    elif parsed_contents is not None:
         raise JSONDeserializeError(f'Rules does not appear to be a list')
     return res
 
@@ -392,7 +390,7 @@ class _RulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
         with QMutexLocker(self.map_lock):
             self.widget_map[widget_ref] = []
             for idx, rule in enumerate(rules):
-                channels_list: List[str]
+                channels_list: List[Dict[str, Any]]
 
                 try:
                     rule.validate()
@@ -403,7 +401,8 @@ class _RulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
 
                 # TODO: Will this work with wildcard channel? Certainly not dynamically changing one because it's evaluated once
                 if rule.channel == BaseRule.Channel.DEFAULT:
-                    default_channel = widget_ref().default_rule_channel()
+                    from comrad.widgets.mixins import WidgetRulesMixin
+                    default_channel = cast(WidgetRulesMixin, widget_ref()).default_rule_channel()
                     if default_channel is None:
                         raise CChannelException(f'Default channel on the widget is not defined yet. We won\' register it for now...')
                     channels_list = [{

@@ -124,10 +124,10 @@ class CApplication(PyDMApplication):
 
         self._stored_plugins: List[CPlugin] = []  # Reference plugins to keep the objects alive
 
-        order: Optional[Iterable[Union[str, CToolbarID]]] = None
+        order: Optional[List[Union[str, CToolbarID]]] = None
         if toolbar_order is not None:
 
-            def _convert(identifier: str) -> Union[str, CToolbarID]:
+            def _convert(identifier: Union[str, CToolbarID]) -> Union[str, CToolbarID]:
                 try:
                     return CToolbarID(identifier)
                 except ValueError:
@@ -207,7 +207,11 @@ class CApplication(PyDMApplication):
         if self._menu_bar_plugin_path:
             args.extend(['--menu-plugin-path', self._menu_bar_plugin_path])
         if self._toolbar_order:
-            args.extend(['--nav-bar-order', ','.join(self._toolbar_order)])
+
+            def _toolbar_to_str(val: Union[str, CToolbarID]):
+                return val if isinstance(val, str) else val.value
+
+            args.extend(['--nav-bar-order', ','.join(map(_toolbar_to_str, self._toolbar_order))])
         if self._plugin_whitelist:
             args.extend(['--enable-plugins', ','.join(self._plugin_whitelist)])
         if self._plugin_blacklist:
@@ -228,8 +232,8 @@ class CApplication(PyDMApplication):
     def _load_toolbar_plugins(self,
                               cmd_line_paths: Optional[str],
                               order: Optional[List[Union[str, CToolbarID]]] = None,
-                              whitelist: Optional[List[str]] = None,
-                              blacklist: Optional[List[str]] = None) -> Optional[List[CPlugin]]:
+                              whitelist: Optional[Iterable[str]] = None,
+                              blacklist: Optional[Iterable[str]] = None) -> Optional[List[CPlugin]]:
         toolbar_plugins = CApplication._load_plugins(env_var_path_key='COMRAD_TOOLBAR_PLUGIN_PATH',
                                                      cmd_line_paths=cmd_line_paths,
                                                      shipped_plugin_path='toolbar',
@@ -251,6 +255,8 @@ class CApplication(PyDMApplication):
                 # Do not instantiate a plugin that is not going to be used
                 continue
 
+            item: Union[QAction, QWidget]
+            plugin: CToolbarPlugin
             if issubclass(plugin_type, CActionPlugin):
                 action_plugin = cast(CToolbarActionPlugin, plugin_type())
                 item = QAction(self.main_window)
@@ -346,8 +352,8 @@ class CApplication(PyDMApplication):
 
     def _load_menubar_plugins(self,
                               cmd_line_paths: Optional[str],
-                              whitelist: Optional[List[str]] = None,
-                              blacklist: Optional[List[str]] = None) -> Optional[List[CPlugin]]:
+                              whitelist: Optional[Iterable[str]] = None,
+                              blacklist: Optional[Iterable[str]] = None) -> Optional[List[CPlugin]]:
         menubar_plugins = CApplication._load_plugins(env_var_path_key='COMRAD_MENUBAR_PLUGIN_PATH',
                                                      cmd_line_paths=cmd_line_paths,
                                                      shipped_plugin_path='menu',
@@ -384,8 +390,8 @@ class CApplication(PyDMApplication):
 
     def _load_status_bar_plugins(self,
                                  cmd_line_paths: Optional[str],
-                                 whitelist: Optional[List[str]] = None,
-                                 blacklist: Optional[List[str]] = None) -> Optional[List[CPlugin]]:
+                                 whitelist: Optional[Iterable[str]] = None,
+                                 blacklist: Optional[Iterable[str]] = None) -> Optional[List[CPlugin]]:
         status_bar_plugins = CApplication._load_plugins(env_var_path_key='COMRAD_STATUSBAR_PLUGIN_PATH',
                                                         cmd_line_paths=cmd_line_paths,
                                                         shipped_plugin_path='statusbar',
