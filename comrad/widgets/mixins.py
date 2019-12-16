@@ -1,7 +1,9 @@
 import json
 import logging
 from typing import Any, List, cast, Union
+from types import MethodType
 from qtpy.QtCore import Property
+from qtpy.QtWidgets import QWidget
 from pydm.utilities import is_qt_designer
 from pydm.widgets.base import PyDMWidget
 from pydm.widgets.rules import RulesDispatcher
@@ -13,37 +15,65 @@ from .value_transform import ValueTransformationBase
 logger = logging.getLogger(__name__)
 
 
+class InitializedMixin:
+
+    def __init__(self):
+        """Simple mixin to set a flag when __init__ method has finished the sequence."""
+        self.widget_initialized = False
+
+
+def _superclass_deprecated(method: MethodType):
+
+    def _wrapper(self, *_, **__):
+        if not is_qt_designer():
+            if not isinstance(self, InitializedMixin):
+                raise TypeError(f'This decorator is intended to be used with InitializedMixin. {type(self).__name__} is not recognized as one.')
+            widget = cast(InitializedMixin, self)
+            if not widget.widget_initialized:
+                # Ignore setting properties in __init__, which may come from PyDM superclasses
+                return
+            name = cast(QWidget, self).objectName()
+            if not name:
+                name = f'unidentified {type(self).__name__}'
+            logger.warning(f'{method.__name__} property is disabled in ComRAD (found in {name})')
+
+    return _wrapper
+
+
+
 class HideUnusedFeaturesMixin:
+    """Mixin that hides PyDM properties that are exposed to Qt Designer and are not used in ComRAD."""
 
     @Property(bool, designable=False)
     def alarmSensitiveBorder(self) -> bool:
         return False
 
     @alarmSensitiveBorder.setter  # type: ignore
+    @_superclass_deprecated
     def alarmSensitiveBorder(self, _: bool):
-        if not is_qt_designer():
-            logger.warning(f'alarmSensitiveBorder property is disabled in ComRAD')
+        pass
 
     @Property(bool, designable=False)
     def alarmSensitiveContent(self) -> bool:
         return False
 
     @alarmSensitiveContent.setter  # type: ignore
+    @_superclass_deprecated
     def alarmSensitiveContent(self, _: bool):
-        if not is_qt_designer():
-            logger.warning(f'alarmSensitiveContent property is disabled in ComRAD')
+        pass
 
 
 class NoPVTextFormatterMixin:
+    """Mixin that hides PyDM properties in TextFormatter that are exposed to Qt Designer and ar enot used in ComRAD."""
 
     @Property(bool, designable=False)
     def precisionFromPV(self) -> bool:
         return False
 
     @precisionFromPV.setter  # type: ignore
+    @_superclass_deprecated
     def precisionFromPV(self, _: bool):
-        if not is_qt_designer():
-            logger.warning(f'precisionFromPV property is disabled in ComRAD')
+        pass
 
     # TODO: We should enable showUnits, when unit support is implemented on the CS level
     @Property(bool, designable=False)
@@ -51,9 +81,9 @@ class NoPVTextFormatterMixin:
         return False
 
     @showUnits.setter  # type: ignore
+    @_superclass_deprecated
     def showUnits(self, _: bool):
-        if not is_qt_designer():
-            logger.warning(f'showUnits property is disabled in ComRAD')
+        pass
 
 
 class CustomizedTooltipMixin:
@@ -70,6 +100,7 @@ class CustomizedTooltipMixin:
 
 
 class ValueTransformerMixin(ValueTransformationBase):
+    """Mixin that introduces valueTransformation property for client-side Python snippets acting on incoming values."""
 
     def getValueTransformation(self) -> str:
         return ValueTransformationBase.getValueTransformation(self)
@@ -181,6 +212,7 @@ class ColorRulesMixin(WidgetRulesMixin):
                            **WidgetRulesMixin.RULE_PROPERTIES)
 
     def __init__(self):
+        """Mixing that introduces color rule on top of the standard rules."""
         self._color = None
 
     def color(self) -> str:

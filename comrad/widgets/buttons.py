@@ -8,13 +8,13 @@ from pydm.widgets.enum_button import PyDMEnumButton
 from qtpy.QtWidgets import QWidget, QPushButton
 from qtpy.QtGui import QIcon
 from qtpy.QtCore import Signal
-from .mixins import HideUnusedFeaturesMixin, CustomizedTooltipMixin, ValueTransformerMixin, WidgetRulesMixin
+from .mixins import HideUnusedFeaturesMixin, CustomizedTooltipMixin, ValueTransformerMixin, WidgetRulesMixin, InitializedMixin
 
 
 logger = logging.getLogger(__name__)
 
 
-class CPushButton(WidgetRulesMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMPushButton):
+class CPushButton(WidgetRulesMixin, CustomizedTooltipMixin, InitializedMixin, HideUnusedFeaturesMixin, PyDMPushButton):
 
     def __init__(self,
                  parent: Optional[QWidget] = None,
@@ -48,6 +48,7 @@ class CPushButton(WidgetRulesMixin, CustomizedTooltipMixin, HideUnusedFeaturesMi
         """
         WidgetRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
+        InitializedMixin.__init__(self)
         HideUnusedFeaturesMixin.__init__(self)
         PyDMPushButton.__init__(self, parent=parent,
                                 label=label,
@@ -56,6 +57,7 @@ class CPushButton(WidgetRulesMixin, CustomizedTooltipMixin, HideUnusedFeaturesMi
                                 relative=relative,
                                 init_channel=init_channel,
                                 **kwargs)
+        self.widget_initialized = True
 
     def init_for_designer(self):
         super().init_for_designer()
@@ -90,7 +92,7 @@ class CShellCommand(PyDMShellCommand):
         super().__init__(parent=parent, command=command, **kwargs)
 
 
-class CEnumButton(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMEnumButton):
+class CEnumButton(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, InitializedMixin, HideUnusedFeaturesMixin, PyDMEnumButton):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -109,16 +111,18 @@ class CEnumButton(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixi
         """
         WidgetRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
+        InitializedMixin.__init__(self)
         HideUnusedFeaturesMixin.__init__(self)
         PyDMEnumButton.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
+        self.widget_initialized = True
 
     def init_for_designer(self):
         super().init_for_designer()
         self.items = ['RAD Item 1', 'RAD Item 2', 'RAD Item ...']
 
 
-class CCommandButton(CustomizedTooltipMixin, QPushButton, HideUnusedFeaturesMixin, PyDMWritableWidget):
+class CCommandButton(CustomizedTooltipMixin, QPushButton, InitializedMixin, HideUnusedFeaturesMixin, PyDMWritableWidget):
 
     send_value_signal = Signal()
     """Overridden channel to allow only dictionaries."""
@@ -145,8 +149,10 @@ class CCommandButton(CustomizedTooltipMixin, QPushButton, HideUnusedFeaturesMixi
         else:
             QPushButton.__init__(self, parent)
         CustomizedTooltipMixin.__init__(self)
+        InitializedMixin.__init__(self)
         HideUnusedFeaturesMixin.__init__(self)
         PyDMWritableWidget.__init__(self, init_channel=init_channel)
+        self.widget_initialized = True
         self.clicked.connect(self._send_cmd)
 
     channelValueChanged = None  # Prevent widget from subscribing
@@ -163,7 +169,7 @@ class CCommandButton(CustomizedTooltipMixin, QPushButton, HideUnusedFeaturesMixi
 
 
 # Do not use unless there's a use-case for that
-# class CToggleButton(WidgetRulesMixin, HideUnusedFeaturesMixin, PyDMPushButton):
+# class CToggleButton(WidgetRulesMixin, InitializedMixin, HideUnusedFeaturesMixin, PyDMPushButton):
 #
 #     inverseToggled = Signal([bool])
 #
@@ -187,6 +193,7 @@ class CCommandButton(CustomizedTooltipMixin, QPushButton, HideUnusedFeaturesMixi
 #             **kwargs: Any future extras that need to be passed down to PyDM.
 #         """
 #         WidgetRulesMixin.__init__(self)
+#         InitializedMixin.__init__(self)
 #         HideUnusedFeaturesMixin.__init__(self)
 #         PyDMPushButton.__init__(self,
 #                                 parent=parent,
@@ -197,6 +204,7 @@ class CCommandButton(CustomizedTooltipMixin, QPushButton, HideUnusedFeaturesMixi
 #                                 init_channel=init_channel,
 #                                 **kwargs)
 #         super().setCheckable(True)
+#         self.widget_initialized = True
 #         self._unchecked_text: str = self.text
 #         self._checked_text: str = self.text
 #         self.toggled.connect(self._on_checked)

@@ -6,10 +6,10 @@ from pydm.widgets.spinbox import PyDMSpinbox
 from pydm.widgets.checkbox import PyDMCheckbox
 from pydm.widgets.enum_combo_box import PyDMEnumComboBox
 from .mixins import (HideUnusedFeaturesMixin, NoPVTextFormatterMixin, CustomizedTooltipMixin,
-                     ValueTransformerMixin, ColorRulesMixin, WidgetRulesMixin)
+                     ValueTransformerMixin, ColorRulesMixin, WidgetRulesMixin, InitializedMixin)
 
 
-class CCheckBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMCheckbox):
+class CCheckBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, InitializedMixin, HideUnusedFeaturesMixin, PyDMCheckbox):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -22,16 +22,18 @@ class CCheckBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin,
         """
         WidgetRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
+        InitializedMixin.__init__(self)
         HideUnusedFeaturesMixin.__init__(self)
         PyDMCheckbox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
+        self.widget_initialized = True
 
     def init_for_designer(self):
         super().init_for_designer()
         self.setText('RAD CheckBox')
 
 
-class CEnumComboBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMEnumComboBox):
+class CEnumComboBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, InitializedMixin, HideUnusedFeaturesMixin, PyDMEnumComboBox):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -50,12 +52,14 @@ class CEnumComboBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMi
         """
         WidgetRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
+        InitializedMixin.__init__(self)
         HideUnusedFeaturesMixin.__init__(self)
         PyDMEnumComboBox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
+        self.widget_initialized = True
 
 
-class CLineEdit(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, NoPVTextFormatterMixin, PyDMLineEdit):
+class CLineEdit(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, InitializedMixin, HideUnusedFeaturesMixin, NoPVTextFormatterMixin, PyDMLineEdit):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -71,10 +75,12 @@ class CLineEdit(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, 
         """
         ColorRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
+        InitializedMixin.__init__(self)
         HideUnusedFeaturesMixin.__init__(self)
         NoPVTextFormatterMixin.__init__(self)
         PyDMLineEdit.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
+        self.widget_initialized = True
 
     def set_color(self, val: str):
         """Overridden method of :class:`ColorRulesMixin`.
@@ -86,7 +92,7 @@ class CLineEdit(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, 
         # TODO: Calculate color and choose appropriate text color by the contrast ratio
 
 
-class CSlider(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, NoPVTextFormatterMixin, PyDMSlider):
+class CSlider(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, InitializedMixin, HideUnusedFeaturesMixin, NoPVTextFormatterMixin, PyDMSlider):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -99,13 +105,15 @@ class CSlider(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, H
         """
         WidgetRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
+        InitializedMixin.__init__(self)
         HideUnusedFeaturesMixin.__init__(self)
         NoPVTextFormatterMixin.__init__(self)
         PyDMSlider.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
+        self.widget_initialized = True
 
 
-class CSpinBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, NoPVTextFormatterMixin, PyDMSpinbox):
+class CSpinBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, InitializedMixin, HideUnusedFeaturesMixin, NoPVTextFormatterMixin, PyDMSpinbox):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -118,7 +126,9 @@ class CSpinBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, 
         """
         WidgetRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
+        InitializedMixin.__init__(self)
         HideUnusedFeaturesMixin.__init__(self)
         NoPVTextFormatterMixin.__init__(self)
         PyDMSpinbox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
+        self.widget_initialized = True

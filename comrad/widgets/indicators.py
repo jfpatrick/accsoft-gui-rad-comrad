@@ -6,10 +6,10 @@ from pydm.widgets.scale import PyDMScaleIndicator
 from pydm.widgets.label import PyDMLabel
 from pydm.widgets.byte import PyDMByteIndicator
 from .mixins import (HideUnusedFeaturesMixin, NoPVTextFormatterMixin, CustomizedTooltipMixin,
-                     ValueTransformerMixin, ColorRulesMixin, WidgetRulesMixin)
+                     ValueTransformerMixin, ColorRulesMixin, WidgetRulesMixin, InitializedMixin)
 
 
-class CLabel(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, NoPVTextFormatterMixin, PyDMLabel):
+class CLabel(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, InitializedMixin, HideUnusedFeaturesMixin, NoPVTextFormatterMixin, PyDMLabel):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -27,10 +27,12 @@ class CLabel(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, Hid
         """
         ColorRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
+        InitializedMixin.__init__(self)
         HideUnusedFeaturesMixin.__init__(self)
         NoPVTextFormatterMixin.__init__(self)
         PyDMLabel.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
+        self.widget_initialized = True
 
     def init_for_designer(self):
         super().init_for_designer()
@@ -66,7 +68,7 @@ class CLabel(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, Hid
 #     pass
 
 
-class CByteIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMByteIndicator):
+class CByteIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, InitializedMixin, HideUnusedFeaturesMixin, PyDMByteIndicator):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -80,9 +82,11 @@ class CByteIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipM
         """
         WidgetRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
+        InitializedMixin.__init__(self)
         HideUnusedFeaturesMixin.__init__(self)
         PyDMByteIndicator.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
+        self.widget_initialized = True
 
     @Slot(list)
     @Slot(bool)
@@ -119,7 +123,7 @@ class CByteIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipM
             PyDMByteIndicator.channelValueChanged(self, int(new_val))
 
 
-class CScaleIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, NoPVTextFormatterMixin, PyDMScaleIndicator):
+class CScaleIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, InitializedMixin, HideUnusedFeaturesMixin, NoPVTextFormatterMixin, PyDMScaleIndicator):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -135,7 +139,9 @@ class CScaleIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltip
         """
         WidgetRulesMixin.__init__(self)
         CustomizedTooltipMixin.__init__(self)
+        InitializedMixin.__init__(self)
         HideUnusedFeaturesMixin.__init__(self)
         NoPVTextFormatterMixin.__init__(self)
         PyDMScaleIndicator.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
+        self.widget_initialized = True

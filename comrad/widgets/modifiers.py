@@ -7,7 +7,7 @@ from pydm.data_plugins.plugin import PyDMConnection
 from pydm.utilities import is_qt_designer
 from qtpy.QtWidgets import QWidget, QFrame, QVBoxLayout, QLabel
 from qtpy.QtCore import Property, Signal, Slot, Q_ENUM, Qt
-from .mixins import HideUnusedFeaturesMixin
+from .mixins import HideUnusedFeaturesMixin, InitializedMixin
 from .value_transform import ValueTransformationBase
 
 
@@ -20,7 +20,7 @@ class GeneratorTrigger:
     AggregatedFirst = 2
 
 
-class CValueAggregator(QWidget, HideUnusedFeaturesMixin, PyDMWidget, ValueTransformationBase, GeneratorTrigger):
+class CValueAggregator(QWidget, InitializedMixin, HideUnusedFeaturesMixin, PyDMWidget, ValueTransformationBase, GeneratorTrigger):
     Q_ENUM(GeneratorTrigger)
     GeneratorTrigger = GeneratorTrigger
 
@@ -36,9 +36,11 @@ class CValueAggregator(QWidget, HideUnusedFeaturesMixin, PyDMWidget, ValueTransf
             init_channel: The channel to be used by the widget.
         """
         QWidget.__init__(self, parent)
+        InitializedMixin.__init__(self)
         HideUnusedFeaturesMixin.__init__(self)
         PyDMWidget.__init__(self)
         ValueTransformationBase.__init__(self)
+        self.widget_initialized = True
         self._channel_ids: List[str] = []
         self._active: bool = True
         # This type defines how often an update is fired and when cached values get overwritten
