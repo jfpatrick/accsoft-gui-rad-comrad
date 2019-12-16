@@ -8,7 +8,7 @@ from pydm.utilities import is_qt_designer
 from qtpy.QtWidgets import QWidget, QFrame, QVBoxLayout, QLabel
 from qtpy.QtCore import Property, Signal, Slot, Q_ENUM, Qt
 from .mixins import HideUnusedFeaturesMixin
-from ..value_transform import ValueTransformationBase
+from .value_transform import ValueTransformationBase
 
 
 logger = logging.getLogger(__name__)

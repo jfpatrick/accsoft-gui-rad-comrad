@@ -1,12 +1,12 @@
 import logging
 from typing import Optional
-import colorlog
+from colorlog import StreamHandler, ColoredFormatter
 
 
 def _setup_logging():
     # Setup logging with colors
-    handler = colorlog.StreamHandler()
-    handler.setFormatter(colorlog.ColoredFormatter(
+    handler = StreamHandler()
+    handler.setFormatter(ColoredFormatter(
         '%(log_color)s[%(levelname)s]: %(name)s => %(reset)s%(message)s',
         reset=True,
         datefmt='%H:%M:%S',

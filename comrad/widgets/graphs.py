@@ -22,7 +22,7 @@ from pydm.widgets.channel import PyDMChannel
 from pydm.widgets.baseplot_curve_editor import BasePlotCurvesModel, BasePlotCurveEditorDialog
 from pydm.widgets.qtplugin_extensions import BasePlotExtension
 from pydm import utilities
-from accsoft_gui_pyqt_widgets import graph as accgraph
+from accwidgets import graph as accgraph
 
 LOGGER = logging.getLogger(__name__)
 

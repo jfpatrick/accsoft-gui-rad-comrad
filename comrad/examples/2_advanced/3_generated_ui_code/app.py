@@ -1,8 +1,8 @@
-from pydm import Display
+from comrad import CDisplay
 from generated import Ui_Form
 
 
-class DemoDisplay(Display, Ui_Form):
+class DemoDisplay(CDisplay, Ui_Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -303,7 +303,7 @@ def __designer_subcommand(parser: argparse.ArgumentParser):
 def _run_comrad(args: argparse.Namespace) -> bool:
 
     # Importing stuff here and not in the beginning of the file to setup the root logger first.
-    from comrad.qt.application import CApplication
+    from comrad.app.application import CApplication
     from pydm.utilities.macro import parse_macro_string
     macros = parse_macro_string(args.macro) if args.macro is not None else None
 

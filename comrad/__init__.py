@@ -8,9 +8,8 @@ Operational GUI applications without much hassle.
 """
 # flake8: noqa: E401,E403
 from _comrad.comrad_info import COMRAD_AUTHOR as __author__, COMRAD_VERSION as __version__
-from .qt.pydm_api import *
-from .qt.pydm_widgets import *
-from .qt.cern_widgets import *
-from .qt.widgets.aggregator import *
-from .qt.widgets.buttons import *
-from .qt.application import *
+from .widgets.aggregator import *
+from .widgets.buttons import *
+from .widgets.graphs import *
+from .widgets.pydm_widgets import *
+from .app.application import *

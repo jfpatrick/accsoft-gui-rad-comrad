@@ -1,14 +1,78 @@
 import logging
-import traceback
-import re
 import os
+import re
+from string import Template
+from typing import Callable, Optional, Any
 from qtpy.QtCore import Property
-from pydm.utilities import is_qt_designer, macro
-from typing import Any, Callable, Optional
-from .file_tracking import FileTracking
+from pydm.utilities import macro, is_pydm_app
 
 
 logger = logging.getLogger(__name__)
+
+
+class FileTracking:
+
+    def __init__(self):
+        self.base_path = ''
+        self.base_macros = {}
+        if is_pydm_app():
+            self.base_path = self.app.directory_stack[-1]
+            self.base_macros = self.app.macro_stack[-1]
+
+    def relative_path(self, filename: str) -> str:
+        """
+        Finds the full path to the Python snippet.
+
+        Args:
+            filename: Filename of the Python snippet.
+
+        Returns:
+            Parsed contents of the file with substituted macros.
+        """
+        if not filename:
+            return ''
+        path = os.path.expanduser(os.path.expandvars(filename))
+        file_path = os.path.join(self.base_path, path) if self.base_path else path
+        return file_path
+
+    def open_file(self, full_path: str) -> str:
+        """
+        Opens the file and parses macros inside.
+
+        Args:
+            full_path: Absolute path to the Python snippet.
+
+        Returns:
+            Parsed contents of the file with substituted macros.
+        """
+        if not full_path:
+            return ''
+        return macro.substitute_in_file(file_path=full_path, macros=self.parsed_macros()).getvalue()
+
+    def parsed_macros(self):
+        """
+        Dictionary containing the key value pair for each macro specified.
+
+        Returns
+        --------
+        dict
+        """
+        return macro.find_base_macros(self)
+
+    def substituted_string(self, string: str) -> str:
+        """
+        Similar to  macro.substitute_in_file() this method substitutes macros in a string
+        directly, without opening a file.
+
+        Args:
+            string: String to parse.
+            macros: Macros dictionary.
+
+        Returns:
+            String with substituted macros.
+        """
+        text = Template(string)
+        return macro.replace_macros_in_template(template=text, macros=self.parsed_macros()).getvalue()
 
 
 class ValueTransformationBase(FileTracking):
@@ -111,43 +175,11 @@ class ValueTransformationBase(FileTracking):
                 parsed_code = self.open_file(file)
                 file = os.path.abspath(file)
             if parsed_code:
-                self._value_transform_fn = create_transformation_function(parsed_code, file=file)
+                self._value_transform_fn = _create_transformation_function(parsed_code, file=file)
         return self._value_transform_fn
 
 
-class ValueTransformerMixin(ValueTransformationBase):
-
-    def getValueTransformation(self) -> str:
-        return ValueTransformationBase.getValueTransformation(self)
-
-    def setValueTransformation(self, new_formatter: str):
-        """
-        Reset generator code snippet.
-
-        Args:
-            new_val: New Python code snippet.
-        """
-        if self.getValueTransformation() != str(new_formatter):
-            ValueTransformationBase.setValueTransformation(self, str(new_formatter))
-            self.value_changed(self.value)  # type: ignore   # This is coming from PyDMWidget
-
-    def value_changed(self, new_val: Any) -> None:
-        """
-        Callback transforms the Channel value through the valueTransformation code before displaying it in a
-        standard way.
-
-        Args:
-            new_val: The new value from the channel. The type depends on the channel.
-        """
-        if is_qt_designer():
-            val = new_val  # Avoid code evaluation in Designer, as it can produce unnecessary errors with broken code
-        else:
-            transform = self.cached_value_transformation()
-            val = transform(new_val=new_val, widget=self) if transform else new_val
-        super().value_changed(val)  # type: ignore
-
-
-def create_transformation_function(transformation: str, file: Optional[os.PathLike] = None) -> Callable:
+def _create_transformation_function(transformation: str, file: Optional[os.PathLike] = None) -> Callable:
     """
     Creates a function used to transform incoming value(s) into a single output value.
 
@@ -185,10 +217,10 @@ __builtins__['output'] = {output_func_name}
     del global_base['macro']
     del global_base['ValueTransformationBase']
     del global_base['FileTracking']
-    del global_base['ValueTransformerMixin']
-    del global_base['create_transformation_function']
+    del global_base['_create_transformation_function']
 
     def __comrad_dcode_wrapper__(**inputs) -> Any:
+        import traceback
         global_vars = global_base.copy()  # Make sure to copy to not modify globals visible in the rest of the app
         global_vars.update(inputs)
         try:

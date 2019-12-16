@@ -1,11 +1,10 @@
-from pydm import Display
-from comrad import CScrollingPlot, CSlidingPlot
+from comrad import CScrollingPlot, CSlidingPlot, CDisplay
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QColor
 from qtpy.QtWidgets import QGridLayout
 
 
-class PlotDisplay(Display):
+class PlotDisplay(CDisplay):
 
     """
     Example window containing a scrolling and a sliding pointer graph

@@ -35,7 +35,7 @@
   <customwidget>
    <class>CLogDisplay</class>
    <extends>PyDMLogDisplay</extends>
-   <header>comrad.qt.pydm_widgets</header>
+   <header>comrad.widgets.pydm_widgets</header>
   </customwidget>
  </customwidgets>
  <resources/>

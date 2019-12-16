@@ -1,10 +1,9 @@
-from pydm import Display
 from qtpy.QtWidgets import QVBoxLayout
-from comrad import CLabel
+from comrad import CLabel, CDisplay
 from comrad.rules import CNumRangeRule
 
 
-class DemoDisplay(Display):
+class DemoDisplay(CDisplay):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

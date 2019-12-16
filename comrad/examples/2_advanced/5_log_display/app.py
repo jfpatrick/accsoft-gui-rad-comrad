@@ -1,4 +1,4 @@
-from pydm import Display
+from comrad import CDisplay
 from qtpy.QtCore import QTimer
 import logging
 import random
@@ -7,7 +7,7 @@ import random
 logger = logging.getLogger('test.app')
 
 
-class DemoDisplay(Display):
+class DemoDisplay(CDisplay):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

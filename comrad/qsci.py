@@ -1,7 +1,9 @@
 from PyQt5.Qsci import QsciScintilla
 from qtpy.QtGui import QColor
 
+
 QSCI_INDENTATION = 4
+
 
 def configure_common_qsci(editor: QsciScintilla):
     """

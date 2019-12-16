@@ -128,7 +128,7 @@ class CMainWindow(PyDMMainWindow, MonkeyPatchedClass):
         if not filename:
             return
         from _comrad.designer import run_designer
-        from comrad.qt.application import CApplication
+        from .application import CApplication
         self.statusBar().showMessage(f"Launching '{filename}' in ComRAD Designer...", 5000)
         app = cast(CApplication, QCoreApplication.instance())
         run_designer(files=[filename],

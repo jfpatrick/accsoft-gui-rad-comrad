@@ -1,7 +1,7 @@
-from pydm import Display
+from comrad import CDisplay
 
 
-class DemoDisplay(Display):
+class DemoDisplay(CDisplay):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -17,8 +17,8 @@ from qtpy.QtGui import QShowEvent
 from qtpy.QtWidgets import (QMainWindow, QTreeWidgetItem, QTreeWidget, QStackedWidget, QTabWidget, QApplication,
                             QAbstractScrollArea, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit, QFrame)
 from pydm.utilities.iconfont import IconFont
-from comrad.utils import icon
-from comrad.qt.about import AboutDialog
+from comrad.icons import icon
+from comrad.app.about import AboutDialog
 
 try:
     from PyQt5.Qsci import QsciScintilla, QsciLexerPython, QsciLexerJSON, QsciLexerCSS
@@ -498,7 +498,6 @@ def run_browser(_: argparse.Namespace):
     app_args = ['ComRAD examples']
     app_args.extend(sys.argv)
     app = QApplication(app_args)
-    import comrad.qt
-    app.setWindowIcon(icon('examples', module_path=comrad.qt.application))
+    app.setWindowIcon(icon('examples'))
     _ = ExamplesWindow()
     sys.exit(app.exec_())

@@ -85,7 +85,7 @@ class AboutDialog(QWidget):
                         string=comrad.__author__)
         self.support.setText(str(self.support.text()).format(author=author))
 
-        from comrad.qt.application import CApplication
+        from ..application import CApplication
         self.app = cast(CApplication, CApplication.instance())
 
         self._populate_credits()

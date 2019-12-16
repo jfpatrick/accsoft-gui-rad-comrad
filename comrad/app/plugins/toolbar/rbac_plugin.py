@@ -5,10 +5,10 @@ from qtpy.QtWidgets import (QWidget, QPushButton, QLineEdit, QLabel, QDialog, QV
                             QWidgetAction, QSizePolicy, QTabWidget)
 from qtpy import uic
 from qtpy.QtCore import Signal, Qt, QEvent
-from comrad.qt.application import CApplication
-from comrad.qt.plugin import CToolbarWidgetPlugin, CPluginPosition
-from comrad.qt.rbac import RBACLoginStatus
-from comrad.utils import icon
+from comrad.app.application import CApplication
+from comrad.rbac import RBACLoginStatus
+from comrad.icons import icon
+from comrad.app.plugins.common import CToolbarWidgetPlugin, CPluginPosition
 
 
 logger = logging.getLogger(__name__)
@@ -139,7 +139,8 @@ class RBACButton(QToolButton):
             self.setMenu(None)
             self.clicked.connect(self._app.rbac.logout)
 
-        self.setIcon(icon(icon_name, file_path=os.path.join(os.path.dirname(__file__))))
+        self.setIcon(icon(icon_name))
+
 
 class RBACButtonPlugin(CToolbarWidgetPlugin):
 

@@ -43,10 +43,11 @@ signal.signal(signal.SIGINT, signal.SIG_DFL)
 from _comrad_designer.logging import setup_logging
 setup_logging()
 
-from comrad.qt.pydm_widgets import (PyDMLabel, PyDMCheckbox, PyDMEnumButton, PyDMPushButton, PyDMRelatedDisplayButton,
-                                    PyDMShellCommand, PyDMWaveformTable, PyDMEmbeddedDisplay,
-                                    PyDMTemplateRepeater, PyDMEnumComboBox, PyDMLineEdit, PyDMSlider, PyDMSpinbox,
-                                    PyDMByteIndicator, PyDMImageView, PyDMLogDisplay, PyDMScaleIndicator)
+from comrad.widgets.pydm_widgets import (PyDMLabel, PyDMCheckbox, PyDMEnumButton, PyDMPushButton,
+                                         PyDMRelatedDisplayButton, PyDMShellCommand, PyDMWaveformTable,
+                                         PyDMEmbeddedDisplay, PyDMTemplateRepeater, PyDMEnumComboBox, PyDMLineEdit,
+                                         PyDMSlider, PyDMSpinbox, PyDMByteIndicator, PyDMImageView, PyDMLogDisplay,
+                                         PyDMScaleIndicator)
 from _comrad_designer.utils import qtplugin_factory
 
 

@@ -13,9 +13,10 @@ from qtpy.QtCore import Qt
 from qtpy.QtGui import QColor, QFont
 from qtpy.QtDesigner import QDesignerFormWindowInterface
 from qtpy.uic import loadUi
-from comrad.rules import WidgetRulesMixin, BaseRule, CNumRangeRule, CExpressionRule, unpack_rules
+from comrad.rules import BaseRule, CNumRangeRule, CExpressionRule, unpack_rules
 from comrad.qsci import configure_common_qsci, QSCI_INDENTATION
 from comrad.json import ComRADJSONEncoder, JSONDeserializeError
+from comrad.widgets.mixins import WidgetRulesMixin
 
 
 logger = logging.getLogger(__name__)

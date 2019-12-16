@@ -27,4 +27,4 @@ class Ui_Form(object):
         Form.setWindowTitle(_translate("Form", "Form"))
 
 
-from comrad.qt.pydm_widgets import CLabel
+from comrad.widgets.pydm_widgets import CLabel

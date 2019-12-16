@@ -7,8 +7,8 @@ from pydm.data_plugins.plugin import PyDMPlugin, PyDMConnection
 from qtpy.QtCore import Qt, QObject, Slot, Signal, QVariant
 from typing import Any, Optional, cast, Callable
 from collections import namedtuple
-from comrad.qt.application import CApplication
-from comrad.qt.rbac import RBACLoginStatus, RBACStartupLoginPolicy
+from comrad.rbac import RBACLoginStatus, RBACStartupLoginPolicy
+from comrad.app.application import CApplication
 from comrad.data.jpype import get_user_message, is_security_exception
 
 

@@ -5,8 +5,6 @@ from typing import Optional, List, Dict
 
 logger = logging.getLogger(__name__)
 
-# TODO: Need to properly kill designer on Ctrl+C
-
 
 def run_designer(ccda_env: str,
                  files: Optional[List[str]] = None,

@@ -1,8 +1,8 @@
-from pydm import Display
+from comrad import CDisplay
 from qtpy.QtWidgets import QHBoxLayout, QLabel
 
 
-class SecondaryDisplay(Display):
+class SecondaryDisplay(CDisplay):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

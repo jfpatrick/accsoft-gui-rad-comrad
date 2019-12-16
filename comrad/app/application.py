@@ -10,11 +10,11 @@ from .main_window import CMainWindow  # This has to be above PyDMApplication to 
 from pydm.application import PyDMApplication
 from pydm.utilities import path_info, which
 from pydm.data_plugins import is_read_only
-from comrad.utils import icon
-from .rbac import RBACState
-from .frame_plugins import load_plugins_from_path
-from .plugin import (CToolbarActionPlugin, CActionPlugin, CToolbarWidgetPlugin, CPositionalPlugin, CToolbarID,
-                     CPluginPosition, CPlugin, CMenuBarPlugin, CStatusBarPlugin, CToolbarPlugin)
+from comrad.icons import icon
+from comrad.rbac import RBACState
+from .plugins.common import (load_plugins_from_path, CToolbarActionPlugin, CActionPlugin, CToolbarWidgetPlugin,
+                             CPositionalPlugin, CToolbarID, CPluginPosition, CPlugin, CMenuBarPlugin, CStatusBarPlugin,
+                             CToolbarPlugin)
 
 
 logger = logging.getLogger(__name__)
@@ -110,7 +110,7 @@ class CApplication(PyDMApplication):
                          fullscreen=fullscreen)
         self.main_window: CMainWindow = self.main_window  # Just to make code completion work
         self._plugins_menu: Optional[QMenu] = None
-        self.setWindowIcon(icon('app', file_path=__file__))
+        self.setWindowIcon(icon('app'))
 
         # Useful for subprocesses
         self._stylesheet_path = stylesheet_path
@@ -429,7 +429,7 @@ class CApplication(PyDMApplication):
                       shipped_plugin_path: str,
                       base_type: Type = CPlugin) -> Dict[str, Type]:
 
-        all_plugin_paths = os.path.join(os.path.dirname(__file__), shipped_plugin_path)
+        all_plugin_paths = os.path.join(os.path.dirname(__file__), 'plugins', shipped_plugin_path)
 
         if cmd_line_paths:
             all_plugin_paths = f'{cmd_line_paths}:{all_plugin_paths}'

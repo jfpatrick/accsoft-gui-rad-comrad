@@ -78,12 +78,12 @@
   <customwidget>
    <class>CPushButton</class>
    <extends>PyDMPushButton</extends>
-   <header>comrad.qt.pydm_widgets</header>
+   <header>comrad.widgets.pydm_widgets</header>
   </customwidget>
   <customwidget>
    <class>CLabel</class>
    <extends>PyDMLabel</extends>
-   <header>comrad.qt.pydm_widgets</header>
+   <header>comrad.widgets.pydm_widgets</header>
   </customwidget>
  </customwidgets>
  <resources/>

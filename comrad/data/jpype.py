@@ -1,5 +1,6 @@
 from typing import Any
 
+
 def get_java_exc(jpype_exc: Any) -> Any:
     """
     Extracts instance of the Java exception from the wrapper.

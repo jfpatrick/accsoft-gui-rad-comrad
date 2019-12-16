@@ -22,30 +22,17 @@ from pydm.widgets.enum_button import PyDMEnumButton
 from pydm.widgets.enum_combo_box import PyDMEnumComboBox
 from pydm.widgets.byte import PyDMByteIndicator
 from pydm.widgets.checkbox import PyDMCheckbox
+from pydm import Display as PyDMDisplay
 # from pydm import data_plugins
 # from pydm.widgets.tab_bar import PyDMTabWidget
 from qtpy.QtWidgets import QWidget
 from qtpy.QtCore import Slot, Property
 from qtpy.QtGui import QIcon
-from comrad.rules import ColorRulesMixin, WidgetRulesMixin
-from .widgets.mixins import HideUnusedFeaturesMixin, NoPVTextFormatterMixin
-from .value_transform import ValueTransformerMixin
+from .mixins import (HideUnusedFeaturesMixin, NoPVTextFormatterMixin, CustomizedTooltipMixin,
+                     ValueTransformerMixin, ColorRulesMixin, WidgetRulesMixin)
 
 
 logger = logging.getLogger(__name__)
-
-
-class CustomizedTooltipMixin:
-    """Mixin that customizes the message passed into the tooltip."""
-
-    def setToolTip(self, tooltip: str):
-        """
-        Re-implements Qt method to look for specific keywords and replace them.
-
-        Args:
-            tooltip:  widget's tooltip.
-        """
-        super().setToolTip(tooltip.replace('PyDM', 'ComRAD').replace('PV ', 'Device Property '))
 
 
 class CWaveFormTable(WidgetRulesMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMWaveformTable):
@@ -514,7 +501,17 @@ class CTemplateRepeater(PyDMTemplateRepeater):
         super().__init__(parent=parent, **kwargs)
 
 
+# We can't subclass PyDMDisplay at this point, because load_py_file will try to look for any PyDMDisplay subclasses and
+# load them which will break the logic when constructing displays in code, because more than one subclass will be found
+# by the loader (CDisplay and user-defined subclass).
+CDisplay = PyDMDisplay
+"""Display is your dashboard and/or window unit.
+
+Displays are the widgets that get integrated inside runtime application and can occupy the whole window, or
+be integrated inside another display using CEmbeddedDisplay.
+"""
+
+
 # TODO: Do we need this widget?
 # class CTabWidget(PyDMTabWidget):
 #     pass
-

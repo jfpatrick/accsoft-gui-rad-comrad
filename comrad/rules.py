@@ -8,14 +8,13 @@ from enum import IntEnum, Enum
 from abc import ABCMeta
 from qtpy.QtWidgets import QWidget
 from qtpy.QtCore import QMutexLocker, Property
-from pydm.widgets.rules import RulesEngine as PyDMRulesEngine, RulesDispatcher
+from pydm.widgets.rules import RulesEngine as PyDMRulesEngine
 from pydm.widgets.channel import PyDMChannel
-from pydm.widgets.base import PyDMWidget
 from pydm.data_plugins import plugin_for_address
 from pydm.data_plugins.plugin import PyDMPlugin, PyDMConnection
 from pydm.utilities import is_qt_designer
 from pydm import config
-from comrad.json import JSONSerializable, ComRADJSONEncoder, JSONDeserializeError
+from comrad.json import JSONSerializable, JSONDeserializeError
 from .monkey import modify_in_place, MonkeyPatchedClass
 
 
@@ -368,102 +367,6 @@ class CChannelException(Exception):
     pass
 
 
-class WidgetRulesMixin:
-    """
-    Common rules mixin for all ComRAD widgets that limits the amount of properties for our widgets
-    and ensures the synchronization between channel setter and rules setter regardless of the order.
-    """
-
-    DEFAULT_RULE_PROPERTY = 'Visibility'
-    """Default rule property visible in the dialog."""
-
-    RULE_PROPERTIES = {
-        BaseRule.Property.ENABLED.value: ['setEnabled', bool],
-        BaseRule.Property.VISIBILITY.value: ['setVisible', bool],
-        BaseRule.Property.OPACITY.value: ['set_opacity', float],
-    }
-    """All available rule properties with associated callbacks and data types."""
-
-    def default_rule_channel(self) -> str:
-        """
-        Default channel to be used in the rule evaluation.
-
-        Returns:
-            Address of the channel.
-        """
-        try:
-            return PyDMWidget.channel.fget(self)  # cast(PyDMWidget, self).channel
-        except AttributeError:
-            raise AttributeError(f'Rule is not supposed to be used with {type(self).__name__}, as it does not have a'
-                                 f' default channel.')
-
-    # We override the following setters to ensure that when unpacked from Designer file
-    # the order of reading out these properties does not impact how they are processed.
-    @PyDMWidget.channel.setter
-    def channel(self, value: str):
-        PyDMWidget.channel.fset(self, value)
-        # Reset the rules once again (the inner data structure should have been reset, that
-        # setter logic works again
-        if value is not None:
-            base = cast(PyDMWidget, self)
-            rules = base._rules
-            base._rules = None
-            base.rules = rules
-
-    def _get_custom_rules(self) -> List[BaseRule]:
-        rules = cast(PyDMWidget, self)._rules
-        if is_qt_designer():
-            return json.dumps(rules, cls=ComRADJSONEncoder)
-        return rules
-
-    def _set_custom_rules(self, new_rules: Union[str, List[BaseRule], None]):
-        if isinstance(new_rules, str):
-            try:
-                new_rules = unpack_rules(new_rules)
-            except (json.JSONDecodeError, JSONDeserializeError) as e:
-                logger.exception(f'Invalid JSON format for rules: {str(e)}')
-                return
-        cast(PyDMWidget, self)._rules = new_rules
-        if new_rules is None:
-            return
-        try:
-            RulesDispatcher().register(widget=self, rules=new_rules)
-        except CChannelException:
-            logger.debug(f'Rules setting failed. We do not have the channel yet, will have to be repeated')
-            # Set internal data structure without activating property setter behavior
-            cast(PyDMWidget, self)._rules = new_rules
-
-    rules: List[BaseRule] = Property(type=str, fget=_get_custom_rules, fset=_set_custom_rules, designable=False)
-    """
-    This property will appear as a list of object oriented rules when used programmatically.
-
-    However, it is converted into JSON-encoded string when used from Qt Designer, because Qt Designer
-    cannot understand custom object format.
-    """
-
-
-class ColorRulesMixin(WidgetRulesMixin):
-
-    RULE_PROPERTIES = dict(**{BaseRule.Property.COLOR.value: ['set_color', str]},
-                           **WidgetRulesMixin.RULE_PROPERTIES)
-
-    def __init__(self):
-        self._color = None
-
-    def color(self) -> str:
-        """
-        Hexadecimal color in #XXXXXX format.
-
-        Returns:
-            color
-        """
-        return self._color
-
-    def set_color(self, val: str):
-        """ Set new color. Val is assumed to be #XXXXXX string here. """
-        self._color = val
-
-
 @modify_in_place
 class _RulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
 
@@ -572,6 +475,7 @@ class _RulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
             # except Exception as e:
             #     logger.exception(f'Error while evaluating Rule: {e}')
         elif isinstance(rule, CNumRangeRule):
+            from comrad.widgets.mixins import WidgetRulesMixin
             _, base_type = cast(WidgetRulesMixin, widget_ref()).RULE_PROPERTIES[rule.prop]
             val = float(job_unit['values'][0])
             for range in rule.ranges:

@@ -2,6 +2,8 @@ _BOOTSTRAP_RAN: bool = False
 
 
 def setup_logging():
+    """Sets the logging in Qt Designer according to the level passed in the environment variable."""
+
     global _BOOTSTRAP_RAN
     if not _BOOTSTRAP_RAN:
         _BOOTSTRAP_RAN = True

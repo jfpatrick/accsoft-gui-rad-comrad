@@ -84,12 +84,12 @@
   <customwidget>
    <class>CScrollingPlot</class>
    <extends>QGraphicsView</extends>
-   <header>comrad.qt.cern_widgets.graph</header>
+   <header>comrad.widgets.graphs</header>
   </customwidget>
   <customwidget>
    <class>CSlidingPlot</class>
    <extends>QGraphicsView</extends>
-   <header>comrad.qt.cern_widgets.graph</header>
+   <header>comrad.widgets.graphs</header>
   </customwidget>
  </customwidgets>
  <resources/>

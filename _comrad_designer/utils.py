@@ -35,6 +35,7 @@ def qtplugin_factory(cls: Type,
         __doc__ = 'ComRAD Designer plugin for {}'.format(cls.__name__)
 
         def __init__(self):
+            """ComRAD Designer widget plugin wrapper."""
             super(Plugin, self).__init__(cls, is_container, group, extensions)
             self._icon = icon
 

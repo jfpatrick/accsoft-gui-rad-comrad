@@ -4,8 +4,7 @@ from pydm.widgets.base import PyDMWritableWidget
 from qtpy.QtWidgets import QWidget, QPushButton
 from qtpy.QtGui import QIcon
 from qtpy.QtCore import Signal
-from comrad.qt.pydm_widgets import CustomizedTooltipMixin
-from .mixins import HideUnusedFeaturesMixin
+from .mixins import HideUnusedFeaturesMixin, CustomizedTooltipMixin
 
 
 logger = logging.getLogger(__name__)
