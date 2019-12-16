@@ -15,13 +15,22 @@ logger = logging.getLogger(__name__)
 
 
 class RBACDialogWidget(QWidget):
-    """Dialog seen when user presses the RBAC button."""
 
     login_by_location = Signal()
-    login_by_username = Signal(str, str)
+    """Is emitted when user desires to login by location."""
 
-    def __init__(self, app: CApplication, parent: Optional[QWidget] = None, *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
+    login_by_username = Signal(str, str)
+    """Is emitted when user attempts to use username/password pair to login."""
+
+    def __init__(self, app: CApplication, parent: Optional[QWidget] = None):
+        """
+        Dialog seen when user presses the RBAC button.
+
+        Args:
+            app: Reference to the application instance.
+            parent: Parent widget to own this object.
+        """
+        super().__init__(parent)
 
         # For IDE support, assign types to dynamically created items from the *.ui file
         self.loc_btn: QPushButton = None
@@ -89,21 +98,11 @@ class RBACDialogWidget(QWidget):
             self.loc_error.hide()
 
 
-class RBACDialog(QDialog):
-
-    def __init__(self, parent: Optional[QWidget] = None, *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
-        layout = QVBoxLayout()
-        layout.addWidget(RBACDialogWidget())
-        self.setLayout(layout)
-
-
 class RBACButton(QToolButton):
 
     def __init__(self, parent: Optional[QWidget] = None, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self._app = cast(CApplication, CApplication.instance())
-        self._dialog: Optional[RBACDialog] = None
         self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         self.setPopupMode(QToolButton.InstantPopup)
         self._menu = QMenu(self)
