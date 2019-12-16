@@ -84,15 +84,19 @@ class _JapcService(QObject, pyjapc.PyJapc):
         logger.debug(f'Attempting RBAC login by location')
         self.rbacLogin(on_exception=self._login_err)
         if self._logged_in:
-            self._app.rbac.user = self.rbacGetToken().getUser().getName()  # FIXME: This is Java call. We need to abstract it into PyRBAC
-            self._app.rbac.status = RBACLoginStatus.LOGGED_IN_BY_LOCATION
+            token = self.rbacGetToken()
+            if token:
+                self._app.rbac.user = token.getUser().getName()  # FIXME: This is Java call. We need to abstract it into PyRBAC
+                self._app.rbac.status = RBACLoginStatus.LOGGED_IN_BY_LOCATION
 
     def login_by_credentials(self, username: str, password: str):
         logger.debug(f'Attempting RBAC login with credentials')
         self.rbacLogin(username=username, password=password, on_exception=self._login_err)
         if self._logged_in:
-            self._app.rbac.user = self.rbacGetToken().getUser().getName()  # FIXME: This is Java call. We need to abstract it into PyRBAC
-            self._app.rbac.status = RBACLoginStatus.LOGGED_IN_BY_CREDENTIALS
+            token = self.rbacGetToken()
+            if token:
+                self._app.rbac.user = token.getUser().getName()  # FIXME: This is Java call. We need to abstract it into PyRBAC
+                self._app.rbac.status = RBACLoginStatus.LOGGED_IN_BY_CREDENTIALS
 
     @property
     def logged_in(self):

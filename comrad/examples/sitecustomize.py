@@ -13,7 +13,7 @@ def _replace_pyjapc(generator_path):
     system_func = getattr(mod, function_name)
 
     from papc.interfaces.pyjapc import SimulatedPyJapc
-    return SimulatedPyJapc.from_simulation_factory(system_func)
+    return SimulatedPyJapc.from_simulation_factory(system_func, strict=False)
 
 
 _GENERATOR_PATH = os.environ.get('PYJAPC_SIMULATION_INIT', None)
