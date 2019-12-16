@@ -30,10 +30,10 @@ class CPushButton(WidgetRulesMixin, CustomizedTooltipMixin, InitializedMixin, Hi
         This type is meant to hold a specific value, and send that value
         to a channel when it is clicked. It works in two different modes of operation:
 
-            1. A fixed value can be given to the :attr:`.pressValue` attribute. Whenever the
+            1. A fixed value can be given to the :attr:`.press_value` attribute. Whenever the
                button is clicked a signal containing this value will be sent to the connected channel.
                This is the default behavior of the button.
-            2. However, if the :attr:`.relativeChange` is set to ``True``, the fixed value will be added
+            2. However, if the :attr:`.relative` is set to ``True``, the fixed value will be added
                to the current value of the channel. This means that the button will increment a channel by
                a fixed amount with every click, a consistent relative move.
 
@@ -57,7 +57,7 @@ class CPushButton(WidgetRulesMixin, CustomizedTooltipMixin, InitializedMixin, Hi
                                 relative=relative,
                                 init_channel=init_channel,
                                 **kwargs)
-        self.widget_initialized = True
+        self._widget_initialized = True
 
     def init_for_designer(self):
         super().init_for_designer()
@@ -68,7 +68,7 @@ class CRelatedDisplayButton(PyDMRelatedDisplayButton):
 
     def __init__(self, parent: Optional[QWidget] = None, filename: Optional[str] = None, **kwargs):
         """
-        A :class:`qtpy.QPushButton` capable of opening a new :class:`pydm.Display` at the same of at a new window.
+        A :class:`qtpy.QPushButton` capable of opening a new :class:`comrad.CDisplay` at the same of at a new window.
 
         Args:
             parent: The parent widget for the button.
@@ -115,7 +115,7 @@ class CEnumButton(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixi
         HideUnusedFeaturesMixin.__init__(self)
         PyDMEnumButton.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
-        self.widget_initialized = True
+        self._widget_initialized = True
 
     def init_for_designer(self):
         super().init_for_designer()
@@ -152,7 +152,7 @@ class CCommandButton(CustomizedTooltipMixin, QPushButton, InitializedMixin, Hide
         InitializedMixin.__init__(self)
         HideUnusedFeaturesMixin.__init__(self)
         PyDMWritableWidget.__init__(self, init_channel=init_channel)
-        self.widget_initialized = True
+        self._widget_initialized = True
         self.clicked.connect(self._send_cmd)
 
     channelValueChanged = None  # Prevent widget from subscribing
@@ -204,7 +204,7 @@ class CCommandButton(CustomizedTooltipMixin, QPushButton, InitializedMixin, Hide
 #                                 init_channel=init_channel,
 #                                 **kwargs)
 #         super().setCheckable(True)
-#         self.widget_initialized = True
+#         self._widget_initialized = True
 #         self._unchecked_text: str = self.text
 #         self._checked_text: str = self.text
 #         self.toggled.connect(self._on_checked)

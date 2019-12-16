@@ -454,11 +454,11 @@ class CApplication(PyDMApplication):
                                       base_type=base_type)
 
     @staticmethod
-    def _filter_enabled_plugins(plugins: Iterable[Type],
+    def _filter_enabled_plugins(plugins: Iterable[Type[CPlugin]],
                                 whitelist: Optional[Iterable[str]],
                                 blacklist: Optional[Iterable[str]]):
 
-        def extract_type_attr(plugin_class: Type, attr_name: str):
+        def extract_type_attr(plugin_class: Type[CPlugin], attr_name: str):
             val = getattr(plugin_class, attr_name, None)
             if val is None or (not isinstance(val, bool) and not val):
                 # Allow False, but do not allow empty strings, lists, etc
@@ -484,11 +484,3 @@ class CApplication(PyDMApplication):
             if not is_enabled:
                 continue
             yield plugin_id, plugin_type
-
-
-class CAction(QAction):
-
-    def __init__(self, parent: Optional[QObject], *args, plugin: CActionPlugin, **kwargs):
-        super().__init__(parent, *args, **kwargs)
-        # To keep the plugin object alive
-        self._plugin = plugin

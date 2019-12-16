@@ -12,10 +12,12 @@ _T = TypeVar('_T', bound='JSONSerializable')
 
 
 class JSONDeserializeError(ValueError):
+    """Custom error when JSON deserialization fails (not due to bad JSON syntax but rather unexpected composition)."""
     pass
 
 
 class JSONSerializable(metaclass=ABCMeta):
+    """Instances of this class are able to be serialized into JSON string and also deserialized from it."""
 
     @classmethod
     @abstractmethod
@@ -46,6 +48,10 @@ class JSONSerializable(metaclass=ABCMeta):
 
 
 class ComRADJSONEncoder(JSONEncoder):
+    """
+    Custom encoder that detects :class:`JSONSerializable` objects and
+    serializes them to JSON string appropriately.
+    """
 
     def default(self, o: object) -> Dict[str, Any]:
         if isinstance(o, JSONSerializable):

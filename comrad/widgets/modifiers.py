@@ -49,7 +49,7 @@ class CValueAggregator(QWidget, InitializedMixin, HideUnusedFeaturesMixin, PyDMW
         HideUnusedFeaturesMixin.__init__(self)
         PyDMWidget.__init__(self)
         ValueTransformationBase.__init__(self)
-        self.widget_initialized = True
+        self._widget_initialized = True
         self._channel_ids: List[str] = []
         self._active: bool = True
         # This type defines how often an update is fired and when cached values get overwritten
@@ -73,7 +73,7 @@ class CValueAggregator(QWidget, InitializedMixin, HideUnusedFeaturesMixin, PyDMW
     @Property('QStringList')
     def inputChannels(self) -> List[str]:
         """
-        This property exposes PyDMWidget channels that we use as input primarily.
+        This property exposes :class:`pydm.widgets.base.PyDMWidget` channels that we use as input primarily.
 
         Returns:
             List of PyDMChannel objects.
@@ -129,7 +129,7 @@ class CValueAggregator(QWidget, InitializedMixin, HideUnusedFeaturesMixin, PyDMW
     @Slot(np.ndarray)
     def channelValueChanged(self, new_val: Any):
         """
-        Callback when a new value arrives on any of the inputChannels.
+        Callback when a new value arrives on any of the :meth:`inputChannels`.
 
         Args:
             new_val: New value.

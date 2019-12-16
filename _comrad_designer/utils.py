@@ -4,13 +4,14 @@ Utilities for Qt Designer intergation.
 
 from typing import Type, List, Optional
 from qtpy.QtGui import QIcon
+from qtpy.QtWidgets import QWidget
 from pydm.widgets.qtplugin_extensions import RulesExtension
 from pydm.widgets.qtplugin_base import PyDMDesignerPlugin
 
 
-def qtplugin_factory(cls: Type,
+def qtplugin_factory(cls: Type[QWidget],
                      is_container: bool = False,
-                     icon: QIcon = None,
+                     icon: Optional[QIcon] = None,
                      group: str = 'ComRAD Widgets',
                      extensions: Optional[List[RulesExtension]] = None):
     """
@@ -24,6 +25,7 @@ def qtplugin_factory(cls: Type,
     Args:
         cls: Widget class.
         is_container: Is a container type of a widget.
+        icon: Icon as visible in the Widget Box and Object Inspector.
         group: Category of the Widget Box, where the widget should be placed.
         extensions: Extra extensions to apply to a widget.
 
@@ -36,7 +38,7 @@ def qtplugin_factory(cls: Type,
 
         def __init__(self):
             """ComRAD Designer widget plugin wrapper."""
-            super(Plugin, self).__init__(cls, is_container, group, extensions)
+            super().__init__(cls=cls, is_container=is_container, group=group, extensions=extensions)
             self._icon = icon
 
         def icon(self):

@@ -54,6 +54,7 @@ class CMainWindow(PyDMMainWindow, MonkeyPatchedClass):
         self.setWindowTitle(title)
 
     def show_about_window(self, _):
+        """Overridden method to shows custom ComRAD About dialog."""
         AboutDialog(self).show()
 
     def edit_in_designer(self, _):

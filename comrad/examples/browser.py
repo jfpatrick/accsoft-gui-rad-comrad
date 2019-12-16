@@ -44,10 +44,18 @@ PathLike = Union[os.PathLike, str]
 
 
 class ExamplesWindow(QMainWindow):
-    """Main window of the examples launcher."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self,
+                 parent: Optional[QWidget] = None,
+                 flags: Union[Qt.WindowFlags, Qt.WindowType] = Qt.WindowFlags()):
+        """
+        Main window of the examples launcher.
+
+        Args:
+            parent: Parent widget to hold this object.
+            flags: Configuration flags to be passed to Qt.
+        """
+        super().__init__(parent, flags)
 
         # For IDE support, assign types to dynamically created items from the *.ui file
         self.example_details: QStackedWidget = None
@@ -409,12 +417,19 @@ class ExamplesWindow(QMainWindow):
 
 
 class DesignerTab(QWidget):
-    """Page for the Qt Designer view in the example details."""
 
     designer_opened = Signal([str])
+    '''Fired when "Open in Designer" button is pressed.'''
 
-    def __init__(self, file_path: PathLike, parent: Optional[QWidget] = None, *args):
-        super().__init__(parent, *args)
+    def __init__(self, file_path: PathLike, parent: Optional[QWidget] = None):
+        """
+        Page for the Qt Designer view in the example details.
+
+        Args:
+            file_path: Path to the designer file.
+            parent: Parent widget to hold this object.
+        """
+        super().__init__(parent)
         self._file_path = file_path
         self.designer_btn: Optional[QPushButton] = None
 
@@ -423,7 +438,6 @@ class DesignerTab(QWidget):
         self.designer_opened.emit(self._file_path)
 
     def showEvent(self, event: QShowEvent) -> None:
-        """Creates code editor when shown for the first time."""
         super().showEvent(event)
 
         if self.designer_btn is not None:
@@ -435,16 +449,23 @@ class DesignerTab(QWidget):
 
 
 class EditorTab(QWidget):
-    """Page for the text file editor in the example details."""
 
-    def __init__(self, file_path: PathLike, file_type: str, parent: Optional[QWidget] = None, *args):
-        super().__init__(parent, *args)
+    def __init__(self, file_path: PathLike, file_type: str, parent: Optional[QWidget] = None):
+        """
+        Page for the text file editor in the example details.
+
+        Args:
+            file_path: Path to the text file.
+            file_type: Type of the file to configure appropriate lexer.
+            parent: Parent widget to hold this object.
+        """
+        super().__init__(parent)
         self._file_path = file_path
         self._file_type = file_type
         self.code_viewer: Optional[QAbstractScrollArea] = None
 
     def showEvent(self, event: QShowEvent) -> None:
-        """Creates code editor when shown for the first time."""
+        # Creates code editor when shown for the first time.
         super().showEvent(event)
 
         # Not a first show event
@@ -490,7 +511,7 @@ def run_browser(_: argparse.Namespace):
     """Runs the examples browser with the given command-line arguments.
 
     Args:
-        args: parsed command line arguments
+        _: parsed command line arguments
     """
     import sys
     app_args = ['ComRAD examples']

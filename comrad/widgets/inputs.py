@@ -26,7 +26,7 @@ class CCheckBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin,
         HideUnusedFeaturesMixin.__init__(self)
         PyDMCheckbox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
-        self.widget_initialized = True
+        self._widget_initialized = True
 
     def init_for_designer(self):
         super().init_for_designer()
@@ -56,7 +56,7 @@ class CEnumComboBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMi
         HideUnusedFeaturesMixin.__init__(self)
         PyDMEnumComboBox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
-        self.widget_initialized = True
+        self._widget_initialized = True
 
 
 class CLineEdit(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, InitializedMixin, HideUnusedFeaturesMixin, NoPVTextFormatterMixin, PyDMLineEdit):
@@ -80,7 +80,7 @@ class CLineEdit(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, 
         NoPVTextFormatterMixin.__init__(self)
         PyDMLineEdit.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
-        self.widget_initialized = True
+        self._widget_initialized = True
 
     def set_color(self, val: str):
         """Overridden method of :class:`ColorRulesMixin`.
@@ -110,7 +110,7 @@ class CSlider(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, I
         NoPVTextFormatterMixin.__init__(self)
         PyDMSlider.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
-        self.widget_initialized = True
+        self._widget_initialized = True
 
 
 class CSpinBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, InitializedMixin, HideUnusedFeaturesMixin, NoPVTextFormatterMixin, PyDMSpinbox):
@@ -131,4 +131,4 @@ class CSpinBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, 
         NoPVTextFormatterMixin.__init__(self)
         PyDMSpinbox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
-        self.widget_initialized = True
+        self._widget_initialized = True

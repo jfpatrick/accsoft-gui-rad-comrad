@@ -63,6 +63,7 @@ class CActionPlugin(CPlugin, metaclass=abc.ABCMeta):
 
 @unique
 class CToolbarID(Enum):
+    """Enum to identify predefined toolbar items that already exist in ComRAD by default."""
 
     SEPARATOR = 'comrad.sep'
     "Toolbar separator"
@@ -137,14 +138,9 @@ class CStatusBarPlugin(CWidgetPlugin, metaclass=abc.ABCMeta):
     defined by `position` property."""
 
 
-def load_plugins_from_path(locations: List[str], token: str, base_type: Type = CPlugin):
+def load_plugins_from_path(locations: List[str], token: str, base_type: Type[CPlugin] = CPlugin):
     """
     Load plugins from file locations that match a specific token.
-
-    Returns
-    -------
-    plugins: dict
-        D
 
     Args:
         locations: list of file locations.

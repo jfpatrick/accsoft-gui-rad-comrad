@@ -32,7 +32,7 @@ class CLabel(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, Ini
         NoPVTextFormatterMixin.__init__(self)
         PyDMLabel.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
-        self.widget_initialized = True
+        self._widget_initialized = True
 
     def init_for_designer(self):
         super().init_for_designer()
@@ -86,7 +86,7 @@ class CByteIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipM
         HideUnusedFeaturesMixin.__init__(self)
         PyDMByteIndicator.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
-        self.widget_initialized = True
+        self._widget_initialized = True
 
     @Slot(list)
     @Slot(bool)
@@ -144,4 +144,4 @@ class CScaleIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltip
         NoPVTextFormatterMixin.__init__(self)
         PyDMScaleIndicator.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
-        self.widget_initialized = True
+        self._widget_initialized = True

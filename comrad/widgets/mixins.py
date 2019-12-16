@@ -19,7 +19,7 @@ class InitializedMixin:
 
     def __init__(self):
         """Simple mixin to set a flag when __init__ method has finished the sequence."""
-        self.widget_initialized = False
+        self._widget_initialized = False
 
 
 def superclass_deprecated(method: MethodType):
@@ -38,7 +38,7 @@ def superclass_deprecated(method: MethodType):
             if not isinstance(self, InitializedMixin):
                 raise TypeError(f'This decorator is intended to be used with InitializedMixin. {type(self).__name__} is not recognized as one.')
             widget = cast(InitializedMixin, self)
-            if not widget.widget_initialized:
+            if not widget._widget_initialized:
                 # Ignore setting properties in __init__, which may come from PyDM superclasses
                 return
             name = cast(QWidget, self).objectName()
@@ -73,7 +73,10 @@ class HideUnusedFeaturesMixin:
 
 
 class NoPVTextFormatterMixin:
-    """Mixin that hides PyDM properties in TextFormatter that are exposed to Qt Designer and ar enot used in ComRAD."""
+    """
+    Mixin that hides PyDM properties in :class:`pydm.widgets.base.TextFormatter` that are exposed to
+    Qt Designer and are not used in ComRAD.
+    """
 
     @Property(bool, designable=False)
     def precisionFromPV(self) -> bool:
@@ -96,7 +99,7 @@ class NoPVTextFormatterMixin:
 
 
 class CustomizedTooltipMixin:
-    """Mixin that customizes the message passed into the tooltip."""
+    """Mixin that customizes the message passed into the :meth:`qtpy.QWidget.tooltip()`."""
 
     def setToolTip(self, tooltip: str):
         """
@@ -127,8 +130,8 @@ class ValueTransformerMixin(ValueTransformationBase):
 
     def value_changed(self, new_val: Any) -> None:
         """
-        Callback transforms the Channel value through the valueTransformation code before displaying it in a
-        standard way.
+        Callback transforms the Channel value through the :attr:`ValueTransformationBase.valueTransformation`
+        code before displaying it in a standard way.
 
         Args:
             new_val: The new value from the channel. The type depends on the channel.

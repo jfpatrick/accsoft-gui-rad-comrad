@@ -22,12 +22,19 @@ from comrad.widgets.mixins import WidgetRulesMixin
 logger = logging.getLogger(__name__)
 
 
-class NewRulesEditor(QDialog):
+class RulesEditor(QDialog):
 
     TAB_DECLARATIVE_VIEW: int = 0
     TAB_SOURCE_VIEW: int = 1
 
     def __init__(self, widget: Union[QWidget, WidgetRulesMixin], parent: Optional[QWidget] = None):
+        """
+        Editor dialog for rules in Qt Designer.
+
+        Args:
+            widget: The widget that holds the rules to be edited.
+            parent: Parent owner to hold the reference to the dialog object.
+        """
         super().__init__(parent)
 
         self.rules_add_btn: QPushButton = None
@@ -129,7 +136,6 @@ class NewRulesEditor(QDialog):
         self._source_valid = True
 
     def _add_range(self):
-        """Add a new empty range to the table."""
         try:
             rule = cast(CNumRangeRule, self._get_current_rule())
         except IndexError:
@@ -148,7 +154,6 @@ class NewRulesEditor(QDialog):
         self._loading_data = False
 
     def _del_range(self):
-        """Delete the selected channel at the table."""
         items = self.range_table.selectionModel().selectedRows(0)
         if len(items) == 0:
             return
@@ -169,7 +174,6 @@ class NewRulesEditor(QDialog):
             self.range_table.removeRow(row)
 
     def _add_rule(self):
-        """Add a new rule to the list of rules."""
         default_name = 'New Rule'
         default_prop = self._widget.DEFAULT_RULE_PROPERTY
         _, prop_type = self._widget.RULE_PROPERTIES[self._widget.DEFAULT_RULE_PROPERTY]
@@ -185,7 +189,6 @@ class NewRulesEditor(QDialog):
         self.rule_name_edit.setFocus()
 
     def _del_rule(self):
-        """Delete the rule selected in the rules list."""
         idx = self._get_current_index()
         if idx < 0:
             return
@@ -203,8 +206,6 @@ class NewRulesEditor(QDialog):
             self._clear_form()
 
     def _name_changed(self):
-        """Callback executed when the rule name is changed."""
-
         if not self._current_rule_item:
             # We may have blurred focus by this time already. Avoid crash
             return
@@ -263,8 +264,6 @@ class NewRulesEditor(QDialog):
         self.details_frame.setEnabled(True)
 
     def _save_changes(self):
-        """Save the new rules at the widget `rules` property."""
-
         if self._get_current_index() != -1:
             if (isinstance(self._get_current_rule(), CNumRangeRule)
                     and self.range_tabs.currentIndex() == self.TAB_SOURCE_VIEW
@@ -289,7 +288,6 @@ class NewRulesEditor(QDialog):
         self.accept()
 
     def _property_changed(self):
-        """Callback executed when the property is selected."""
         try:
             text = self.prop_combobox.currentText()
             _, prop_type = self.prop_combobox.currentData()
@@ -348,12 +346,6 @@ class NewRulesEditor(QDialog):
 
 
     def _get_current_index(self) -> int:
-        """
-        Calculate and return the selected index from the list of rules.
-
-        Returns:
-            The index selected at the list of rules or -1 in case the item does not exist.
-        """
         if self._current_rule_item is None:
             return -1
         return self.rules_list_widget.indexFromItem(self._current_rule_item).row()

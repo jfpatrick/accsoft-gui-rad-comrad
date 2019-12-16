@@ -9,36 +9,46 @@ COMRAD_DESCRIPTION = \
   applications for operators of CERN accelerators and machine design
   experts. It offers a set of tools to develop and run applications
   without the need to be an expert in software engineering domain.'''
+"""Description of ComRAD framework to be presented in help messages and about dialogs."""
 
 
 COMRAD_AUTHOR = 'Ivan Sinkarenko <ivan.sinkarenko@cern.ch>'
+"""Support contact information to be presented in help messages and about dialogs."""
 
 
 COMRAD_VERSION = get_comrad_versions()['version']
+"""ComRAD framework version to be presented in help messages and about dialogs."""
 
 
 class AccPyEnv(NamedTuple):
     """Tuple that accumulates versions of the Acc-py environment."""
-    py: str
-    pyqt: str
+    py: str  # Version of Python distribution.
+    pyqt: str  # Version of Python distribution.
 
 
 class Versions(NamedTuple):
     """Tuple that accumulates versions of the most important dependencies."""
-    comrad: str
-    widgets: str
-    cmmn_build: str
-    pyjapc: str
-    pydm: str
-    np: str
-    pg: str
-    python: str
-    pyqt: str
-    qt: str
-    accpy: Optional[AccPyEnv] = None
+    comrad: str  # Version of ComRAD framework.
+    widgets: str  # Version of Acc-Py widget library.
+    cmmn_build: str  # Version of cmmn_build_dep_manager
+    pyjapc: str  # Version of PyJAPC library
+    pydm: str  # Version of PyDM framework
+    np: str  # Version of NumPy library
+    pg: str  # Version of PyQtGraph library
+    python: str  # Version of Python interpreter
+    pyqt: str  # Version of PyQt bindings
+    qt: str  # Version of Qt framework
+    accpy: Optional[AccPyEnv] = None  # Acc-Py-related version
 
 
 def get_versions_info() -> Versions:
+    """
+    Retrieve the versions of the framework and its dependencies.
+
+    Returns:
+        Versions tuple.
+    """
+
     import numpy as np
     import pydm
     import pyqtgraph as pg
@@ -89,3 +99,4 @@ CCDA_MAP: Dict[str, str] = {
     'DEV': 'https://ccda-dev.cern.ch:8906/api',
     'DEV2': 'https://ccda-dev.cern.ch:8907/api',
 }
+"""Mapping between predefined CMW environments and corresponding CCDA endpoints."""

@@ -19,7 +19,7 @@ class CEmbeddedDisplay(PyDMEmbeddedDisplay):
 
     def __init__(self, parent: Optional[QWidget] = None, **kwargs):
         """
-        A :class:`qtpy.QFrame` capable of rendering a Display.
+        A :class:`qtpy.QFrame` capable of rendering a :class:`comrad.CDisplay`.
 
         Args:
             parent: The parent widget for the display.
@@ -40,7 +40,7 @@ class CTemplateRepeater(PyDMTemplateRepeater):
         It can be very convenient if you have displays that repeat the same set of
         widgets over and over - for instance, if you have a standard set of
         controls for a magnet, and want to build a display with a list of controls
-        for every magnet, the Template Repeater lets you do that with a minimum
+        for every magnet, the :class:`CTemplateRepeater` lets you do that with a minimum
         amount of work: just build a template for a single magnet, and a JSON list
         with the data that describes all of the magnets.
 

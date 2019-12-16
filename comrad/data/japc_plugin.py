@@ -23,6 +23,7 @@ cern = jpype.JPackage('cern')
 # from pydm.widgets.channel import PyDMChannel
 # because it crashes with error "unable to import is_qt_designer"
 # We need this import purely for typings. Therefore, we make a local stub
+# TODO: This should be removed when corresponding issue is fixed
 class PyDMChannel:
 
     value_signal: Optional[Signal]

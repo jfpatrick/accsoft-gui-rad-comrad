@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 class FileTracking:
 
     def __init__(self):
+        """Common mixin for widgets that have to work with files and parse macros inside them."""
         self.base_path = ''
         self.base_macros = {}
         if is_pydm_app():

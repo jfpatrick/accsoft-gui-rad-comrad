@@ -1,7 +1,7 @@
 import os
 import logging
 from typing import Optional, cast, Tuple
-from qtpy.QtWidgets import (QWidget, QPushButton, QLineEdit, QLabel, QDialog, QVBoxLayout, QToolButton, QMenu,
+from qtpy.QtWidgets import (QWidget, QPushButton, QLineEdit, QLabel, QToolButton, QMenu,
                             QWidgetAction, QSizePolicy, QTabWidget)
 from qtpy import uic
 from qtpy.QtCore import Signal, Qt, QEvent
@@ -100,8 +100,14 @@ class RBACDialogWidget(QWidget):
 
 class RBACButton(QToolButton):
 
-    def __init__(self, parent: Optional[QWidget] = None, *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
+    def __init__(self, parent: Optional[QWidget] = None):
+        """
+        Button that is embedded into the toolbar to open the dialog.
+
+        Args:
+            parent: Parent widget to hold this object.
+        """
+        super().__init__(parent)
         self._app = cast(CApplication, CApplication.instance())
         self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         self.setPopupMode(QToolButton.InstantPopup)
@@ -142,6 +148,7 @@ class RBACButton(QToolButton):
 
 
 class RBACButtonPlugin(CToolbarWidgetPlugin):
+    """Plugin to display RBAC button in the toolbar."""
 
     position = CPluginPosition.RIGHT
     plugin_id = 'comrad.rbac'
