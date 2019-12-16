@@ -80,12 +80,12 @@ def get_versions_info() -> Versions:
 
 
 CCDA_MAP: Dict[str, str] = {
-    'PRO': 'https://ccda.cern.ch:8900/api/',
-    'PRO2': 'https://ccda.cern.ch:8901/api/',
-    'TEST': 'https://ccda-test.cern.ch:8902/api/',
-    'TEST2': 'https://ccda-test.cern.ch:8903/api/',
-    'INT': 'https://ccda-int.cern.ch:8904/api/',
-    'INT2': 'https://ccda-int.cern.ch:8905/api/',
-    'DEV': 'https://ccda-dev.cern.ch:8906/api/',
-    'DEV2': 'https://ccda-dev.cern.ch:8907/api/',
+    'PRO': 'https://ccda.cern.ch:8900/api',
+    'PRO2': 'https://ccda.cern.ch:8901/api',
+    'TEST': 'https://ccda-test.cern.ch:8902/api',
+    'TEST2': 'https://ccda-test.cern.ch:8903/api',
+    'INT': 'https://ccda-int.cern.ch:8904/api',
+    'INT2': 'https://ccda-int.cern.ch:8905/api',
+    'DEV': 'https://ccda-dev.cern.ch:8906/api',
+    'DEV2': 'https://ccda-dev.cern.ch:8907/api',
 }
