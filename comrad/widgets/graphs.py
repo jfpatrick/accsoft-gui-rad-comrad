@@ -16,6 +16,7 @@ from qtpy.QtWidgets import QWidget, QStyledItemDelegate, QComboBox, QStyleOption
 from qtpy.QtGui import QColor, QPen, QBrush
 from qtpy.QtCore import Property, QObject, QModelIndex, QVariant, QAbstractTableModel, Qt
 import pyqtgraph as pg
+# from pydm.widgets.image import PyDMImageView
 from pydm.widgets.baseplot import BasePlotCurveItem, PyDMPrimitiveWidget
 from pydm.widgets.base import widget_destroyed
 from pydm.widgets.channel import PyDMChannel
@@ -2054,3 +2055,39 @@ class CPlottingItemEditorExtension(BasePlotExtension):
         """
         super().__init__(widget, CPlottingItemEditorDialog)
         self.edit_curves_action.setText("Edit Plotting Items...")
+
+
+# TODO: Make available when proven useful
+# class CImageView(WidgetRulesMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMImageView):
+#
+#     def __init__(self,
+#                  parent: Optional[QWidget] = None,
+#                  image_channel: Optional[str] = None,
+#                  width_channel: Optional[str] = None,
+#                  **kwargs):
+#         """
+#         A :class:`pyqtgraph.ImageView` subclass with support for CS Channels.
+#
+#         If there is no :attr:`widthChannel` it is possible to define the width of
+#         the image with the :attr:`width` property.
+#
+#         The :attr:`normalizeData` property defines if the colors of the images are
+#         relative to the :attr:`colorMapMin` and :attr:`colorMapMax` property or to
+#         the minimum and maximum values of the image.
+#
+#         Use the :attr:`newImageSignal` to hook up to a signal that is emitted when a new
+#         image is rendered in the widget.
+#
+#         Args:
+#             parent: The parent widget for the image view.
+#             image_channel: The channel to be used by the widget for the image data.
+#             width_channel: The channel to be used by the widget to receive the image width information.
+#             **kwargs: Any future extras that need to be passed down to PyDM.
+#         """
+#         WidgetRulesMixin.__init__(self)
+#         CustomizedTooltipMixin.__init__(self)
+#         HideUnusedFeaturesMixin.__init__(self)
+#         PyDMImageView.__init__(self, parent=parent, image_channel=image_channel, width_channel=width_channel, **kwargs)
+#
+#     def default_rule_channel(self) -> str:
+#         return self.imageChannel

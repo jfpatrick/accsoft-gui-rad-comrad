@@ -44,7 +44,7 @@
   <customwidget>
    <class>CScaleIndicator</class>
    <extends>PyDMScaleIndicator</extends>
-   <header>comrad.widgets.pydm_widgets</header>
+   <header>comrad.widgets.indicators</header>
   </customwidget>
  </customwidgets>
  <resources/>

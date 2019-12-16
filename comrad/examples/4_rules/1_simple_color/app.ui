@@ -41,7 +41,7 @@
   <customwidget>
    <class>CLabel</class>
    <extends>PyDMLabel</extends>
-   <header>comrad.widgets.pydm_widgets</header>
+   <header>comrad.widgets.indicators</header>
   </customwidget>
  </customwidgets>
  <resources/>

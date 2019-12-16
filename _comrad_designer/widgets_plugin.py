@@ -15,11 +15,11 @@ from _comrad_designer.logging import setup_logging
 setup_logging()
 
 # from pydm.widgets.tab_bar_qtplugin import TabWidgetPlugin as PyDMTabWidgetPlugin
-from pydm.widgets.qtplugin_extensions import RulesExtension, PyDMExtension
+from pydm.widgets.qtplugin_extensions import PyDMExtension
 from comrad import (CScrollingPlot, CSlidingPlot, CPlottingItemEditorExtension, CValueAggregator, CCommandButton,
-                    CScaleIndicator, CLogDisplay, CImageView, CEnumComboBox, CSlider, CSpinBox, CLabel,
+                    CScaleIndicator, CLogDisplay, CEnumComboBox, CSlider, CSpinBox, CLabel,
                     CByteIndicator, CLineEdit, CTemplateRepeater, CEmbeddedDisplay, CShellCommand,
-                    CRelatedDisplayButton, CPushButton, CEnumButton, CWaveFormTable, CCheckBox)
+                    CRelatedDisplayButton, CPushButton, CEnumButton, CCheckBox)
 from comrad.icons import icon
 from _comrad_designer.utils import qtplugin_factory
 from _comrad_designer.rules_editor import NewRulesEditor as RulesEditor
@@ -74,7 +74,8 @@ ShellCommand = qtplugin_factory(CShellCommand, group=_COMRAD_GROUP_BUTTONS, icon
 # ToggleButton = qtplugin_factory(CToggleButton, group=_COMRAD_GROUP_BUTTONS, icon=load_icon('toggle'), extensions=_BASE_EXTENSIONS)
 
 # Item Widgets
-WaveformTable = qtplugin_factory(CWaveFormTable, group=_COMRAD_GROUP_ITEM_VIEWS, icon=_load_icon('waveform_table'), extensions=_BASE_EXTENSIONS)
+# TODO: Uncomment when useful
+# WaveformTable = qtplugin_factory(CWaveFormTable, group=_COMRAD_GROUP_ITEM_VIEWS, icon=_load_icon('waveform_table'), extensions=_BASE_EXTENSIONS)
 
 # Containers
 # TODO: What is CFrame useful for?
@@ -91,7 +92,8 @@ Spinbox = qtplugin_factory(CSpinBox, group=_COMRAD_GROUP_INPUT, icon=_load_icon(
 # Display Widgets
 Label = qtplugin_factory(CLabel, group=_COMRAD_GROUP_DISPLAY, icon=_load_icon('label'), extensions=_BASE_EXTENSIONS)
 ByteIndicator = qtplugin_factory(CByteIndicator, group=_COMRAD_GROUP_DISPLAY, icon=_load_icon('byte_indicator'), extensions=_BASE_EXTENSIONS)
-ImageView = qtplugin_factory(CImageView, group=_COMRAD_GROUP_DISPLAY, icon=_load_icon('image_view'), extensions=_BASE_EXTENSIONS)
+# TODO: Uncomment when useful
+# ImageView = qtplugin_factory(CImageView, group=_COMRAD_GROUP_DISPLAY, icon=_load_icon('image_view'), extensions=_BASE_EXTENSIONS)
 LogDisplay = qtplugin_factory(CLogDisplay, group=_COMRAD_GROUP_DISPLAY, icon=_load_icon('log_viewer'), extensions=_BASE_EXTENSIONS)
 ScaleIndicator = qtplugin_factory(CScaleIndicator, group=_COMRAD_GROUP_DISPLAY, icon=_load_icon('scale_indicator'), extensions=_BASE_EXTENSIONS)
 

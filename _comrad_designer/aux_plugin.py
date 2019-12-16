@@ -8,7 +8,7 @@ widget. If PyDMLabel is not included, you will see in the bottom of the file the
  <customwidget>
   <class>CLabel</class>
   <extends>QLabel</extends>
-  <header>comrad.qt.pydm_widgets</header>
+  <header>comrad.widgets.indicators</header>
  </customwidget>
 </customwidgets>
 
@@ -21,7 +21,7 @@ it results in the following structure:
  <customwidget>
   <class>CLabel</class>
   <extends>PyDMLabel</extends>
-  <header>comrad.qt.pydm_widgets</header>
+  <header>comrad.widgets.indicators</header>
   </customwidget>
  <customwidget>
   <class>PyDMLabel</class>
@@ -43,11 +43,13 @@ signal.signal(signal.SIGINT, signal.SIG_DFL)
 from _comrad_designer.logging import setup_logging
 setup_logging()
 
-from comrad.widgets.pydm_widgets import (PyDMLabel, PyDMCheckbox, PyDMEnumButton, PyDMPushButton,
-                                         PyDMRelatedDisplayButton, PyDMShellCommand, PyDMWaveformTable,
-                                         PyDMEmbeddedDisplay, PyDMTemplateRepeater, PyDMEnumComboBox, PyDMLineEdit,
-                                         PyDMSlider, PyDMSpinbox, PyDMByteIndicator, PyDMImageView, PyDMLogDisplay,
-                                         PyDMScaleIndicator)
+from pydm.widgets import (PyDMLabel, PyDMCheckbox, PyDMPushButton,
+                          PyDMRelatedDisplayButton, PyDMShellCommand,
+                          PyDMEmbeddedDisplay, PyDMTemplateRepeater, PyDMEnumComboBox, PyDMLineEdit,
+                          PyDMSlider, PyDMSpinbox, PyDMByteIndicator,
+                          PyDMScaleIndicator)
+from pydm.widgets.logdisplay import PyDMLogDisplay
+from pydm.widgets.enum_button import PyDMEnumButton
 from _comrad_designer.utils import qtplugin_factory
 
 
@@ -65,7 +67,7 @@ PyDMEnumButton_ = qtplugin_factory(PyDMEnumButton, group=_COMRAD_GROUP_HIDDEN_IT
 PyDMPushButton_ = qtplugin_factory(PyDMPushButton, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 PyDMRelatedDisplayButton_ = qtplugin_factory(PyDMRelatedDisplayButton, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 PyDMShellCommand_ = qtplugin_factory(PyDMShellCommand, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-PyDMWaveformTable_ = qtplugin_factory(PyDMWaveformTable, group=_COMRAD_GROUP_HIDDEN_ITEMS)
+# PyDMWaveformTable_ = qtplugin_factory(PyDMWaveformTable, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 # TODO: Uncomment if CFrame is needed
 # PyDMFrame_ = qtplugin_factory(PyDMFrame, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 PyDMEmbeddedDisplay_ = qtplugin_factory(PyDMEmbeddedDisplay, group=_COMRAD_GROUP_HIDDEN_ITEMS)
@@ -75,7 +77,7 @@ PyDMLineEdit_ = qtplugin_factory(PyDMLineEdit, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 PyDMSlider_ = qtplugin_factory(PyDMSlider, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 PyDMSpinbox_ = qtplugin_factory(PyDMSpinbox, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 PyDMByteIndicator_ = qtplugin_factory(PyDMByteIndicator, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-PyDMImageView_ = qtplugin_factory(PyDMImageView, group=_COMRAD_GROUP_HIDDEN_ITEMS)
+# PyDMImageView_ = qtplugin_factory(PyDMImageView, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 PyDMLogDisplay_ = qtplugin_factory(PyDMLogDisplay, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 PyDMScaleIndicator_ = qtplugin_factory(PyDMScaleIndicator, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 # PyDMTabWidget_ = qtplugin_factory(PyDMTabWidget, group=_COMRAD_GROUP_HIDDEN_ITEMS)

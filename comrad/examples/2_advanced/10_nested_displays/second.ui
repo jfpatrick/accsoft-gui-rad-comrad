@@ -38,7 +38,7 @@
   <customwidget>
    <class>CTemplateRepeater</class>
    <extends>PyDMTemplateRepeater</extends>
-   <header>comrad.widgets.pydm_widgets</header>
+   <header>comrad.widgets.containers</header>
   </customwidget>
  </customwidgets>
  <resources/>

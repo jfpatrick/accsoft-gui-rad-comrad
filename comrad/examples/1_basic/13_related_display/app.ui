@@ -89,7 +89,7 @@
   <customwidget>
    <class>CRelatedDisplayButton</class>
    <extends>PyDMRelatedDisplayButton</extends>
-   <header>comrad.widgets.pydm_widgets</header>
+   <header>comrad.widgets.buttons</header>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -1,13 +1,121 @@
 import logging
-from typing import Optional
+from typing import Optional, Union
 from pydm.widgets.base import PyDMWritableWidget
+from pydm.widgets.pushbutton import PyDMPushButton
+from pydm.widgets.related_display_button import PyDMRelatedDisplayButton
+from pydm.widgets.shell_command import PyDMShellCommand
+from pydm.widgets.enum_button import PyDMEnumButton
 from qtpy.QtWidgets import QWidget, QPushButton
 from qtpy.QtGui import QIcon
 from qtpy.QtCore import Signal
-from .mixins import HideUnusedFeaturesMixin, CustomizedTooltipMixin
+from .mixins import HideUnusedFeaturesMixin, CustomizedTooltipMixin, ValueTransformerMixin, WidgetRulesMixin
 
 
 logger = logging.getLogger(__name__)
+
+
+class CPushButton(WidgetRulesMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMPushButton):
+
+    def __init__(self,
+                 parent: Optional[QWidget] = None,
+                 label: Optional[str] = None,
+                 icon: Optional[QIcon] = None,
+                 press_value: Union[str, int, float, None] = None,
+                 relative: bool = False,
+                 init_channel: Optional[str] = None,
+                 **kwargs):
+        """
+        Basic PushButton to send a fixed value.
+
+        This type is meant to hold a specific value, and send that value
+        to a channel when it is clicked. It works in two different modes of operation:
+
+            1. A fixed value can be given to the :attr:`.pressValue` attribute. Whenever the
+               button is clicked a signal containing this value will be sent to the connected channel.
+               This is the default behavior of the button.
+            2. However, if the :attr:`.relativeChange` is set to ``True``, the fixed value will be added
+               to the current value of the channel. This means that the button will increment a channel by
+               a fixed amount with every click, a consistent relative move.
+
+        Args:
+            parent: The parent widget for the button.
+            label: String to place on button.
+            icon: An icon to display on the button.
+            press_value: Value to be sent when the button is clicked.
+            relative: Choice to have the button perform a relative put, instead of always setting to an absolute value.
+            init_channel: ID of channel to manipulate.
+            **kwargs: Any future extras that need to be passed down to PyDM.
+        """
+        WidgetRulesMixin.__init__(self)
+        CustomizedTooltipMixin.__init__(self)
+        HideUnusedFeaturesMixin.__init__(self)
+        PyDMPushButton.__init__(self, parent=parent,
+                                label=label,
+                                icon=icon,
+                                pressValue=press_value,
+                                relative=relative,
+                                init_channel=init_channel,
+                                **kwargs)
+
+    def init_for_designer(self):
+        super().init_for_designer()
+        self.setText('RAD PushButton')
+
+
+class CRelatedDisplayButton(PyDMRelatedDisplayButton):
+
+    def __init__(self, parent: Optional[QWidget] = None, filename: Optional[str] = None, **kwargs):
+        """
+        A :class:`qtpy.QPushButton` capable of opening a new :class:`pydm.Display` at the same of at a new window.
+
+        Args:
+            parent: The parent widget for the button.
+            filename: The file to be opened.
+            **kwargs: Any future extras that need to be passed down to PyDM.
+        """
+        super().__init__(parent=parent, filename=filename, **kwargs)
+
+
+class CShellCommand(PyDMShellCommand):
+
+    def __init__(self, parent: Optional[QWidget] = None, command: Optional[str] = None, **kwargs):
+        """
+        A :class:`qtpy.QPushButton` capable of executing shell commands.
+
+        Args:
+            parent: The parent widget for the button.
+            command: Command to execute.
+            **kwargs: Any future extras that need to be passed down to PyDM.
+        """
+        super().__init__(parent=parent, command=command, **kwargs)
+
+
+class CEnumButton(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMEnumButton):
+
+    def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
+        """
+        A :class:`qtpy.QWidget` that renders buttons for every option of Enum Items.
+        For now three types of buttons can be rendered:
+        - Push Button
+        - Radio Button
+
+        Signals:
+         - send_value_signal: Emitted when the user changes the value.
+
+        Args:
+            parent: The parent widget for the button.
+            init_channel: The channel to be used by the widget.
+            **kwargs: Any future extras that need to be passed down to PyDM.
+        """
+        WidgetRulesMixin.__init__(self)
+        CustomizedTooltipMixin.__init__(self)
+        HideUnusedFeaturesMixin.__init__(self)
+        PyDMEnumButton.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
+        ValueTransformerMixin.__init__(self)
+
+    def init_for_designer(self):
+        super().init_for_designer()
+        self.items = ['RAD Item 1', 'RAD Item 2', 'RAD Item ...']
 
 
 class CCommandButton(CustomizedTooltipMixin, QPushButton, HideUnusedFeaturesMixin, PyDMWritableWidget):

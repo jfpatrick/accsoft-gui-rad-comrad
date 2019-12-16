@@ -190,12 +190,12 @@ except KeyError:
   <customwidget>
    <class>CLabel</class>
    <extends>PyDMLabel</extends>
-   <header>comrad.widgets.pydm_widgets</header>
+   <header>comrad.widgets.indicators</header>
   </customwidget>
   <customwidget>
    <class>CValueAggregator</class>
    <extends>QWidget</extends>
-   <header>comrad.widgets.aggregator</header>
+   <header>comrad.widgets.modifiers</header>
   </customwidget>
  </customwidgets>
  <resources/>
