@@ -1,3 +1,5 @@
+/* Based on https://forums.libretro.com/t/desktop-ui-themes-with-qss-style-sheets/16029 */
+
 QLabel {
     color: rgb(180, 180, 180);
 }
