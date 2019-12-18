@@ -1,12 +1,16 @@
 import logging
+import sys
 from typing import Optional
 from colorlog import StreamHandler, ColoredFormatter
 
 
+# Definition where is the level that decides which logs go to stdout and which to stderr
+_ERROR_THRESHOLD = logging.WARNING
+
+
 def _setup_logging():
     # Setup logging with colors
-    handler = StreamHandler()
-    handler.setFormatter(ColoredFormatter(
+    formatter = ColoredFormatter(
         '%(log_color)s[%(levelname)s]: %(name)s => %(reset)s%(message)s',
         reset=True,
         datefmt='%H:%M:%S',
@@ -17,8 +21,23 @@ def _setup_logging():
             'ERROR': 'red',
             'CRITICAL': 'red,bg_white',
         }
-    ))
-    logging.basicConfig(handlers=[handler])
+    )
+
+    # Prevent error logs to go to stdout, as they will be redirected to stderr
+    class StdoutFilter(logging.Filter):
+
+        def filter(self, record: logging.LogRecord):
+            return record.levelno < _ERROR_THRESHOLD
+
+
+    stdout_handler = StreamHandler(stream=sys.stdout)
+    stdout_handler.setFormatter(formatter)
+    stdout_handler.addFilter(StdoutFilter())
+
+    stderr_handler = StreamHandler(stream=sys.stderr)
+    stderr_handler.setFormatter(formatter)
+    stderr_handler.setLevel(_ERROR_THRESHOLD)
+    logging.basicConfig(handlers=[stdout_handler, stderr_handler])
 
 
 def install_logger_level(level: Optional[str]):
