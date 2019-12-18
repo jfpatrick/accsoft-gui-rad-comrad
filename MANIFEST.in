@@ -1,4 +1,4 @@
 include versioneer.py
-include comrad/_version.py
+include _comrad/_version.py
 include requirements.txt
-include README.txt
+include README.md

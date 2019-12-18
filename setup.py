@@ -67,6 +67,7 @@ setup(
     url='https://wikis.cern.ch/display/ACCPY/Rapid+Application+Development',
     packages=find_packages(exclude=('build*', 'dist*', 'docs*', 'tests', '*.egg-info')),
     classifiers=[
+        'Programming Language :: Python',
         'Development Status :: 3 - Alpha',
         'Environment :: X11 Applications :: Qt',
         'Operating System :: POSIX :: Linux',
