@@ -112,7 +112,7 @@ class ExamplesWindow(QMainWindow):
         self.example_run_btn.clicked.connect(self._run_example)
         self.show()
 
-    def _show_about(self):  # pylint: disable=no-self-use   # It has to be instance method, as it is connected as a slot
+    def _show_about(self):
         """
         Opens 'About' dialog.
         """

@@ -46,7 +46,7 @@ class _RulesExtension(PyDMExtension):
         RulesEditor(widget=self.widget, parent=None).exec_()
 
 
-_load_icon = functools.partial(icon, file_path=__file__)  # pylint: disable=invalid-name
+_load_icon = functools.partial(icon, file_path=__file__)
 
 
 _BASE_EXTENSIONS = [_RulesExtension]
@@ -122,7 +122,7 @@ _CValueAggregator = qtplugin_factory(CValueAggregator, group=_COMRAD_GROUP_VIRTU
 #         return load_icon('tab_widget')
 #
 #
-# TabWidget = TabWidgetPlugin(extensions=_BASE_EXTENSIONS)  # pylint: disable=invalid-name
+# TabWidget = TabWidgetPlugin(extensions=_BASE_EXTENSIONS)
 #
 # # This has to be removed, otherwise it will also appear in Qt Designer
 # del PyDMTabWidgetPlugin

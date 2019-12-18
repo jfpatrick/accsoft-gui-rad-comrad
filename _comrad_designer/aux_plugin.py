@@ -60,7 +60,6 @@ from _comrad_designer.utils import qtplugin_factory
 _COMRAD_GROUP_HIDDEN_ITEMS = '[invisible]'
 
 
-# pylint: disable=invalid-name
 _PyDMLabel = qtplugin_factory(PyDMLabel, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 _PyDMCheckbox = qtplugin_factory(PyDMCheckbox, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 _PyDMEnumButton = qtplugin_factory(PyDMEnumButton, group=_COMRAD_GROUP_HIDDEN_ITEMS)

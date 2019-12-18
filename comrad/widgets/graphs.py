@@ -1,7 +1,5 @@
 """Graphs based on the library accsoft_gui_pyqt_widgets's package graph for comrad"""
 
-# pylint: disable=too-many-lines
-
 from enum import Enum
 import abc
 from typing import cast, Type, Optional, Union, List, Dict, Iterable, Any
@@ -55,8 +53,6 @@ class PlottingStyles(Enum):
     bar_graph: str = "Bar Graph"
     injection_bar_graph: str = "Injection Bar Graph"
     timestamp_markers: str = "Timestamp Marker"
-
-# pylint: disable=logging-format-interpolation
 
 
 class PyDMChannelDataSource(accgraph.UpdateSource):
@@ -326,9 +322,9 @@ class CPlotWidgetBase(PyDMPrimitiveWidget):
 
     # Overwritten add... functions of the ExPlotWidget
 
-    def addCurve(  # pylint: disable=too-many-arguments, invalid-name
+    def addCurve(
             self,
-            c: Optional[pg.PlotDataItem] = None,  # pylint: disable=invalid-name
+            c: Optional[pg.PlotDataItem] = None,
             params: Optional[Dict[str, Any]] = None,
             data_source: Union[str, accgraph.UpdateSource, None] = None,
             layer_identifier: Optional[str] = None,
@@ -388,7 +384,7 @@ class CPlotWidgetBase(PyDMPrimitiveWidget):
             buffer_size=buffer_size,
         )
 
-    def addBarGraph(  # pylint: disable=invalid-name
+    def addBarGraph(
             self,
             data_source: Union[str, accgraph.UpdateSource, None] = None,
             layer_identifier: Optional[str] = None,
@@ -428,7 +424,7 @@ class CPlotWidgetBase(PyDMPrimitiveWidget):
             buffer_size=buffer_size,
         )
 
-    def addInjectionBar(  # pylint: disable=invalid-name
+    def addInjectionBar(
             self,
             data_source: Union[str, accgraph.UpdateSource],
             layer_identifier: Optional[str] = None,
@@ -468,7 +464,7 @@ class CPlotWidgetBase(PyDMPrimitiveWidget):
             buffer_size=buffer_size,
         )
 
-    def addTimestampMarker(  # pylint: disable=invalid-name
+    def addTimestampMarker(
             self,
             data_source: Union[str, accgraph.UpdateSource],
             buffer_size: int = accgraph.DEFAULT_BUFFER_SIZE,
@@ -502,7 +498,7 @@ class CPlotWidgetBase(PyDMPrimitiveWidget):
             buffer_size=buffer_size,
         )
 
-    def add_channel_attached_item(  # pylint: disable=too-many-arguments
+    def add_channel_attached_item(
             self,
             channel_address: str,
             style: str = PlottingStyles.line_graph.value,
@@ -603,7 +599,7 @@ class CPlotWidgetBase(PyDMPrimitiveWidget):
             raise ValueError(
                 f"{type(self).__name__} does not support style '{style}'"
             )
-        return self.ITEM_TYPES[style](  # pylint: disable=not-callable
+        return self.ITEM_TYPES[style](
             plot_item=self.plotItem,
             data_source=data_source,
         )
@@ -702,7 +698,7 @@ class CPlotWidgetBase(PyDMPrimitiveWidget):
         self._items = []
 
 
-class CItemPropertiesBase(metaclass=abc.ABCMeta):  # pylint: disable=too-many-instance-attributes
+class CItemPropertiesBase(metaclass=abc.ABCMeta):
 
     """
     Base class for different plotting item properties. This classes uses
@@ -1274,7 +1270,7 @@ class CTimestampMarkerPropertiesBase(CItemPropertiesBase):
 class CScrollingCurve(
         accgraph.ScrollingPlotCurve,
         CCurvePropertiesBase,
-):  # pylint: disable=too-many-ancestors
+):
 
     """
     Scrolling curve for a scrolling plot widget that
@@ -1326,7 +1322,7 @@ class CScrollingCurve(
 class CScrollingBarGraph(
         accgraph.ScrollingBarGraphItem,
         CBarGraphPropertiesBase,
-):  # pylint: disable=too-many-ancestors
+):
 
     """
     Scrolling bar graph item for a scrolling plot widget that
@@ -1379,7 +1375,7 @@ class CScrollingBarGraph(
 class CScrollingInjectionBarGraph(
         accgraph.ScrollingInjectionBarGraphItem,
         CInjectionBarGraphPropertiesBase,
-):  # pylint: disable=too-many-ancestors
+):
 
     """
     Scrolling injection bar graph for a scrolling plot widget
@@ -1427,7 +1423,7 @@ class CScrollingInjectionBarGraph(
         )
 
 
-class CScrollingTimestampMarker(  # pylint: disable=too-many-ancestors
+class CScrollingTimestampMarker(
         accgraph.ScrollingTimestampMarker,
         CTimestampMarkerPropertiesBase,
 ):
@@ -1480,7 +1476,7 @@ class CScrollingTimestampMarker(  # pylint: disable=too-many-ancestors
         )
 
 
-class CScrollingPlot(CPlotWidgetBase, accgraph.ScrollingPlotWidget):  # pylint: disable=too-many-ancestors
+class CScrollingPlot(CPlotWidgetBase, accgraph.ScrollingPlotWidget):
 
     """
     Plot widget for displaying scrolling curves,
@@ -1517,7 +1513,7 @@ class CScrollingPlot(CPlotWidgetBase, accgraph.ScrollingPlotWidget):  # pylint: 
 
 # ~~~~~~~~~~~~~~~~~~~~~~ Sliding Plotting Items ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class CSlidingCurve(accgraph.SlidingPointerPlotCurve, CCurvePropertiesBase):  # pylint: disable=too-many-ancestors
+class CSlidingCurve(accgraph.SlidingPointerPlotCurve, CCurvePropertiesBase):
 
     """
     Sliding curve for a sliding pointer plot widget that
@@ -1566,7 +1562,7 @@ class CSlidingCurve(accgraph.SlidingPointerPlotCurve, CCurvePropertiesBase):  # 
         )
 
 
-class CSlidingPlot(CPlotWidgetBase, accgraph.SlidingPlotWidget):  # pylint: disable=too-many-ancestors
+class CSlidingPlot(CPlotWidgetBase, accgraph.SlidingPlotWidget):
 
     """Plot widget for displaying sliding curves."""
 
@@ -1649,7 +1645,7 @@ class CPlottingItemModel(BasePlotCurvesModel):
             Flag, if cell should be editable or greyed out.
         """
         column_name = self._column_names[index.column()]
-        curve: CItemPropertiesBase = self.plot._curves[index.row()]  # pylint: disable=protected-access
+        curve: CItemPropertiesBase = self.plot._curves[index.row()]
         flags: int = Qt.ItemIsSelectable
         # Colors are enabled but handled by the color dialog, so we have
         # to keep it disabled for editing.
@@ -1659,7 +1655,7 @@ class CPlottingItemModel(BasePlotCurvesModel):
                 flags = flags | Qt.ItemIsEditable
         return flags
 
-    def get_data(  # pylint: disable=arguments-differ, too-many-return-statements
+    def get_data(
             self,
             column_name: str,
             item: CItemPropertiesBase,
@@ -1697,7 +1693,7 @@ class CPlottingItemModel(BasePlotCurvesModel):
             return str(item.style_string)
         return QVariant()
 
-    def setData(  # pylint: disable=too-many-return-statements
+    def setData(
             self,
             index: QModelIndex,
             value: Union[str, int],
@@ -1723,7 +1719,7 @@ class CPlottingItemModel(BasePlotCurvesModel):
         if index.column() >= self.columnCount():
             return False
         column_name = self._column_names[index.column()]
-        item: CItemPropertiesBase = self.plot._curves[index.row()]  # pylint: disable=protected-access
+        item: CItemPropertiesBase = self.plot._curves[index.row()]
         if role == Qt.EditRole:
             if isinstance(value, QVariant):
                 value = value.toString()
@@ -1798,7 +1794,7 @@ class CPlottingItemModel(BasePlotCurvesModel):
                     symbol=item.symbol,
                     symbol_size=item.symbol_size,
                     layer=item.layer,
-                    index=self.plot._items.index(item),  # pylint: disable=protected-access
+                    index=self.plot._items.index(item),
                 )
             return True
         except KeyError:
@@ -1809,7 +1805,7 @@ class CPlottingItemModel(BasePlotCurvesModel):
             )
             return False
 
-    def set_data(  # pylint: disable=arguments-differ
+    def set_data(
             self,
             column_name: str,
             item: CCurvePropertiesBase,
@@ -1850,7 +1846,7 @@ class CPlottingItemModel(BasePlotCurvesModel):
             return False
         return True
 
-    def append(  # pylint: disable=arguments-differ, too-many-arguments
+    def append(
             self,
             style: str = PlottingStyles.line_graph.value,
             address: Optional[str] = None,
@@ -1922,10 +1918,10 @@ class PlottingItemStyleColumnDelegate(QStyledItemDelegate):
     a list, instead of having to type in strings by hand.
     """
 
-    def createEditor(  # pylint: disable=invalid-name, no-self-use
+    def createEditor(
             self,
             parent: QWidget,
-            option: QStyleOptionViewItem,  # pylint: disable=unused-argument
+            option: QStyleOptionViewItem,
             index: QModelIndex,
     ) -> QWidget:
         """
@@ -1950,7 +1946,7 @@ class PlottingItemStyleColumnDelegate(QStyledItemDelegate):
         editor.addItems(list(filtered_item_types.keys()))
         return editor
 
-    def setEditorData(self, editor: QWidget, index: QModelIndex) -> None:  # pylint: disable=invalid-name, no-self-use
+    def setEditorData(self, editor: QWidget, index: QModelIndex) -> None:
         """
         Set the combobox text from the table item's model.
         This overrides QStyledItemDelegate base method.
@@ -1962,7 +1958,7 @@ class PlottingItemStyleColumnDelegate(QStyledItemDelegate):
         val = str(index.model().data(index, Qt.EditRole))
         editor.setCurrentText(val)
 
-    def setModelData(  # pylint: disable=invalid-name, no-self-use
+    def setModelData(
             self,
             editor: QWidget,
             model: QAbstractTableModel,
@@ -1980,11 +1976,11 @@ class PlottingItemStyleColumnDelegate(QStyledItemDelegate):
         """
         model.setData(index, editor.currentText(), Qt.EditRole)
 
-    def updateEditorGeometry(  # pylint: disable=invalid-name, no-self-use
+    def updateEditorGeometry(
             self,
             editor: QWidget,
             option: QStyleOptionViewItem,
-            index: QModelIndex,  # pylint: disable=unused-argument
+            index: QModelIndex,
     ) -> None:
         """
         Updates the editor for the item specified by index according to the

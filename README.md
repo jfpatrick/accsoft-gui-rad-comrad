@@ -165,16 +165,12 @@ coverage run --source rad -m py.test && coverage html
 
 ComRAD is integrated with several linting utilities:
 
-- pylint
 - flake8
 - mypy
 
-You would run each of them separately (from repository root).
+(we intentionally do not use pylint because it creates too much overhead)
 
-For pylint (this currently does not lint tests):
-```bash
-pylint comrad
-```
+You would run each of them separately (from repository root).
 
 For flake8:
 ```bash

@@ -32,7 +32,6 @@ def qtplugin_factory(cls: Type[QWidget],
     Returns:
         New plugin wrapper class.
     """
-    # pylint: disable=missing-docstring
     class Plugin(PyDMDesignerPlugin):
         __doc__ = 'ComRAD Designer plugin for {}'.format(cls.__name__)
 
