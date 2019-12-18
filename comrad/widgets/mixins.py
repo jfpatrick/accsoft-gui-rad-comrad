@@ -49,7 +49,6 @@ def superclass_deprecated(method: MethodType):
     return _wrapper
 
 
-
 class HideUnusedFeaturesMixin:
     """Mixin that hides PyDM properties that are exposed to Qt Designer and are not used in ComRAD."""
 

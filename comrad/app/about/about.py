@@ -81,7 +81,7 @@ class AboutDialog(QWidget):
         import comrad
         import re
         author = re.sub(pattern=r'(.*)<([^>]*)>',
-                        repl='\g<1>&lt;<a href="mailto:\g<2>">\g<2></a>&gt;',
+                        repl='\g<1>&lt;<a href="mailto:\g<2>">\g<2></a>&gt;',  # noqa: W605
                         string=comrad.__author__)
         self.support.setText(str(self.support.text()).format(author=author))
 
@@ -101,7 +101,7 @@ class AboutDialog(QWidget):
             self._populate_japc()
 
     def _add_tools_to_list(self, tools: Union[ExternalTool, Dict[str, ExternalTool]]):
-        for name, tool in tools.items():
+        for _, tool in tools.items():
             if isinstance(tool, dict):
                 self._add_tools_to_list(tool)
             else:
@@ -135,9 +135,9 @@ class AboutDialog(QWidget):
         contrib_file = pathlib.Path(pydm_contrib, 'contributors.txt')
         with open(contrib_file) as f:
             for line in f:
-                self.contrib_list.addItem(
-                    str(line).strip().replace('@ivany4', 'Ivan Sinkarenko (@ivany4, ivan.sinkarenko@cern.ch)')
-                )
+                self.contrib_list.addItem(str(line)
+                                          .strip()
+                                          .replace('@ivany4', 'Ivan Sinkarenko (@ivany4, ivan.sinkarenko@cern.ch)'))
 
     def _populate_japc(self):
         self.inca_enabled.setText('Yes' if self.app.use_inca else 'No')

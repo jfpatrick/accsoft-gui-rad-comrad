@@ -47,7 +47,7 @@ class ExamplesWindow(QMainWindow):
 
     def __init__(self,
                  parent: Optional[QWidget] = None,
-                 flags: Union[Qt.WindowFlags, Qt.WindowType] = Qt.WindowFlags()):
+                 flags: Optional[Union[Qt.WindowFlags, Qt.WindowType]] = None):
         """
         Main window of the examples launcher.
 
@@ -55,6 +55,8 @@ class ExamplesWindow(QMainWindow):
             parent: Parent widget to hold this object.
             flags: Configuration flags to be passed to Qt.
         """
+        if flags is None:
+            flags = Qt.WindowFlags()
         super().__init__(parent, flags)
 
         # For IDE support, assign types to dynamically created items from the *.ui file
@@ -267,7 +269,7 @@ class ExamplesWindow(QMainWindow):
             return re.sub(pattern=r'^~example', repl=str(basedir), string=arg)
 
         try:
-            example_args = list(map(expand_args, module.launch_arguments)) # type: ignore
+            example_args = list(map(expand_args, module.launch_arguments))  # type: ignore
         except AttributeError:
             example_args = None
 
@@ -419,7 +421,7 @@ class ExamplesWindow(QMainWindow):
 class DesignerTab(QWidget):
 
     designer_opened = Signal([str])
-    '''Fired when "Open in Designer" button is pressed.'''
+    """Fired when "Open in Designer" button is pressed."""
 
     def __init__(self, file_path: PathLike, parent: Optional[QWidget] = None):
         """

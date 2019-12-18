@@ -13,7 +13,6 @@ class MonkeyPatchedClass:
     """Methods overridden by monkey-patching."""
 
 
-
 def modify_in_place(new_cls: Type):
     """Generic Monkey-patching solution for classes.
 

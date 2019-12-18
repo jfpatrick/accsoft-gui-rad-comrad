@@ -21,7 +21,7 @@ class CPlugin(metaclass=abc.ABCMeta):
     """Useful for integrated plugins to mark whether it's enabled by default or should be enabled via launch flag."""
 
     plugin_id: str = ''
-    "Reverse domain string that represents the unique ID of the plugin class."
+    """Reverse domain string that represents the unique ID of the plugin class."""
 
 
 class CPluginPosition(Enum):
@@ -66,19 +66,19 @@ class CToolbarID(Enum):
     """Enum to identify predefined toolbar items that already exist in ComRAD by default."""
 
     SEPARATOR = 'comrad.sep'
-    "Toolbar separator"
+    """Toolbar separator"""
 
     NAV_BACK = 'comrad.back'
-    "Navigation button back"
+    """Navigation button back"""
 
     NAV_FORWARD = 'comrad.fwd'
-    "Navigation button forward"
+    """Navigation button forward"""
 
     NAV_HOME = 'comrad.home'
-    "Navigation button Home"
+    """Navigation button Home"""
 
     SPACER = 'comrad.spacer'
-    "Separating empty space between left-aligned toolbar items and right-aligned ones."
+    """Separating empty space between left-aligned toolbar items and right-aligned ones."""
 
 
 class CToolbarPlugin(metaclass=abc.ABCMeta):
@@ -130,9 +130,9 @@ class CStatusBarPlugin(CWidgetPlugin, metaclass=abc.ABCMeta):
 
     is_permanent: bool = False
     """Type of the widget (normal/permanent).
-    
+
     For explanation of types, refer to the official docs: https://doc.qt.io/qt-5/qstatusbar.html#details.
-    
+
     Also, widgets are aligned based on their type. Permanent widgets will be placed on the right hand side from
     temporary ones to minimize the likelihood of overlapping with temporary messages. This will override the preference
     defined by `position` property."""

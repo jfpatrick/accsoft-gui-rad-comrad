@@ -20,7 +20,7 @@ def _setup_logging():
             'WARNING': 'yellow',
             'ERROR': 'red',
             'CRITICAL': 'red,bg_white',
-        }
+        },
     )
 
     # Prevent error logs to go to stdout, as they will be redirected to stderr
@@ -28,7 +28,6 @@ def _setup_logging():
 
         def filter(self, record: logging.LogRecord):
             return record.levelno < _ERROR_THRESHOLD
-
 
     stdout_handler = StreamHandler(stream=sys.stdout)
     stdout_handler.setFormatter(formatter)

@@ -5,7 +5,7 @@ import subprocess
 from itertools import chain
 from typing import Optional, List, Dict, Iterable, Type, Union, cast, Tuple
 from qtpy.QtWidgets import QAction, QMenu, QSpacerItem, QSizePolicy, QWidget, QHBoxLayout, QMessageBox
-from qtpy.QtCore import Qt, QObject
+from qtpy.QtCore import Qt
 from .main_window import CMainWindow  # This has to be above PyDMApplication to ensure monkey-patching
 from pydm.application import PyDMApplication
 from pydm.utilities import path_info, which
@@ -278,7 +278,7 @@ class CApplication(PyDMApplication):
                 stored_plugins.append(widget_plugin)
                 plugin = widget_plugin
 
-            setattr(item, 'plugin_id', plugin_id)
+            setattr(item, 'plugin_id', plugin_id)  # noqa: B010
 
             (toolbar_left if cast(CPositionalPlugin, plugin).position == CPluginPosition.LEFT
              else toolbar_right).append(item)

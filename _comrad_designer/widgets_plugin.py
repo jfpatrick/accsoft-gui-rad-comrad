@@ -35,7 +35,7 @@ class _RulesExtension(PyDMExtension):
             widget: Widget to apply the extension to.
         """
         super().__init__(widget)
-        self._action = QAction("Edit Rules...", self.widget)
+        self._action = QAction('Edit Rules...', self.widget)
         self._action.triggered.connect(self._edit_rules)
 
     def actions(self) -> List[QAction]:

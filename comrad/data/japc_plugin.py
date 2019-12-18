@@ -363,7 +363,7 @@ class _JapcConnection(PyDMConnection):
             self.new_value_signal[type(value)].emit(value)
         except KeyError:
             logger.warning(f'Cannot propagate JAPC value ({type(value)}) to the widget. '
-                             f'Signal override is not defined.')
+                           'Signal override is not defined.')
 
     @Slot()
     def _on_device_command(self):

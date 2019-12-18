@@ -18,7 +18,7 @@ class DemoDisplay(CDisplay):
         label.rules = [
             CNumRangeRule(name='Demo colors',
                           prop=CNumRangeRule.Property.COLOR,
-                          ranges=[CNumRangeRule.Range(min_val=0.5, max_val=1.01, prop_val='#FF0000')])
+                          ranges=[CNumRangeRule.Range(min_val=0.5, max_val=1.01, prop_val='#FF0000')]),
         ]
 
         self.layout().addWidget(label)

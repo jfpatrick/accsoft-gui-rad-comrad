@@ -215,7 +215,7 @@ class CValueAggregator(QWidget, InitializedMixin, HideUnusedFeaturesMixin, PyDMW
 
     @Property(str, designable=False)
     def channel(self) -> str:
-        return ""
+        return ''
 
     @channel.setter  # type: ignore
     @superclass_deprecated

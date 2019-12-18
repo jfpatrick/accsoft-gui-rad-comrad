@@ -100,9 +100,9 @@ class CMainWindow(PyDMMainWindow, MonkeyPatchedClass):
         self._get_or_create_menu(name)
 
     def _get_or_create_menu(self,
-                           name: Union[str, Iterable[str]],
-                           parent: Optional[QMenu] = None,
-                           full_path: Optional[str] = None) -> QMenu:
+                            name: Union[str, Iterable[str]],
+                            parent: Optional[QMenu] = None,
+                            full_path: Optional[str] = None) -> QMenu:
         parent_menu: QMenu = parent or self.menuBar()
         full_path = full_path or cast(str, name)
         if isinstance(name, str):
@@ -145,11 +145,11 @@ class CMainWindow(PyDMMainWindow, MonkeyPatchedClass):
         main_window.edit_in_designer.open_editor_generic inner method.
         """
         system = platform.system()
-        if system == "Linux":
+        if system == 'Linux':
             subprocess.call(('xdg-open', filename))
-        elif system == "Darwin":
+        elif system == 'Darwin':
             subprocess.call(('open', filename))
-        elif system == "Windows":
+        elif system == 'Windows':
             os.startfile(filename)
 
 

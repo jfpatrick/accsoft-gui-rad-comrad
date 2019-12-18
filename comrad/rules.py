@@ -7,7 +7,7 @@ from typing import List, Dict, Any, Optional, cast, Union, Iterator, Iterable
 from enum import IntEnum, Enum
 from abc import ABCMeta
 from qtpy.QtWidgets import QWidget
-from qtpy.QtCore import QMutexLocker, Property
+from qtpy.QtCore import QMutexLocker
 from pydm.widgets.rules import RulesEngine as PyDMRulesEngine
 from pydm.widgets.channel import PyDMChannel
 from pydm.data_plugins import plugin_for_address
@@ -87,7 +87,9 @@ class BaseRule(JSONSerializable, metaclass=ABCMeta):
         if not self.name:
             errors.append(f'Not every rule has a name')
         if not self.prop:
-            errors.append(f'Rule "{self.name}"' if self.name else "Some rule" + ' is missing property definition')
+            errors.append('{rule_name} is missing property definition'.format(
+                rule_name=f'Rule "{self.name}"' if self.name else 'Some rule',
+            ))
         if errors:
             raise TypeError(';'.join(errors))
 
@@ -277,7 +279,7 @@ class CNumRangeRule(BaseRule):
             channel = BaseRule.Channel(channel)
         except ValueError:
             pass
-        
+
         return cls(name=name, prop=prop, channel=channel, ranges=ranges)
 
     def to_json(self):
@@ -319,7 +321,7 @@ class CNumRangeRule(BaseRule):
                     errors.append(str(e))
                     continue
 
-                for another_row, another_range in enumerate(self.ranges[row + 1:]):
+                for _, another_range in enumerate(self.ranges[row + 1:]):
                     if is_overlapping(min1=range.min_val,
                                       max1=range.max_val,
                                       min2=another_range.min_val,
@@ -379,7 +381,7 @@ class _RulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
     def register(self: PyDMRulesEngine, widget: QWidget, rules: List[BaseRule]):
 
         if is_qt_designer() and not config.DESIGNER_ONLINE:
-            logger.debug(f'Not registering rules because channels won\'t be connected in the offline designer')
+            logger.debug(f"Not registering rules because channels won't be connected in the offline designer")
             return
 
         logger.debug(f'Registering rules for "{type(widget).__name__}" ({id(widget)}):\n{list(rules)}')
@@ -404,7 +406,7 @@ class _RulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
                     from comrad.widgets.mixins import WidgetRulesMixin
                     default_channel = cast(WidgetRulesMixin, widget_ref()).default_rule_channel()
                     if default_channel is None:
-                        raise CChannelException(f'Default channel on the widget is not defined yet. We won\' register it for now...')
+                        raise CChannelException(f"Default channel on the widget is not defined yet. We won't register it for now...")
                     channels_list = [{
                         'channel': default_channel,
                         'trigger': True,
@@ -456,7 +458,7 @@ class _RulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
                 'widget': widget_ref,
                 'name': rule.name,
                 'property': rule.prop,
-                'value': val
+                'value': val,
             }
             obj.rule_signal.emit(payload)
 

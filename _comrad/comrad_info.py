@@ -3,12 +3,12 @@ from ._version import get_versions as get_comrad_versions
 
 
 COMRAD_DESCRIPTION = \
-    f'''  ComRAD (CO Multi-purpose Rapid Application Development environment)
+    f"""  ComRAD (CO Multi-purpose Rapid Application Development environment)
 
   ComRAD framework seeks to streamline development of operational
   applications for operators of CERN accelerators and machine design
   experts. It offers a set of tools to develop and run applications
-  without the need to be an expert in software engineering domain.'''
+  without the need to be an expert in software engineering domain."""
 """Description of ComRAD framework to be presented in help messages and about dialogs."""
 
 
@@ -59,7 +59,7 @@ def get_versions_info() -> Versions:
     import cmmnbuild_dep_manager
     from qtpy.QtCore import __version__ as pyqt_ver, qVersion
 
-    python_ver = ".".join([str(v) for v in sys.version_info[0:3]])
+    python_ver = '.'.join([str(v) for v in sys.version_info[0:3]])
     qt_ver = qVersion()
     np_ver = np.__version__
     pydm_ver = pydm.__version__
@@ -68,7 +68,7 @@ def get_versions_info() -> Versions:
     pyjapc_ver = pyjapc.__version__
     cmmn_ver = cmmnbuild_dep_manager.__version__
     # TODO: Make widgets version when ready
-    widgets_ver = '0.1.0' #accsoft_gui_pyqt_widgets.__version__
+    widgets_ver = '0.1.0'  # accsoft_gui_pyqt_widgets.__version__
     accpy: Optional[AccPyEnv] = None
 
     if 'ACC_PY_PREFIX' in os.environ and 'ACC_PYQT_PREFIX' in os.environ:

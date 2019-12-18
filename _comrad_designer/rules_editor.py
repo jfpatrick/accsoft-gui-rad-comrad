@@ -85,7 +85,7 @@ class RulesEditor(QDialog):
         configure_common_qsci(self.source_ranges_editor)
         self.source_ranges_editor.setReadOnly(False)
 
-        rules = cast(str, widget.rules) # In Qt Designer it's going to be JSON-encoded string
+        rules = cast(str, widget.rules)  # In Qt Designer it's going to be JSON-encoded string
         self._rules: List[BaseRule]
         if rules is None:
             self._rules = []
@@ -308,7 +308,6 @@ class RulesEditor(QDialog):
         self.base_type_lbl.setText(type_name)
         self.base_type_frame.setHidden(False)
 
-
         if isinstance(curr_rule, CNumRangeRule):
             _, prev_prop_type = self._widget.RULE_PROPERTIES[prev_prop]
             if prop_type != prev_prop_type:
@@ -343,7 +342,6 @@ class RulesEditor(QDialog):
             self._update_source_view()
         else:
             raise AttributeError(f'Unsupported tab: {idx}')
-
 
     def _get_current_index(self) -> int:
         if self._current_rule_item is None:
@@ -569,4 +567,3 @@ class RulesEditor(QDialog):
             self._source_valid = False
             return
         self._source_valid = True
-

@@ -32,9 +32,8 @@ def run():
         'formatter_class': argparse.RawDescriptionHelpFormatter,
     }
 
-
     versions = get_versions_info()
-    version_str = f'''ComRAD {versions.comrad}
+    version_str = f"""ComRAD {versions.comrad}
 
 Based on:
 ---------
@@ -46,7 +45,7 @@ NumPy v{versions.np}
 PyQtGraph v{versions.pg}
 
 Environment:
-------------\n'''
+------------\n"""
 
     if versions.accpy:
         version_str += f'Acc-py PyQt {versions.accpy.pyqt} (PyQt v{versions.pyqt}, Qt v{versions.qt})\n' + \
@@ -130,15 +129,15 @@ def _install_controls_arguments(parser: argparse.ArgumentParser):
                              'service for integration/acceptance/system testing to be used by external clients; '
                              'uses CCDB INT schema; - INT: unstable integration service for internal CMW '
                              'integration testing used by the CMW team only; uses CCDB INT schema; - DEV: '
-                             'Development environment. Uses CCDB DEV schema. The environments with suffix \'2\' are'
+                             "Development environment. Uses CCDB DEV schema. The environments with suffix '2' are"
                              ' similar to original ones but use alternative CCDB endpoints.',
-                         choices=['PRO', 'TEST', 'INT', 'DEV', 'PRO2', 'TEST2', 'INT2', 'DEV2'],
-                         default='PRO')
+                        choices=['PRO', 'TEST', 'INT', 'DEV', 'PRO2', 'TEST2', 'INT2', 'DEV2'],
+                        default='PRO')
     parser.add_argument('--java-env',
                         help='Custom JVM flags to be passed for JVM-dependent control libraries. Note, all '
                              'Java-based libraries will reuse the same JVM, therefore these variables will '
                              'affect all of them.',
-                        metavar="key=value",
+                        metavar='key=value',
                         nargs=argparse.ONE_OR_MORE)
 
 
