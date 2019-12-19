@@ -10,6 +10,7 @@ import argparse
 import importlib
 import importlib.util
 import importlib.machinery
+from pathlib import Path
 from typing import List, Optional, Tuple, cast, Union
 from qtpy import uic
 from qtpy.QtCore import Qt, Signal
@@ -38,9 +39,7 @@ _EXAMPLE_DETAILS_UI_PAGE = 1
 _EXAMPLE_DETAILS_PY_PAGE = 0
 
 
-_CURR_DIR = os.path.dirname(__file__)
-
-PathLike = Union[os.PathLike, str]
+_CURR_DIR: Path = Path(__file__).parent.absolute()
 
 
 class ExamplesWindow(QMainWindow):
@@ -70,9 +69,9 @@ class ExamplesWindow(QMainWindow):
         self.alert_icon_lbl: QLabel = None
         self.tabs: QTabWidget = None
 
-        uic.loadUi(os.path.join(os.path.dirname(__file__), 'main.ui'), self)
+        uic.loadUi(_CURR_DIR / 'main.ui', self)
 
-        self._selected_example_path: Optional[str] = None
+        self._selected_example_path: Optional[Path] = None
         self._selected_example_entrypoint: Optional[str] = None
         self._selected_example_japc_generator: Optional[str] = None
         self._selected_example_args: Optional[List[str]] = None
@@ -87,7 +86,7 @@ class ExamplesWindow(QMainWindow):
 
         examples = ExamplesWindow._find_runnable_examples()
 
-        def replace_digits(orig: str) -> str:
+        def replace_digits(orig: Path) -> Path:
             """
             Sorts the strings preferring 1.10 to fall after 1.1 which is not achieved by
             default ASCII sorting which prefers 0 as the lower char code.
@@ -102,9 +101,9 @@ class ExamplesWindow(QMainWindow):
 
             # Replaces a digit by the corresponding amount of letters that are low in the ASCII table
             replace_num = lambda match: int(match.group(0)) * 'Z'
-            return re.sub(pattern=r'\d+',
-                          repl=replace_num,
-                          string=orig)
+            return Path(re.sub(pattern=r'\d+',
+                               repl=replace_num,
+                               string=str(orig)))
 
         examples.sort(key=replace_digits, reverse=True)
         self._populate_examples_tree_widget(examples)
@@ -121,7 +120,7 @@ class ExamplesWindow(QMainWindow):
         AboutDialog(parent=self, icon=self.windowIcon()).show()
 
     @staticmethod
-    def _find_runnable_examples() -> List[str]:
+    def _find_runnable_examples() -> List[Path]:
         """
         Crawls the examples folder trying to locate subdirectories that can be runnable examples.
 
@@ -133,23 +132,23 @@ class ExamplesWindow(QMainWindow):
             list of absolute paths to runnable examples.
         """
         excludes = {'_', '.'}
-        example_paths: List[str] = []
+        example_paths: List[Path] = []
         for root, dirs, files in os.walk(_CURR_DIR):
-            logger.debug(f'Entering {root}')
+            root_path = Path(root)
+            logger.debug(f'Entering {root_path}')
             is_exec = _EXAMPLE_CONFIG in files
-            if root != _CURR_DIR and is_exec:
-                example_paths.append(root)
-                logger.debug(f'Example {root} is executable. Will stop here.')
+            if root_path != _CURR_DIR and is_exec:
+                example_paths.append(root_path)
+                logger.debug(f'Example {root_path} is executable. Will stop here.')
                 dirs[:] = []  # Do not go deeper, as it might simply contain submodules
             else:
                 dirs[:] = [d for d in dirs if d[0] not in excludes]
                 logger.debug(f'Will crawl child dirs: {dirs}')
 
-        formatted = '\n'.join(example_paths)
-        logger.debug(f'Located examples in dirs:\n{formatted}')
+        logger.debug('Located examples in dirs:\n{paths}'.format(paths='\n'.join(map(str, example_paths))))
         return example_paths
 
-    def _populate_examples_tree_widget(self, example_paths: List[str]):
+    def _populate_examples_tree_widget(self, example_paths: List[Path]):
         """
         Populates sidebar with the runnable examples.
 
@@ -160,8 +159,8 @@ class ExamplesWindow(QMainWindow):
             example_paths: list of absolute paths to the runnable examples.
         """
         for path in example_paths:
-            relative = os.path.relpath(path, _CURR_DIR)
-            dirs = relative.split(os.path.sep)
+            relative = path.relative_to(_CURR_DIR)
+            dirs = relative.parts
             parent_subtree: QTreeWidgetItem = self.examples_tree.invisibleRootItem()
             for directory in dirs:
                 name, dig = ExamplesWindow._tree_info(directory)
@@ -227,7 +226,7 @@ class ExamplesWindow(QMainWindow):
             curr_item = par
 
         path_dirs.reverse()
-        example_path = os.path.join(os.path.dirname(__file__), *path_dirs)
+        example_path = _CURR_DIR.joinpath(*path_dirs)
 
         if self._selected_example_path == example_path:
             # Already selected. Do nothing
@@ -238,7 +237,7 @@ class ExamplesWindow(QMainWindow):
         if example_mod:
             self._set_example_details(module=example_mod, basedir=example_path)
 
-    def _set_example_details(self, module: types.ModuleType, basedir: PathLike):
+    def _set_example_details(self, module: types.ModuleType, basedir: Path):
         """
         Populates the details view (right-hand side of the window) with information about the
         selected example.
@@ -290,25 +289,26 @@ class ExamplesWindow(QMainWindow):
         else:
             self.arg_frame.hide()
 
-        bundle_files: List[str] = []
+        bundle_files: List[Path] = []
 
-        def is_file_allowed(file: PathLike) -> bool:
-            _, ext = os.path.splitext(file)
+        def is_file_allowed(file: str) -> bool:
+            ext = Path(file).suffix
             return ext in ('.py', '.ui', '.json', '.qss')
 
         for root, dirs, files in os.walk(basedir):
+            root_path = Path(root)
             try:
                 dirs.remove('__pycache__')
             except ValueError:
                 pass
-            if root == basedir:
+            if root_path == basedir:
                 files.remove(_EXAMPLE_CONFIG)
             files = cast(List[str], filter(is_file_allowed, files))
-            bundle_files.extend(os.path.join(root, f) for f in files)
+            bundle_files.extend(root_path / f for f in files)
 
         self._create_file_tabs(file_paths=bundle_files, selected=example_entrypoint, basedir=basedir)
 
-    def _create_file_tabs(self, file_paths: List[str], selected: str, basedir: PathLike):
+    def _create_file_tabs(self, file_paths: List[Path], selected: str, basedir: Path):
         """
         Dynamically creates tabs to select files contained by the example directory.
 
@@ -322,21 +322,22 @@ class ExamplesWindow(QMainWindow):
 
         for file_path in file_paths:
             widget: QWidget
-            filename = os.path.relpath(path=file_path, start=basedir)
-            _, ext = os.path.splitext(filename)
+            filename = file_path.relative_to(basedir)
+            ext = filename.suffix
             if ext in ('.py', '.json', '.qss'):
                 widget = EditorTab(file_path=file_path, file_type=ext, parent=self.tabs)
             elif ext == '.ui':
                 tab = DesignerTab(file_path=file_path, parent=self.tabs)
                 tab.designer_opened.connect(ExamplesWindow._open_designer_file)
                 widget = tab
-            self.tabs.addTab(widget, filename)
-            if filename == selected:
+            filename_str = str(filename)
+            self.tabs.addTab(widget, filename_str)
+            if filename_str == selected:
                 # Trigger display of the main file
                 self.tabs.setCurrentWidget(widget)
 
     @staticmethod
-    def _absolute_module_id(basedir: PathLike) -> str:
+    def _absolute_module_id(basedir: Path) -> str:
         """
         Constructs the absolute module identifier.
 
@@ -352,12 +353,12 @@ class ExamplesWindow(QMainWindow):
         # Removes trailing '.__main__'
         abs_mod_path: List[str] = __loader__.name.split('.')  # type: ignore
         del abs_mod_path[-1]
-        rel_path = os.path.relpath(basedir, _CURR_DIR)
-        abs_mod_path.extend(rel_path.split(os.sep))
+        rel_path = basedir.relative_to(_CURR_DIR)
+        abs_mod_path.extend(rel_path.parts)
         return '.'.join(abs_mod_path)
 
     @staticmethod
-    def _module_from_example(basedir: PathLike, name: str) -> Optional[types.ModuleType]:
+    def _module_from_example(basedir: Path, name: str) -> Optional[types.ModuleType]:
         """
         Resolves the Python module from the directory of the example.
 
@@ -368,12 +369,12 @@ class ExamplesWindow(QMainWindow):
         Returns:
             Python module or None if failed to load.
         """
-        if not os.path.isdir(basedir):
+        if not basedir.is_dir():
             logger.warning(f'Cannot display example from {basedir} - not a directory')
             return None
 
-        config = os.path.join(basedir, _EXAMPLE_CONFIG)
-        if not os.path.exists(config) or not os.path.isfile(config):
+        config = basedir / _EXAMPLE_CONFIG
+        if not config.exists() or not config.is_file():
             logger.warning(f'Cannot display example from {basedir} - cannot find entry point')
             return None
 
@@ -394,11 +395,11 @@ class ExamplesWindow(QMainWindow):
             return None
 
         # We must run it as an external process, because event loop is already running
-        file_path = os.path.join(self._selected_example_path, self._selected_example_entrypoint)
+        file_path = self._selected_example_path / self._selected_example_entrypoint
         args: List[str] = ['comrad', 'run']
         if self._selected_example_args is not None:
             args.extend(self._selected_example_args)
-        args.append(file_path)
+        args.append(str(file_path))
         logger.debug(f'Launching app with args: {args}')
         env = dict(os.environ, PYJAPC_SIMULATION_INIT=(self._selected_example_japc_generator or ''))
         python_path = env.get('PYTHONPATH', '')
@@ -411,11 +412,11 @@ class ExamplesWindow(QMainWindow):
             logger.error(f'comrad run has failed: {str(ex)}')
 
     @staticmethod
-    def _open_designer_file(file_path: PathLike):
+    def _open_designer_file(file_path: str):
         """Opens *.ui file in Qt Designer"""
         from _comrad.designer import run_designer
         from _comrad.comrad_info import CCDA_MAP
-        run_designer(files=[cast(str, file_path)], ccda_env=CCDA_MAP['PRO'])
+        run_designer(files=[file_path], ccda_env=CCDA_MAP['PRO'])
 
 
 class DesignerTab(QWidget):
@@ -423,7 +424,7 @@ class DesignerTab(QWidget):
     designer_opened = Signal([str])
     """Fired when "Open in Designer" button is pressed."""
 
-    def __init__(self, file_path: PathLike, parent: Optional[QWidget] = None):
+    def __init__(self, file_path: Path, parent: Optional[QWidget] = None):
         """
         Page for the Qt Designer view in the example details.
 
@@ -437,7 +438,7 @@ class DesignerTab(QWidget):
 
     def _btn_clicked(self):
         """Forwards the signal adding path information"""
-        self.designer_opened.emit(self._file_path)
+        self.designer_opened.emit(str(self._file_path))
 
     def showEvent(self, event: QShowEvent) -> None:
         super().showEvent(event)
@@ -445,14 +446,14 @@ class DesignerTab(QWidget):
         if self.designer_btn is not None:
             return
 
-        uic.loadUi(os.path.join(os.path.dirname(__file__), 'ui_details.ui'), self)
+        uic.loadUi(_CURR_DIR / 'ui_details.ui', self)
         btn: QPushButton = self.designer_btn  # Remove optional, as we are sure it was set here
         btn.clicked.connect(self._btn_clicked)
 
 
 class EditorTab(QWidget):
 
-    def __init__(self, file_path: PathLike, file_type: str, parent: Optional[QWidget] = None):
+    def __init__(self, file_path: Path, file_type: str, parent: Optional[QWidget] = None):
         """
         Page for the text file editor in the example details.
 
@@ -500,7 +501,7 @@ class EditorTab(QWidget):
             editor.setAcceptRichText(False)
             self.code_viewer = editor
 
-        with open(self._file_path) as f:
+        with self._file_path.open() as f:
             self.code_viewer.setText(f.read())
 
         layout = QVBoxLayout()
