@@ -56,6 +56,7 @@ def get_versions_info() -> Versions:
     import pathlib
     import os
     import pyjapc
+    import accwidgets
     import cmmnbuild_dep_manager
     from qtpy.QtCore import __version__ as pyqt_ver, qVersion
 
@@ -67,8 +68,7 @@ def get_versions_info() -> Versions:
     comrad_ver = COMRAD_VERSION
     pyjapc_ver = pyjapc.__version__
     cmmn_ver = cmmnbuild_dep_manager.__version__
-    # TODO: Make widgets version when ready
-    widgets_ver = '0.1.0'  # accsoft_gui_pyqt_widgets.__version__
+    widgets_ver = accwidgets.__version__
     accpy: Optional[AccPyEnv] = None
 
     if 'ACC_PY_PREFIX' in os.environ and 'ACC_PYQT_PREFIX' in os.environ:
