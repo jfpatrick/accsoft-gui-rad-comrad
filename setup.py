@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 import versioneer
-import re
 from setuptools import setup, PEP420PackageFinder
-from os import path
-from typing import List, TextIO
+from pathlib import Path
 
 
 # We use implicit packages (PEP420) that are not obliged
@@ -13,45 +11,62 @@ from typing import List, TextIO
 find_packages = PEP420PackageFinder.find
 
 
-curr_dir = path.abspath(path.dirname(__file__))
+curr_dir: Path = Path(__file__).parent.absolute()
 
 
-def read_req(f: TextIO) -> List[str]:
-    res = []
-    for line in f.read().split('\n'):
-        if not line.startswith('-e'):
-            res.append(line)
-            continue
-
-        # Rearrange dev packages into the format understandable by setup()
-        m = re.match(r'-e\ +((git\+(https?|ssh|git|krb5).*\.git([^#]*)?)(#egg=(.+)))', line)
-        if m:
-            addr = m.group(1)
-            egg = m.group(6)
-            res.append(f'{egg} @ {addr}')
-    return res
-
-
-with open(path.join(curr_dir, 'README.md'), 'r') as f:
+with curr_dir.joinpath('README.md').open() as f:
     long_description = f.read()
 
-with open(path.join(curr_dir, 'requirements.txt'), 'r') as f:
-    requirements = read_req(f)
 
+requirements = {
+    'prod': [
+        'numpy>=1.16.4&&<2',
+        'argcomplete>=1.10.0&&<2',
+        'colorlog>=4.0.2&&<5',
+        'QtPy>=1.7&&<2',
+        'pyjapc @ git+ssh://git@gitlab.cern.ch:7999/pelson/pyjapc.git@jvm_startup_hook#egg=pyjapc',
+        'accwidgets @ git+ssh://git@gitlab.cern.ch:7999/acc-co/accsoft/gui/accsoft-gui-pyqt-widgets.git#egg=accwidgets',
+        'papc @ git+ssh://git@gitlab.cern.ch:7999/pelson/papc.git#egg=papc',
+        'pydm @ git+ssh://git@gitlab.cern.ch:7999/acc-co/accsoft/gui/rad/accsoft-gui-rad-pydm.git@multi-fix#egg=pydm',
+    ],
+    'test': [
+        'pytest>=4.*',
+        'pytest-cov',
+        'pytest-mock',
+        'pytest-random-order',
+    ],
+    'lint': [
+        'mypy>=0.720',
+        'flake8>=3.7.8&&<4',
+        'flake8-quotes>=2.1.0&&<3',
+        'flake8-commas>=2&&<3',
+        'flake8-colors>=0.1.6&&<2',
+        'flake8-rst>=0.7.1&&<2',
+        'flake8-breakpoint>=1.1.0&&<2',
+        'flake8-pyi>=19.3.0&&<20',
+        'flake8-comprehensions>=2.2.0&&<3',
+        'flake8-builtins-unleashed>=1.3.1&&<2',
+        'flake8-blind-except>=0.1.1&&<2',
+        'flake8-bugbear>=19.8.0&&<20',
+    ],
+    'docs': [
+        'Sphinx>=2.1.2&&<2.2',
+        'recommonmark>=0.6.0&&<0.7',
+        'sphinx-rtd-theme>=0.4.3&&<0.5',
+    ],
+    'release': [
+        'versioneer>=0.15',
+        'setuptools>=40.8.0',
+        'twine>=1.13.0&&<1.14',
+        'wheel',
+    ],
+}
+requirements['dev'] = [*requirements['test'], *requirements['lint'], *requirements['docs'], *requirements['release']]
+requirements['all'] = [*requirements['prod'], *requirements['dev']]
 
-def read_extras_req(filename: str):
-    try:
-        with open(path.join(curr_dir, filename), 'r') as f:
-            return read_req(f)
-    except FileNotFoundError:
-        # This is meant to be installed only from source, therefore pip installation is not supposed
-        # to find this file
-        return []
-
-
-test_requirements = read_extras_req('test-requirements.txt')
-docs_requirements = read_extras_req('docs-requirements.txt')
-dev_requirements = read_extras_req('dev-requirements.txt')
+requires = requirements['prod']
+del requirements['prod']
+extra_requires = requirements
 
 # Note include_package_data must be set to False, otherwise setuptools
 # will consider only CVS/Svn tracked non-code files
@@ -75,18 +90,13 @@ setup(
     package_data={
         '': ['*.ui', '*.ico', '*.png', '*.qss', '*.json'],
     },
-    install_requires=requirements,
+    install_requires=requires,
     entry_points={
         'gui_scripts': [
             'comrad=_comrad.launcher:run',
         ],
     },
-    extras_require={
-        'test': test_requirements,
-        'docs': docs_requirements,
-        'dev': dev_requirements,
-        'all': requirements + dev_requirements + test_requirements + docs_requirements,
-    },
+    extras_require=extra_requires,
     platforms=['centos7'],
     test_suite='tests',
 )

@@ -1,4 +1,0 @@
-pytest>=4.*
-pytest-cov
-pytest-mock
-pytest-random-order
