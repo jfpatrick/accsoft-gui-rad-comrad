@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import versioneer
+from typing import Dict, List, Optional
 from setuptools import setup, PEP420PackageFinder
 from pathlib import Path
 
@@ -18,7 +19,26 @@ with curr_dir.joinpath('README.md').open() as f:
     long_description = f.read()
 
 
-requirements = {
+Requirements = Dict[str, List[str]]
+
+
+def replace_for_ci(reqs: Requirements):
+    import os
+    token: Optional[str] = os.environ.get('CI_JOB_TOKEN', None)
+    if not token:
+        return
+
+    def replace_entry(entry: str) -> str:
+        import re
+        return re.sub(pattern=r'git\+(https?|ssh|git|krb5).*gitlab\.cern\.ch(:\d+)?',
+                      repl=f'git+https://gitlab-ci-token:{token}@gitlab.cern.ch',
+                      string=entry)
+
+    for group, defs in reqs.items():
+        reqs[group] = list(map(replace_entry, defs))
+
+
+requirements: Requirements = {
     'prod': [
         'numpy>=1.16.4&&<2',
         'argcomplete>=1.10.0&&<2',
@@ -61,8 +81,11 @@ requirements = {
         'wheel',
     ],
 }
+replace_for_ci(requirements)
 requirements['dev'] = [*requirements['test'], *requirements['lint'], *requirements['docs'], *requirements['release']]
 requirements['all'] = [*requirements['prod'], *requirements['dev']]
+
+print(f'My requirements:\n{requirements}')
 
 requires = requirements['prod']
 del requirements['prod']
