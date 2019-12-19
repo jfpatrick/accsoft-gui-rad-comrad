@@ -11,6 +11,7 @@ flake8:
   stage: Code Quality
   script:
     - source /opt/venv/bin/activate
+    - yum install -y -q gcc-c++  # Temp fix for PyJapc to build from source
     - pip install .[lint]
     - export LANG=en_US.UTF-8  # Otherwise, flake8 might fail with UnicodeDecodeError: 'ascii' codec can't decode byte
     - flake8
@@ -20,6 +21,7 @@ mypy:
   stage: Code Quality
   script:
     - source /opt/venv/bin/activate
+      - yum install -y -q gcc-c++  # Temp fix for PyJapc to build from source
     - pip install .[lint]
     - mypy .
 
@@ -28,6 +30,7 @@ pytest:
   stage: Unit Tests
   script:
     - source /opt/venv/bin/
+      - yum install -y -q gcc-c++  # Temp fix for PyJapc to build from source
     - pip install .[test]
     - run_headless python -m pytest --random-order --cov-report html:coverage --cov-report term-missing:skip-covered --cov=accwidgets -vx --color=yes tests/
   artifacts:
@@ -42,6 +45,7 @@ twine:
   stage: Release
   script:
     - source /opt/venv/bin/activate
+      - yum install -y -q gcc-c++  # Temp fix for PyJapc to build from source
     - pip install .[release]
     - pip install -U setuptools
     - python setup.py sdist bdist_wheel
