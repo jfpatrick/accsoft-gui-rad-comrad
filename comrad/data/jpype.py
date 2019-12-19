@@ -66,23 +66,3 @@ def get_user_message(jpype_exc: Any) -> str:
     parts = throwable.getMessage().split(' : ')
     parts = parts[-1].split(' --> ')
     return parts[-1]
-
-
-def is_security_exception(jpype_exc: Any) -> bool:
-    """
-    Checks whether given exception is the security exception related to user permissions.
-
-    To not be coupled with the PyJAPC implementation, we actually look for pattern in the name
-    of the causes of the exception. It's just an assumption, but it's the best guess to not
-    have a hardcoded types here...
-
-    Args:
-        jpype_exc: jPype exception wrapper produced with jpype.JException(cern.java.smth.Exception).
-
-    Returns:
-        True if exception related to user permissions.
-    """
-    for exc in _iter_causes(jpype_exc):
-        if type(exc).__name__.endswith('SecurityException'):
-            return True
-    return False

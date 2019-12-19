@@ -224,10 +224,11 @@ class CApplication(PyDMApplication):
             args.extend(command_line_args)
         subprocess.Popen(args, shell=False)
 
-    def on_control_error(self, message: str):
+    def on_control_error(self, message: str, display_popup: bool):
         """Callback to display a message whenever an exception happens in the control system."""
         logger.warning(f'Control system warning received: {message}')
-        QMessageBox.warning(None, 'Control system problem', message)
+        if display_popup:
+            QMessageBox.warning(None, 'Control system problem', message)
 
     def _load_toolbar_plugins(self,
                               cmd_line_paths: Optional[str],

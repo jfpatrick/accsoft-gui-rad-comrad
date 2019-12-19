@@ -9,7 +9,7 @@ from typing import Any, Optional, cast, Callable
 from collections import namedtuple
 from comrad.rbac import RBACLoginStatus, RBACStartupLoginPolicy
 from comrad.app.application import CApplication
-from comrad.data.jpype import get_user_message, is_security_exception
+from comrad.data.jpype import get_user_message
 
 
 logger = logging.getLogger('comrad_japc')
@@ -41,7 +41,7 @@ class _JapcService(QObject, pyjapc.PyJapc):
 
     japc_status_changed = Signal(bool)
     japc_login_error = Signal(tuple)
-    japc_param_error = Signal(str)
+    japc_param_error = Signal(str, bool)
 
     def __init__(self):
         app = cast(CApplication, CApplication.instance())
@@ -133,14 +133,14 @@ class _JapcService(QObject, pyjapc.PyJapc):
             self._set_online(False)
 
     def getParam(self, *args, **kwargs):
-        self._expect_cmw_security_error(super().getParam, *args, **kwargs)
+        self._expect_cmw_error(super().getParam, *args, **kwargs)
 
     def setParam(self, *args, **kwargs):
         if not self._use_inca and 'checkDims' not in kwargs:
             # Because when InCA is not set up, setter will crash because it will fail to
             # receive valueDescriptor while trying to verify dimensions.
             kwargs['checkDims'] = False
-        self._expect_cmw_security_error(super().setParam, *args, **kwargs)
+        self._expect_cmw_error(super().setParam, *args, display_popup=True, **kwargs)
 
     def stopSubscriptions(self, parameterName: Optional[str] = None, selector: Optional[str] = None):
         super().stopSubscriptions(parameterName=parameterName, selector=selector)
@@ -157,15 +157,12 @@ class _JapcService(QObject, pyjapc.PyJapc):
     def _login_err(self, message: str, login_by_location: bool):
         self.japc_login_error.emit((message, login_by_location))
 
-    def _expect_cmw_security_error(self, fn: Callable, *args, **kwargs):
+    def _expect_cmw_error(self, fn: Callable, *args, display_popup: bool = False, **kwargs):
         try:
             fn(*args, **kwargs)
         except jpype.JException(cern.japc.core.ParameterException) as e:
-            if is_security_exception(e):
-                message = get_user_message(e)
-                self.japc_param_error.emit(message)
-            else:
-                raise e
+            message = get_user_message(e)
+            self.japc_param_error.emit(message, display_popup)
 
     def _setup_jvm(self, log_level: int):
         """Overrides internal PyJapc hook to set any custom JVM flags"""
