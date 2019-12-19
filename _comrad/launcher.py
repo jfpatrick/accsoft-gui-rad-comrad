@@ -6,6 +6,7 @@ import argparse
 import argcomplete
 import os
 import sys
+from pathlib import Path
 from typing import Optional, Iterable, cast, Tuple, Dict, List
 from .comrad_info import COMRAD_DESCRIPTION, get_versions_info
 from .logging import install_logger_level
@@ -109,7 +110,7 @@ Environment:
 
 def _comrad_asset(file: str) -> str:
     import comrad
-    return os.path.join(os.path.abspath(os.path.dirname(comrad.__file__)), file)
+    return str(Path(comrad.__file__).parent.absolute() / file)
 
 
 def _install_help(parser: argparse.ArgumentParser):

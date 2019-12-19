@@ -2,6 +2,7 @@ import logging
 import os
 import platform
 import subprocess
+from pathlib import Path
 from typing import Optional, Union, Iterable, cast
 from qtpy.QtWidgets import QWidget, QMenu, QAction, QMainWindow, QFileDialog, QApplication
 from qtpy.QtCore import QCoreApplication, Qt
@@ -68,14 +69,14 @@ class CMainWindow(PyDMMainWindow, MonkeyPatchedClass):
     def open_file_action(self, _):
         """Overridden slot to open file that substitutes the name of the file type visible in the dialog."""
         modifiers = QApplication.keyboardModifiers()
-        folder: str
+        folder: Path
         try:
-            curr_file: str = self.current_file()
-            folder = os.path.dirname(curr_file)
+            curr_file = Path(self.current_file())
+            folder = curr_file.parent
         except IndexError:
-            folder = os.getcwd()
+            folder = Path.cwd()
 
-        dialog_res = QFileDialog.getOpenFileName(self, 'Open File...', folder, 'ComRAD Files (*.ui *.py)')
+        dialog_res = QFileDialog.getOpenFileName(self, 'Open File...', str(folder), 'ComRAD Files (*.ui *.py)')
         filename: str = dialog_res[0] if isinstance(dialog_res, (list, tuple)) else dialog_res
 
         if filename:

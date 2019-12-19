@@ -2,6 +2,7 @@ import os
 import functools
 import logging
 import json
+from pathlib import Path
 from typing import Optional, Union, cast, Type, Callable, List
 from pydm.utilities.iconfont import IconFont
 from PyQt5.Qsci import QsciScintilla, QsciLexerJSON
@@ -60,7 +61,7 @@ class RulesEditor(QDialog):
         self.details_frame: QFrame = None
         self.source_ranges_editor: QsciScintilla = None
 
-        loadUi(os.path.join(os.path.dirname(__file__), 'rules_editor.ui'), self)
+        loadUi(Path(__file__).parent / 'rules_editor.ui', self)
 
         self.rules_add_btn.setIcon(IconFont().icon('plus'))
         self.rules_del_btn.setIcon(IconFont().icon('minus'))

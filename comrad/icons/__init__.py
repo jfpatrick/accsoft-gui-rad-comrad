@@ -1,13 +1,13 @@
-import os
 import logging
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Union
 from qtpy.QtGui import QIcon, QPixmap
 
 
 logger = logging.getLogger(__name__)
 
 
-def icon(name: str, file_path: Optional[str] = None) -> QIcon:
+def icon(name: str, file_path: Optional[Union[Path, str]] = None) -> QIcon:
     """
     Loads the icon with the given name, provided that the file is located in comrad/icons or relative to the file_path,
     and is always inside ./icons directory and is of ICO extension.
@@ -26,10 +26,10 @@ def icon(name: str, file_path: Optional[str] = None) -> QIcon:
     else:
         components = ['icons', file_name]
 
-    storage_dir = os.path.abspath(os.path.dirname(file_path))
-    icon_path = os.path.join(storage_dir, *components)
+    storage_dir: Path = Path(file_path).parent.absolute()
+    icon_path = storage_dir.joinpath(*components)
 
-    if not os.path.isfile(icon_path):
-        logger.warning(f'Warning: Icon "{name}" cannot be found at {str(icon_path)}')
-    pixmap = QPixmap(icon_path)
+    if not icon_path.is_file():
+        logger.warning(f'Warning: Icon "{name}" cannot be found at {icon_path}')
+    pixmap = QPixmap(str(icon_path))
     return QIcon(pixmap)

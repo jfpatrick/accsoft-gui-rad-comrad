@@ -1,7 +1,6 @@
-import os
-import pathlib
 import pydm
 import inspect
+from pathlib import Path
 from typing import Optional, Dict, Union, cast
 from qtpy import uic
 from qtpy.QtWidgets import (QWidget, QLabel, QListWidget, QGroupBox, QTableWidget,
@@ -48,7 +47,7 @@ class AboutDialog(QWidget):
         self.tabs: QTabWidget = None
         self.icon_lbl: QLabel = None
 
-        uic.loadUi(os.path.join(os.path.dirname(__file__), 'about.ui'), self)
+        uic.loadUi(Path(__file__).parent / 'about.ui', self)
 
         if icon is not None:
             self.icon_lbl.setPixmap(icon.pixmap(self.icon_lbl.maximumSize()))
@@ -131,9 +130,8 @@ class AboutDialog(QWidget):
         self.contrib_list.addItem('PyDM Contributors:')
         self.contrib_list.addItem('------------------')
         import pydm.about_pydm.about
-        pydm_contrib = pathlib.Path(pydm.about_pydm.about.__file__).parent
-        contrib_file = pathlib.Path(pydm_contrib, 'contributors.txt')
-        with open(contrib_file) as f:
+        contrib_file: Path = Path(pydm.about_pydm.about.__file__).parent / 'contributors.txt'
+        with contrib_file.open() as f:
             for line in f:
                 self.contrib_list.addItem(str(line)
                                           .strip()

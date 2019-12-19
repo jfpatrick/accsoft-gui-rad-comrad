@@ -399,6 +399,10 @@ class ExamplesWindow(QMainWindow):
         args: List[str] = ['comrad', 'run']
         if self._selected_example_args is not None:
             args.extend(self._selected_example_args)
+        if '--log-level' not in args:
+            # Mirror current log level to the child app (e.g. when running in DEBUG, also launch example in DEBUG)
+            args.append('--log-level')
+            args.append(logging.getLevelName(logging.getLogger().level))
         args.append(str(file_path))
         logger.debug(f'Launching app with args: {args}')
         env = dict(os.environ, PYJAPC_SIMULATION_INIT=(self._selected_example_japc_generator or ''))

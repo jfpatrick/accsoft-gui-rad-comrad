@@ -2,6 +2,7 @@ import os
 import logging
 import json
 import subprocess
+from pathlib import Path
 from itertools import chain
 from typing import Optional, List, Dict, Iterable, Type, Union, cast, Tuple
 from qtpy.QtWidgets import QAction, QMenu, QSpacerItem, QSizePolicy, QWidget, QHBoxLayout, QMessageBox
@@ -163,16 +164,19 @@ class CApplication(PyDMApplication):
                 write needs to use this argument.
         """
         # Expand user (~ or ~user) and environment variables.
-        ui_file = os.path.expanduser(os.path.expandvars(ui_file))
-        base_dir, file_name, args = path_info(str(ui_file))
-        filepath = os.path.join(base_dir, file_name)
+        ui_file_path = Path(ui_file).expanduser().resolve()
+        base_dir, file_name, args = path_info(str(ui_file_path))
+        filepath = Path(base_dir) / file_name
         filepath_args = args
-        exec_path = which('comrad')
+        exec_path: Optional[str] = which('comrad')
 
         if exec_path is None:
             extra_path = os.environ.get('PYDM_PATH', None)
             if extra_path is not None:
-                exec_path = os.path.join(extra_path, 'comrad')
+                exec_path = str(Path(extra_path) / 'comrad')
+            else:
+                logger.error('Cannot find "comrad" executable')
+                return
 
         args = [exec_path, 'run']
         if self.hide_nav_bar:
@@ -436,7 +440,7 @@ class CApplication(PyDMApplication):
                       shipped_plugin_path: str,
                       base_type: Type = CPlugin) -> Dict[str, Type]:
 
-        all_plugin_paths = os.path.join(os.path.dirname(__file__), 'plugins', shipped_plugin_path)
+        all_plugin_paths = str(Path(__file__).parent / 'plugins' / shipped_plugin_path)
 
         if cmd_line_paths:
             all_plugin_paths = f'{cmd_line_paths}:{all_plugin_paths}'
@@ -449,7 +453,7 @@ class CApplication(PyDMApplication):
         if extra_plugin_paths:
             all_plugin_paths = f'{extra_plugin_paths}:{all_plugin_paths}'
 
-        locations = all_plugin_paths.split(':')
+        locations = [Path(p) for p in all_plugin_paths.split(':')]
         return load_plugins_from_path(locations=locations,
                                       token='_plugin.py',
                                       base_type=base_type)

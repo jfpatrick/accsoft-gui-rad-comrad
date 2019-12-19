@@ -1,19 +1,20 @@
 import os
 import logging
-from typing import Optional, List, Dict
+from pathlib import Path
+from typing import Optional, List, Dict, Union
 
 
 logger = logging.getLogger(__name__)
 
 
 def run_designer(ccda_env: str,
-                 files: Optional[List[str]] = None,
+                 files: Optional[List[Union[Path, str]]] = None,
                  online: bool = False,
                  use_inca: bool = True,
                  java_env: Optional[Dict[str, str]] = None,
                  server: bool = False,
                  client: Optional[int] = None,
-                 resource_dir: Optional[str] = None,
+                 resource_dir: Optional[Union[Path, str]] = None,
                  enable_internal_props: bool = False,
                  log_level: Optional[str] = None,
                  blocking: bool = True):
@@ -37,9 +38,9 @@ def run_designer(ccda_env: str,
         CompletedProcess instance returned from subprocess.run()
     """
     import _comrad_designer
-    path_to_plugins = os.path.abspath(os.path.dirname(_comrad_designer.__file__))
+    path_to_plugins: Path = Path(_comrad_designer.__file__).parent.absolute()
     env = {
-        'PYQTDESIGNERPATH': path_to_plugins,
+        'PYQTDESIGNERPATH': str(path_to_plugins),
         'QT_DESIGNER_RAD_EXTRAS': '1',
         'QT_DESIGNER_RAD_CCDA': ccda_env,
     }
@@ -62,12 +63,12 @@ def run_designer(ccda_env: str,
         cmd.append(str(client))
     if resource_dir is not None:
         cmd.append('--resourcedir')
-        cmd.append(resource_dir)
+        cmd.append(str(resource_dir))
     if enable_internal_props:
         cmd.append('--enableinternaldynamicproperties')
 
     if files:
-        cmd.extend(files)
+        cmd.extend(map(str, files))
 
     logger.debug(f'Launching command {cmd} with environment: {env}')
 

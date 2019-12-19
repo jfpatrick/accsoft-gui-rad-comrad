@@ -1,5 +1,5 @@
-import os
 import logging
+from pathlib import Path
 from typing import Optional, cast, Tuple
 from qtpy.QtWidgets import (QWidget, QPushButton, QLineEdit, QLabel, QToolButton, QMenu,
                             QWidgetAction, QSizePolicy, QTabWidget)
@@ -41,7 +41,7 @@ class RBACDialogWidget(QWidget):
         self.loc_error: QLabel = None
         self.tabs: QTabWidget = None
 
-        uic.loadUi(os.path.join(os.path.dirname(__file__), 'rbac_dialog.ui'), self)
+        uic.loadUi(Path(__file__).parent / 'rbac_dialog.ui', self)
 
         self.user_error.hide()
         self.loc_error.hide()
@@ -69,11 +69,11 @@ class RBACDialogWidget(QWidget):
         user = self.username.text()
         passwd = self.password.text()
         if not user and not passwd:
-            self.user_error.setText('You must define username and password')
+            self.user_error.setText('You must type in username and password')
         elif not user:
-            self.user_error.setText('You must define username')
+            self.user_error.setText('You must type in username')
         elif not passwd:
-            self.user_error.setText('You must define password')
+            self.user_error.setText('You must type in password')
         else:
             self.user_error.hide()
             self.loc_error.hide()

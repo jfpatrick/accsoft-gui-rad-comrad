@@ -4,6 +4,7 @@ import uuid
 import inspect
 import logging
 import importlib
+from pathlib import Path
 from typing import Optional, Union, Iterable, Dict, List, cast, Type
 from types import ModuleType
 from enum import Enum, auto, unique
@@ -138,7 +139,7 @@ class CStatusBarPlugin(CWidgetPlugin, metaclass=abc.ABCMeta):
     defined by `position` property."""
 
 
-def load_plugins_from_path(locations: List[str], token: str, base_type: Type[CPlugin] = CPlugin):
+def load_plugins_from_path(locations: List[Path], token: str, base_type: Type[CPlugin] = CPlugin):
     """
     Load plugins from file locations that match a specific token.
 
@@ -153,17 +154,18 @@ def load_plugins_from_path(locations: List[str], token: str, base_type: Type[CPl
     plugin_classes: Dict[str, ModuleType] = {}
     for loc in locations:
         for root, _, files in os.walk(loc):
-            if root.split(os.path.sep)[-1].startswith('__'):
+            root_path = Path(root)
+            if root_path.name.startswith('__'):
                 continue
 
-            logger.debug(f'Looking for plugins at: {root}')
+            logger.debug(f'Looking for plugins at: {root_path}')
             for name in files:
                 if not name.endswith(token):
                     continue
                 temp_name = str(uuid.uuid4())
                 logger.debug(f'Trying to load {name} (as {temp_name})...')
                 spec: importlib.machinery.ModuleSpec = \
-                    importlib.util.spec_from_file_location(name=temp_name, location=os.path.join(root, name))
+                    importlib.util.spec_from_file_location(name=temp_name, location=root_path / name)
                 mod: ModuleType = importlib.util.module_from_spec(spec)
                 loader = cast(importlib.machinery.SourceFileLoader, spec.loader)
                 try:

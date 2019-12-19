@@ -1,6 +1,6 @@
 import logging
-import os
 import re
+from pathlib import Path
 from string import Template
 from typing import Callable, Optional, Any
 from qtpy.QtCore import Property
@@ -14,13 +14,13 @@ class FileTracking:
 
     def __init__(self):
         """Common mixin for widgets that have to work with files and parse macros inside them."""
-        self.base_path = ''
+        self.base_path: Optional[Path] = None
         self.base_macros = {}
         if is_pydm_app():
-            self.base_path = self.app.directory_stack[-1]
+            self.base_path = Path(self.app.directory_stack[-1])
             self.base_macros = self.app.macro_stack[-1]
 
-    def relative_path(self, filename: str) -> str:
+    def relative_path(self, filename: str) -> Optional[Path]:
         """
         Finds the full path to the Python snippet.
 
@@ -31,12 +31,12 @@ class FileTracking:
             Parsed contents of the file with substituted macros.
         """
         if not filename:
-            return ''
-        path = os.path.expanduser(os.path.expandvars(filename))
-        file_path = os.path.join(self.base_path, path) if self.base_path else path
-        return file_path
+            return None
+        path = Path(filename)
+        file_path = self.base_path / path if self.base_path else path
+        return file_path.expanduser().resolve()
 
-    def open_file(self, full_path: str) -> str:
+    def open_file(self, full_path: Optional[Path]) -> str:
         """
         Opens the file and parses macros inside.
 
@@ -48,7 +48,7 @@ class FileTracking:
         """
         if not full_path:
             return ''
-        return macro.substitute_in_file(file_path=full_path, macros=self.parsed_macros()).getvalue()
+        return macro.substitute_in_file(file_path=str(full_path), macros=self.parsed_macros()).getvalue()
 
     def parsed_macros(self):
         """
@@ -174,13 +174,14 @@ class ValueTransformationBase(FileTracking):
             else:
                 file = self.relative_path(self.snippetFilename)
                 parsed_code = self.open_file(file)
-                file = os.path.abspath(file)
+                if file:
+                    file = file.absolute()
             if parsed_code:
                 self._value_transform_fn = _create_transformation_function(parsed_code, file=file)
         return self._value_transform_fn
 
 
-def _create_transformation_function(transformation: str, file: Optional[os.PathLike] = None) -> Callable:
+def _create_transformation_function(transformation: str, file: Optional[Path] = None) -> Callable:
     """
     Creates a function used to transform incoming value(s) into a single output value.
 
@@ -214,7 +215,7 @@ __builtins__['output'] = {output_func_name}
 """.format(output_func_name='__comrad_output_func__', return_var=return_var, code=code)
     global_base = globals().copy()
     if file:
-        global_base['__file__'] = file
+        global_base['__file__'] = str(file)
     del global_base['macro']
     del global_base['ValueTransformationBase']
     del global_base['FileTracking']
