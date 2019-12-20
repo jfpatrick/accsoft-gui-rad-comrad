@@ -22,22 +22,6 @@ with curr_dir.joinpath('README.md').open() as f:
 Requirements = Dict[str, List[str]]
 
 
-def replace_for_ci(reqs: Requirements):
-    import os
-    token: Optional[str] = os.environ.get('CI_JOB_TOKEN', None)
-    if not token:
-        return
-
-    def replace_entry(entry: str) -> str:
-        import re
-        return re.sub(pattern=r'git\+(https?|ssh|git|krb5).*gitlab\.cern\.ch(:\d+)?',
-                      repl=f'git+https://gitlab-ci-token:{token}@gitlab.cern.ch',
-                      string=entry)
-
-    for group, defs in reqs.items():
-        reqs[group] = list(map(replace_entry, defs))
-
-
 requirements: Requirements = {
     'prod': [
         'numpy>=1.16.4&&<2',
@@ -45,7 +29,7 @@ requirements: Requirements = {
         'colorlog>=4.0.2&&<5',
         'QtPy>=1.7&&<2',
         'pyjapc @ git+ssh://git@gitlab.cern.ch:7999/pelson/pyjapc.git@jvm_startup_hook#egg=pyjapc',
-        'accwidgets @ git+ssh://git@gitlab.cern.ch:7999/acc-co/accsoft/gui/accsoft-gui-pyqt-widgets.git#egg=accwidgets',
+        'accwidgets @ git+ssh://git@gitlab.cern.ch:7999/isinkare/accsoft-gui-pyqt-widgets.git@ci#egg=accwidgets',
         'papc @ git+ssh://git@gitlab.cern.ch:7999/pelson/papc.git#egg=papc',
         'pydm @ git+ssh://git@gitlab.cern.ch:7999/acc-co/accsoft/gui/rad/accsoft-gui-rad-pydm.git@multi-fix#egg=pydm',
     ],
@@ -81,7 +65,6 @@ requirements: Requirements = {
         'wheel',
     ],
 }
-replace_for_ci(requirements)
 requirements['dev'] = [*requirements['test'], *requirements['lint'], *requirements['docs'], *requirements['release']]
 requirements['all'] = [*requirements['prod'], *requirements['dev']]
 

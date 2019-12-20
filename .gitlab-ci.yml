@@ -6,12 +6,15 @@ stages:
 variables:
   ACCPY_PYQT_DOCKER_IMAGE: gitlab-registry.cern.ch/acc-co/accsoft/gui/accsoft-gui-pyqt-distro/acc-py-pyqt:ci
 
+before_script:
+  - source /opt/venv/bin/activate
+  - git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.cern.ch".insteadOf ssh://git@gitlab.cern.ch:7999
+  - yum install -y -q gcc-c++  # Temp fix for PyJapc to build from source
+
 flake8:
   image: $ACCPY_PYQT_DOCKER_IMAGE
   stage: Code Quality
   script:
-    - source /opt/venv/bin/activate
-    - yum install -y -q gcc-c++  # Temp fix for PyJapc to build from source
     - pip install .[lint]
     - export LANG=en_US.UTF-8  # Otherwise, flake8 might fail with UnicodeDecodeError: 'ascii' codec can't decode byte
     - flake8
@@ -20,8 +23,6 @@ mypy:
   image: $ACCPY_PYQT_DOCKER_IMAGE
   stage: Code Quality
   script:
-    - source /opt/venv/bin/activate
-      - yum install -y -q gcc-c++  # Temp fix for PyJapc to build from source
     - pip install .[lint]
     - mypy .
 
@@ -29,8 +30,6 @@ pytest:
   image: $ACCPY_PYQT_DOCKER_IMAGE
   stage: Unit Tests
   script:
-    - source /opt/venv/bin/
-      - yum install -y -q gcc-c++  # Temp fix for PyJapc to build from source
     - pip install .[test]
     - run_headless python -m pytest --random-order --cov-report html:coverage --cov-report term-missing:skip-covered --cov=accwidgets -vx --color=yes tests/
   artifacts:
@@ -44,8 +43,6 @@ twine:
   image: $ACCPY_PYQT_DOCKER_IMAGE
   stage: Release
   script:
-    - source /opt/venv/bin/activate
-      - yum install -y -q gcc-c++  # Temp fix for PyJapc to build from source
     - pip install .[release]
     - pip install -U setuptools
     - python setup.py sdist bdist_wheel
@@ -62,7 +59,6 @@ twine:
 #  image: $ACCPY_PYQT_DOCKER_IMAGE
 #  stage: Release
 #  script:
-#    - source /opt/venv/bin/activate
 #    - pip install .[docs]
 #    - echo "Sphinx command is coming in the future..."
 #  when: manual
