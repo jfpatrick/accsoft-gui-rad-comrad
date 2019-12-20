@@ -1,3 +1,4 @@
+import logging
 from typing import Optional
 from qtpy.QtWidgets import QWidget
 from qtpy.QtCore import Property
@@ -9,6 +10,9 @@ from pydm.widgets.enum_combo_box import PyDMEnumComboBox
 from .mixins import (HideUnusedFeaturesMixin, NoPVTextFormatterMixin, CustomizedTooltipMixin,
                      ValueTransformerMixin, ColorRulesMixin, WidgetRulesMixin, InitializedMixin)
 from .deprecations import superclass_deprecated
+
+
+logger = logging.getLogger(__name__)
 
 
 class CCheckBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, InitializedMixin, HideUnusedFeaturesMixin, PyDMCheckbox):
@@ -120,7 +124,7 @@ class CSlider(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, I
         return True
 
     @userDefinedLimits.setter  # type: ignore
-    @superclass_deprecated
+    @superclass_deprecated(logger)
     def userDefinedLimits(self, _):
         pass
 

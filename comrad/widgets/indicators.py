@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 from typing import List, Tuple, Union, Optional
 from qtpy.QtWidgets import QWidget
@@ -8,6 +9,9 @@ from pydm.widgets.byte import PyDMByteIndicator
 from .mixins import (HideUnusedFeaturesMixin, NoPVTextFormatterMixin, CustomizedTooltipMixin,
                      ValueTransformerMixin, ColorRulesMixin, WidgetRulesMixin, InitializedMixin)
 from .deprecations import superclass_deprecated
+
+
+logger = logging.getLogger(__name__)
 
 
 class CLabel(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, InitializedMixin, HideUnusedFeaturesMixin, NoPVTextFormatterMixin, PyDMLabel):
@@ -153,6 +157,6 @@ class CScaleIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltip
         return False
 
     @limitsFromChannel.setter  # type: ignore
-    @superclass_deprecated
+    @superclass_deprecated(logger)
     def limitsFromChannel(self, _):
         pass

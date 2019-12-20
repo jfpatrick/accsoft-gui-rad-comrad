@@ -69,7 +69,7 @@ class CPushButton(WidgetRulesMixin, CustomizedTooltipMixin, InitializedMixin, Hi
         return False
 
     @passwordProtected.setter  # type: ignore
-    @superclass_deprecated
+    @superclass_deprecated(logger)
     def passwordProtected(self, _):
         pass
 
@@ -78,7 +78,7 @@ class CPushButton(WidgetRulesMixin, CustomizedTooltipMixin, InitializedMixin, Hi
         return super().password
 
     @password.setter  # type: ignore
-    @superclass_deprecated
+    @superclass_deprecated(logger)
     def password(self, _):
         pass
 
@@ -87,7 +87,7 @@ class CPushButton(WidgetRulesMixin, CustomizedTooltipMixin, InitializedMixin, Hi
         return super().protectedPassword
 
     @protectedPassword.setter  # type: ignore
-    @superclass_deprecated
+    @superclass_deprecated(logger)
     def protectedPassword(self, _):
         pass
 

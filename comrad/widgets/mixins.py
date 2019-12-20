@@ -30,7 +30,7 @@ class HideUnusedFeaturesMixin:
         return False
 
     @alarmSensitiveBorder.setter  # type: ignore
-    @superclass_deprecated
+    @superclass_deprecated(logger)
     def alarmSensitiveBorder(self, _):
         pass
 
@@ -39,7 +39,7 @@ class HideUnusedFeaturesMixin:
         return False
 
     @alarmSensitiveContent.setter  # type: ignore
-    @superclass_deprecated
+    @superclass_deprecated(logger)
     def alarmSensitiveContent(self, _):
         pass
 
@@ -55,7 +55,7 @@ class NoPVTextFormatterMixin:
         return False
 
     @precisionFromPV.setter  # type: ignore
-    @superclass_deprecated
+    @superclass_deprecated(logger)
     def precisionFromPV(self, _):
         pass
 
@@ -65,7 +65,7 @@ class NoPVTextFormatterMixin:
         return False
 
     @showUnits.setter  # type: ignore
-    @superclass_deprecated
+    @superclass_deprecated(logger)
     def showUnits(self, _):
         pass
 
