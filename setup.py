@@ -82,10 +82,13 @@ setup(
     url='https://wikis.cern.ch/display/ACCPY/Rapid+Application+Development',
     packages=find_packages(exclude=('build*', 'dist*', 'docs*', 'tests', '*.egg-info')),
     classifiers=[
-        'Programming Language :: Python',
         'Development Status :: 3 - Alpha',
         'Environment :: X11 Applications :: Qt',
+        'Intended Audience :: Developers',
         'Operating System :: POSIX :: Linux',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: Implementation :: CPython',
+        'Typing :: Typed',
     ],
     package_data={
         '': ['*.ui', '*.ico', '*.png', '*.qss', '*.json'],
