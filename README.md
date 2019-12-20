@@ -33,29 +33,15 @@ Currently, it integrates PyJAPC as an interface to the control system, but might
 
 # Install
 
+Before performing any operations or installation make sure that you have PyQt distribution active.
+
 ## pip from CO package index
-
-Ensure that you have access to acc-py Nexus repository:
-
-```bash
-export PIP_EXTRA_INDEX_URL="http://acc-py-repo:8081/repository/py-development-local/simple/"
-```
-
-Then simply install the package:
 
 ```bash
 pip install comrad
 ```
 
 ## pip from Gitlab
-
-Make sure you have an updated version of pip (standard pip3 v9.* does not handle installs from git):
-
-```bash
-pip install -U pip
-```
-
-Now, install the package:
 
 ```bash
 pip install git+https://gitlab.cern.ch/acc-co/accsoft/gui/rad/accsoft-gui-rad-comrad.git
@@ -182,19 +168,6 @@ For mypy:
 mypy .
 ```
 
-## Package hierarchy
-
-`comrad` package comes as a set of 4 Python subpackages:
-- *data*: integrates a custom PyJAPC data plugin to PyDM environment
-- *designer*: brings collection of plugins to be used in Qt Designer
-- *qt*: contains any components to be used for Qt Designer or PyDM
-- *tools*: brings a collection of custom tools to be used by PyDM
-
-Considering that you have installed the package from source, navigate to the root directory, and prepare test dependencies
-```bash
-pip install -e .[all]
-```
-
 ## Building documentation
 
 Use sphinx to build the docs:
@@ -231,7 +204,7 @@ and locate the index page in `docs/build/index.html`.
 ## Uploading package to CO package index
 Make sure that you have tools installed
 ```bash
-pip install twine wheel
+pip install .[release]
 ```
 Prepare the source distribution
 ```bash
@@ -240,7 +213,7 @@ python setup.py sdist bdist_wheel
 
 Upload to the repository
 ```bash
-python -m twine upload --repository-url http://acc-py-repo:8081/repository/py-development-local/ -u py-service-upload dist/*
+python -m twine upload --repository-url http://acc-py-repo:8081/repository/py-release-local/ -u py-service-upload dist/*
 ```
 
 And now you can clean up
