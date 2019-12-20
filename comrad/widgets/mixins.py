@@ -1,7 +1,6 @@
 import json
 import logging
 from typing import Any, List, cast, Union
-from types import MethodType
 from qtpy.QtCore import Property
 from qtpy.QtWidgets import QWidget
 from pydm.utilities import is_qt_designer
@@ -10,6 +9,7 @@ from pydm.widgets.rules import RulesDispatcher
 from comrad.rules import BaseRule, CChannelException, unpack_rules
 from comrad.json import ComRADJSONEncoder, JSONDeserializeError
 from .value_transform import ValueTransformationBase
+from .deprecations import superclass_deprecated
 
 
 logger = logging.getLogger(__name__)
@@ -22,33 +22,6 @@ class InitializedMixin:
         self._widget_initialized = False
 
 
-def superclass_deprecated(method: MethodType):
-    """
-    Decorator to deprecate properties exposed to Qt Designer that are actually defined in dependencies outside of ComRAD.
-
-    Args:
-        method: Method to decorate.
-
-    Returns:
-        Wrapper method with decorated logic.
-    """
-
-    def _wrapper(self, *_, **__):
-        if not is_qt_designer():
-            if not isinstance(self, InitializedMixin):
-                raise TypeError(f'This decorator is intended to be used with InitializedMixin. {type(self).__name__} is not recognized as one.')
-            widget = cast(InitializedMixin, self)
-            if not widget._widget_initialized:
-                # Ignore setting properties in __init__, which may come from PyDM superclasses
-                return
-            name = cast(QWidget, self).objectName()
-            if not name:
-                name = f'unidentified {type(self).__name__}'
-            logger.warning(f'{method.__name__} property is disabled in ComRAD (found in {name})')
-
-    return _wrapper
-
-
 class HideUnusedFeaturesMixin:
     """Mixin that hides PyDM properties that are exposed to Qt Designer and are not used in ComRAD."""
 
@@ -58,7 +31,7 @@ class HideUnusedFeaturesMixin:
 
     @alarmSensitiveBorder.setter  # type: ignore
     @superclass_deprecated
-    def alarmSensitiveBorder(self, _: bool):
+    def alarmSensitiveBorder(self, _):
         pass
 
     @Property(bool, designable=False)
@@ -67,7 +40,7 @@ class HideUnusedFeaturesMixin:
 
     @alarmSensitiveContent.setter  # type: ignore
     @superclass_deprecated
-    def alarmSensitiveContent(self, _: bool):
+    def alarmSensitiveContent(self, _):
         pass
 
 
@@ -83,7 +56,7 @@ class NoPVTextFormatterMixin:
 
     @precisionFromPV.setter  # type: ignore
     @superclass_deprecated
-    def precisionFromPV(self, _: bool):
+    def precisionFromPV(self, _):
         pass
 
     # TODO: We should enable showUnits, when unit support is implemented on the CS level
@@ -93,7 +66,7 @@ class NoPVTextFormatterMixin:
 
     @showUnits.setter  # type: ignore
     @superclass_deprecated
-    def showUnits(self, _: bool):
+    def showUnits(self, _):
         pass
 
 

@@ -1,12 +1,13 @@
 import numpy as np
 from typing import List, Tuple, Union, Optional
 from qtpy.QtWidgets import QWidget
-from qtpy.QtCore import Slot
+from qtpy.QtCore import Slot, Property
 from pydm.widgets.scale import PyDMScaleIndicator
 from pydm.widgets.label import PyDMLabel
 from pydm.widgets.byte import PyDMByteIndicator
 from .mixins import (HideUnusedFeaturesMixin, NoPVTextFormatterMixin, CustomizedTooltipMixin,
                      ValueTransformerMixin, ColorRulesMixin, WidgetRulesMixin, InitializedMixin)
+from .deprecations import superclass_deprecated
 
 
 class CLabel(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, InitializedMixin, HideUnusedFeaturesMixin, NoPVTextFormatterMixin, PyDMLabel):
@@ -144,4 +145,14 @@ class CScaleIndicator(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltip
         NoPVTextFormatterMixin.__init__(self)
         PyDMScaleIndicator.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
+        self._limits_from_channel = False
         self._widget_initialized = True
+
+    @Property(bool, designable=False)
+    def limitsFromChannel(self) -> bool:
+        return False
+
+    @limitsFromChannel.setter  # type: ignore
+    @superclass_deprecated
+    def limitsFromChannel(self, _):
+        pass
