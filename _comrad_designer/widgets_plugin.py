@@ -16,13 +16,13 @@ setup_logging()
 
 # from pydm.widgets.tab_bar_qtplugin import TabWidgetPlugin as PyDMTabWidgetPlugin
 from pydm.widgets.qtplugin_extensions import PyDMExtension
-from comrad import (CScrollingPlot, CSlidingPlot, CPlottingItemEditorExtension, CValueAggregator, CCommandButton,
-                    CScaleIndicator, CLogDisplay, CEnumComboBox, CSlider, CSpinBox, CLabel,
-                    CByteIndicator, CLineEdit, CTemplateRepeater, CEmbeddedDisplay, CShellCommand,
-                    CRelatedDisplayButton, CPushButton, CEnumButton, CCheckBox)
+from comrad import (CScrollingPlot, CCyclicPlot, CValueAggregator, CCommandButton, CScaleIndicator, CLogDisplay,
+                    CEnumComboBox, CSlider, CSpinBox, CLabel, CByteIndicator, CLineEdit, CTemplateRepeater,
+                    CEmbeddedDisplay, CShellCommand, CRelatedDisplayButton, CPushButton, CEnumButton, CCheckBox)
 from comrad.icons import icon
 from _comrad_designer.utils import qtplugin_factory
 from _comrad_designer.rules_editor import RulesEditor
+from _comrad_designer.graphs import CPlottingItemEditorExtension, CLayerEditorExtension
 
 
 class _RulesExtension(PyDMExtension):
@@ -50,7 +50,8 @@ _load_icon = functools.partial(icon, file_path=__file__)
 
 
 _BASE_EXTENSIONS = [_RulesExtension]
-_PLOT_EXTENSIONS = [CPlottingItemEditorExtension]
+_PLOT_EXTENSIONS = [CPlottingItemEditorExtension, CLayerEditorExtension]
+
 
 # Currently the groups are made so that new widgets blend into the standard PyQt widgets
 _COMRAD_GROUP_CONTAINER = 'Containers'  # 'ComRAD Container Widgets'
@@ -99,7 +100,7 @@ _CScaleIndicator = qtplugin_factory(CScaleIndicator, group=_COMRAD_GROUP_DISPLAY
 
 # Charts
 _CScrollingPlot = qtplugin_factory(CScrollingPlot, group=_COMRAD_GROUP_PLOT, icon=_load_icon('graph_scrolling_plot'), extensions=_PLOT_EXTENSIONS)
-_CSlidingPlot = qtplugin_factory(CSlidingPlot, group=_COMRAD_GROUP_PLOT, icon=_load_icon('graph_sliding_plot'), extensions=_PLOT_EXTENSIONS)
+_CCyclicPlot = qtplugin_factory(CCyclicPlot, group=_COMRAD_GROUP_PLOT, icon=_load_icon('graph_sliding_plot'), extensions=_PLOT_EXTENSIONS)
 
 # Invisible
 _CValueAggregator = qtplugin_factory(CValueAggregator, group=_COMRAD_GROUP_VIRTUAL, icon=_load_icon('calc'))

@@ -3,7 +3,6 @@ import os
 import uuid
 import inspect
 import logging
-import importlib
 from pathlib import Path
 from typing import Optional, Union, Iterable, Dict, List, cast, Type
 from types import ModuleType
@@ -151,6 +150,8 @@ def load_plugins_from_path(locations: List[Path], token: str, base_type: Type[CP
     Returns:
         dictionary of plugins add from this folder.
     """
+    import importlib.util
+    import importlib.machinery
     plugin_classes: Dict[str, ModuleType] = {}
     for loc in locations:
         for root, _, files in os.walk(loc):

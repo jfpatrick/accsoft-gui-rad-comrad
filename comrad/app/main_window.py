@@ -1,5 +1,4 @@
 import logging
-import os
 import platform
 import subprocess
 from pathlib import Path
@@ -150,8 +149,8 @@ class CMainWindow(PyDMMainWindow, MonkeyPatchedClass):
             subprocess.call(('xdg-open', filename))
         elif system == 'Darwin':
             subprocess.call(('open', filename))
-        elif system == 'Windows':
-            os.startfile(filename)
+        else:
+            logger.warning(f"You are using unsupported operating system. Can't open the file...")
 
 
 @modify_in_place
