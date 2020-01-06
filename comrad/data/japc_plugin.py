@@ -142,12 +142,6 @@ class _JapcService(QObject, pyjapc.PyJapc):
             kwargs['checkDims'] = False
         self._expect_cmw_error(super().setParam, *args, display_popup=True, **kwargs)
 
-    def stopSubscriptions(self, parameterName: Optional[str] = None, selector: Optional[str] = None):
-        super().stopSubscriptions(parameterName=parameterName, selector=selector)
-        if not self._subscriptionHandleDict:
-            logger.debug(f'Last subscription was removed from JAPC. Logging out.')
-            self.rbacLogout()
-
     def _set_online(self, logged_in: bool):
         self._logged_in = logged_in
         self.japc_status_changed.emit(logged_in)
