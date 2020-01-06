@@ -9,6 +9,8 @@ variables:
 before_script:
   - source /opt/venv/bin/activate
   - git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.cern.ch".insteadOf ssh://git@gitlab.cern.ch:7999
+  - export PIP_INDEX_URL=http://acc-py-repo:8081/repository/vr-py-releases/simple/
+  - export PIP_TRUSTED_HOST=acc-py-repo
   - yum install -y -q gcc-c++  # Temp fix for PyJapc to build from source
 
 flake8:
