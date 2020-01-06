@@ -133,7 +133,7 @@ class _JapcService(QObject, pyjapc.PyJapc):
             self._set_online(False)
 
     def getParam(self, *args, **kwargs):
-        self._expect_cmw_error(super().getParam, *args, **kwargs)
+        return self._expect_cmw_error(super().getParam, *args, **kwargs)
 
     def setParam(self, *args, **kwargs):
         if not self._use_inca and 'checkDims' not in kwargs:
@@ -159,7 +159,7 @@ class _JapcService(QObject, pyjapc.PyJapc):
 
     def _expect_cmw_error(self, fn: Callable, *args, display_popup: bool = False, **kwargs):
         try:
-            fn(*args, **kwargs)
+            return fn(*args, **kwargs)
         except jpype.JException(cern.japc.core.ParameterException) as e:
             message = get_user_message(e)
             self.japc_param_error.emit(message, display_popup)
