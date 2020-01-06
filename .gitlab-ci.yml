@@ -32,6 +32,7 @@ pytest:
   image: $ACCPY_PYQT_DOCKER_IMAGE
   stage: Unit Tests
   script:
+    - yum install -y python36-tkinter  # TODO: This should go away, when PyJapc loses this dependency
     - pip install .[test]
     - run_headless python -m pytest --random-order --cov-report html:coverage --cov-report term-missing:skip-covered --cov=accwidgets -vx --color=yes tests/
   artifacts:
