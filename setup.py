@@ -47,7 +47,7 @@ requirements = {
         'flake8-comprehensions>=2.2.0&&<3',
         'flake8-builtins-unleashed>=1.3.1&&<2',
         'flake8-blind-except>=0.1.1&&<2',
-        'flake8-bugbear>=19.8.0&&<20',
+        'flake8-bugbear==20.1',
     ],
     'docs': [
         'Sphinx>=2.1.2&&<2.2',
