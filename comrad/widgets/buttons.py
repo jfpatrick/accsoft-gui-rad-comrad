@@ -7,8 +7,9 @@ from pydm.widgets.shell_command import PyDMShellCommand
 from pydm.widgets.enum_button import PyDMEnumButton
 from qtpy.QtWidgets import QWidget, QPushButton
 from qtpy.QtGui import QIcon
-from qtpy.QtCore import Signal
+from qtpy.QtCore import Signal, Property
 from .mixins import HideUnusedFeaturesMixin, CustomizedTooltipMixin, ValueTransformerMixin, WidgetRulesMixin, InitializedMixin
+from .deprecations import superclass_deprecated
 
 
 logger = logging.getLogger(__name__)
@@ -62,6 +63,33 @@ class CPushButton(WidgetRulesMixin, CustomizedTooltipMixin, InitializedMixin, Hi
     def init_for_designer(self):
         super().init_for_designer()
         self.setText('RAD PushButton')
+
+    @Property(bool, designable=False)
+    def passwordProtected(self) -> bool:
+        return False
+
+    @passwordProtected.setter  # type: ignore
+    @superclass_deprecated(logger)
+    def passwordProtected(self, _):
+        pass
+
+    @Property(str, designable=False)
+    def password(self) -> str:
+        return super().password
+
+    @password.setter  # type: ignore
+    @superclass_deprecated(logger)
+    def password(self, _):
+        pass
+
+    @Property(str, designable=False)
+    def protectedPassword(self) -> str:
+        return super().protectedPassword
+
+    @protectedPassword.setter  # type: ignore
+    @superclass_deprecated(logger)
+    def protectedPassword(self, _):
+        pass
 
 
 class CRelatedDisplayButton(PyDMRelatedDisplayButton):

@@ -1,4 +1,4 @@
-from comrad import CScrollingPlot, CSlidingPlot, CDisplay
+from comrad import CScrollingPlot, CCyclicPlot, CDisplay
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QColor
 from qtpy.QtWidgets import QGridLayout
@@ -19,7 +19,7 @@ class PlotDisplay(CDisplay):
         self.resize(900, 600)
         # Create scrolling and sliding plot
         self.scrolling_plot: CScrollingPlot = CScrollingPlot()
-        self.sliding_plot: CSlidingPlot = CSlidingPlot()
+        self.sliding_plot: CCyclicPlot = CCyclicPlot()
         # Add created plots to the windows layout
         main_layout.addWidget(self.scrolling_plot)
         main_layout.addWidget(self.sliding_plot)
@@ -51,23 +51,19 @@ class PlotDisplay(CDisplay):
         self.scrolling_plot.showTopAxis = False
         self.scrolling_plot.showRightAxis = False
         # Add two new layers, give them names and set axis labels
-        self.scrolling_plot.add_layer(
-            identifier="layer_0",
-            axis_label_kwargs={
-                "text": "Curve"
-            }
+        self.scrolling_plot.add_layer(layer_id='layer_0')
+        self.scrolling_plot.add_layer(layer_id='layer_1')
+        self.scrolling_plot.setLabels(
+            left='Bar Graph',
+            layer_0='Curve',
+            layer_1='Injection Bars',
         )
-        self.scrolling_plot.add_layer(
-            identifier="layer_1",
-            axis_label_kwargs={
-                "text": "Injection Bars"
-            }
-        )
-        self.scrolling_plot.setLabels(left="Bar Graph")
         # Give each layer a separate view range along the y axis
-        self.scrolling_plot.setYRange(min=0, max=3)
-        self.scrolling_plot.plotItem.get_layer_by_identifier("layer_0").view_box.setYRange(min=-1, max=2)
-        self.scrolling_plot.plotItem.get_layer_by_identifier("layer_1").view_box.setYRange(min=-4.5, max=1.5)
+        self.scrolling_plot.setRange(
+            yRange=(0, 3),
+            layer_0=(-1, 2),
+            layer_1=(-4.5, 1.5),
+        )
 
     def _configure_sliding_plot(self):
         """
@@ -77,12 +73,12 @@ class PlotDisplay(CDisplay):
         """
         self.sliding_plot.timeSpan = 10.0
         self.sliding_plot.add_layer(
-            identifier="layer_0",
-            axis_label_kwargs={
-                "text": "Triangle Scatter"
-            }
+            layer_id='layer_0',
         )
-        self.sliding_plot.setLabels(left="Dotted Curve")
+        self.sliding_plot.setLabels(
+            left='Dotted Curve',
+            layer_0='Triangle Scatter',
+        )
 
     def _add_curves_to_scrolling_plot(self):
         """
@@ -91,30 +87,30 @@ class PlotDisplay(CDisplay):
         """
         # Add yellow bargraph to default layer
         bars = self.scrolling_plot.addBarGraph(
-            data_source="japc://DemoDevice/Acquisition#RandomBar",
-            color=QColor("yellow")
+            data_source='japc://DemoDevice/Acquisition#RandomBar',
+            color=QColor('yellow'),
         )
         bars.line_width = 1
         # Add red curve in layer_0
         self.scrolling_plot.addCurve(
-            data_source="japc://DemoDevice/Acquisition#RandomPoint",
-            layer_identifier="layer_0",
-            color=QColor("red"),
+            data_source='japc://DemoDevice/Acquisition#RandomPoint',
+            layer='layer_0',
+            color=QColor('red'),
             line_width=2,
             line_style=Qt.SolidLine,
             symbol=None,
         )
         # Add blue injection bar graph into layer_1
         self.scrolling_plot.addInjectionBar(
-            data_source="japc://DemoDevice/Acquisition#RandomInjectionBar",
-            layer_identifier="layer_1",
-            color=QColor("dodgerblue"),
-            line_width=2
+            data_source='japc://DemoDevice/Acquisition#RandomInjectionBar',
+            layer='layer_1',
+            color=QColor('dodgerblue'),
+            line_width=2,
         )
         # Add timestamp markers
         self.scrolling_plot.addTimestampMarker(
-            data_source="japc://DemoDevice/Acquisition#RandomTimestampMarker",
-            line_width=3
+            data_source='japc://DemoDevice/Acquisition#RandomTimestampMarker',
+            line_width=3,
         )
 
     def _add_curves_to_sliding_plot(self):
@@ -124,18 +120,18 @@ class PlotDisplay(CDisplay):
         """
         # Add yellow dash line
         self.sliding_plot.addCurve(
-            data_source="japc://DemoDevice/Acquisition#RandomPoint",
-            color=QColor("yellow"),
+            data_source='japc://DemoDevice/Acquisition#RandomPoint',
+            color=QColor('yellow'),
             line_width=2,
             line_style=Qt.DashLine,
-            symbol=None
+            symbol=None,
         )
         # Add red triangles without a line attached to the same field
         self.sliding_plot.addCurve(
-            data_source="japc://DemoDevice/Acquisition#RandomPoint",
-            layer_identifier="layer_0",
-            color=QColor("red"),
+            data_source='japc://DemoDevice/Acquisition#RandomPoint',
+            layer='layer_0',
+            color=QColor('red'),
             line_style=Qt.NoPen,
-            symbol="t",
-            symbol_size=10
+            symbol='t',
+            symbol_size=10,
         )

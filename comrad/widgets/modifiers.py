@@ -218,7 +218,7 @@ class CValueAggregator(QWidget, InitializedMixin, HideUnusedFeaturesMixin, PyDMW
         return ''
 
     @channel.setter  # type: ignore
-    @superclass_deprecated
+    @superclass_deprecated(logger)
     def channel(self, _):
         pass
 
@@ -227,7 +227,7 @@ class CValueAggregator(QWidget, InitializedMixin, HideUnusedFeaturesMixin, PyDMW
         return super().minimumSize()
 
     @minimumSize.setter  # type: ignore
-    @superclass_deprecated
+    @superclass_deprecated(logger)
     def minimumSize(self, _):
         pass
 
@@ -236,7 +236,7 @@ class CValueAggregator(QWidget, InitializedMixin, HideUnusedFeaturesMixin, PyDMW
         return super().maximumSize()
 
     @maximumSize.setter  # type: ignore
-    @superclass_deprecated
+    @superclass_deprecated(logger)
     def maximumSize(self, _):
         pass
 
@@ -245,7 +245,7 @@ class CValueAggregator(QWidget, InitializedMixin, HideUnusedFeaturesMixin, PyDMW
         return super().baseSize()
 
     @baseSize.setter  # type: ignore
-    @superclass_deprecated
+    @superclass_deprecated(logger)
     def baseSize(self, _):
         pass
 
@@ -254,7 +254,7 @@ class CValueAggregator(QWidget, InitializedMixin, HideUnusedFeaturesMixin, PyDMW
         return super().sizeIncrement()
 
     @sizeIncrement.setter  # type: ignore
-    @superclass_deprecated
+    @superclass_deprecated(logger)
     def sizeIncrement(self, _):
         pass
 
@@ -263,7 +263,7 @@ class CValueAggregator(QWidget, InitializedMixin, HideUnusedFeaturesMixin, PyDMW
         return QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
     @sizePolicy.setter  # type: ignore
-    @superclass_deprecated
+    @superclass_deprecated(logger)
     def sizePolicy(self, _):
         pass
 

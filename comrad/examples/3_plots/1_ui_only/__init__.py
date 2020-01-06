@@ -1,4 +1,4 @@
-title = "Graphs displaying different plotting items built with Qt Designer"
+title = 'Graphs displaying different plotting items built with Qt Designer'
 description = \
     'This example shows how to create a display containing a Scrolling Graph and a Sliding Pointer Graph ' \
     'using only Qt Designer UI files. ' \
@@ -8,5 +8,5 @@ description = \
     '"RandomBar", "RandomInjectonBar" and "RandomTimestampMarker", which emit lists of different values ' \
     'representing a timestamp and other metrics that are then displayed by the connected item.'
 
-entrypoint = "app.ui"
-japc_generator = "japc_device:create_device"
+entrypoint = 'app.ui'
+japc_generator = 'japc_device:create_device'

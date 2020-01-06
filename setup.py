@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import versioneer
-from typing import Dict, List, Optional
 from setuptools import setup, PEP420PackageFinder
 from pathlib import Path
 
@@ -19,17 +18,14 @@ with curr_dir.joinpath('README.md').open() as f:
     long_description = f.read()
 
 
-Requirements = Dict[str, List[str]]
-
-
-requirements: Requirements = {
+requirements = {
     'prod': [
         'numpy>=1.16.4&&<2',
         'argcomplete>=1.10.0&&<2',
         'colorlog>=4.0.2&&<5',
         'QtPy>=1.7&&<2',
         'pyjapc @ git+ssh://git@gitlab.cern.ch:7999/pelson/pyjapc.git@jvm_startup_hook#egg=pyjapc',
-        'accwidgets @ git+ssh://git@gitlab.cern.ch:7999/isinkare/accsoft-gui-pyqt-widgets.git@ci#egg=accwidgets',
+        'accwidgets==0.1',
         'papc @ git+ssh://git@gitlab.cern.ch:7999/pelson/papc.git#egg=papc',
         'pydm @ git+ssh://git@gitlab.cern.ch:7999/acc-co/accsoft/gui/rad/accsoft-gui-rad-pydm.git@multi-fix#egg=pydm',
     ],
@@ -40,7 +36,7 @@ requirements: Requirements = {
         'pytest-random-order',
     ],
     'lint': [
-        'mypy>=0.720',
+        'mypy>=0.761',
         'flake8>=3.7.8&&<4',
         'flake8-quotes>=2.1.0&&<3',
         'flake8-commas>=2&&<3',
@@ -68,8 +64,6 @@ requirements: Requirements = {
 requirements['dev'] = [*requirements['test'], *requirements['lint'], *requirements['docs'], *requirements['release']]
 requirements['all'] = [*requirements['prod'], *requirements['dev']]
 
-print(f'My requirements:\n{requirements}')
-
 requires = requirements['prod']
 del requirements['prod']
 extra_requires = requirements
@@ -88,10 +82,13 @@ setup(
     url='https://wikis.cern.ch/display/ACCPY/Rapid+Application+Development',
     packages=find_packages(exclude=('build*', 'dist*', 'docs*', 'tests', '*.egg-info')),
     classifiers=[
-        'Programming Language :: Python',
         'Development Status :: 3 - Alpha',
         'Environment :: X11 Applications :: Qt',
+        'Intended Audience :: Developers',
         'Operating System :: POSIX :: Linux',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: Implementation :: CPython',
+        'Typing :: Typed',
     ],
     package_data={
         '': ['*.ui', '*.ico', '*.png', '*.qss', '*.json'],

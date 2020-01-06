@@ -1,5 +1,7 @@
+import logging
 from typing import Optional
 from qtpy.QtWidgets import QWidget
+from qtpy.QtCore import Property
 from pydm.widgets.line_edit import PyDMLineEdit
 from pydm.widgets.slider import PyDMSlider
 from pydm.widgets.spinbox import PyDMSpinbox
@@ -7,6 +9,10 @@ from pydm.widgets.checkbox import PyDMCheckbox
 from pydm.widgets.enum_combo_box import PyDMEnumComboBox
 from .mixins import (HideUnusedFeaturesMixin, NoPVTextFormatterMixin, CustomizedTooltipMixin,
                      ValueTransformerMixin, ColorRulesMixin, WidgetRulesMixin, InitializedMixin)
+from .deprecations import superclass_deprecated
+
+
+logger = logging.getLogger(__name__)
 
 
 class CCheckBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, InitializedMixin, HideUnusedFeaturesMixin, PyDMCheckbox):
@@ -110,7 +116,17 @@ class CSlider(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, I
         NoPVTextFormatterMixin.__init__(self)
         PyDMSlider.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         ValueTransformerMixin.__init__(self)
+        self._user_defined_limits = True
         self._widget_initialized = True
+
+    @Property(bool, designable=False)
+    def userDefinedLimits(self) -> bool:
+        return True
+
+    @userDefinedLimits.setter  # type: ignore
+    @superclass_deprecated(logger)
+    def userDefinedLimits(self, _):
+        pass
 
 
 class CSpinBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, InitializedMixin, HideUnusedFeaturesMixin, NoPVTextFormatterMixin, PyDMSpinbox):

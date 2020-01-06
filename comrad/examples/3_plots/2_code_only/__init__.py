@@ -1,4 +1,4 @@
-title = "Code only display with graphs displaying different plotting items"
+title = 'Code only display with graphs displaying different plotting items'
 description = \
     'This example shows how to create a display containing a Scrolling Graph and a Sliding Pointer Graph ' \
     'without the usage of Qt Designer UI files. ' \
@@ -8,5 +8,5 @@ description = \
     '"RandomBar", "RandomInjectonBar" and "RandomTimestampMarker", which emit lists of different values ' \
     'representing a timestamp and other metrics that are then displayed by the connected item.'
 
-entrypoint = "app.py"
-japc_generator = "japc_device:create_device"
+entrypoint = 'app.py'
+japc_generator = 'japc_device:create_device'

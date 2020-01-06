@@ -25,30 +25,30 @@ class DemoDevice(Device):
 
     def __init__(self):
         super().__init__(
-            name="DemoDevice",
+            name='DemoDevice',
             device_properties=(
                 Acquisition(
-                    name="Acquisition",
+                    name='Acquisition',
                     fields=(
                         FieldType(
-                            name="RandomPoint",
-                            datatype="list",
+                            name='RandomPoint',
+                            datatype='list',
                         ),
                         FieldType(
-                            name="RandomBar",
-                            datatype="list",
+                            name='RandomBar',
+                            datatype='list',
                         ),
                         FieldType(
-                            name="RandomInjectionBar",
-                            datatype="list",
+                            name='RandomInjectionBar',
+                            datatype='list',
                         ),
                         FieldType(
-                            name="RandomTimestampMarker",
-                            datatype="list",
+                            name='RandomTimestampMarker',
+                            datatype='list',
                         ),
-                    )
+                    ),
                 ),
-            )
+            ),
         )
         self._timer = RepeatedTimer(1 / self.frequency, self.emit_point)
         self.emit_threshold = 9
@@ -57,31 +57,31 @@ class DemoDevice(Device):
         """Callback on timer fire."""
         timestamp = datetime.now().timestamp()
         random_value = random.random()
-        random_text = f"L {int(random_value * 10)}"
-        random_color = ["r", "b", "g"][int(random_value * 3)]
-        self.set_state({"Acquisition#RandomPoint": [
+        random_text = f'L {int(random_value * 10)}'
+        random_color = ['r', 'b', 'g'][int(random_value * 3)]
+        self.set_state({'Acquisition#RandomPoint': [
             timestamp,           # x value
-            random_value         # y value
-        ]}, "")
-        self.set_state({"Acquisition#RandomBar": [
+            random_value,        # y value
+        ]}, '')
+        self.set_state({'Acquisition#RandomBar': [
             timestamp,           # x value
             0.5 * random_value,  # y value
-            random_value         # height
-        ]}, "")
+            random_value,        # height
+        ]}, '')
         if self.emit_threshold % 4 == 0:
-            self.set_state({"Acquisition#RandomInjectionBar": [
+            self.set_state({'Acquisition#RandomInjectionBar': [
                 timestamp,           # x value
                 random_value,        # y value
                 1.0,                 # height
                 0.5,                 # width
                 random_text,         # label
-            ]}, "")
+            ]}, '')
         if self.emit_threshold % 10 == 0:
-            self.set_state({"Acquisition#RandomTimestampMarker": [
+            self.set_state({'Acquisition#RandomTimestampMarker': [
                 timestamp,           # x value
                 random_color,        # color
-                random_text          # label
-            ]}, "")
+                random_text,         # label
+            ]}, '')
 
         if self.emit_threshold > 1:
             self.emit_threshold -= 1
