@@ -27,6 +27,7 @@ mypy:
   script:
     - pip install .[lint]
     - mypy .
+    - mypy tests
 
 pytest:
   image: $ACCPY_PYQT_DOCKER_IMAGE
