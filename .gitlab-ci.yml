@@ -26,8 +26,7 @@ mypy:
   stage: Code Quality
   script:
     - pip install .[lint]
-    - mypy .
-    - mypy tests
+    - mypy . tests comrad/data
 
 pytest:
   image: $ACCPY_PYQT_DOCKER_IMAGE

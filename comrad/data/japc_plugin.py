@@ -15,7 +15,7 @@ from comrad.data.jpype import get_user_message
 logger = logging.getLogger('comrad_japc')
 
 
-cern = jpype.JPackage('cern')
+cern = jpype.JPackage('cern')  # type: ignore
 
 
 # Unfortunately, we cannot import
@@ -118,7 +118,7 @@ class _JapcService(QObject, pyjapc.PyJapc):
                               password=password,
                               loginDialog=loginDialog,
                               readEnv=readEnv)
-        except jpype.JException(cern.rbac.client.authentication.AuthenticationException) as e:
+        except jpype.JException(cern.rbac.client.authentication.AuthenticationException) as e:  # type: ignore
             if on_exception is not None:
                 message = get_user_message(e)
                 login_by_location = not username and not password
@@ -154,7 +154,7 @@ class _JapcService(QObject, pyjapc.PyJapc):
     def _expect_cmw_error(self, fn: Callable, *args, display_popup: bool = False, **kwargs):
         try:
             return fn(*args, **kwargs)
-        except jpype.JException(cern.japc.core.ParameterException) as e:
+        except jpype.JException(cern.japc.core.ParameterException) as e:  # type: ignore
             message = get_user_message(e)
             self.japc_param_error.emit(message, display_popup)
 
@@ -163,7 +163,7 @@ class _JapcService(QObject, pyjapc.PyJapc):
         super()._setup_jvm(log_level=log_level)
         for name, val in self._app.jvm_flags.items():
             logger.debug(f'Setting extra JVM flag: {name}={val}')
-            jpype.java.lang.System.setProperty(name, str(val))
+            jpype.java.lang.System.setProperty(name, str(val))  # type: ignore
 
 
 _japc: Optional[_JapcService] = None
@@ -384,7 +384,7 @@ class _JapcConnection(PyDMConnection):
             logger.debug(f'Channel {self.protocol}://{self.address} is {"online" if connected else "offline"}')
             self.connection_state_signal.emit(connected)
 
-    def _create_subscription(self) -> bool:
+    def _create_subscription(self):
         japc = get_japc()
         if not self.online:
             logger.debug(f'Subscribing to JAPC at {self._device_prop}')
@@ -413,8 +413,9 @@ class _JapcConnection(PyDMConnection):
                              f"'{self.protocol}:///device/prop#field' or"
                              f"'{self.protocol}:///device/property'. Underlying problem: {str(e)}")
 
-    def _on_subscription_exception(self, param_name: str, description: str, exception: Exception):
-        logger.exception(f'Exception {type(exception).__name__} triggered on {param_name}: {exception.getMessage()}')
+    def _on_subscription_exception(self, param_name: str, _: str, exception: Exception):
+        logger.exception(f'Exception {type(exception).__name__} triggered '  # type: ignore
+                         f'on {param_name}: {exception.getMessage()}')
         self._some_subscriptions_failed = True
 
     def _on_japc_status_changed(self, logged_in: bool):
