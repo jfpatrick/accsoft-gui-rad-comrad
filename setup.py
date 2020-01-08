@@ -25,7 +25,7 @@ requirements = {
         'colorlog>=4.0.2&&<5',
         'QtPy>=1.7&&<2',
         'pyjapc @ git+ssh://git@gitlab.cern.ch:7999/pelson/pyjapc.git@jvm_startup_hook#egg=pyjapc',
-        'accwidgets==0.1',
+        'accwidgets>=0.1.1&&accwidgets<1',
         'papc @ git+ssh://git@gitlab.cern.ch:7999/pelson/papc.git#egg=papc',
         'pydm @ git+ssh://git@gitlab.cern.ch:7999/acc-co/accsoft/gui/rad/accsoft-gui-rad-pydm.git@multi-fix#egg=pydm',
     ],
