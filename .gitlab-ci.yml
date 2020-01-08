@@ -34,7 +34,7 @@ pytest:
   script:
     - yum install -y python36-tkinter  # TODO: This should go away, when PyJapc loses this dependency
     - pip install .[test]
-    - run_headless python -m pytest --random-order --cov-report html:coverage --cov-report term-missing:skip-covered --cov=accwidgets -vx --color=yes tests/
+    - run_headless python -m pytest --random-order --cov-report html:coverage --cov-report term-missing:skip-covered --cov=comrad --cov=_comrad --cov=_comrad_designer -vx --color=yes tests/
   artifacts:
     name: coverage-report
     paths:
