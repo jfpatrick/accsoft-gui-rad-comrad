@@ -1,0 +1,72 @@
+stages:
+  - Code Quality
+  - Unit Tests
+  - Release
+
+variables:
+  ACCPY_PYQT_DOCKER_IMAGE: gitlab-registry.cern.ch/acc-co/accsoft/gui/accsoft-gui-pyqt-distro/acc-py-pyqt:ci
+
+before_script:
+  - source /opt/venv/bin/activate
+  - git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.cern.ch".insteadOf ssh://git@gitlab.cern.ch:7999
+  - export PIP_INDEX_URL=http://acc-py-repo:8081/repository/vr-py-releases/simple/
+  - export PIP_TRUSTED_HOST=acc-py-repo
+  - yum install -y -q gcc-c++  # Temp fix for PyJapc to build from source
+
+flake8:
+  image: $ACCPY_PYQT_DOCKER_IMAGE
+  stage: Code Quality
+  script:
+    - pip install .[lint]
+    - export LANG=en_US.UTF-8  # Otherwise, flake8 might fail with UnicodeDecodeError: 'ascii' codec can't decode byte
+    - flake8
+
+mypy:
+  image: $ACCPY_PYQT_DOCKER_IMAGE
+  stage: Code Quality
+  script:
+    - pip install .[lint]
+    - mypy . tests comrad/data
+
+pytest:
+  image: $ACCPY_PYQT_DOCKER_IMAGE
+  stage: Unit Tests
+  script:
+    - yum install -y python36-tkinter  # TODO: This should go away, when PyJapc loses this dependency
+    - pip install .[test]
+    - run_headless python -m pytest --random-order --cov-report html:coverage --cov-report term-missing:skip-covered --cov=comrad --cov=_comrad --cov=_comrad_designer -vx --color=yes tests/
+  artifacts:
+    name: coverage-report
+    paths:
+      - coverage
+    when: on_success
+    expire_in: 1 month
+
+twine:
+  image: $ACCPY_PYQT_DOCKER_IMAGE
+  stage: Release
+  script:
+    - pip install .[release]
+    - pip install -U setuptools
+    - python setup.py sdist bdist_wheel
+    - python -m twine upload --repository-url http://acc-py-repo:8081/repository/py-release-local/ -u $ACCPY_NEXUS_USER -p $ACCPY_NEXUS_PASSWD dist/*
+  when: manual
+  only:
+    refs:
+      - tags
+    variables:
+      - $ACCPY_NEXUS_USER != null
+      - $ACCPY_NEXUS_PASSWD != null
+
+#sphinx:
+#  image: $ACCPY_PYQT_DOCKER_IMAGE
+#  stage: Release
+#  script:
+#    - pip install .[docs]
+#    - echo "Sphinx command is coming in the future..."
+#  when: manual
+#  only:
+#    refs:
+#      - master
+#      - develop
+#      - tags

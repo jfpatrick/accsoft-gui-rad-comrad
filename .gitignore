@@ -9,6 +9,7 @@ __pycache__
 htmlcov
 .pytest_cache
 .mypy_cache
+coverage
 
 # End of placeholder for user defined entries
 
