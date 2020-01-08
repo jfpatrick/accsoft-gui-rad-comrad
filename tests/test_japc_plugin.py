@@ -38,20 +38,25 @@ def test_rbac_login(succeeds: bool, by_location: bool, expected_status: RBACLogi
     def set_logged_in(*_, **__):
         japc._logged_in = succeeds
 
-    with mocker.patch.object(japc, 'rbacLogin', side_effect=set_logged_in):
-        with mocker.patch.object(japc, 'rbacGetToken', return_value=FakeToken()):
-            if by_location:
-                japc.login_by_location()
-            else:
-                japc.login_by_credentials(username='fakeuser', password='fakepasswd')
-            cast(mock.Mock, japc.rbacLogin).assert_called_once()
-            if succeeds:
-                japc.rbacGetToken.assert_called_once()
-                assert rbac.user == 'TEST_USER'
-            else:
-                japc.rbacGetToken.assert_not_called()
-                assert rbac.user is None
-            assert rbac.status == expected_status
+    login_mock = mock.MagicMock()
+    login_mock.side_effect = set_logged_in
+
+    token_mock = mock.MagicMock()
+    token_mock.return_value = FakeToken()
+
+    mocker.patch.multiple(japc, rbacLogin=login_mock, rbacGetToken=token_mock)
+    if by_location:
+        japc.login_by_location()
+    else:
+        japc.login_by_credentials(username='fakeuser', password='fakepasswd')
+    cast(mock.Mock, japc.rbacLogin).assert_called_once()
+    if succeeds:
+        japc.rbacGetToken.assert_called_once()
+        assert rbac.user == 'TEST_USER'
+    else:
+        japc.rbacGetToken.assert_not_called()
+        assert rbac.user is None
+    assert rbac.status == expected_status
 
 
 @mock.patch('pyjapc.PyJapc.rbacLogout')
@@ -62,11 +67,11 @@ def test_rbac_logout_succeeds(mocked_super, mocker):
     rbac.user = 'TEST_USER'
     rbac._status = RBACLoginStatus.LOGGED_IN_BY_LOCATION
 
-    with mocker.patch.object(japc, 'rbacGetToken'):
-        japc.rbacLogout()
-        mocked_super.assert_called_once()
-        japc.rbacGetToken.assert_not_called()
-        assert rbac.status == RBACLoginStatus.LOGGED_OUT
+    mocker.patch.object(japc, 'rbacGetToken')
+    japc.rbacLogout()
+    mocked_super.assert_called_once()
+    japc.rbacGetToken.assert_not_called()
+    assert rbac.status == RBACLoginStatus.LOGGED_OUT
 
 
 @mock.patch('pyjapc.PyJapc.rbacLogin')
@@ -139,14 +144,14 @@ def test_rbac_login_fails_on_auth_exception(mocker):
         cern = jpype.JPackage('cern')
         raise jpype.JException(cern.rbac.client.authentication.AuthenticationException)('Test exception')
 
-    with mocker.patch('pyjapc.PyJapc.rbacLogin', side_effect=raise_error):
-        japc = japc_plugin._JapcService()
-        assert japc.logged_in is False
+    mocker.patch('pyjapc.PyJapc.rbacLogin', side_effect=raise_error)
+    japc = japc_plugin._JapcService()
+    assert japc.logged_in is False
 
-        callback = mock.MagicMock()
+    callback = mock.MagicMock()
 
-        japc.rbacLogin(on_exception=callback)
-        callback.assert_called_once_with('Test exception', True)
+    japc.rbacLogin(on_exception=callback)
+    callback.assert_called_once_with('Test exception', True)
 
 
 @mock.patch('pyjapc.PyJapc.getParam', return_value=3)
@@ -161,10 +166,10 @@ def test_japc_set_succeeds(mocker):
 
     callback = mock.MagicMock()
 
-    with mocker.patch('pyjapc.PyJapc.setParam', side_effect=callback):
-        japc = japc_plugin._JapcService()
-        japc.setParam('test_addr', 4)
-        callback.assert_called_once_with('test_addr', 4, checkDims=False)
+    mocker.patch('pyjapc.PyJapc.setParam', side_effect=callback)
+    japc = japc_plugin._JapcService()
+    japc.setParam('test_addr', 4)
+    callback.assert_called_once_with('test_addr', 4, checkDims=False)
 
 
 @pytest.mark.parametrize('method,display_popup,value', [
@@ -183,15 +188,15 @@ def test_japc_get_set_fails_on_cmw_exception(mocker, method, display_popup, valu
         cern = jpype.JPackage('cern')
         raise jpype.JException(cern.japc.core.ParameterException)('Test exception')
 
-    with mocker.patch(f'pyjapc.PyJapc.{method}', side_effect=raise_error):
-        japc = japc_plugin._JapcService()
-        callback = mock.MagicMock()
-        japc.japc_param_error.connect(callback)
-        args = ['test_addr']
-        if value is not None:
-            args.append(value)
-        getattr(japc, method)(*args)
-        callback.assert_called_once_with('Test exception', display_popup)
+    mocker.patch(f'pyjapc.PyJapc.{method}', side_effect=raise_error)
+    japc = japc_plugin._JapcService()
+    callback = mock.MagicMock()
+    japc.japc_param_error.connect(callback)
+    args = ['test_addr']
+    if value is not None:
+        args.append(value)
+    getattr(japc, method)(*args)
+    callback.assert_called_once_with('Test exception', display_popup)
 
 
 @mock.patch('jpype.java')
@@ -207,19 +212,19 @@ def test_jvm_flags_are_passed(mocked_java):
 
 @mock.patch('pydm.widgets.channel.PyDMChannel')
 def test_connection_address(mocked_channel, mocker):
-    with mocker.patch('pyjapc.PyJapc'):
-        connection = japc_plugin._JapcConnection(channel=mocked_channel, address='mydevice/myprop#myfield@CERN.TEST.SELECTOR')
-        assert connection._device_prop == 'mydevice/myprop#myfield'
-        assert connection._japc_additional_args['timingSelectorOverride'] == 'CERN.TEST.SELECTOR'
-        connection = japc_plugin._JapcConnection(channel=mocked_channel, address='mydevice/myprop#myfield')
-        assert connection._device_prop == 'mydevice/myprop#myfield'
-        assert 'timingSelectorOverride' not in connection._japc_additional_args
-        connection = japc_plugin._JapcConnection(channel=mocked_channel, address='mydevice/myprop@CERN.TEST.SELECTOR')
-        assert connection._device_prop == 'mydevice/myprop'
-        assert connection._japc_additional_args['timingSelectorOverride'] == 'CERN.TEST.SELECTOR'
-        connection = japc_plugin._JapcConnection(channel=mocked_channel, address='mydevice/myprop')
-        assert connection._device_prop == 'mydevice/myprop'
-        assert 'timingSelectorOverride' not in connection._japc_additional_args
+    mocker.patch('pyjapc.PyJapc')
+    connection = japc_plugin._JapcConnection(channel=mocked_channel, address='mydevice/myprop#myfield@CERN.TEST.SELECTOR')
+    assert connection._device_prop == 'mydevice/myprop#myfield'
+    assert connection._japc_additional_args['timingSelectorOverride'] == 'CERN.TEST.SELECTOR'
+    connection = japc_plugin._JapcConnection(channel=mocked_channel, address='mydevice/myprop#myfield')
+    assert connection._device_prop == 'mydevice/myprop#myfield'
+    assert 'timingSelectorOverride' not in connection._japc_additional_args
+    connection = japc_plugin._JapcConnection(channel=mocked_channel, address='mydevice/myprop@CERN.TEST.SELECTOR')
+    assert connection._device_prop == 'mydevice/myprop'
+    assert connection._japc_additional_args['timingSelectorOverride'] == 'CERN.TEST.SELECTOR'
+    connection = japc_plugin._JapcConnection(channel=mocked_channel, address='mydevice/myprop')
+    assert connection._device_prop == 'mydevice/myprop'
+    assert 'timingSelectorOverride' not in connection._japc_additional_args
 
 
 @pytest.mark.skip
@@ -227,10 +232,10 @@ def test_connection_address(mocked_channel, mocker):
 def test_remove_listener_disconnects_slots(mocked_channel, mocker):
     # FIXME: Cant properly mock 'connect'
     japc = japc_plugin.get_japc()
-    with mocker.patch.object(japc, 'stopSubscriptions'):
-        with mocker.patch.object(mocked_channel.value_signal, 'connect'):
-            _ = japc_plugin._JapcConnection(channel=mocked_channel, address='test_addr')
-            mocked_channel.value_signal.connect.assert_called_once()
+    mocker.patch.object(japc, 'stopSubscriptions')
+    mocker.patch.object(mocked_channel.value_signal, 'connect')
+    _ = japc_plugin._JapcConnection(channel=mocked_channel, address='test_addr')
+    mocked_channel.value_signal.connect.assert_called_once()
 
 
 @pytest.mark.parametrize('connected', [
