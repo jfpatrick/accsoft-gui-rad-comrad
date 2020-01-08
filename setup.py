@@ -30,13 +30,13 @@ requirements = {
         'pydm @ git+ssh://git@gitlab.cern.ch:7999/acc-co/accsoft/gui/rad/accsoft-gui-rad-pydm.git@multi-fix#egg=pydm',
     ],
     'test': [
-        'pytest>=4.*',
-        'pytest-cov',
-        'pytest-mock',
-        'pytest-random-order',
+        'pytest>=5.0.1&&<5.1',
+        'pytest-cov>=2.5.1&&<2.6',
+        'pytest-mock>=2.0&&<2.1',
+        'pytest-random-order>=1.0.4&&<1.1',
     ],
     'lint': [
-        'mypy>=0.761',
+        'mypy==0.761',
         'flake8>=3.7.8&&<4',
         'flake8-quotes>=2.1.0&&<3',
         'flake8-commas>=2&&<3',
