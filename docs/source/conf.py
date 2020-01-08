@@ -20,7 +20,7 @@ from datetime import datetime
 
 # -- Project information -----------------------------------------------------
 
-author_name = __author__.split(' <')[0]
+author_name = __author__.split('<')[0].strip()
 
 project = 'ComRAD'
 copyright = f'{datetime.now().year}, {author_name}'
@@ -39,7 +39,10 @@ version = __version__
 extensions = [
     'recommonmark',  # Enable Markdown source files along with reStructuredText
     'sphinx_rtd_theme',  # Read-the-docs theme
-    'sphinxcontrib.confluencebuilder',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
+    'sphinxcontrib.napoleon',
+    'sphinx_autodoc_typehints',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -61,25 +64,27 @@ html_theme = 'sphinx_rtd_theme'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['_static']
 
 html_short_title = f'{project} v{__version__}'
 html_title = f'{html_short_title} docs'
 
-# html_logo # TODO: Put comrad logo here
-# html_favicon # TODO: Put comrad logo here
+html_logo = '../../comrad/icons/app.ico'
+html_favicon = html_logo
+
+# This value controls the docstrings inheritance. If set to True the docstring for classes or methods,
+# if not explicitly set, is inherited form parents.
+autodoc_inherit_docstrings = True
+# Scan all found documents for autosummary directives, and generate stub pages for each.
+autosummary_generate = True
+# Document classes and functions imported in modules
+autosummary_imported_members = True
+# if True, set typing.TYPE_CHECKING to True to enable “expensive” typing imports
+set_type_checking_flag = True
+
 
 # Enable Markdown source files along with reStructuredText
 source_suffix = {
     '.rst': 'restructuredtext',
     '.md': 'markdown',
 }
-
-# Configure building docs for Confluence
-confluence_publish = True
-confluence_space_name = 'DEV'  # TODO: Change space to Accpy
-confluence_parent_page = 'BE-CO PyDM evaluation'  # TODO: Change the parent page
-confluence_server_url = 'https://wikis.cern.ch/'
-confluence_server_user = 'isinkare'
-confluence_ask_password = True
-confluence_disable_ssl_validation = True  # Because CERN uses its own CA. Providing them both does not really help
