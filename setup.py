@@ -49,7 +49,7 @@ requirements = {
         'flake8-blind-except>=0.1.1&&<2',
         'flake8-bugbear==20.1',
     ],
-    'docs': [
+    'doc': [
         'Sphinx>=2.1.2&&<2.2',
         'recommonmark>=0.6.0&&<0.7',
         'sphinx-rtd-theme>=0.4.3&&<0.5',
@@ -63,7 +63,7 @@ requirements = {
         'wheel',
     ],
 }
-requirements['dev'] = [*requirements['test'], *requirements['lint'], *requirements['docs'], *requirements['release']]
+requirements['dev'] = [*requirements['test'], *requirements['lint'], *requirements['doc'], *requirements['release']]
 requirements['all'] = [*requirements['prod'], *requirements['dev']]
 
 requires = requirements['prod']
