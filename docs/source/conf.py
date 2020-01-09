@@ -23,7 +23,7 @@ from datetime import datetime
 author_name = __author__.split('<')[0].strip()
 
 project = 'ComRAD'
-copyright = f'{datetime.now().year}, {author_name}'
+copyright = f'{datetime.now().year}, CERN'
 author = author_name
 
 # The full version, including alpha/beta/rc tags

@@ -68,6 +68,10 @@ sphinx:
   extends: .acc_py_build_docs
   image: $ACCPY_PYQT_DOCKER_IMAGE
   stage: Release
+  only:
+    refs:
+      - master
+      - develop
 
 sphinx on tag:
   extends: .acc_py_build_docs_on_tag
