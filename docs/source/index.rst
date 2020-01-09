@@ -16,6 +16,7 @@ It allows for easy integration between CO control system and Qt GUI framework to
    :caption: Contents:
 
    widgets/clineedit
+   widgets/clabel
 
 
 Indices and tables
