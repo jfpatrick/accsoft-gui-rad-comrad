@@ -262,6 +262,7 @@ class CApplication(PyDMApplication):
 
             item: Union[QAction, QWidget]
             plugin: CToolbarPlugin
+            logger.debug(f'Instantiating plugin "{plugin_type.plugin_id}"')
             if issubclass(plugin_type, CActionPlugin):
                 action_plugin = cast(CToolbarActionPlugin, plugin_type())
                 item = QAction(self.main_window)
@@ -289,7 +290,7 @@ class CApplication(PyDMApplication):
              else toolbar_right).append(item)
 
         if toolbar_actions:
-            menu = self._get_or_create_menu(name=('Plugins', 'Toolbar'))
+            menu = self.main_window._get_or_create_menu(name=('Plugins', 'Toolbar'))
             menu.addActions(toolbar_actions)
 
         def _add_item_to_nav_bar(item: Union[QWidget, QAction]):
@@ -371,6 +372,7 @@ class CApplication(PyDMApplication):
         for _, plugin_type in CApplication._filter_enabled_plugins(plugins=menubar_plugins.values(),
                                                                    whitelist=whitelist,
                                                                    blacklist=blacklist):
+            logger.debug(f'Instantiating plugin "{plugin_type.plugin_id}"')
             plugin: CMenuBarPlugin = plugin_type()
             try:
                 menu = self.main_window.get_or_create_menu(plugin.top_level())
@@ -381,10 +383,18 @@ class CApplication(PyDMApplication):
             item = plugin.menu_item()
             if isinstance(item, QAction):
                 menu.addAction(item)
-                item.setParent(menu)  # Needed, otherwise menu does not appear as has no parent
+                item.setParent(menu)  # Needed, because QWidget.addAction(QAction) call does not transfer ownership
             elif isinstance(item, QMenu):
-                menu.addMenu(item)
-                item.setParent(menu)  # Needed, otherwise menu does not appear as has no parent
+                # For whatever reason, QMenu.addMenu(QMenu) works funny (overlapping menus over one another).
+                # Workaround here, is to create a completely new menu, reassign actions to it, but keep the original
+                # object alive (by assigning parent below) in order for lambda-based functors to still work on
+                # action trigger...
+                new_menu = menu.addMenu(item.title())
+                for action in item.actions():
+                    item.removeAction(action)
+                    new_menu.addAction(action)
+                    action.setParent(menu)
+                item.setParent(menu)
             else:
                 logger.exception(f'Unsupported {plugin_type.__name__}.menu_item() return type '
                                  f'({type(item).__name__}). Must be either QAction or QMenu.')
@@ -411,6 +421,7 @@ class CApplication(PyDMApplication):
         for _, plugin_type in CApplication._filter_enabled_plugins(plugins=status_bar_plugins.values(),
                                                                    whitelist=whitelist,
                                                                    blacklist=blacklist):
+            logger.debug(f'Instantiating plugin "{plugin_type.plugin_id}"')
             plugin = cast(CStatusBarPlugin, plugin_type())
             widget = plugin.create_widget()
             item = (widget, plugin.is_permanent)

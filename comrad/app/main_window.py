@@ -97,7 +97,7 @@ class CMainWindow(PyDMMainWindow, MonkeyPatchedClass):
         Returns:
             An existing menu or the new one, if such does not exist yet.
         """
-        self._get_or_create_menu(name)
+        return self._get_or_create_menu(name)
 
     def _get_or_create_menu(self,
                             name: Union[str, Iterable[str]],
@@ -105,6 +105,7 @@ class CMainWindow(PyDMMainWindow, MonkeyPatchedClass):
                             full_path: Optional[str] = None) -> QMenu:
         parent_menu: QMenu = parent or self.menuBar()
         full_path = full_path or cast(str, name)
+        logger.debug(f'Searching for menu "{name}" under {parent_menu}')
         if isinstance(name, str):
             try:
                 menu = next((a.menu() for a in parent_menu.actions() if a.text() == name))
@@ -114,6 +115,7 @@ class CMainWindow(PyDMMainWindow, MonkeyPatchedClass):
                 else:
                     logger.debug(f'Adding new menu "{name}" to menu bar')
                 return parent_menu.addMenu(name)
+            logger.debug(f'Found existing menu "{name}": {menu}')
             if menu is None:
                 path = full_path if isinstance(full_path, str) else '->'.join(full_path)
                 raise ValueError(f'Cannot create submenu "{path}". Another action (not submenu) with '
