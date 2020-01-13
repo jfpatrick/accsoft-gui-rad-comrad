@@ -70,7 +70,7 @@ html_theme = 'sphinx_rtd_theme'
 html_short_title = f'{project} v{__version__}'
 html_title = f'{html_short_title} docs'
 
-html_logo = '../../comrad/icons/app.ico'
+html_logo = '../comrad/icons/app.ico'
 html_favicon = html_logo
 
 # This value controls the docstrings inheritance. If set to True the docstring for classes or methods,
