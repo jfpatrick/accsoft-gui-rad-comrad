@@ -18,12 +18,12 @@ class CLabel(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, Ini
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
-        A :class:`qtpy.QLabel` with support for setting the text via a CS Channel, or
+        A :class:`qtpy.QtWidgets.QLabel` with support for setting the text via a CS Channel, or
         through the Rules system.
 
         **Note!:** If a :class:`CLabel` is configured to use a :attr:`channel`, and also with a rule
         which changes the :meth:`QLabel.text` property, the behavior is undefined. Use either
-        the :attr:`channel` *or* a :attr:`QLabel.text` rule, but not both.
+        the :attr:`channel` *or* a :meth:`QLabel.text` rule, but not both.
 
         Args:
             parent: The parent widget for the label.

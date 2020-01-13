@@ -43,7 +43,8 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.inheritance_diagram', # Draw inheritance diagrams
-    'sphinx.ext.graphviz', # Needed to draw diagrams produced by plugin above
+    'sphinx.ext.graphviz',  # Needed to draw diagrams produced by plugin above
+    'sphinx.ext.intersphinx',  # To connect external docs, e.g. PyQt5
     'sphinxcontrib.napoleon',
     'sphinx_autodoc_typehints',
 ]
@@ -557,4 +558,10 @@ set_type_checking_flag = True
 source_suffix = {
     '.rst': 'restructuredtext',
     '.md': 'markdown',
+}
+
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3.6', None),
+    'qtpy': ('https://www.riverbankcomputing.com/static/Docs/PyQt5/', None),
+
 }
