@@ -177,7 +177,6 @@ class RulesEditor(QDialog):
     def _add_rule(self):
         default_name = 'New Rule'
         default_prop = self._widget.DEFAULT_RULE_PROPERTY
-        _, prop_type = self._widget.RULE_PROPERTIES[self._widget.DEFAULT_RULE_PROPERTY]
         new_rule = CNumRangeRule(name=default_name,
                                  prop=default_prop,
                                  channel=BaseRule.Channel.DEFAULT)

@@ -40,7 +40,7 @@ import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 # Has to be above first main comrad package import
-from _comrad_designer.logging import setup_logging
+from _comrad_designer.log_config import setup_logging
 setup_logging()
 
 from pydm.widgets import (PyDMLabel, PyDMCheckbox, PyDMPushButton,

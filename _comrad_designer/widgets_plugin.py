@@ -11,7 +11,7 @@ from typing import List
 from qtpy.QtWidgets import QAction, QWidget
 
 # Has to be above first main comrad package import
-from _comrad_designer.logging import setup_logging
+from _comrad_designer.log_config import setup_logging
 setup_logging()
 
 # from pydm.widgets.tab_bar_qtplugin import TabWidgetPlugin as PyDMTabWidgetPlugin

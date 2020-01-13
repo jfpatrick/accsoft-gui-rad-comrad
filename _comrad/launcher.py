@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from typing import Optional, Iterable, cast, Tuple, Dict, List
 from .comrad_info import COMRAD_DESCRIPTION, get_versions_info
-from .logging import install_logger_level
+from .log_config import install_logger_level
 
 
 # Allow smooth exit on Ctrl+C

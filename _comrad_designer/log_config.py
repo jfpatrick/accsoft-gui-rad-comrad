@@ -10,5 +10,5 @@ def setup_logging():
         # Only setup logging when application exists (we're in Qt designer)
         # otherwise, it's a launcher that imports it to setup plugin paths for Qt Designer subprocess
         import os
-        from _comrad.logging import install_logger_level
+        from _comrad.log_config import install_logger_level
         install_logger_level(os.environ.get('COMRAD_DESIGNER_LOG_LEVEL', None))
