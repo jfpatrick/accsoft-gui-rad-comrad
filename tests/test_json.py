@@ -1,11 +1,11 @@
 import json
 from enum import Enum, IntEnum
-from comrad.json import JSONSerializable, ComRADJSONEncoder
+from comrad.json import CJSONSerializable, CJSONEncoder
 
 
 def test_json_encoder():
 
-    class FakeSerializable(JSONSerializable):
+    class FakeSerializable(CJSONSerializable):
 
         def __init__(self, val: int = 0):
             super().__init__()
@@ -32,5 +32,5 @@ def test_json_encoder():
         'intenum': FakeIntEnum.TEST,
     }
 
-    res = json.dumps(sample, cls=ComRADJSONEncoder)
+    res = json.dumps(sample, cls=CJSONEncoder)
     assert res == '{"obj": {"val": 78}, "enum": "TEST", "intenum": 45}'

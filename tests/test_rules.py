@@ -4,14 +4,14 @@ from unittest import mock
 from pytestqt.qtbot import QtBot
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QWidget
-from comrad.rules import (CNumRangeRule, CExpressionRule, BaseRule, JSONDeserializeError, unpack_rules,
-                          CRulesEngine, CChannelException)
-from comrad.json import ComRADJSONEncoder
+from comrad.rules import (CNumRangeRule, CExpressionRule, CJSONDeserializeError, unpack_rules,
+                          CRulesEngine, CChannelError)
+from comrad.json import CJSONEncoder
 
 
 @pytest.mark.parametrize('channel,resulting_channel', [
     ('japc://dev/prop#field', 'japc://dev/prop#field'),
-    ('__auto__', BaseRule.Channel.DEFAULT),
+    ('__auto__', CNumRangeRule.Channel.DEFAULT),
 ])
 @pytest.mark.parametrize('range_min,range_max', [
     (0.0, 1.0),
@@ -63,7 +63,7 @@ def test_num_range_rule_deserialize_succeeds(channel, resulting_channel, range_m
     ({'name': 'test_name', 'prop': 'opacity', 'channel': '__auto__', 'ranges': [{'min': 0.5, 'value': 0.5}]}, r'Can\\\'t parse range JSON: "max" is not float, "NoneType" given*'),
 ])
 def test_num_range_rule_deserialize_fails(json_obj, error_msg):
-    with pytest.raises(JSONDeserializeError, match=error_msg):
+    with pytest.raises(CJSONDeserializeError, match=error_msg):
         CNumRangeRule.from_json(json_obj)
 
 
@@ -103,7 +103,7 @@ def test_num_range_rule_serialize_succeeds(name, prop, channel, ranges):
                          channel=channel,
                          ranges=ranges)
     import json
-    serialized = json.loads(json.dumps(rule.to_json(), cls=ComRADJSONEncoder))  # To not compare against the string but rather a dictionary
+    serialized = json.loads(json.dumps(rule.to_json(), cls=CJSONEncoder))  # To not compare against the string but rather a dictionary
 
     def map_range(range: CNumRangeRule.Range) -> Dict[str, Any]:
         return {
@@ -117,7 +117,7 @@ def test_num_range_rule_serialize_succeeds(name, prop, channel, ranges):
         'prop': prop,
         'channel': channel,
         'ranges': list(map(map_range, ranges)),
-        'type': BaseRule.Type.NUM_RANGE.value,
+        'type': CNumRangeRule.Type.NUM_RANGE.value,
     }
 
 
@@ -224,7 +224,7 @@ def test_unpack_rules_succeeds(rule_cnt, rule_types, names, props, channels, pay
         assert isinstance(rule, rule_type)
         assert rule.name == name
         assert rule.prop == prop
-        assert rule.channel == BaseRule.Channel.DEFAULT if channel == '__auto__' else channel
+        assert rule.channel == CNumRangeRule.Channel.DEFAULT if channel == '__auto__' else channel
         if rule_type == CNumRangeRule:
             assert len(cast(CNumRangeRule, rule).ranges) == payload
         elif rule_type == CExpressionRule:
@@ -233,14 +233,14 @@ def test_unpack_rules_succeeds(rule_cnt, rule_types, names, props, channels, pay
 
 @pytest.mark.parametrize('err,err_type,json_str', [
     (r'type', KeyError, '[{"name":"rule2","prop":"opacity","channel":"japc://dev/prop#field","ranges":null}]'),
-    (r'Can\\\'t parse range JSON: "name" is not a string', JSONDeserializeError, '[{"type":0,"prop":"opacity","channel":"japc://dev/prop#field","ranges":null}]'),
-    (r'Can\\\'t parse range JSON: "prop" is not a string', JSONDeserializeError, '[{"name":"rule2","type":0,"channel":"japc://dev/prop#field","ranges":null}]'),
-    (r'Can\\\'t parse range JSON: "channel" is not a string', JSONDeserializeError, '[{"name":"rule2","prop":"opacity","type":0,"ranges":null}]'),
-    (r'Can\\\'t parse range JSON: "ranges" is not a list', JSONDeserializeError, '[{"name":"rule2","prop":"opacity","type":0,"channel":"__auto__"}]'),
-    (r'Can\\\'t parse range JSON: "ranges" is not a list, "NoneType" given*', JSONDeserializeError, '[{"type":0,"name":"rule2","prop":"opacity","channel":"japc://dev/prop#field","ranges":null}]'),
-    (r'must have integer type, given str', JSONDeserializeError, '[{"type":"test","name":"rule1","prop":"opacity","channel":"japc://dev/prop#field","ranges":[]}]'),
-    (r'Rules does not appear to be a list', JSONDeserializeError, '{"type":0,"name":"rule2","prop":"opacity","channel":"japc://dev/prop#field","ranges":[]}'),
-    (r'Unknown rule type 2 for JSON', JSONDeserializeError, '[{"type":2,"name":"rule2","prop":"opacity","channel":"japc://dev/prop#field","ranges":[]}]'),
+    (r'Can\\\'t parse range JSON: "name" is not a string', CJSONDeserializeError, '[{"type":0,"prop":"opacity","channel":"japc://dev/prop#field","ranges":null}]'),
+    (r'Can\\\'t parse range JSON: "prop" is not a string', CJSONDeserializeError, '[{"name":"rule2","type":0,"channel":"japc://dev/prop#field","ranges":null}]'),
+    (r'Can\\\'t parse range JSON: "channel" is not a string', CJSONDeserializeError, '[{"name":"rule2","prop":"opacity","type":0,"ranges":null}]'),
+    (r'Can\\\'t parse range JSON: "ranges" is not a list', CJSONDeserializeError, '[{"name":"rule2","prop":"opacity","type":0,"channel":"__auto__"}]'),
+    (r'Can\\\'t parse range JSON: "ranges" is not a list, "NoneType" given*', CJSONDeserializeError, '[{"type":0,"name":"rule2","prop":"opacity","channel":"japc://dev/prop#field","ranges":null}]'),
+    (r'must have integer type, given str', CJSONDeserializeError, '[{"type":"test","name":"rule1","prop":"opacity","channel":"japc://dev/prop#field","ranges":[]}]'),
+    (r'Rules does not appear to be a list', CJSONDeserializeError, '{"type":0,"name":"rule2","prop":"opacity","channel":"japc://dev/prop#field","ranges":[]}'),
+    (r'Unknown rule type 2 for JSON', CJSONDeserializeError, '[{"type":2,"name":"rule2","prop":"opacity","channel":"japc://dev/prop#field","ranges":[]}]'),
     (r'', NotImplementedError, '[{"type":1,"name":"rule2","prop":"opacity","channel":"japc://dev/prop#field","expr":""}]'),  # TODO: Remove when expression rules are implemented
 ])
 def test_unpack_rules_fails(err, err_type, json_str):
@@ -367,11 +367,11 @@ def test_rules_engine_finds_default_channel(qtbot: QtBot, default_channel):
 
     rule = CNumRangeRule(name='test_name',
                          prop='test_prop',
-                         channel=BaseRule.Channel.DEFAULT,
+                         channel=CNumRangeRule.Channel.DEFAULT,
                          ranges=[CNumRangeRule.Range(min_val=0.0, max_val=0.0, prop_val=0.5)])
 
     if default_channel is None:
-        with pytest.raises(CChannelException):
+        with pytest.raises(CChannelError):
             engine.register(widget=widget, rules=[rule])
         try:
             job_summary = next(iter(engine.widget_map.values()))

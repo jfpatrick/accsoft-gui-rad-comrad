@@ -8,15 +8,15 @@ from enum import Enum
 logger = logging.getLogger(__name__)
 
 
-_T = TypeVar('_T', bound='JSONSerializable')
+_T = TypeVar('_T', bound='CJSONSerializable')
 
 
-class JSONDeserializeError(ValueError):
+class CJSONDeserializeError(ValueError):
     """Custom error when JSON deserialization fails (not due to bad JSON syntax but rather unexpected composition)."""
     pass
 
 
-class JSONSerializable(metaclass=ABCMeta):
+class CJSONSerializable(metaclass=ABCMeta):
     """Instances of this class are able to be serialized into JSON string and also deserialized from it."""
 
     @classmethod
@@ -32,7 +32,7 @@ class JSONSerializable(metaclass=ABCMeta):
             New object.
 
         Raises:
-            JSONDeserializeError: when parsing fails.
+            CJSONDeserializeError: when parsing fails.
         """
         pass
 
@@ -47,16 +47,16 @@ class JSONSerializable(metaclass=ABCMeta):
         pass
 
 
-class ComRADJSONEncoder(JSONEncoder):
+class CJSONEncoder(JSONEncoder):
     """
-    Custom encoder that detects :class:`JSONSerializable` objects and
+    Custom encoder that detects :class:`CJSONSerializable` objects and
     serializes them to JSON string appropriately.
     """
 
     def default(self, o: object) -> Dict[str, Any]:
-        if isinstance(o, JSONSerializable):
+        if isinstance(o, CJSONSerializable):
             logger.debug(f'Encoding serializable ComRAD object: {o}')
-            return cast(JSONSerializable, o).to_json()
+            return cast(CJSONSerializable, o).to_json()
         elif isinstance(o, Enum):
             return cast(Enum, o).value
         return JSONEncoder.default(self, o)

@@ -6,8 +6,8 @@ from qtpy.QtWidgets import QWidget
 from pydm.utilities import is_qt_designer
 from pydm.widgets.base import PyDMWidget
 from pydm.widgets.rules import RulesDispatcher
-from comrad.rules import BaseRule, CChannelException, unpack_rules
-from comrad.json import ComRADJSONEncoder, JSONDeserializeError
+from comrad.rules import BaseRule, CChannelError, unpack_rules
+from comrad.json import CJSONEncoder, CJSONDeserializeError
 from .value_transform import ValueTransformationBase
 from .deprecations import superclass_deprecated
 
@@ -161,14 +161,14 @@ class WidgetRulesMixin:
     def _get_custom_rules(self) -> List[BaseRule]:
         rules = cast(PyDMWidget, self)._rules
         if is_qt_designer():
-            return cast(List[BaseRule], json.dumps(rules, cls=ComRADJSONEncoder))
+            return cast(List[BaseRule], json.dumps(rules, cls=CJSONEncoder))
         return rules
 
     def _set_custom_rules(self, new_rules: Union[str, List[BaseRule], None]):
         if isinstance(new_rules, str):
             try:
                 new_rules = unpack_rules(new_rules)
-            except (json.JSONDecodeError, JSONDeserializeError) as e:
+            except (json.JSONDecodeError, CJSONDeserializeError) as e:
                 logger.exception(f'Invalid JSON format for rules: {str(e)}')
                 return
         cast(PyDMWidget, self)._rules = new_rules
@@ -176,7 +176,7 @@ class WidgetRulesMixin:
             return
         try:
             RulesDispatcher().register(widget=self, rules=new_rules)
-        except CChannelException:
+        except CChannelError:
             logger.debug(f'Rules setting failed. We do not have the channel yet, will have to be repeated')
             # Set internal data structure without activating property setter behavior
             cast(PyDMWidget, self)._rules = new_rules

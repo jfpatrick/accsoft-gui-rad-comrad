@@ -16,7 +16,7 @@ from qtpy.QtDesigner import QDesignerFormWindowInterface
 from qtpy.uic import loadUi
 from comrad.rules import BaseRule, CNumRangeRule, CExpressionRule, unpack_rules
 from comrad.qsci import configure_common_qsci, QSCI_INDENTATION
-from comrad.json import ComRADJSONEncoder, JSONDeserializeError
+from comrad.json import CJSONEncoder, CJSONDeserializeError
 from comrad.widgets.mixins import WidgetRulesMixin
 
 
@@ -132,7 +132,7 @@ class RulesEditor(QDialog):
     def _update_source_view(self):
         rule = cast(CNumRangeRule, self._get_current_rule())
         self._loading_data = True
-        self.source_ranges_editor.setText(json.dumps(rule.ranges, cls=ComRADJSONEncoder, indent=QSCI_INDENTATION))
+        self.source_ranges_editor.setText(json.dumps(rule.ranges, cls=CJSONEncoder, indent=QSCI_INDENTATION))
         self._loading_data = False
         self._source_valid = True
 
@@ -284,7 +284,7 @@ class RulesEditor(QDialog):
         # TODO: Maybe this could be shared for all dialogs that we're about to create for designer?
         form_window = QDesignerFormWindowInterface.findFormWindow(self._widget)
         if form_window:
-            form_window.cursor().setProperty('rules', json.dumps(self._rules, cls=ComRADJSONEncoder))
+            form_window.cursor().setProperty('rules', json.dumps(self._rules, cls=CJSONEncoder))
         self.accept()
 
     def _property_changed(self):
@@ -561,9 +561,9 @@ class RulesEditor(QDialog):
         try:
             contents = json.loads(self.source_ranges_editor.text())
             if not isinstance(contents, list):
-                raise JSONDeserializeError(f'Expected list of rules, got {type(contents).__name__}', None, 0)
+                raise CJSONDeserializeError(f'Expected list of rules, got {type(contents).__name__}', None, 0)
             cast(CNumRangeRule, self._get_current_rule()).ranges = list(map(CNumRangeRule.Range.from_json, contents))
-        except (JSONDeserializeError, json.JSONDecodeError):
+        except (CJSONDeserializeError, json.JSONDecodeError):
             self._source_valid = False
             return
         self._source_valid = True

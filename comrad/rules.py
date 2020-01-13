@@ -14,7 +14,7 @@ from pydm.data_plugins import plugin_for_address
 from pydm.data_plugins.plugin import PyDMPlugin, PyDMConnection
 from pydm.utilities import is_qt_designer
 from pydm import config
-from comrad.json import JSONSerializable, JSONDeserializeError
+from comrad.json import CJSONSerializable, CJSONDeserializeError
 from .monkey import modify_in_place, MonkeyPatchedClass
 
 
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 RangeValue = Union[str, bool, float]
 
 
-class BaseRule(JSONSerializable, metaclass=ABCMeta):
+class BaseRule(CJSONSerializable, metaclass=ABCMeta):
 
     class Channel(Enum):
         """Predefined channel values."""
@@ -150,7 +150,7 @@ class CExpressionRule(BaseRule):
 
 class CNumRangeRule(BaseRule):
 
-    class Range(JSONSerializable):
+    class Range(CJSONSerializable):
 
         def __init__(self, min_val: float, max_val: float, prop_val: Optional[RangeValue] = None):
             """
@@ -200,13 +200,13 @@ class CNumRangeRule(BaseRule):
             value: RangeValue = contents.get('value', None)
 
             if not isinstance(min_val, float):
-                raise JSONDeserializeError(
+                raise CJSONDeserializeError(
                     f'Can\'t parse range JSON: "min" is not float, "{type(min_val).__name__}" given.', None, 0)
             if not isinstance(max_val, float):
-                raise JSONDeserializeError(
+                raise CJSONDeserializeError(
                     f'Can\'t parse range JSON: "max" is not float, "{type(max_val).__name__}" given.', None, 0)
             if not isinstance(value, float) and not isinstance(value, str) and not isinstance(value, bool):
-                raise JSONDeserializeError(
+                raise CJSONDeserializeError(
                     f'Can\'t parse range JSON: "value" has unsupported type "{type(value).__name__}".', None, 0)
             return cls(min_val=min_val, max_val=max_val, prop_val=value)
 
@@ -261,16 +261,16 @@ class CNumRangeRule(BaseRule):
         channel: Union[str, BaseRule.Channel] = contents.get('channel', None)
 
         if not isinstance(name, str):
-            raise JSONDeserializeError(f'Can\'t parse range JSON: "name" is not a string, "{type(name).__name__}" given.', None, 0)
+            raise CJSONDeserializeError(f'Can\'t parse range JSON: "name" is not a string, "{type(name).__name__}" given.', None, 0)
         if not isinstance(prop, str):
-            raise JSONDeserializeError(f'Can\'t parse range JSON: "prop" is not a string, "{type(prop).__name__}" given.', None, 0)
+            raise CJSONDeserializeError(f'Can\'t parse range JSON: "prop" is not a string, "{type(prop).__name__}" given.', None, 0)
         if not isinstance(channel, str):
-            raise JSONDeserializeError(f'Can\'t parse range JSON: "channel" is not a string, "{type(channel).__name__}" given.', None, 0)
+            raise CJSONDeserializeError(f'Can\'t parse range JSON: "channel" is not a string, "{type(channel).__name__}" given.', None, 0)
 
         json_ranges: List[Any] = contents.get('ranges', None)
 
         if not isinstance(json_ranges, list):
-            raise JSONDeserializeError(f'Can\'t parse range JSON: "ranges" is not a list, "{type(json_ranges).__name__}" given.', None, 0)
+            raise CJSONDeserializeError(f'Can\'t parse range JSON: "ranges" is not a list, "{type(json_ranges).__name__}" given.', None, 0)
 
         ranges: Iterator['CNumRangeRule.Range'] = map(CNumRangeRule.Range.from_json, json_ranges)
 
@@ -350,19 +350,19 @@ def unpack_rules(contents: str) -> List[BaseRule]:
         for json_rule in parsed_contents:
             rule_type: int = json_rule['type']
             if not isinstance(rule_type, int):
-                raise JSONDeserializeError(f'Rule {json_rule} must have integer type, given {type(rule_type).__name__}.')
+                raise CJSONDeserializeError(f'Rule {json_rule} must have integer type, given {type(rule_type).__name__}.')
             if rule_type == BaseRule.Type.NUM_RANGE:
                 res.append(CNumRangeRule.from_json(json_rule))
             elif rule_type == BaseRule.Type.PY_EXPR:
                 res.append(CExpressionRule.from_json(json_rule))
             else:
-                raise JSONDeserializeError(f'Unknown rule type {rule_type} for JSON {json_rule}')
+                raise CJSONDeserializeError(f'Unknown rule type {rule_type} for JSON {json_rule}')
     elif parsed_contents is not None:
-        raise JSONDeserializeError(f'Rules does not appear to be a list')
+        raise CJSONDeserializeError(f'Rules does not appear to be a list')
     return res
 
 
-class CChannelException(Exception):
+class CChannelError(Exception):
     """Custom exception types to catch rule/channel-related exceptions."""
     pass
 
@@ -406,7 +406,7 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
                     from comrad.widgets.mixins import WidgetRulesMixin
                     default_channel = cast(WidgetRulesMixin, widget_ref()).default_rule_channel()
                     if default_channel is None:
-                        raise CChannelException(f"Default channel on the widget is not defined yet. We won't register it for now...")
+                        raise CChannelError(f"Default channel on the widget is not defined yet. We won't register it for now...")
                     channels_list = [{
                         'channel': default_channel,
                         'trigger': True,
