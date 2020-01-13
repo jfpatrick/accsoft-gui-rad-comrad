@@ -13,10 +13,17 @@ It allows for easy integration between CO control system and Qt GUI framework to
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Widgets:
 
    widgets/clineedit
    widgets/clabel
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Rules:
+
+   rules/cnumrangerule
+   rules/cchannelerror
 
 
 Indices and tables
