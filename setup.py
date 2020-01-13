@@ -34,6 +34,7 @@ requirements = {
         'pytest-cov>=2.5.1&&<2.6',
         'pytest-mock>=2.0&&<2.1',
         'pytest-random-order>=1.0.4&&<1.1',
+        'pytest-qt>=3.2.2&&<4'
     ],
     'lint': [
         'mypy==0.761',
