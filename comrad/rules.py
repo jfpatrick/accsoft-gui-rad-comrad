@@ -140,8 +140,8 @@ class CExpressionRule(BaseRule):
         super().__init__(name=name, prop=prop, channel=channel)
         self.expr = expression
 
-    @staticmethod
-    def from_json(contents: Dict[str, Any]):
+    @classmethod
+    def from_json(cls, contents):
         raise NotImplementedError()
 
     def to_json(self):
@@ -254,7 +254,7 @@ class CNumRangeRule(BaseRule):
         self.ranges: List['CNumRangeRule.Range'] = ranges if isinstance(ranges, list) else list(ranges)
 
     @classmethod
-    def from_json(cls, contents: Dict[str, Any]):
+    def from_json(cls, contents):
         logger.debug(f'Unpacking JSON rule: {contents}')
         name: str = contents.get('name', None)
         prop: str = contents.get('prop', None)
