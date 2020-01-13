@@ -368,7 +368,7 @@ class CChannelException(Exception):
 
 
 @modify_in_place
-class _RulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
+class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
 
     def __init__(self):
         """
@@ -378,7 +378,7 @@ class _RulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
         logger.debug(f'Instantiating custom rules engine')
         self._overridden_methods['__init__'](self)
 
-    def register(self: PyDMRulesEngine, widget: QWidget, rules: List[BaseRule]):
+    def register(self, widget: QWidget, rules: List[BaseRule]):
 
         if is_qt_designer() and not config.DESIGNER_ONLINE:
             logger.debug(f"Not registering rules because channels won't be connected in the offline designer")
@@ -446,7 +446,7 @@ class _RulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
 
                 self.widget_map[widget_ref].append(job_unit)
 
-    def calculate_expression(self: PyDMRulesEngine, widget_ref: ReferenceType, rule: Dict[str, Any]):
+    def calculate_expression(self, widget_ref: ReferenceType, rule: Dict[str, Any]):
         job_unit = rule
         job_unit['calculate'] = False
 

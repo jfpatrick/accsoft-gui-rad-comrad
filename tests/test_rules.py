@@ -1,6 +1,9 @@
 import pytest
 from typing import Dict, Any, cast
-from comrad.rules import CNumRangeRule, CExpressionRule, BaseRule, JSONDeserializeError, unpack_rules
+from unittest import mock
+from pytestqt.qtbot import QtBot
+from qtpy.QtWidgets import QWidget
+from comrad.rules import CNumRangeRule, CExpressionRule, BaseRule, JSONDeserializeError, unpack_rules, CRulesEngine
 from comrad.json import ComRADJSONEncoder
 
 
@@ -243,9 +246,31 @@ def test_unpack_rules_fails(err, err_type, json_str):
         unpack_rules(json_str)
 
 
-@pytest.mark.skip
-def test_rules_engine_does_not_register_in_designer():
-    pass
+@pytest.mark.parametrize('designer_online', [
+    True,
+    False,
+])
+def test_rules_engine_does_not_register_in_designer(qtbot: QtBot, designer_online):
+    from comrad import CApplication
+    with mock.patch.object(CApplication.instance(), 'aboutToQuit', create=True):
+        engine = CRulesEngine()
+        widget = QWidget()
+        qtbot.addWidget(widget)
+        rule = CNumRangeRule(name='test_name',
+                             prop='test_prop',
+                             channel='japc://dev/prop#field',
+                             ranges=[CNumRangeRule.Range(min_val=0.0, max_val=0.0, prop_val=0.5)])
+
+        import comrad.rules
+        comrad.rules.plugin_for_address = mock.MagicMock()
+        comrad.rules.config.DESIGNER_ONLINE = designer_online
+        comrad.rules.is_qt_designer = mock.MagicMock(return_value=True)
+        engine.register(widget=widget, rules=[rule])
+
+        if designer_online:
+            assert len(engine.widget_map) == 1
+        else:
+            assert engine.widget_map == {}
 
 
 @pytest.mark.skip

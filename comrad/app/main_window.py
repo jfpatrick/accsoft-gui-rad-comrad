@@ -134,7 +134,7 @@ class CMainWindow(PyDMMainWindow, MonkeyPatchedClass):
         from _comrad.designer import run_designer
         from .application import CApplication
         self.statusBar().showMessage(f"Launching '{filename}' in ComRAD Designer...", 5000)
-        app = cast(CApplication, QCoreApplication.instance())
+        app = cast(CApplication, CApplication.instance())
         run_designer(files=[filename],
                      blocking=False,
                      ccda_env=app.ccda_endpoint,
