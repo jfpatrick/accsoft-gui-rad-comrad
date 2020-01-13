@@ -1,5 +1,5 @@
 import pytest
-from typing import Dict, Any, cast, Optional, List
+from typing import Dict, Any, cast, Optional
 from unittest import mock
 from pytestqt.qtbot import QtBot
 from qtpy.QtCore import Qt
