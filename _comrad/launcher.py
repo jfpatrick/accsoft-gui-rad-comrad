@@ -113,13 +113,13 @@ def _comrad_asset(file: str) -> str:
     return str(Path(comrad.__file__).parent.absolute() / file)
 
 
-def _install_help(parser: argparse.ArgumentParser):
+def _install_help(parser: argparse._ActionsContainer):
     parser.add_argument('-h', '--help',
                         action='help',
                         help='Show this help message and exit.')
 
 
-def _install_controls_arguments(parser: argparse.ArgumentParser):
+def _install_controls_arguments(parser: argparse._ActionsContainer):
     parser.add_argument('--no-inca',
                         action='store_true',
                         help='Do not use InCA server middleware and connect directly to devices. By default JAPC '
@@ -142,7 +142,7 @@ def _install_controls_arguments(parser: argparse.ArgumentParser):
                         nargs=argparse.ONE_OR_MORE)
 
 
-def _install_debug_arguments(parser: argparse.ArgumentParser):
+def _install_debug_arguments(parser: argparse._ActionsContainer):
     parser.add_argument('--log-level',
                         help='Configure level of log display (default: INFO).',
                         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],

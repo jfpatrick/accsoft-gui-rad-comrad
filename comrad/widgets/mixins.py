@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Any, List, cast, Union
+from typing import Any, List, cast, Union, Dict, Tuple, Callable
 from qtpy.QtCore import Property
 from qtpy.QtWidgets import QWidget
 from pydm.utilities import is_qt_designer
@@ -125,10 +125,10 @@ class WidgetRulesMixin:
     DEFAULT_RULE_PROPERTY = 'Visibility'
     """Default rule property visible in the dialog."""
 
-    RULE_PROPERTIES = {
-        BaseRule.Property.ENABLED.value: ['setEnabled', bool],
-        BaseRule.Property.VISIBILITY.value: ['setVisible', bool],
-        BaseRule.Property.OPACITY.value: ['set_opacity', float],
+    RULE_PROPERTIES: Dict[str, Tuple[str, Callable[[Any], Any]]] = {
+        BaseRule.Property.ENABLED.value: ('setEnabled', bool),
+        BaseRule.Property.VISIBILITY.value: ('setVisible', bool),
+        BaseRule.Property.OPACITY.value: ('set_opacity', float),
     }
     """All available rule properties with associated callbacks and data types."""
 
@@ -192,7 +192,7 @@ class WidgetRulesMixin:
 
 class ColorRulesMixin(WidgetRulesMixin):
 
-    RULE_PROPERTIES = dict(**{BaseRule.Property.COLOR.value: ['set_color', str]},
+    RULE_PROPERTIES = dict(**{BaseRule.Property.COLOR.value: ('set_color', str)},
                            **WidgetRulesMixin.RULE_PROPERTIES)
 
     def __init__(self):
