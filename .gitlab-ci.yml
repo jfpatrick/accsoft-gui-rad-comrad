@@ -30,7 +30,7 @@ mypy:
   stage: Code Quality
   script:
     - pip install .[lint]
-    - mypy . tests comrad/data
+    - mypy . tests docs comrad/app comrad/app/plugins comrad/app/plugins/toolbar comrad/data _comrad
 
 pytest:
   image: $ACCPY_PYQT_DOCKER_IMAGE
