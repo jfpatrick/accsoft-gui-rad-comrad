@@ -17,6 +17,7 @@ def patch_app_singleton(monkeypatch):
 
         processEvents = mock.MagicMock()  # Required for pytest-qt to operate properly
         on_control_error = mock.MagicMock()  # Required for japc_plugin to instantiate
+        aboutToQuit = mock.MagicMock()
 
     test_app = FakeApp()
 

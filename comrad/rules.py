@@ -450,19 +450,19 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
         job_unit = rule
         job_unit['calculate'] = False
 
-        rule = job_unit['rule']
+        rule_obj = job_unit['rule']
         obj = self
 
         def notify_value(val):
             payload = {
                 'widget': widget_ref,
-                'name': rule.name,
-                'property': rule.prop,
+                'name': rule_obj.name,
+                'property': rule_obj.prop,
                 'value': val,
             }
             obj.rule_signal.emit(payload)
 
-        if isinstance(rule, CExpressionRule):
+        if isinstance(rule_obj, CExpressionRule):
             logger.warning(f'Python expressions are not supported for evaluation yet')
             # TODO: Handle Python expression here
             # eval_env = {
@@ -475,11 +475,11 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
             #     notify_value(val)
             # except Exception as e:
             #     logger.exception(f'Error while evaluating Rule: {e}')
-        elif isinstance(rule, CNumRangeRule):
+        elif isinstance(rule_obj, CNumRangeRule):
             from comrad.widgets.mixins import WidgetRulesMixin
-            _, base_type = cast(WidgetRulesMixin, widget_ref()).RULE_PROPERTIES[rule.prop]
+            _, base_type = cast(WidgetRulesMixin, widget_ref()).RULE_PROPERTIES[rule_obj.prop]
             val = float(job_unit['values'][0])
-            for range in rule.ranges:
+            for range in rule_obj.ranges:
                 if range.min_val <= val < range.max_val:
                     notify_value(base_type(range.prop_val))
                     break
@@ -487,5 +487,5 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
                 notify_value(None)
             return
         else:
-            logger.exception(f'Unsupported rule type: {type(rule).__name__}')
+            logger.exception(f'Unsupported rule type: {type(rule_obj).__name__}')
             return

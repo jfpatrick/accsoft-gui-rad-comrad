@@ -1,9 +1,11 @@
 import pytest
-from typing import Dict, Any, cast
+from typing import Dict, Any, cast, Optional, List
 from unittest import mock
 from pytestqt.qtbot import QtBot
+from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QWidget
-from comrad.rules import CNumRangeRule, CExpressionRule, BaseRule, JSONDeserializeError, unpack_rules, CRulesEngine
+from comrad.rules import (CNumRangeRule, CExpressionRule, BaseRule, JSONDeserializeError, unpack_rules,
+                          CRulesEngine, CChannelException)
 from comrad.json import ComRADJSONEncoder
 
 
@@ -251,55 +253,207 @@ def test_unpack_rules_fails(err, err_type, json_str):
     False,
 ])
 def test_rules_engine_does_not_register_in_designer(qtbot: QtBot, designer_online):
-    from comrad import CApplication
-    with mock.patch.object(CApplication.instance(), 'aboutToQuit', create=True):
-        engine = CRulesEngine()
-        widget = QWidget()
-        qtbot.addWidget(widget)
-        rule = CNumRangeRule(name='test_name',
+    engine = CRulesEngine()
+    widget = QWidget()
+    qtbot.addWidget(widget)
+    rule = CNumRangeRule(name='test_name',
+                         prop='test_prop',
+                         channel='japc://dev/prop#field',
+                         ranges=[CNumRangeRule.Range(min_val=0.0, max_val=0.0, prop_val=0.5)])
+
+    import comrad.rules
+    import pydm.data_plugins
+    pydm.data_plugins.plugin_for_address = comrad.rules.plugin_for_address = mock.MagicMock()
+    comrad.rules.config.DESIGNER_ONLINE = designer_online
+    comrad.rules.is_qt_designer = mock.MagicMock(return_value=True)
+    engine.register(widget=widget, rules=[rule])
+
+    try:
+        job_summary = next(iter(engine.widget_map.values()))
+    except StopIteration:
+        job_summary = []
+
+    if designer_online:
+        assert len(job_summary) == 1
+    else:
+        assert len(job_summary) == 0
+
+
+@pytest.mark.parametrize('faulty', [
+    True,
+    False,
+])
+def test_rules_engine_does_not_register_faulty_rules(qtbot: QtBot, faulty):
+    engine = CRulesEngine()
+    widget = QWidget()
+    qtbot.addWidget(widget)
+    rule = CNumRangeRule(name='test_name',
+                         prop='test_prop',
+                         channel='japc://dev/prop#field',
+                         ranges=None if faulty else [CNumRangeRule.Range(min_val=0.0, max_val=0.0, prop_val=0.5)])
+
+    import comrad.rules
+    import pydm.data_plugins
+    pydm.data_plugins.plugin_for_address = comrad.rules.plugin_for_address = mock.MagicMock()
+    comrad.rules.is_qt_designer = mock.MagicMock(return_value=False)
+
+    engine.register(widget=widget, rules=[rule])
+
+    try:
+        job_summary = next(iter(engine.widget_map.values()))
+    except StopIteration:
+        job_summary = []
+    if faulty:
+        assert len(job_summary) == 0
+    else:
+        assert len(job_summary) == 1
+
+
+def test_rules_engine_unregisters_old_rules(qtbot: QtBot):
+    engine = CRulesEngine()
+    widget = QWidget()
+    qtbot.addWidget(widget)
+
+    import comrad.rules
+    import pydm.data_plugins
+    pydm.data_plugins.plugin_for_address = comrad.rules.plugin_for_address = mock.MagicMock()
+    comrad.rules.is_qt_designer = mock.MagicMock(return_value=False)
+
+    rule = CNumRangeRule(name='rule1',
+                         prop='test_prop',
+                         channel='japc://dev/prop#field',
+                         ranges=[CNumRangeRule.Range(min_val=0.0, max_val=0.0, prop_val=0.5)])
+    engine.register(widget=widget, rules=[rule])
+    assert len(engine.widget_map) == 1
+    job_summary = next(iter(engine.widget_map.values()))
+    assert len(job_summary) == 1
+    assert cast(CNumRangeRule, job_summary[0]['rule']).name == 'rule1'
+
+    new_rule = CNumRangeRule(name='rule2',
                              prop='test_prop',
                              channel='japc://dev/prop#field',
                              ranges=[CNumRangeRule.Range(min_val=0.0, max_val=0.0, prop_val=0.5)])
-
-        import comrad.rules
-        comrad.rules.plugin_for_address = mock.MagicMock()
-        comrad.rules.config.DESIGNER_ONLINE = designer_online
-        comrad.rules.is_qt_designer = mock.MagicMock(return_value=True)
-        engine.register(widget=widget, rules=[rule])
-
-        if designer_online:
-            assert len(engine.widget_map) == 1
-        else:
-            assert engine.widget_map == {}
+    engine.register(widget=widget, rules=[new_rule])
+    assert len(engine.widget_map) == 1
+    job_summary = next(iter(engine.widget_map.values()))
+    assert len(job_summary) == 1
+    assert cast(CNumRangeRule, job_summary[0]['rule']).name == 'rule2'
 
 
-@pytest.mark.skip
-def test_rules_engine_does_not_register_faulty_rules():
-    pass
-
-
-@pytest.mark.skip
-def test_rules_engine_unregisters_old_rules():
-    pass
-
-
-@pytest.mark.skip
-def test_rules_engine_finds_default_channel():
-    pass
-
-
-@pytest.mark.skip
-def test_rules_engine_uses_custom_channels():
-    pass
-
-
-@pytest.mark.skip
-@pytest.mark.parametrize('val,range_min,range_max', [
-    (0, -1, 1),
-    (-1, -1, 1),
-    (1, -1, 1),
-    (-2, -1, 1),
-    ('rubbish', -1, 1),
+@pytest.mark.parametrize('default_channel', [
+    'japc://default_dev/prop#field',
+    None,
 ])
-def test_rules_engine_calculates_range_value(val, range_min, range_max):
-    pass
+def test_rules_engine_finds_default_channel(qtbot: QtBot, default_channel):
+    from comrad.widgets.mixins import WidgetRulesMixin
+
+    class CustomWidget(QWidget, WidgetRulesMixin):
+
+        def __init__(self, parent: Optional[QWidget] = None):
+            QWidget.__init__(self, parent)
+            WidgetRulesMixin.__init__(self)
+
+        def default_rule_channel(self):
+            return default_channel
+
+    engine = CRulesEngine()
+    widget = CustomWidget()
+    qtbot.addWidget(widget)
+
+    import comrad.rules
+    import pydm.data_plugins
+    pydm.data_plugins.plugin_for_address = comrad.rules.plugin_for_address = mock.MagicMock()
+    comrad.rules.is_qt_designer = mock.MagicMock(return_value=False)
+
+    rule = CNumRangeRule(name='test_name',
+                         prop='test_prop',
+                         channel=BaseRule.Channel.DEFAULT,
+                         ranges=[CNumRangeRule.Range(min_val=0.0, max_val=0.0, prop_val=0.5)])
+
+    if default_channel is None:
+        with pytest.raises(CChannelException):
+            engine.register(widget=widget, rules=[rule])
+        try:
+            job_summary = next(iter(engine.widget_map.values()))
+        except StopIteration:
+            job_summary = []
+        assert len(job_summary) == 0
+    else:
+        engine.register(widget=widget, rules=[rule])
+        assert len(engine.widget_map) == 1
+        job_summary = next(iter(engine.widget_map.values()))
+        assert len(job_summary) == 1
+        assert len(job_summary[0]['channels']) == 1
+
+        from pydm.widgets.channel import PyDMChannel
+        assert cast(PyDMChannel, job_summary[0]['channels'][0]).address == default_channel
+
+
+def test_rules_engine_uses_custom_channels(qtbot: QtBot):
+    engine = CRulesEngine()
+    widget = QWidget()
+    qtbot.addWidget(widget)
+
+    import comrad.rules
+    import pydm.data_plugins
+    pydm.data_plugins.plugin_for_address = comrad.rules.plugin_for_address = mock.MagicMock()
+    comrad.rules.is_qt_designer = mock.MagicMock(return_value=False)
+
+    rule = CNumRangeRule(name='test_name',
+                         prop='test_prop',
+                         channel='japc://dev/prop#field',
+                         ranges=[CNumRangeRule.Range(min_val=0.0, max_val=0.0, prop_val=0.5)])
+    engine.register(widget=widget, rules=[rule])
+    assert len(engine.widget_map) == 1
+    job_summary = next(iter(engine.widget_map.values()))
+    assert len(job_summary) == 1
+    assert len(job_summary[0]['channels']) == 1
+    from pydm.widgets.channel import PyDMChannel
+    channel = cast(PyDMChannel, job_summary[0]['channels'][0])
+    assert channel.address == 'japc://dev/prop#field'
+
+
+@pytest.mark.parametrize('incoming_val,range_min,range_max,should_calc', [
+    (0, -1, 1, True),
+    (-1, -1, 1, True),
+    (1, -1, 1, False),
+    (-2, -1, 1, False),
+    ('rubbish', -1, 1, False),
+])
+def test_rules_engine_calculates_range_value(qtbot: QtBot, incoming_val, range_min, range_max, should_calc):
+    engine = CRulesEngine()
+    callback = mock.MagicMock()
+    engine.rule_signal.connect(callback, Qt.DirectConnection)
+
+    class CustomWidget(QWidget):
+        RULE_PROPERTIES = {
+            'test_prop': (None, str),
+        }
+
+    widget = CustomWidget()
+    qtbot.addWidget(widget)
+
+    rule = CNumRangeRule(name='test_name',
+                         prop='test_prop',
+                         channel='japc://dev/prop#field',
+                         ranges=[CNumRangeRule.Range(min_val=range_min, max_val=range_max, prop_val='HIT')])
+    import weakref
+    widget_ref = weakref.ref(widget, engine.widget_destroyed)
+    job_unit = {
+        'calculate': True,
+        'rule': rule,
+        'values': [incoming_val],
+    }
+
+    if isinstance(incoming_val, int):
+        engine.calculate_expression(widget_ref=widget_ref, rule=job_unit)
+        callback.assert_called_with({
+            'widget': widget_ref,
+            'name': 'test_name',
+            'property': 'test_prop',
+            'value': 'HIT' if should_calc else None,
+        })
+    else:
+        with pytest.raises(ValueError):
+            engine.calculate_expression(widget_ref=widget_ref, rule=job_unit)
+        callback.assert_not_called()
