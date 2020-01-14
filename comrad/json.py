@@ -32,7 +32,8 @@ class CJSONSerializable(metaclass=ABCMeta):
             New object.
 
         Raises:
-            CJSONDeserializeError: when parsing fails.
+            json.JSONDecodeError: invalid JSON format.
+            CJSONDeserializeError: when parsing fails due to incorrect object structure.
         """
         pass
 
@@ -42,7 +43,7 @@ class CJSONSerializable(metaclass=ABCMeta):
         Encode the object as JSON.
 
         Returns:
-            JSON dictionary, that can be placed into `json.dumps`.
+            JSON dictionary, that can be placed into :func:`json.dumps`.
         """
         pass
 

@@ -51,7 +51,7 @@ requirements = {
         'flake8-bugbear==20.1',
     ],
     'doc': [
-        'Sphinx>=2.1.2&&<2.2',
+        'Sphinx>=2.3.1&&<3',
         'recommonmark>=0.6.0&&<0.7',
         'sphinx-rtd-theme>=0.4.3&&<0.5',
         'sphinx-autodoc-typehints>=1.10.3&&<2',

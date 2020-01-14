@@ -28,11 +28,13 @@ class BaseRule(CJSONSerializable, metaclass=ABCMeta):
 
     class Channel(Enum):
         """Predefined channel values."""
+
         DEFAULT = '__auto__'
         """Take value from the default channel specified by the widget via `default_rule_channel()` method."""
 
         NOT_IMPORTANT = '__skip__'
         """Indicates that channel is used to aggregate value but does not act as a trigger for recalculating the rule."""
+
 
     class Type(IntEnum):
         """All available rule setting modes."""

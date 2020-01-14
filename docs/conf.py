@@ -562,6 +562,6 @@ source_suffix = {
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3.6', None),
-    'qtpy': ('https://www.riverbankcomputing.com/static/Docs/PyQt5/', None),
-
+    'qtpy': ('https://www.riverbankcomputing.com/static/Docs/PyQt5/', None),  # TODO: This needs some work that it gets recognized https://stackoverflow.com/questions/47102004/how-to-properly-link-to-pyqt5-documentation-using-intersphinx
+    # 'pydm':  # TODO: Introduce PyDM cross-reference here, also accwidgets later
 }

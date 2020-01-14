@@ -25,6 +25,13 @@ It allows for easy integration between CO control system and Qt GUI framework to
    rules/cnumrangerule
    rules/cchannelerror
 
+.. toctree::
+   :caption: Misc:
+
+   cjsonserializable
+   cjsonencoder
+   cjsondeserializeerror
+
 
 Indices and tables
 ==================
