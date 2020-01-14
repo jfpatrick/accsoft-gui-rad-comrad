@@ -1,3 +1,9 @@
+"""
+Authentication and role-based access control in the
+control system.
+"""
+
+
 import logging
 from typing import Optional, Tuple
 from enum import IntEnum, auto

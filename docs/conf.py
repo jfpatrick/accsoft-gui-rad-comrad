@@ -42,7 +42,7 @@ extensions = [
     'sphinx_rtd_theme',  # Read-the-docs theme
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
-    'sphinx.ext.inheritance_diagram', # Draw inheritance diagrams
+    'sphinx.ext.inheritance_diagram',  # Draw inheritance diagrams
     'sphinx.ext.graphviz',  # Needed to draw diagrams produced by plugin above
     'sphinx.ext.intersphinx',  # To connect external docs, e.g. PyQt5
     'sphinxcontrib.napoleon',
@@ -544,7 +544,17 @@ autodoc_default_options = {
                        'textEdited,'
                        'textMargins,'
                        'undo,'
-                       'validator,',
+                       'validator,'
+                       'ColorSpec,'
+                       'aboutQt,'
+                       'aboutToQuit,'
+                       'activeModalWidget,'
+                       'activePopupWidget,'
+                       'activeWindow,'
+                       'addLibraryPath,'
+                       'alert,'
+                       'allWidgets,'
+                       'allWindows',
 }
 # Scan all found documents for autosummary directives, and generate stub pages for each.
 autosummary_generate = True
@@ -564,4 +574,10 @@ intersphinx_mapping = {
     'python': ('https://docs.python.org/3.6', None),
     'qtpy': ('https://www.riverbankcomputing.com/static/Docs/PyQt5/', None),  # TODO: This needs some work that it gets recognized https://stackoverflow.com/questions/47102004/how-to-properly-link-to-pyqt5-documentation-using-intersphinx
     # 'pydm':  # TODO: Introduce PyDM cross-reference here, also accwidgets later
+}
+
+
+inheritance_graph_attrs = {
+    'fontsize': 14,
+    'size': '"60, 30"',
 }

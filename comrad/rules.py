@@ -1,3 +1,8 @@
+"""
+Widget rules can be used to control certain properties based on the incoming value from the control devices.
+"""
+
+
 import functools
 import weakref
 import logging
@@ -34,7 +39,6 @@ class BaseRule(CJSONSerializable, metaclass=ABCMeta):
 
         NOT_IMPORTANT = '__skip__'
         """Indicates that channel is used to aggregate value but does not act as a trigger for recalculating the rule."""
-
 
     class Type(IntEnum):
         """All available rule setting modes."""

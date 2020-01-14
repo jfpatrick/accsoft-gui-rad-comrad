@@ -84,7 +84,7 @@ class CustomizedTooltipMixin:
 
 
 class ValueTransformerMixin(ValueTransformationBase):
-    """Mixin that introduces valueTransformation property for client-side Python snippets acting on incoming values."""
+    """Mixin that introduces :attr:`ValueTransformationBase.valueTransformation` property for client-side Python snippets acting on incoming values."""
 
     def getValueTransformation(self) -> str:
         return ValueTransformationBase.getValueTransformation(self)

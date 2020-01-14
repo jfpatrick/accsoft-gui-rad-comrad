@@ -1,5 +1,4 @@
 """
-ComRAD framework
 CO Multi-purpose Rapid Application Development
 
 This framework integrates several tools to be used for developing applications in Python.

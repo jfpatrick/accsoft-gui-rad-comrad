@@ -6,34 +6,22 @@
 ComRAD
 ==================================
 
-CO Multi-purpose Rapid Application Development
-
-This framework integrates several tools to be used for developing applications in Python.
-It allows for easy integration between CO control system and Qt GUI framework to produce Operational GUI applications without much hassle.
+.. automodule:: comrad
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Widgets:
+   :caption: API Reference:
 
-   widgets/clineedit
-   widgets/clabel
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Rules:
-
-   rules/cnumrangerule
-   rules/cchannelerror
-
-.. toctree::
-   :caption: Misc:
-
-   cjsonserializable
-   cjsonencoder
-   cjsondeserializeerror
-
+   widgets/module
+   application/index
+   rules/module
+   transformations/index
+   rbac/module
+   json/module
+   plugins/module
+   qsci/module
 
 Indices and tables
 ==================
 
+* :ref:`genindex`
 * :ref:`modindex`

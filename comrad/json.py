@@ -1,3 +1,7 @@
+"""
+Common logic for packing and unpacking objects using JSON format.
+"""
+
 import logging
 from abc import ABCMeta, abstractmethod
 from typing import Dict, Any, TypeVar, Type, cast

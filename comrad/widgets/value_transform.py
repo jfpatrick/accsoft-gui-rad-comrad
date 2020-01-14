@@ -111,7 +111,7 @@ class ValueTransformationBase(FileTracking):
     @Property(str)
     def snippetFilename(self) -> str:
         """
-        Path to the file that contains Python snippet for transformation. If valueTransformation is defined,
+        Path to the file that contains Python snippet for transformation. If :attr:`valueTransformation` is defined,
         it will override the code coming from this file.
 
         Returns:
@@ -132,7 +132,7 @@ class ValueTransformationBase(FileTracking):
     @Property(str)
     def macros(self) -> str:
         """
-        Similar to the macros of PyDMEmbeddedDisplay and PyDMRelatedDisplayButton,
+        Similar to the macros of :class:`PyDMEmbeddedDisplay` and :class:`PyDMRelatedDisplayButton`,
         this is will substitute variables in the value transformation code,
         either defined with the inline snippet, or coming from a file.
 
@@ -162,7 +162,7 @@ class ValueTransformationBase(FileTracking):
         """
         When called for the first time, it will attempt to access inline code snippet
         or if one is undefined, then it will try to load a Python file, defined by the
-        snippetFilename.
+        :attr:`snippetFilename`.
 
         Returns:
             Value transformation code with substituted macros.
