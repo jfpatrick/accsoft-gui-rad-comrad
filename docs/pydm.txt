@@ -1,0 +1,10 @@
+# Sphinx inventory version 2
+# Project: pydm
+# Version: latest
+# The remainder of this file is compressed using zlib.
+PyDMChannel py:class 1 channel.html#channel.PyDMChannel -
+pydm.widgets.channel.PyDMChannel py:class 1 channel.html#channel.PyDMChannel PyDMChannel
+pydm.utilities.macro.substitute_in_file py:func 1 utilities/index.html#pydm.utilities.macro.substitute_in_file -
+pydm.application.PyDMApplication py:class 1 application.html#pydm.PyDMApplication PyDMApplication
+pydm.widgets.PyDMEmbeddedDisplay py:class 1 widgets/embedded_display.html#pydm.widgets.embedded_display.PyDMEmbeddedDisplay PyDMEmbeddedDisplay
+pydm.widgets.PyDMRelatedDisplayButton py:class 1 widgets/related_display_button.html#pydm.widgets.related_display_button.PyDMRelatedDisplayButton PyDMRelatedDisplayButton

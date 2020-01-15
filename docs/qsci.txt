@@ -1,0 +1,7 @@
+# Sphinx inventory version 2
+# Project: Qsci
+# Version: latest
+# The remainder of this file is compressed using zlib.
+PyDMChannel py:class 1 channel.html#channel.PyDMChannel -
+PyQt5.Qsci.QsciScintilla py:class 1 classQsciScintilla.html QsciScintilla
+QsciScintilla py:class 1 classQsciScintilla.html -

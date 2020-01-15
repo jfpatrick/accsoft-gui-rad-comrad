@@ -10,7 +10,7 @@ def configure_common_qsci(editor: QsciScintilla):
     Configures source code editor to have a common style everywhere across the application.
 
     Args:
-        editor: QScintilla object
+        editor: :class:`PyQt5.Qsci.QsciScintilla` object.
     """
     editor.setIndentationsUseTabs(False)
     editor.setIndentationGuides(True)

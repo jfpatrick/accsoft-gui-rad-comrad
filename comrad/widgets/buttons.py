@@ -26,15 +26,15 @@ class CPushButton(CWidgetRulesMixin, CCustomizedTooltipMixin, CInitializedMixin,
                  init_channel: Optional[str] = None,
                  **kwargs):
         """
-        Basic PushButton to send a fixed value.
+        Basic push-button to send a fixed value.
 
         This type is meant to hold a specific value, and send that value
         to a channel when it is clicked. It works in two different modes of operation:
 
-            1. A fixed value can be given to the :attr:`.press_value` attribute. Whenever the
+            1. A fixed value can be given to the ``press_value`` argument. Whenever the
                button is clicked a signal containing this value will be sent to the connected channel.
                This is the default behavior of the button.
-            2. However, if the :attr:`.relative` is set to ``True``, the fixed value will be added
+            2. However, if the ``relative`` is set to ``True``, the fixed value will be added
                to the current value of the channel. This means that the button will increment a channel by
                a fixed amount with every click, a consistent relative move.
 
@@ -96,7 +96,7 @@ class CRelatedDisplayButton(PyDMRelatedDisplayButton):
 
     def __init__(self, parent: Optional[QWidget] = None, filename: Optional[str] = None, **kwargs):
         """
-        A :class:`qtpy.QPushButton` capable of opening a new :class:`comrad.CDisplay` at the same of at a new window.
+        A :class:`~PyQt5.QtWidgets.QPushButton` capable of opening a new :class:`CDisplay` at the same of at a new window.
 
         Args:
             parent: The parent widget for the button.
@@ -110,7 +110,7 @@ class CShellCommand(PyDMShellCommand):
 
     def __init__(self, parent: Optional[QWidget] = None, command: Optional[str] = None, **kwargs):
         """
-        A :class:`qtpy.QPushButton` capable of executing shell commands.
+        A :class:`~PyQt5.QtWidgets.QPushButton` capable of executing shell commands.
 
         Args:
             parent: The parent widget for the button.
@@ -124,13 +124,14 @@ class CEnumButton(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTooltipM
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
-        A :class:`qtpy.QWidget` that renders buttons for every option of Enum Items.
+        A :class:`~PyQt5.QtWidgets.QWidget` that renders buttons for every option of enum items.
         For now three types of buttons can be rendered:
-        - Push Button
-        - Radio Button
+
+        - Push button
+        - Radio button
 
         Signals:
-         - send_value_signal: Emitted when the user changes the value.
+            send_value_signal: Emitted when the user changes the value.
 
         Args:
             parent: The parent widget for the button.
@@ -161,7 +162,7 @@ class CCommandButton(CCustomizedTooltipMixin, QPushButton, CInitializedMixin, CH
                  icon: Optional[QIcon] = None,
                  init_channel: Optional[str] = None):
         """
-        A push button that allows to send a command to the control system.
+        A push-button that allows to send a command to the control system.
 
         Args:
             parent: The parent widget for the button.

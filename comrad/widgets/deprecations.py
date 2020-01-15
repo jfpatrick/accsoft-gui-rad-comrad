@@ -9,7 +9,7 @@ def superclass_deprecated(logger: logging.Logger):
     Decorator to deprecate properties exposed to Qt Designer that are actually defined in dependencies outside of ComRAD.
 
     Args:
-        logger: Logger that should produce a warning (to localize where those warnings come from)
+        logger: Logger that should produce a warning (to localize where those warnings come from).
 
     Returns:
         Wrapper method with decorated logic.

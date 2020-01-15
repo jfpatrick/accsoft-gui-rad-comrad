@@ -56,6 +56,7 @@ requirements = {
         'sphinx-rtd-theme>=0.4.3&&<0.5',
         'sphinx-autodoc-typehints>=1.10.3&&<2',
         'sphinxcontrib-napoleon2>=1.0&&<2',
+        'sphobjinv>=2.0&&<2.1',
     ],
     'release': [
         'versioneer>=0.15',

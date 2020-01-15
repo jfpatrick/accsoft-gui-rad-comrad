@@ -71,7 +71,7 @@ class CNoPVTextFormatterMixin:
 
 
 class CCustomizedTooltipMixin:
-    """Mixin that customizes the message passed into the :meth:`qtpy.QWidget.tooltip()`."""
+    """Mixin that customizes the message passed into the :attr:`QWidget.toolTip`."""
 
     def setToolTip(self, tooltip: str):
         """
@@ -84,7 +84,10 @@ class CCustomizedTooltipMixin:
 
 
 class CValueTransformerMixin(CValueTransformationBase):
-    """Mixin that introduces :attr:`CValueTransformationBase.valueTransformation` property for client-side Python snippets acting on incoming values."""
+    """
+    Mixin that introduces :attr:`~comrad.widgets.value_transform.CValueTransformationBase.valueTransformation`
+    property for client-side Python snippets acting on incoming values.
+    """
 
     def getValueTransformation(self) -> str:
         return CValueTransformationBase.getValueTransformation(self)
@@ -102,7 +105,8 @@ class CValueTransformerMixin(CValueTransformationBase):
 
     def value_changed(self, new_val: Any) -> None:
         """
-        Callback transforms the Channel value through the :attr:`CValueTransformationBase.valueTransformation`
+        Callback transforms the channel value through the
+        :attr:`~comrad.widgets.value_transform.CValueTransformationBase.valueTransformation`
         code before displaying it in a standard way.
 
         Args:
@@ -201,7 +205,7 @@ class CColorRulesMixin(CWidgetRulesMixin):
 
     def color(self) -> str:
         """
-        Hexadecimal color in #XXXXXX format.
+        Hexadecimal color in ``#XXXXXX`` format.
 
         Returns:
             color
@@ -209,5 +213,5 @@ class CColorRulesMixin(CWidgetRulesMixin):
         return self._color
 
     def set_color(self, val: str):
-        """ Set new color. Val is assumed to be #XXXXXX string here. """
+        """ Set new color. Val is assumed to be ``#XXXXXX`` string here. """
         self._color = val

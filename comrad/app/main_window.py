@@ -128,7 +128,7 @@ class CMainWindow(PyDMMainWindow, MonkeyPatchedClass):
             return menu
 
     def _open_editor_ui(self, filename: str):
-        """Overridden of PyDM's main_window.edit_in_designer.open_editor_ui inner method."""
+        """Overridden of :meth:`pydm.main_window.PyDMMainWindow.edit_in_designer.open_editor_ui` inner method."""
         if not filename:
             return
         from _comrad.designer import run_designer
@@ -143,8 +143,8 @@ class CMainWindow(PyDMMainWindow, MonkeyPatchedClass):
 
     def _open_editor_generic(self, filename: str):
         """
-        We only care about Linux, but this is (more or less) a direct copy-paste of PyDM's
-        main_window.edit_in_designer.open_editor_generic inner method.
+        We only care about Linux, but this is (more or less) a direct copy-paste of
+        :meth:`pydm.main_window.PyDMMainWindow.edit_in_designer.open_editor_generic` inner method.
         """
         system = platform.system()
         if system == 'Linux':

@@ -19,7 +19,7 @@ class CCheckBox(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTooltipMix
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
-        A :class:`qtpy.QCheckbox` with support for Channels from the control system.
+        A :class:`qtpy.QtWidgets.QCheckBox` with support for channels from the control system.
 
         Args:
             parent: The parent widget for the checkbox.
@@ -43,7 +43,7 @@ class CEnumComboBox(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedToolti
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
-        A :class:`qtpy.QComboBox` with support for Channels from the control system.
+        A :class:`qtpy.QtWidgets.QComboBox` with support for channels from the control system.
 
         Signals:
          - send_value_signal: Emitted when the user changes the value.
@@ -70,7 +70,7 @@ class CLineEdit(CColorRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixi
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
 
-        A :class:`qtpy.QLineEdit` (writable text field) with support for CS Channels.
+        A :class:`PyQt5.QtWidgets.QLineEdit` (writable text field) with support for CS channels.
         This widget offers an unit conversion menu when users Right Click
         into it.
 
@@ -89,7 +89,7 @@ class CLineEdit(CColorRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixi
         self._widget_initialized = True
 
     def set_color(self, val: str):
-        """Overridden method of :class:`CColorRulesMixin`.
+        """Overridden method of :class:`~comrad.widgets.mixins.CColorRulesMixin`.
 
         Args:
             val: The new value of the color."""
@@ -102,7 +102,7 @@ class CSlider(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixin
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
-        A :class:`qtpy.QSlider` with support for Channels and more from the control system.
+        A :class:`qtpy.QtWidgets.QSlider` with support for channels and more from the control system.
 
         Args:
             parent: The parent widget for the slider.
@@ -133,7 +133,7 @@ class CSpinBox(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixi
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
-        A :class:`qtpy.QDoubleSpinBox` with support for Channels and more from the control system.
+        A :class:`qtpy.QtWidgets.QDoubleSpinBox` with support for channels and more from the control system.
 
         Args:
             parent: The parent widget for the spinbox.

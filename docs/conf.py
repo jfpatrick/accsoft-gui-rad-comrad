@@ -34,6 +34,9 @@ version = __version__
 
 # -- General configuration ---------------------------------------------------
 
+primary_domain = 'py'
+highlight_language = 'py'
+
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
@@ -42,11 +45,11 @@ extensions = [
     'sphinx_rtd_theme',  # Read-the-docs theme
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
+    'sphinx.ext.intersphinx',  # To connect external docs, e.g. PyQt5
+    'sphinxcontrib.napoleon',  # This needs to be before typehints
+    'sphinx_autodoc_typehints',
     'sphinx.ext.inheritance_diagram',  # Draw inheritance diagrams
     'sphinx.ext.graphviz',  # Needed to draw diagrams produced by plugin above
-    'sphinx.ext.intersphinx',  # To connect external docs, e.g. PyQt5
-    'sphinxcontrib.napoleon',
-    'sphinx_autodoc_typehints',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -201,7 +204,6 @@ autodoc_default_options = {
                        'frameWidth,'
                        'geometry,'
                        'getContentsMargins,'
-                       'getValueTransformation,'
                        'get_ctrl_limits,'
                        'grab,'
                        'grabGesture,'
@@ -572,8 +574,14 @@ source_suffix = {
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3.6', None),
-    'qtpy': ('https://www.riverbankcomputing.com/static/Docs/PyQt5/', None),  # TODO: This needs some work that it gets recognized https://stackoverflow.com/questions/47102004/how-to-properly-link-to-pyqt5-documentation-using-intersphinx
-    # 'pydm':  # TODO: Introduce PyDM cross-reference here, also accwidgets later
+    'Qt': ('https://doc.qt.io/qt-5/', './qt.inv'),
+    'PyQt5': ('https://www.riverbankcomputing.com/static/Docs/PyQt5/', None),
+    'QScintilla': ('https://www.riverbankcomputing.com/static/Docs/QScintilla/', './qsci.inv'),
+    'pydm': ('http://slaclab.github.io/pydm/', './pydm.inv'),
+    'numpy': ('http://docs.scipy.org/doc/numpy/', None),
+    'pyqtgraph': ('http://www.pyqtgraph.org/documentation/', None),
+    'pyjapc': ('http://bewww.cern.ch/~bdisoft/pyjapc/', None),
+    # 'accwidgets': ('https://acc-py.web.cern.ch/gitlab/acc-co/accsoft/gui/pyqt/accsoft-gui-pyqt-widgets/docs/master/', None),
 }
 
 

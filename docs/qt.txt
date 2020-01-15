@@ -1,0 +1,34 @@
+# Sphinx inventory version 2
+# Project: qt
+# Version: 5
+# The remainder of this file is compressed using zlib.
+PyQt5.QtWidgets.QWidget py:class 1 qwidget.html QWidget
+PyQt5.QtWidgets.QWidget.toolTip py:attr 1 qwidget.html#toolTip-prop QWidget.toolTip
+qtpy.QtWidgets.QWidget py:class 1 qwidget.html QWidget
+qtpy.QtWidgets.QWidget.toolTip py:attr 1 qwidget.html#toolTip-prop QWidget.toolTip
+QWidget py:class 1 qwidget.html -
+QWidget.toolTip py:attr 1 qwidget.html#toolTip-prop -
+PyQt5.QtWidgets.QCheckBox py:class 1 qcheckbox.html QCheckBox
+qtpy.QtWidgets.QCheckBox py:class 1 qcheckbox.html QCheckBox
+QCheckBox py:class 1 qcheckbox.html -
+PyQt5.QtWidgets.QComboBox py:class 1 qcombobox.html QComboBox
+qtpy.QtWidgets.QComboBox py:class 1 qcombobox.html QComboBox
+QComboBox py:class 1 qcombobox.html -
+PyQt5.QtWidgets.QSlider py:class 1 qslider.html QSlider
+qtpy.QtWidgets.QSlider py:class 1 qslider.html QSlider
+QSlider py:class 1 qslider.html -
+PyQt5.QtWidgets.QDoubleSpinBox py:class 1 qdoublespinbox.html QDoubleSpinBox
+qtpy.QtWidgets.QDoubleSpinBox py:class 1 qdoublespinbox.html QDoubleSpinBox
+QDoubleSpinBox py:class 1 qdoublespinbox.html -
+PyQt5.QtWidgets.QPushButton py:class 1 qpushbutton.html QPushButton
+qtpy.QtWidgets.QPushButton py:class 1 qpushbutton.html QPushButton
+QPushButton py:class 1 qpushbutton.html -
+PyQt5.QtWidgets.QLineEdit py:class 1 qlineedit.html QLineEdit
+qtpy.QtWidgets.QLineEdit py:class 1 qlineedit.html QLineEdit
+QLineEdit py:class 1 qlineedit.html -
+PyQt5.QtWidgets.QFrame py:class 1 qframe.html QFrame
+qtpy.QtWidgets.QFrame py:class 1 qframe.html QFrame
+QFrame py:class 1 qframe.html -
+PyQt5.QtWidgets.QLabel py:class 1 qlabel.html QLabel
+qtpy.QtWidgets.QLabel py:class 1 qlabel.html QLabel
+QLabel py:class 1 qlabel.html -

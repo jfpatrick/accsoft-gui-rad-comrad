@@ -18,6 +18,7 @@ ComRAD
    rbac/module
    json/module
    plugins/module
+   icons/module
    qsci/module
 
 Indices and tables

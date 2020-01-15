@@ -10,7 +10,7 @@ from pydm.widgets.logdisplay import PyDMLogDisplay
 #
 #     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
 #         """
-#         A :class:`qtpy.QTableWidget` with support for CS Channels.
+#         A :class:`PyQt5.QTableWidget` with support for CS Channels.
 #
 #         Values of the array are displayed in the selected number of columns.
 #         The number of rows is determined by the size of the waveform.
@@ -35,10 +35,10 @@ class CLogDisplay(PyDMLogDisplay):
                  level: int = logging.NOTSET,
                  **kwargs):
         """
-        Standard display for Log Output.
+        Standard display for log output.
 
         This widget handles instantiating a ``GuiHandler`` and displaying log
-        messages to a :class:`qtpy.QPlainTextEdit`. The level of the log can be changed from
+        messages to a :class:`PyQt5.QtWidgets.QPlainTextEdit`. The level of the log can be changed from
         inside the widget itself, allowing users to select from any of the levels specified by the widget.
 
         Args:

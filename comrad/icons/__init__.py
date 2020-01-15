@@ -9,8 +9,8 @@ logger = logging.getLogger(__name__)
 
 def icon(name: str, file_path: Optional[Union[Path, str]] = None) -> QIcon:
     """
-    Loads the icon with the given name, provided that the file is located in comrad/icons or relative to the file_path,
-    and is always inside ./icons directory and is of ICO extension.
+    Loads the icon with the given name, provided that the file is located in comrad/icons or relative to the
+    ``file_path``, and is always inside ./icons directory and is of ICO extension.
 
     Args:
         name: basename for the *.ico file.

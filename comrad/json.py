@@ -30,7 +30,7 @@ class CJSONSerializable(metaclass=ABCMeta):
         Factory to construct the rule from JSON.
 
         Args:
-            contents: JSON dictionary that has been parsed by `json.loads`.
+            contents: JSON dictionary that has been parsed by :func:`json.loads`.
 
         Returns:
             New object.

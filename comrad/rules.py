@@ -35,7 +35,10 @@ class BaseRule(CJSONSerializable, metaclass=ABCMeta):
         """Predefined channel values."""
 
         DEFAULT = '__auto__'
-        """Take value from the default channel specified by the widget via `default_rule_channel()` method."""
+        """
+        Take value from the default channel specified by the widget via
+        :meth:`~CWidgetRulesMixin.default_rule_channel` method.
+        """
 
         NOT_IMPORTANT = '__skip__'
         """Indicates that channel is used to aggregate value but does not act as a trigger for recalculating the rule."""
@@ -71,7 +74,7 @@ class BaseRule(CJSONSerializable, metaclass=ABCMeta):
 
         Args:
             name: Name of the rule as it's visible in the rules list.
-            prop: Name corresponding to the key in RULE_PROPERTIES.
+            prop: Name corresponding to the key in :attr:`~CWidgetRulesMixin.RULE_PROPERTIES`.
             channel: Channel address. Use :attr:`Channel.DEFAULT` to use the default channel of the widget
                      or :attr:`Channel.NOT_IMPORTANT` if the rule body is responsible for collecting the channel
                      information, e.g. in Python expressions. We never set it to None, to not confuse with absent
@@ -136,7 +139,7 @@ class CExpressionRule(BaseRule):
 
         Args:
             name: Name of the rule as it's visible in the rules list.
-            prop: Name corresponding to the key in RULE_PROPERTIES.
+            prop: Name corresponding to the key in :attr:`CWidgetRulesMixin.RULE_PROPERTIES`.
             channel: Channel address. Use :attr:`BaseRule.Channel.DEFAULT` to use the default channel of the widget
                      or :attr:`BaseRule.Channel.NOT_IMPORTANT` if the rule body is responsible for collecting the channel
                      information, e.g. in Python expressions. We never set it to None, to not confuse with absent
@@ -246,7 +249,7 @@ class CNumRangeRule(BaseRule):
 
         Args:
             name: Name of the rule as it's visible in the rules list.
-            prop: Name corresponding to the key in RULE_PROPERTIES.
+            prop: Name corresponding to the key in :attr:`CWidgetRulesMixin.RULE_PROPERTIES`.
             channel: Channel address. Use :attr:`BaseRule.Channel.DEFAULT` to use the default channel of the widget
                      or :attr:`BaseRule.Channel.NOT_IMPORTANT` if the rule body is responsible for collecting the channel
                      information, e.g. in Python expressions. We never set it to None, to not confuse with absent
@@ -378,7 +381,7 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
 
     def __init__(self):
         """
-        RulesEngine inherits from QThread and is responsible evaluating the rules
+        RulesEngine inherits from :class:`PyQt5.QtCore.QThread` and is responsible evaluating the rules
         for all the widgets in the application.
         """
         logger.debug(f'Instantiating custom rules engine')

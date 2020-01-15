@@ -50,7 +50,7 @@ class CApplication(PyDMApplication):
                  plugin_blacklist: Optional[Iterable[str]] = None,
                  fullscreen: bool = False):
         """
-        CApplication handles loading ComRAD display files, opening
+        :class:`CApplication` handles loading ComRAD display files, opening
         new windows, and most importantly, establishing and managing
         connections to channels via data plugins.
 
@@ -58,17 +58,18 @@ class CApplication(PyDMApplication):
             ccda_endpoint: Location of CCDA web service.
             ui_file: The file path to a PyDM display file (.ui or .py).
             command_line_args: A list of strings representing arguments supplied at the command
-                line.  All arguments in this list are handled by QApplication, in addition to CApplication.
+                line.  All arguments in this list are handled by :class:`PyQt5.QtWidgets.QApplication`,
+                in addition to :class:`CApplication`.
             display_args: A list of command line arguments that should be forwarded to the
-                Display class. This is only useful if a Related Display Button
+                :class:`CDisplay` class. This is only useful if a :class:`CRelatedDisplayButton`
                 is opening up a .py file with extra arguments specified, and
                 probably isn't something you will ever need to use when writing
-                code that instantiates CApplication.
+                code that instantiates :class:`CApplication`.
             use_inca: Whether to route JAPC connection through known InCA servers.
             cmw_env: Original CMW environment. While it is not directly used in this instance, instead relying on
-                "java_env" and "ccda_endpoint", it will be passed to any child ComRAD processes.
+                ``java_env`` and ``ccda_endpoint``, it will be passed to any child ComRAD processes.
             java_env: JVM flags to be passed to the control system libraries.
-            perfmon: Whether or not to enable performance monitoring using 'psutil'.
+            perfmon: Whether or not to enable performance monitoring using ``psutil``.
                 When enabled, CPU load information on a per-thread basis is
                 periodically printed to the terminal.
             hide_nav_bar: Whether or not to display the navigation bar (forward/back/home buttons)
@@ -79,14 +80,14 @@ class CApplication(PyDMApplication):
                 when the main window is first displayed.
             read_only: Whether or not to launch PyDM in a read-only state.
             macros: A dictionary of macro variables to be forwarded to the display class being loaded.
-            use_main_window: If ui_file is note given, this parameter controls whether or not to
-                create a PyDMMainWindow in the initialization (Default is True).
+            use_main_window: If "ui_file" is not given, this parameter controls whether or not to
+                create a :class:`~pydm.main_window.PyDMMainWindow` in the initialization (Default is ``True``).
             nav_bar_plugin_path: Path to the directory with navigation bar (toolbar) plugins. This path has
-                can be augmented by COMRAD_TOOLBAR_PLUGIN_PATH environment variable.
+                can be augmented by ``COMRAD_TOOLBAR_PLUGIN_PATH`` environment variable.
             status_bar_plugin_path: Path to the directory with status bar plugins. This path has
-                can be augmented by COMRAD_STATUSBAR_PLUGIN_PATH environment variable.
+                can be augmented by ``COMRAD_STATUSBAR_PLUGIN_PATH`` environment variable.
             menu_bar_plugin_path: Path to the directory with main menu plugins. This path has
-                can be augmented by COMRAD_MENUBAR_PLUGIN_PATH environment variable.
+                can be augmented by ``COMRAD_MENUBAR_PLUGIN_PATH`` environment variable.
             stylesheet_path: Path to the *.qss file styling application and widgets.
             fullscreen: Whether or not to launch PyDM in a full screen mode.
         """

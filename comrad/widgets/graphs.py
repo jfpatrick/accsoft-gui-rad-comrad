@@ -59,7 +59,7 @@ class PyDMChannelDataSource(accgraph.UpdateSource):
             data_type_to_emit: Type,
     ):
         """
-        Create a new source that is attached to a PyDM Channel
+        Create a new source that is attached to a :class:`pydm.widgets.channel.PyDMChannel`.
 
         Args:
             channel_address: address the channel is getting data from
@@ -83,7 +83,7 @@ class PyDMChannelDataSource(accgraph.UpdateSource):
     @address.setter
     def address(self, new_address: str) -> None:
         """
-        Replace the PyDMChannel with one created from the passed channel address.
+        Replace the :class:`pydm.widgets.channel.PyDMChannel` with one created from the passed channel address.
 
         Args:
             new_address: new address that will be used to create a channel for
@@ -99,7 +99,7 @@ class PyDMChannelDataSource(accgraph.UpdateSource):
 
     @property
     def channel(self) -> Optional[PyDMChannel]:
-        """Get the current PyDMChannel the update source is based on."""
+        """Get the current :class:`pydm.widgets.channel.PyDMChannel` the update source is based on."""
         return self._channel
 
     def _connection_state_changes(self) -> None:
@@ -272,19 +272,19 @@ class CPlotWidgetBase(PyDMPrimitiveWidget):
     allows sharing these functions with their implementation in
     different plot widgets.
 
-    This class uses attributes of the ExPlotWidget and should only
-    be used as a base class in classes derived from ExPlotWidget.
+    This class uses attributes of the :class:`~accwidgets.graph.ExPlotWidget` and should only
+    be used as a base class in classes derived from :class:`~accwidgets.graph.ExPlotWidget`.
     For overwritten functions to be picked up, this class has to
-    be mentioned before the ExPlotWidget in the derived classes definition
+    be mentioned before the :class:`~accwidgets.graph.ExPlotWidget` in the derived classes definition
     of super classes:
 
-    class Derived(CPlotWidgetBase, ExPlotWidget)  -> function's are overwritten
+    >>> class Derived(CPlotWidgetBase, ExPlotWidget)  # function's are overwritten
 
-    class Derived(ExPlotWidget, CPlotWidgetBase)  -> original functions are picked up
+    >>> class Derived(ExPlotWidget, CPlotWidgetBase)  # original functions are picked up
 
-    Subclasses can define in the class attribute **ITEM_TYPES** what
+    Subclasses can define in the class attribute :attr:`ITEM_TYPES` what
     type of plotting items they can display for which style. If the
-    value is set to None, the style is interpreted as not supported.
+    value is set to ``None``, the style is interpreted as not supported.
     """
 
     ITEM_TYPES: OrderedDict = OrderedDict([
@@ -372,26 +372,27 @@ class CPlotWidgetBase(PyDMPrimitiveWidget):
             line_width: Optional[int] = None,
     ) -> Union['CItemPropertiesBase', pg.PlotDataItem]:
         """
-        This function overrides the ExPlotItem's addCurve function and extends it
+        This function overrides the :class:`~accwidgets.graph.ExPlotItem`'s
+        :meth:`~accwidgets.graph.ExPlotItem.addCurve` function and extends it
         by giving the option to pass a channel address for feeding data to the graph.
         Additionally you can pass stylistic parameters which are the same as
-        CItemsPropertyBase's style properties that are supported by the item.
+        :class:`CItemsPropertyBase`'s style properties that are supported by the item.
 
         Args:
-            c: param for deprecated addCurve from PyQtGraph, only for catching calls
-               for PlotItem.addCurve
+            c: param for deprecated :meth:`~pyqtgraph.PlotItem.addCurve` from PyQtGraph,
+               only for catching calls for :meth:`~pyqtgraph.PlotItem.addCurve`.
             params: param for deprecated addCurve from PyQtGraph, only for catching calls
-                    for PlotItem.addCurve
-            data_source: Instance of **UpdateSource** that emits data or a string for a
-                         channel address
+                    for :meth:`~pyqtgraph.PlotItem.addCurve`.
+            data_source: Instance of :class:`~accwidgets.graph.datamodel.connection.UpdateSource` that emits data
+                         or a string for a channel address
             layer: Layer in which the curve should be added to
             buffer_size: amount of data the item's data model is holding
             color: color for the lines in the curve
             name: name of the curve that can be displayed in the plots legend (if added)
-            symbol: symbol that represents the single data-points, see pg.ScatterPlotItem
+            symbol: symbol that represents the single data-points, see :class:`pyqtgraph.ScatterPlotItem`
                     for all possible values
             symbol_size: size for the symbols
-            line_style: Style of the line, see QtCore.Qt PenStyle Enum for values
+            line_style: Style of the line, see :class:`PyQt5.QtCore.Qt.PenStyle` enum for values
             line_width: thickness of the line in the graph
 
         Returns:
@@ -428,14 +429,15 @@ class CPlotWidgetBase(PyDMPrimitiveWidget):
             bar_width: Optional[int] = None,
     ) -> Union['CItemPropertiesBase', pg.BarGraphItem]:
         """
-        This function overrides the ExPlotItem's addBarGraph function and extends it
+        This function overrides the :class:`~accwdigets.graph.ExPlotItem`'s
+        :meth:`~accwidgets.graph.ExPlotItem.addBarGraph` function and extends it
         by giving the option to pass a channel address for feeding data to the graph.
         Additionally you can pass stylistic parameters which are the same as
-        CItemsPropertyBase's style properties that are supported by the item.
+        :class:`CItemsPropertyBase`'s style properties that are supported by the item.
 
         Args:
-            data_source: Instance of **UpdateSource** that emits data or a string for a
-                         channel address
+            data_source: Instance of :class:`~accwidgets.graph.datamodel.connection.UpdateSource` that emits data
+                         or a string for a channel address
             layer: Layer in which the bar graph should be added to
             buffer_size: amount of data the item's data model is holding
             color: Color the bars are displayed in
@@ -468,14 +470,15 @@ class CPlotWidgetBase(PyDMPrimitiveWidget):
             line_width: Optional[int] = None,
     ) -> Union['CItemPropertiesBase', pg.BarGraphItem]:
         """
-        This function overrides the ExPlotItem's addInjectionBar function and extends it
+        This function overrides the :class:`~accwdigets.graph.ExPlotItem`'s
+        :meth:`~accwidgets.graph.ExPlotItem.addInjectionBar` function and extends it
         by giving the option to pass a channel address for feeding data to the graph.
         Additionally you can pass stylistic parameters which are the same as
-        CItemsPropertyBase's style properties that are supported by the item.
+        :class:`CItemsPropertyBase`'s style properties that are supported by the item.
 
         Args:
-            data_source: Instance of **UpdateSource** that emits data or a string for a
-                         channel address
+            data_source: Instance of :class:`~accwidgets.graph.datamodel.connection.UpdateSource` that emits
+                         data or a string for a channel address
             layer: Layer in which the injection bars should be added to
             buffer_size: amount of data the item's data model is holding
             color: Color for the lines in the injection bar
@@ -506,14 +509,15 @@ class CPlotWidgetBase(PyDMPrimitiveWidget):
             line_width: Optional[int] = None,
     ) -> Union['CItemPropertiesBase', pg.BarGraphItem]:
         """
-        This function overrides the ExPlotItem's addTimestampMarker function and extends it
+        This function overrides the :class:`~accwdigets.graph.ExPlotItem`'s
+        :meth:`~accwidgets.graph.ExPlotItem.addTimestampMarker` function and extends it
         by giving the option to pass a channel address for feeding data to the graph.
         Additionally you can pass stylistic parameters which are the same as
-        CItemsPropertyBase's style properties that are supported by the item.
+        :class:`CItemsPropertyBase`'s style properties that are supported by the item.
 
         Args:
-            data_source: Instance of **UpdateSource** that emits data or a string for a
-                         channel address
+            data_source: Instance of :class:`~accwidgets.graph.datamodel.connection.UpdateSource` that emits
+                         data or a string for a channel address
             buffer_size: amount of data the item's data model is holding
             line_width: Thickness of the vertical line representing a specific timestamp
 
@@ -699,10 +703,10 @@ class CPlotWidgetBase(PyDMPrimitiveWidget):
 
     def remove_channel_attached_item_at_index(self, index: int) -> None:
         """
-        Remove a item from the graph, given its index in the graph's _items list.
+        Remove a item from the graph, given its index in the graph's :attr:`_items` list.
 
         Args:
-            index : The item's index in the graph's _items list.
+            index : The item's index in the graph's :attr:`_items` list.
         """
         item = self._items[index]
         self.remove_channel_attached_item(item)
@@ -711,11 +715,10 @@ class CPlotWidgetBase(PyDMPrimitiveWidget):
         """
         Dump the current list of items and each item's settings into a list
         of JSON-formatted strings. This function is mainly for the Qt Designer plugin
-        to represent all curves as one QStringList and not for calling it directly.
+        to represent all curves as one :class:`~PyQt5.QtCore.QStringList` and not for calling it directly.
 
         Returns:
-            A list of JSON-formatted strings, each containing an item's
-            settings
+            A list of JSON-formatted strings, each containing an item's settings.
         """
         return [json.dumps(item.to_dict()) for item in self._items_checked]
 
@@ -775,20 +778,6 @@ class CPlotWidgetBase(PyDMPrimitiveWidget):
 
 class CItemPropertiesBase(metaclass=abc.ABCMeta):
 
-    """
-    Base class for different plotting item properties. This classes uses
-    provides common properties that can be used in curves, bar graphs, etc.
-
-    All properties for style parameters are based on private getter and setter
-    functions. With the base implementation, these style parameters are just
-    saved in instance attributes and won't have any visual effect in the plot. If
-    a plotting item can use one of these style parameters properly (f.e. a curve
-    can use a line width), these functions should be overwritten in the subclasses.
-
-    Saving these properties even if the plotting item can not use them is important
-    when switching back to items that can use them to not loose prior set values.
-    """
-
     plotting_item_editor_supported_columns: List[str] = []
     symbols = BasePlotCurveItem.symbols
     lines = BasePlotCurveItem.lines
@@ -800,6 +789,19 @@ class CItemPropertiesBase(metaclass=abc.ABCMeta):
     ]
 
     def __init__(self):
+        """
+        Base class for different plotting item properties. This classes uses
+        provides common properties that can be used in curves, bar graphs, etc.
+
+        All properties for style parameters are based on private getter and setter
+        functions. With the base implementation, these style parameters are just
+        saved in instance attributes and won't have any visual effect in the plot. If
+        a plotting item can use one of these style parameters properly (f.e. a curve
+        can use a line width), these functions should be overwritten in the subclasses.
+
+        Saving these properties even if the plotting item can not use them is important
+        when switching back to items that can use them to not loose prior set values.
+        """
         self.opts: Dict
 
     def initialize_style_properties(
@@ -858,17 +860,17 @@ class CItemPropertiesBase(metaclass=abc.ABCMeta):
 
     @property
     def address(self) -> str:
-        """Returns the address of the PyDMChannel the data source is based on"""
+        """Returns the address of the :class:`~pydm.widgets.channel.PyDMChannel` the data source is based on."""
         return self.data_source.address
 
     @address.setter
     def address(self, new_address: str) -> None:
-        """Change the address of the PyDMChannel the data source is based on"""
+        """Change the address of the :class:`~pydm.widgets.channel.PyDMChannel` the data source is based on."""
         self.data_source.address = new_address
 
     @property
     def layer(self) -> str:
-        """Returns the address of the PyDMChannel the data source is based on"""
+        """Returns the address of the :class:`~pydm.widgets.channel.PyDMChannel` the data source is based on."""
         return cast(accgraph.DataModelBasedItem, self).layer_id
 
     @property
@@ -888,7 +890,7 @@ class CItemPropertiesBase(metaclass=abc.ABCMeta):
     def color_string(self) -> str:
         """
         A string representation of the color used for the item. This string
-        will be a hex color code, like #FF00FF, or an SVG spec color name, if
+        will be a hex color code, like ``#FF00FF``, or an SVG spec color name, if
         a name exists for the color.
         """
         return str(utilities.colors.svg_color_from_hex(self.color.name(), hex_on_fail=True))
@@ -897,7 +899,7 @@ class CItemPropertiesBase(metaclass=abc.ABCMeta):
     def color_string(self, new_color_string: str) -> None:
         """
         A string representation of the color used for the item. This string
-        will be a hex color code, like #FF00FF, or an SVG spec color name, if
+        will be a hex color code, like ``#FF00FF``, or an SVG spec color name, if
         a name exists for the color.
 
         Args:
@@ -924,19 +926,19 @@ class CItemPropertiesBase(metaclass=abc.ABCMeta):
 
     @property
     def label(self) -> str:
-        """The name of the item displayed in the Legend."""
+        """The name of the item displayed in the legend."""
         return getattr(self, '_name', '')
 
     @label.setter
     def label(self, new_name: str) -> None:
-        """Set the items name that is displayed in the Legend."""
+        """Set the items name that is displayed in the legend."""
         self._name = new_name
 
     @property
     def line_style(self) -> int:
         """
         Return the style of lines used in the item (if supported).
-        Must be a value from the Qt::PenStyle enum
+        Must be a value from the :class:`~PyQt5.QtCore.Qt.PenStyle` enum
         (see http://doc.qt.io/qt-5/qt.html#PenStyle-enum).
         """
         return getattr(self, '_line_style', list(self.lines.values())[0])
@@ -945,7 +947,7 @@ class CItemPropertiesBase(metaclass=abc.ABCMeta):
     def line_style(self, new_style: int) -> None:
         """
         Set the style of lines used in the item (if supported).
-        Must be a value from the Qt::PenStyle enum
+        Must be a value from the :class:`~PyQt5.QtCore.Qt.PenStyle` enum
         (see http://doc.qt.io/qt-5/qt.html#PenStyle-enum).
         """
         if new_style in self.lines.values():
@@ -973,8 +975,8 @@ class CItemPropertiesBase(metaclass=abc.ABCMeta):
     @symbol.setter
     def symbol(self, new_symbol: Optional[str]) -> None:
         """
-        The single-character code for the symbol drawn at each datapoint.
-        See the documentation for pyqtgraph.PlotDataItem for possible values.
+        The single-character code for the symbol drawn at each data point.
+        See the documentation for :class:`pyqtgraph.PlotDataItem` for possible values.
         """
         if new_symbol in self.symbols.values():
             self._symbol = new_symbol
@@ -995,8 +997,8 @@ class CCurvePropertiesBase(CItemPropertiesBase):
 
     """
     Base class for different curve properties. This classes uses
-    attributes of the LivePlotCurve and should only be used as a
-    base class in classes derived from LivePlotCurve.
+    attributes of the :class:`accwidgets.graph.LivePlotCurve` and should only be used as a
+    base class in classes derived from :class:`accwidgets.graph.LivePlotCurve`.
     """
 
     plotting_item_editor_supported_columns: List[str] = [e.value for e in ColumnNames]
@@ -1020,22 +1022,23 @@ class CCurvePropertiesBase(CItemPropertiesBase):
 
     @property
     def pen(self) -> QPen:
-        """Grant easier access to PlotDataItems pen"""
+        """Grant easier access to :attr:`~pyqtgraph.PlotDataItem.pen`."""
         self._prepare_pens_in_opts()
         return self.opts.get('pen')
 
     @property
     def symbol_pen(self) -> QPen:
-        """Grant easier access to PlotDataItems symbolPen"""
+        """Grant easier access to :attr:`~pyqtgraph.PlotDataItem.symbolPen`."""
         self._prepare_pens_in_opts()
         return self.opts.get('symbolPen')
 
     def _prepare_pens_in_opts(self) -> None:
         """
-        Despite having access to mkPen() which returns QPens, PlotDataItems
-        pen and symbolPen are initialized with (R,G,B) tuples instead of
-        QPen's. This functions tries to transform all pens of the PlotDataItem
-        to QPens to have consistent types and access to QPen functionality.
+        Despite having access to :func:`pyqtgraph.mkPen` which returns :class:`PyQt5.QtGui.QPen`'s,
+        :class:`pyqtgraph.PlotDataItem`'s :attr:`~pyqtgraph.PlotDataItem.pen` and
+        :attr:`pyqtgraph.PlotDataItem.symbolPen` are initialized with (R,G,B) tuples instead of
+        :class:`PyQt5.QtGui.QPen`'s. This functions tries to transform all pens of the :class:`pyqtgraph,PlotDataItem`
+        to :class:`PyQt5.QtGui.QPen`s to have consistent types and access to :class:`PyQt5.QtGui.QPen` functionality.
         """
         potential_pen = self.opts.get('pen')
         potential_symbol_pen = self.opts.get('symbolPen')
@@ -1116,8 +1119,8 @@ class CBarGraphPropertiesBase(CItemPropertiesBase):
 
     """
     Base class for different bar graph properties. This classes uses
-    attributes of the LiveBarGraphItem and should only be used as a
-    base class in classes derived from LiveBarGraphItem.
+    attributes of the :class:`accwidgets.graph.LiveBarGraphItem` and should only be used as a
+    base class in classes derived from :class:`accwidgets.graph.LiveBarGraphItem`.
     """
 
     plotting_item_editor_supported_columns: List[str] = [
@@ -1147,13 +1150,13 @@ class CBarGraphPropertiesBase(CItemPropertiesBase):
 
     @property
     def brush(self) -> QBrush:
-        """Grant easier access to BarGraphItem's pen"""
+        """Grant easier access to :class:`~pyqtgraph.graphicsItems.GraphItem.GraphItem`'s pen"""
         self._prepare_pens_in_opts()
         return self.opts.get('brush')
 
     @property
     def pen(self) -> QPen:
-        """Grant easier access to BarGraphItem's pen"""
+        """Grant easier access to :class:`~pyqtgraph.graphicsItems.GraphItem.GraphItem`'s pen"""
         self._prepare_pens_in_opts()
         return self.opts.get('pen')
 
@@ -1341,7 +1344,7 @@ class CScrollingCurve(
 
     """
     Scrolling curve for a scrolling plot widget that
-    receives its data through a PyDMChannel.
+    receives its data through a :class:`~pydm.widgets.channel.PyDMChannel`.
     """
 
     def __init__(
@@ -1392,7 +1395,7 @@ class CScrollingBarGraph(
 
     """
     Scrolling bar graph item for a scrolling plot widget that
-    receives its data through a PyDMChannel.
+    receives its data through a :class:`~pydm.widgets.channel.PyDMChannel`.
     """
 
     def __init__(
@@ -1444,7 +1447,7 @@ class CScrollingInjectionBarGraph(
 
     """
     Scrolling injection bar graph for a scrolling plot widget
-    that receives its data through a PyDMChannel.
+    that receives its data through a :class:`~pydm.widgets.channel.PyDMChannel`.
     """
 
     def __init__(
@@ -1494,7 +1497,7 @@ class CScrollingTimestampMarker(
 
     """
     Scrolling timestamp markers for a scrolling plot widget that
-    receives its data through a PyDMChannel.
+    receives its data through a :class:`~pydm.widgets.channel.PyDMChannel`.
     """
 
     def __init__(
@@ -1583,7 +1586,7 @@ class CCyclicCurve(accgraph.CyclicPlotCurve, CCurvePropertiesBase):
 
     """
     Cyclic curve for a cyclic plot widget that
-    receives its data through a PyDMChannel.
+    receives its data through a :class:`~pydm.widgets.channel.PyDMChannel`.
     """
 
     def __init__(
@@ -1628,7 +1631,6 @@ class CCyclicCurve(accgraph.CyclicPlotCurve, CCurvePropertiesBase):
 
 
 class CCyclicPlot(CPlotWidgetBase, accgraph.CyclicPlotWidget):
-
     """Plot widget for displaying cyclic curves."""
 
     ITEM_TYPES: OrderedDict = OrderedDict([

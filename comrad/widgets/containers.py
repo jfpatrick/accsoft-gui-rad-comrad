@@ -19,7 +19,7 @@ class CEmbeddedDisplay(PyDMEmbeddedDisplay):
 
     def __init__(self, parent: Optional[QWidget] = None, **kwargs):
         """
-        A :class:`qtpy.QFrame` capable of rendering a :class:`comrad.CDisplay`.
+        A :class:`~PyQt5.QtWidgets.QFrame` capable of rendering a :class:`CDisplay`.
 
         Args:
             parent: The parent widget for the display.

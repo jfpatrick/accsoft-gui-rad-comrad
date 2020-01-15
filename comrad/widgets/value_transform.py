@@ -56,13 +56,13 @@ class CFileTracking:
 
         Returns
         --------
-        dict
+            Dictionary
         """
         return macro.find_base_macros(self)
 
     def substituted_string(self, string: str) -> str:
         """
-        Similar to  macro.substitute_in_file() this method substitutes macros in a string
+        Similar to :func:`pydm.utilities.macro.substitute_in_file` this method substitutes macros in a string
         directly, without opening a file.
 
         Args:
@@ -78,7 +78,8 @@ class CFileTracking:
 
 class CValueTransformationBase(CFileTracking):
     """ Caveats:
-        If you are using macros template in the imported modules, it will produce SyntaxError. Wrap it in strings.
+        If you are using macros template in the imported modules, it will produce :class:`SyntaxError`.
+        Wrap it in strings.
     """
 
     def __init__(self):
@@ -111,7 +112,8 @@ class CValueTransformationBase(CFileTracking):
     @Property(str)
     def snippetFilename(self) -> str:
         """
-        Path to the file that contains Python snippet for transformation. If :attr:`valueTransformation` is defined,
+        Path to the file that contains Python snippet for transformation.
+        If :attr:`~comrad.widgets.value_transform.CValueTransformationBase.valueTransformation` is defined,
         it will override the code coming from this file.
 
         Returns:
@@ -132,7 +134,8 @@ class CValueTransformationBase(CFileTracking):
     @Property(str)
     def macros(self) -> str:
         """
-        Similar to the macros of :class:`PyDMEmbeddedDisplay` and :class:`PyDMRelatedDisplayButton`,
+        Similar to the macros of :class:`pydm.widgets.PyDMEmbeddedDisplay` and
+        :class:`pydm.widgets.PyDMRelatedDisplayButton`,
         this is will substitute variables in the value transformation code,
         either defined with the inline snippet, or coming from a file.
 
@@ -187,7 +190,7 @@ def _create_transformation_function(transformation: str, file: Optional[Path] = 
 
     Args:
         transformation: Python snippet.
-        file: Path to the Python executable file to be set in __file__ variable.
+        file: Path to the Python executable file to be set in ``__file__`` variable.
 
     Returns:
         Function that can transform incoming values (passed as keyword args and are embedded into globals)

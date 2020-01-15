@@ -18,12 +18,12 @@ class CLabel(CColorRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixin, 
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
-        A :class:`qtpy.QtWidgets.QLabel` with support for setting the text via a CS Channel, or
-        through the Rules system.
+        A :class:`~PyQt5.QtWidgets.QLabel` with support for setting the text via a control system channel, or
+        through the rules system.
 
         **Note!:** If a :class:`CLabel` is configured to use a :attr:`channel`, and also with a rule
-        which changes the :meth:`QLabel.text` property, the behavior is undefined. Use either
-        the :attr:`channel` *or* a :meth:`QLabel.text` rule, but not both.
+        which changes the :meth:`~PyQt5.QtWidgets.QLabel.text` property, the behavior is undefined. Use either
+        the :attr:`channel` *or* a :meth:`~PyQt5.QtWidgets.QLabel.text` rule, but not both.
 
         Args:
             parent: The parent widget for the label.
@@ -45,8 +45,8 @@ class CLabel(CColorRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixin, 
 
     def setNum(self, new_val: Union[float, int]):
         """
-        Callback transforms the directly set numeric value through the :attr:`CValueTransformerMixin.valueTransformation`
-        code before displaying it in a standard way.
+        Callback transforms the directly set numeric value through the
+        :attr:`~comrad.widgets.value_transform.CValueTransformationBase.valueTransformation` code before displaying it in a standard way.
 
         Args:
             new_val: The new value from the channel. The type depends on the channel.
@@ -54,7 +54,7 @@ class CLabel(CColorRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixin, 
         self.value_changed(new_val)
 
     def set_color(self, val: str):
-        """Overridden method of :class:`CColorRulesMixin`.
+        """Overridden method of :class:`~comrad.widgets.mixins.CColorRulesMixin`.
 
         Args:
             val: The new value of the color."""
@@ -78,7 +78,7 @@ class CByteIndicator(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedToolt
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
         Widget for graphical representation of bits from an integer number
-        with support for Channels from CS.
+        with support for channels from CS.
 
         Args:
             parent: The parent widget for the indicator.
@@ -102,10 +102,11 @@ class CByteIndicator(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedToolt
     def channelValueChanged(self, new_val: Union[bool, int, List[Tuple[int, str]]]):
         """
         Slot that accepts types, not natively supported by PyDM
-        list: Currently, PyJAPC is expected to convert EnumItemSet into List[Tuple[code, name]].
+        list: Currently, :mod:`pyjapc` is expected to convert EnumItemSet into ``List[Tuple[code, name]]``.
         bool: Indicator fails to display a single bool value
 
-        :class:`PyDMByteIndicator` expects int value. So we construct int from the bit mask expressed by the list.
+        :class:`~pydm.widgets.byte.PyDMByteIndicator` expects int value.
+        So we construct int from the bit mask expressed by the list.
 
         Args:
             new_val: Incoming value.
@@ -132,7 +133,7 @@ class CScaleIndicator(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTool
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
-        A bar-shaped indicator for scalar value with support for Channels and
+        A bar-shaped indicator for scalar value with support for channels and
         more from the control system.
         Configurable features include indicator type (bar/pointer), scale tick
         marks and orientation (horizontal/vertical).

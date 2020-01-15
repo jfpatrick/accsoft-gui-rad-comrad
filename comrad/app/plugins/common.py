@@ -145,7 +145,7 @@ def load_plugins_from_path(locations: List[Path], token: str, base_type: Type[CP
     Args:
         locations: list of file locations.
         token: a phrase that must match the end of the filename for it to be checked for.
-        base_type: Base class of the plugins to look for. It should be a subclass of / or CPlugin.
+        base_type: Base class of the plugins to look for. It should be a subclass of / or :class:`CPlugin`.
 
     Returns:
         dictionary of plugins add from this folder.

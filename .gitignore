@@ -3,6 +3,7 @@
 .venv
 .pyre
 __pycache__
+*.inv
 *.log
 *.egg-info
 .coverage

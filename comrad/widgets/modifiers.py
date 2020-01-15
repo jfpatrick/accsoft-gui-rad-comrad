@@ -73,10 +73,10 @@ class CValueAggregator(QWidget, CInitializedMixin, CHideUnusedFeaturesMixin, PyD
     @Property('QStringList')
     def inputChannels(self) -> List[str]:
         """
-        This property exposes :class:`pydm.widgets.base.PyDMWidget` channels that we use as input primarily.
+        This property exposes :class:`PyDMWidget`'s channels that we use as input primarily.
 
         Returns:
-            List of PyDMChannel objects.
+            List of :class:`PyDMChannel` objects.
         """
         return self._channel_ids
 
@@ -129,7 +129,7 @@ class CValueAggregator(QWidget, CInitializedMixin, CHideUnusedFeaturesMixin, PyD
     @Slot(np.ndarray)
     def channelValueChanged(self, new_val: Any):
         """
-        Callback when a new value arrives on any of the :meth:`inputChannels`.
+        Callback when a new value arrives on any of the :attr:`inputChannels`.
 
         Args:
             new_val: New value.

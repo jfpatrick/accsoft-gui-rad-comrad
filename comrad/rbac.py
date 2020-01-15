@@ -41,7 +41,7 @@ class CRBACState(QObject):
 
     rbac_error = Signal(tuple)
     """Emits when authentication error occurs. Payload is a tuple of message string and a boolean
-       for request type (True -> by location, False -> by username)"""
+       for request type (``True`` -> by location, ``False`` -> by username)"""
 
     def __init__(self, parent: Optional[QObject] = None):
         super().__init__(parent)
