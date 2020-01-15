@@ -409,8 +409,8 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
 
                 # TODO: Will this work with wildcard channel? Certainly not dynamically changing one because it's evaluated once
                 if rule.channel == BaseRule.Channel.DEFAULT:
-                    from comrad.widgets.mixins import WidgetRulesMixin
-                    default_channel = cast(WidgetRulesMixin, widget_ref()).default_rule_channel()
+                    from comrad.widgets.mixins import CWidgetRulesMixin
+                    default_channel = cast(CWidgetRulesMixin, widget_ref()).default_rule_channel()
                     if default_channel is None:
                         raise CChannelError(f"Default channel on the widget is not defined yet. We won't register it for now...")
                     channels_list = [{
@@ -482,8 +482,8 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
             # except Exception as e:
             #     logger.exception(f'Error while evaluating Rule: {e}')
         elif isinstance(rule_obj, CNumRangeRule):
-            from comrad.widgets.mixins import WidgetRulesMixin
-            _, base_type = cast(WidgetRulesMixin, widget_ref()).RULE_PROPERTIES[rule_obj.prop]
+            from comrad.widgets.mixins import CWidgetRulesMixin
+            _, base_type = cast(CWidgetRulesMixin, widget_ref()).RULE_PROPERTIES[rule_obj.prop]
             val = float(job_unit['values'][0])
             for range in rule_obj.ranges:
                 if range.min_val <= val < range.max_val:

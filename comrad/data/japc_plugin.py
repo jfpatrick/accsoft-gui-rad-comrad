@@ -7,7 +7,7 @@ from pydm.data_plugins.plugin import PyDMPlugin, PyDMConnection
 from qtpy.QtCore import Qt, QObject, Slot, Signal, QVariant
 from typing import Any, Optional, cast, Callable
 from collections import namedtuple
-from comrad.rbac import RBACLoginStatus, RBACStartupLoginPolicy
+from comrad.rbac import CRBACLoginStatus, CRBACStartupLoginPolicy
 from comrad.app.application import CApplication
 from comrad.data.jpype import get_user_message
 
@@ -71,13 +71,13 @@ class _JapcService(QObject, pyjapc.PyJapc):
         self.japc_param_error.connect(self._app.on_control_error)
         logger.debug(f'JAPC is set up and ready!')
 
-        if app.rbac.startup_login_policy == RBACStartupLoginPolicy.LOGIN_BY_LOCATION:
+        if app.rbac.startup_login_policy == CRBACStartupLoginPolicy.LOGIN_BY_LOCATION:
             logger.debug(f'Attempting login by location on the first connection')
             try:
                 self.login_by_location()
             except BaseException:
                 logger.info('Login by location failed. User will have to manually acquire RBAC token.')
-        elif app.rbac.startup_login_policy == RBACStartupLoginPolicy.LOGIN_BY_CREDENTIALS:
+        elif app.rbac.startup_login_policy == CRBACStartupLoginPolicy.LOGIN_BY_CREDENTIALS:
             # TODO: Implement presenting a dialog here
             pass
 
@@ -88,7 +88,7 @@ class _JapcService(QObject, pyjapc.PyJapc):
             token = self.rbacGetToken()
             if token:
                 self._app.rbac.user = token.getUser().getName()  # FIXME: This is Java call. We need to abstract it into PyRBAC
-                self._app.rbac.status = RBACLoginStatus.LOGGED_IN_BY_LOCATION
+                self._app.rbac.status = CRBACLoginStatus.LOGGED_IN_BY_LOCATION
 
     def login_by_credentials(self, username: str, password: str):
         logger.debug(f'Attempting RBAC login with credentials')
@@ -97,7 +97,7 @@ class _JapcService(QObject, pyjapc.PyJapc):
             token = self.rbacGetToken()
             if token:
                 self._app.rbac.user = token.getUser().getName()  # FIXME: This is Java call. We need to abstract it into PyRBAC
-                self._app.rbac.status = RBACLoginStatus.LOGGED_IN_BY_CREDENTIALS
+                self._app.rbac.status = CRBACLoginStatus.LOGGED_IN_BY_CREDENTIALS
 
     @property
     def logged_in(self):
@@ -146,7 +146,7 @@ class _JapcService(QObject, pyjapc.PyJapc):
         self._logged_in = logged_in
         self.japc_status_changed.emit(logged_in)
         if not logged_in:
-            self._app.rbac.status = RBACLoginStatus.LOGGED_OUT
+            self._app.rbac.status = CRBACLoginStatus.LOGGED_OUT
 
     def _login_err(self, message: str, login_by_location: bool):
         self.japc_login_error.emit((message, login_by_location))

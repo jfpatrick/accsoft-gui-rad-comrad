@@ -7,8 +7,8 @@ from pydm.data_plugins.plugin import PyDMConnection
 from pydm.utilities import is_qt_designer
 from qtpy.QtWidgets import QWidget, QFrame, QVBoxLayout, QLabel, QSizePolicy
 from qtpy.QtCore import Property, Signal, Slot, Q_ENUM, Qt, QSize
-from .mixins import HideUnusedFeaturesMixin, InitializedMixin, superclass_deprecated
-from .value_transform import ValueTransformationBase
+from .mixins import CHideUnusedFeaturesMixin, CInitializedMixin, superclass_deprecated
+from .value_transform import CValueTransformationBase
 
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ class GeneratorTrigger:
     """First new value arriving since the last trigger."""
 
 
-class CValueAggregator(QWidget, InitializedMixin, HideUnusedFeaturesMixin, PyDMWidget, ValueTransformationBase, GeneratorTrigger):
+class CValueAggregator(QWidget, CInitializedMixin, CHideUnusedFeaturesMixin, PyDMWidget, CValueTransformationBase, GeneratorTrigger):
     Q_ENUM(GeneratorTrigger)
     GeneratorTrigger = GeneratorTrigger
 
@@ -45,10 +45,10 @@ class CValueAggregator(QWidget, InitializedMixin, HideUnusedFeaturesMixin, PyDMW
             init_channel: The channel to be used by the widget.
         """
         QWidget.__init__(self, parent)
-        InitializedMixin.__init__(self)
-        HideUnusedFeaturesMixin.__init__(self)
+        CInitializedMixin.__init__(self)
+        CHideUnusedFeaturesMixin.__init__(self)
         PyDMWidget.__init__(self)
-        ValueTransformationBase.__init__(self)
+        CValueTransformationBase.__init__(self)
         self._widget_initialized = True
         self._channel_ids: List[str] = []
         self._active: bool = True

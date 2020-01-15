@@ -3,6 +3,6 @@ Value transformation
 
 .. toctree::
 
-   valuetransformermixin
-   valuetransformationbase
-   filetracking
+   ../widgets/mixins/cvaluetransformermixin
+   cvaluetransformationbase
+   cfiletracking

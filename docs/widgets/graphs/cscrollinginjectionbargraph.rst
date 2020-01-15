@@ -1,5 +1,5 @@
 CScrollingInjectionBarGraph
-=====================
+===========================
 
 .. inheritance-diagram:: comrad.CScrollingInjectionBarGraph
     :parts: 1

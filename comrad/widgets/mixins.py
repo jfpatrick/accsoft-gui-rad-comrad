@@ -8,21 +8,21 @@ from pydm.widgets.base import PyDMWidget
 from pydm.widgets.rules import RulesDispatcher
 from comrad.rules import BaseRule, CChannelError, unpack_rules
 from comrad.json import CJSONEncoder, CJSONDeserializeError
-from .value_transform import ValueTransformationBase
+from .value_transform import CValueTransformationBase
 from .deprecations import superclass_deprecated
 
 
 logger = logging.getLogger(__name__)
 
 
-class InitializedMixin:
+class CInitializedMixin:
 
     def __init__(self):
-        """Simple mixin to set a flag when __init__ method has finished the sequence."""
+        """Simple mixin to set a flag when :meth:`__init__` method has finished the sequence."""
         self._widget_initialized = False
 
 
-class HideUnusedFeaturesMixin:
+class CHideUnusedFeaturesMixin:
     """Mixin that hides PyDM properties that are exposed to Qt Designer and are not used in ComRAD."""
 
     @Property(bool, designable=False)
@@ -44,7 +44,7 @@ class HideUnusedFeaturesMixin:
         pass
 
 
-class NoPVTextFormatterMixin:
+class CNoPVTextFormatterMixin:
     """
     Mixin that hides PyDM properties in :class:`pydm.widgets.base.TextFormatter` that are exposed to
     Qt Designer and are not used in ComRAD.
@@ -70,7 +70,7 @@ class NoPVTextFormatterMixin:
         pass
 
 
-class CustomizedTooltipMixin:
+class CCustomizedTooltipMixin:
     """Mixin that customizes the message passed into the :meth:`qtpy.QWidget.tooltip()`."""
 
     def setToolTip(self, tooltip: str):
@@ -83,11 +83,11 @@ class CustomizedTooltipMixin:
         cast(QWidget, super()).setToolTip(tooltip.replace('PyDM', 'ComRAD').replace('PV ', 'Device Property '))
 
 
-class ValueTransformerMixin(ValueTransformationBase):
-    """Mixin that introduces :attr:`ValueTransformationBase.valueTransformation` property for client-side Python snippets acting on incoming values."""
+class CValueTransformerMixin(CValueTransformationBase):
+    """Mixin that introduces :attr:`CValueTransformationBase.valueTransformation` property for client-side Python snippets acting on incoming values."""
 
     def getValueTransformation(self) -> str:
-        return ValueTransformationBase.getValueTransformation(self)
+        return CValueTransformationBase.getValueTransformation(self)
 
     def setValueTransformation(self, new_formatter: str):
         """
@@ -97,12 +97,12 @@ class ValueTransformerMixin(ValueTransformationBase):
             new_val: New Python code snippet.
         """
         if self.getValueTransformation() != str(new_formatter):
-            ValueTransformationBase.setValueTransformation(self, str(new_formatter))
+            CValueTransformationBase.setValueTransformation(self, str(new_formatter))
             self.value_changed(self.value)  # type: ignore   # This is coming from PyDMWidget
 
     def value_changed(self, new_val: Any) -> None:
         """
-        Callback transforms the Channel value through the :attr:`ValueTransformationBase.valueTransformation`
+        Callback transforms the Channel value through the :attr:`CValueTransformationBase.valueTransformation`
         code before displaying it in a standard way.
 
         Args:
@@ -116,7 +116,7 @@ class ValueTransformerMixin(ValueTransformationBase):
         super().value_changed(val)  # type: ignore
 
 
-class WidgetRulesMixin:
+class CWidgetRulesMixin:
     """
     Common rules mixin for all ComRAD widgets that limits the amount of properties for our widgets
     and ensures the synchronization between channel setter and rules setter regardless of the order.
@@ -190,10 +190,10 @@ class WidgetRulesMixin:
     """
 
 
-class ColorRulesMixin(WidgetRulesMixin):
+class CColorRulesMixin(CWidgetRulesMixin):
 
     RULE_PROPERTIES = dict(**{BaseRule.Property.COLOR.value: ('set_color', str)},
-                           **WidgetRulesMixin.RULE_PROPERTIES)
+                           **CWidgetRulesMixin.RULE_PROPERTIES)
 
     def __init__(self):
         """Mixing that introduces color rule on top of the standard rules."""

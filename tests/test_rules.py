@@ -345,13 +345,13 @@ def test_rules_engine_unregisters_old_rules(qtbot: QtBot):
     None,
 ])
 def test_rules_engine_finds_default_channel(qtbot: QtBot, default_channel):
-    from comrad.widgets.mixins import WidgetRulesMixin
+    from comrad.widgets.mixins import CWidgetRulesMixin
 
-    class CustomWidget(QWidget, WidgetRulesMixin):
+    class CustomWidget(QWidget, CWidgetRulesMixin):
 
         def __init__(self, parent: Optional[QWidget] = None):
             QWidget.__init__(self, parent)
-            WidgetRulesMixin.__init__(self)
+            CWidgetRulesMixin.__init__(self)
 
         def default_rule_channel(self):
             return default_channel

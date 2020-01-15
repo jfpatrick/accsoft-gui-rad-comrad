@@ -7,15 +7,15 @@ from pydm.widgets.slider import PyDMSlider
 from pydm.widgets.spinbox import PyDMSpinbox
 from pydm.widgets.checkbox import PyDMCheckbox
 from pydm.widgets.enum_combo_box import PyDMEnumComboBox
-from .mixins import (HideUnusedFeaturesMixin, NoPVTextFormatterMixin, CustomizedTooltipMixin,
-                     ValueTransformerMixin, ColorRulesMixin, WidgetRulesMixin, InitializedMixin)
+from .mixins import (CHideUnusedFeaturesMixin, CNoPVTextFormatterMixin, CCustomizedTooltipMixin,
+                     CValueTransformerMixin, CColorRulesMixin, CWidgetRulesMixin, CInitializedMixin)
 from .deprecations import superclass_deprecated
 
 
 logger = logging.getLogger(__name__)
 
 
-class CCheckBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, InitializedMixin, HideUnusedFeaturesMixin, PyDMCheckbox):
+class CCheckBox(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixin, CInitializedMixin, CHideUnusedFeaturesMixin, PyDMCheckbox):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -26,12 +26,12 @@ class CCheckBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin,
             init_channel: The channel to be used by the widget.
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
-        WidgetRulesMixin.__init__(self)
-        CustomizedTooltipMixin.__init__(self)
-        InitializedMixin.__init__(self)
-        HideUnusedFeaturesMixin.__init__(self)
+        CWidgetRulesMixin.__init__(self)
+        CCustomizedTooltipMixin.__init__(self)
+        CInitializedMixin.__init__(self)
+        CHideUnusedFeaturesMixin.__init__(self)
         PyDMCheckbox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
-        ValueTransformerMixin.__init__(self)
+        CValueTransformerMixin.__init__(self)
         self._widget_initialized = True
 
     def init_for_designer(self):
@@ -39,7 +39,7 @@ class CCheckBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin,
         self.setText('RAD CheckBox')
 
 
-class CEnumComboBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, InitializedMixin, HideUnusedFeaturesMixin, PyDMEnumComboBox):
+class CEnumComboBox(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixin, CInitializedMixin, CHideUnusedFeaturesMixin, PyDMEnumComboBox):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -56,16 +56,16 @@ class CEnumComboBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMi
             init_channel: The channel to be used by the widget.
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
-        WidgetRulesMixin.__init__(self)
-        CustomizedTooltipMixin.__init__(self)
-        InitializedMixin.__init__(self)
-        HideUnusedFeaturesMixin.__init__(self)
+        CWidgetRulesMixin.__init__(self)
+        CCustomizedTooltipMixin.__init__(self)
+        CInitializedMixin.__init__(self)
+        CHideUnusedFeaturesMixin.__init__(self)
         PyDMEnumComboBox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
-        ValueTransformerMixin.__init__(self)
+        CValueTransformerMixin.__init__(self)
         self._widget_initialized = True
 
 
-class CLineEdit(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, InitializedMixin, HideUnusedFeaturesMixin, NoPVTextFormatterMixin, PyDMLineEdit):
+class CLineEdit(CColorRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixin, CInitializedMixin, CHideUnusedFeaturesMixin, CNoPVTextFormatterMixin, PyDMLineEdit):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -79,17 +79,17 @@ class CLineEdit(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, 
             init_channel: The channel to be used by the widget.
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
-        ColorRulesMixin.__init__(self)
-        CustomizedTooltipMixin.__init__(self)
-        InitializedMixin.__init__(self)
-        HideUnusedFeaturesMixin.__init__(self)
-        NoPVTextFormatterMixin.__init__(self)
+        CColorRulesMixin.__init__(self)
+        CCustomizedTooltipMixin.__init__(self)
+        CInitializedMixin.__init__(self)
+        CHideUnusedFeaturesMixin.__init__(self)
+        CNoPVTextFormatterMixin.__init__(self)
         PyDMLineEdit.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
-        ValueTransformerMixin.__init__(self)
+        CValueTransformerMixin.__init__(self)
         self._widget_initialized = True
 
     def set_color(self, val: str):
-        """Overridden method of :class:`ColorRulesMixin`.
+        """Overridden method of :class:`CColorRulesMixin`.
 
         Args:
             val: The new value of the color."""
@@ -98,7 +98,7 @@ class CLineEdit(ColorRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, 
         # TODO: Calculate color and choose appropriate text color by the contrast ratio
 
 
-class CSlider(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, InitializedMixin, HideUnusedFeaturesMixin, NoPVTextFormatterMixin, PyDMSlider):
+class CSlider(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixin, CInitializedMixin, CHideUnusedFeaturesMixin, CNoPVTextFormatterMixin, PyDMSlider):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -109,13 +109,13 @@ class CSlider(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, I
             init_channel: The channel to be used by the widget.
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
-        WidgetRulesMixin.__init__(self)
-        CustomizedTooltipMixin.__init__(self)
-        InitializedMixin.__init__(self)
-        HideUnusedFeaturesMixin.__init__(self)
-        NoPVTextFormatterMixin.__init__(self)
+        CWidgetRulesMixin.__init__(self)
+        CCustomizedTooltipMixin.__init__(self)
+        CInitializedMixin.__init__(self)
+        CHideUnusedFeaturesMixin.__init__(self)
+        CNoPVTextFormatterMixin.__init__(self)
         PyDMSlider.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
-        ValueTransformerMixin.__init__(self)
+        CValueTransformerMixin.__init__(self)
         self._user_defined_limits = True
         self._widget_initialized = True
 
@@ -129,7 +129,7 @@ class CSlider(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, I
         pass
 
 
-class CSpinBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, InitializedMixin, HideUnusedFeaturesMixin, NoPVTextFormatterMixin, PyDMSpinbox):
+class CSpinBox(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixin, CInitializedMixin, CHideUnusedFeaturesMixin, CNoPVTextFormatterMixin, PyDMSpinbox):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
         """
@@ -140,11 +140,11 @@ class CSpinBox(WidgetRulesMixin, ValueTransformerMixin, CustomizedTooltipMixin, 
             init_channel: The channel to be used by the widget.
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
-        WidgetRulesMixin.__init__(self)
-        CustomizedTooltipMixin.__init__(self)
-        InitializedMixin.__init__(self)
-        HideUnusedFeaturesMixin.__init__(self)
-        NoPVTextFormatterMixin.__init__(self)
+        CWidgetRulesMixin.__init__(self)
+        CCustomizedTooltipMixin.__init__(self)
+        CInitializedMixin.__init__(self)
+        CHideUnusedFeaturesMixin.__init__(self)
+        CNoPVTextFormatterMixin.__init__(self)
         PyDMSpinbox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
-        ValueTransformerMixin.__init__(self)
+        CValueTransformerMixin.__init__(self)
         self._widget_initialized = True

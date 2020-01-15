@@ -6,7 +6,7 @@ from qtpy.QtWidgets import (QWidget, QPushButton, QLineEdit, QLabel, QToolButton
 from qtpy import uic
 from qtpy.QtCore import Signal, Qt, QEvent
 from comrad.app.application import CApplication
-from comrad.rbac import RBACLoginStatus
+from comrad.rbac import CRBACLoginStatus
 from comrad.icons import icon
 from comrad.app.plugins.common import CToolbarWidgetPlugin, CPluginPosition
 
@@ -121,12 +121,12 @@ class RBACButton(QToolButton):
         self._app.rbac.rbac_status_changed.connect(self._status_changed)
 
     def _status_changed(self, new_status: int):
-        status = RBACLoginStatus(new_status)
+        status = CRBACLoginStatus(new_status)
         self._decorate(status=status)
 
-    def _decorate(self, status: RBACLoginStatus):
+    def _decorate(self, status: CRBACLoginStatus):
         icon_name: str
-        if status == RBACLoginStatus.LOGGED_OUT:
+        if status == CRBACLoginStatus.LOGGED_OUT:
             self.setText('RBA: no token')
             icon_name = 'offline'
             self.setMenu(self._menu)

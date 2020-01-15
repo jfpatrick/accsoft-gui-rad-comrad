@@ -9,9 +9,9 @@ def patch_app_singleton(monkeypatch):
 
         def __init__(self):
             print(f'Instantiating fake app instance')
-            from comrad.rbac import RBACState, RBACStartupLoginPolicy
-            self.rbac = RBACState()
-            self.rbac.startup_login_policy = RBACStartupLoginPolicy.NO_LOGIN
+            from comrad.rbac import CRBACState, CRBACStartupLoginPolicy
+            self.rbac = CRBACState()
+            self.rbac.startup_login_policy = CRBACStartupLoginPolicy.NO_LOGIN
             self.use_inca = False
             self.jvm_flags = {}
 

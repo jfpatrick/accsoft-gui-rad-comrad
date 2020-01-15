@@ -17,7 +17,7 @@ from qtpy.uic import loadUi
 from comrad.rules import BaseRule, CNumRangeRule, CExpressionRule, unpack_rules
 from comrad.qsci import configure_common_qsci, QSCI_INDENTATION
 from comrad.json import CJSONEncoder, CJSONDeserializeError
-from comrad.widgets.mixins import WidgetRulesMixin
+from comrad.widgets.mixins import CWidgetRulesMixin
 
 
 logger = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ class RulesEditor(QDialog):
     TAB_DECLARATIVE_VIEW: int = 0
     TAB_SOURCE_VIEW: int = 1
 
-    def __init__(self, widget: Union[QWidget, WidgetRulesMixin], parent: Optional[QWidget] = None):
+    def __init__(self, widget: Union[QWidget, CWidgetRulesMixin], parent: Optional[QWidget] = None):
         """
         Editor dialog for rules in Qt Designer.
 

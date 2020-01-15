@@ -12,7 +12,7 @@ from pydm.application import PyDMApplication
 from pydm.utilities import path_info, which
 from pydm.data_plugins import is_read_only
 from comrad.icons import icon
-from comrad.rbac import RBACState
+from comrad.rbac import CRBACState
 from .plugins.common import (load_plugins_from_path, CToolbarActionPlugin, CActionPlugin, CToolbarWidgetPlugin,
                              CPositionalPlugin, CToolbarID, CPluginPosition, CPlugin, CMenuBarPlugin, CStatusBarPlugin,
                              CToolbarPlugin)
@@ -92,7 +92,7 @@ class CApplication(PyDMApplication):
         """
         args = [_APP_NAME]
         args.extend(command_line_args or [])
-        self.rbac = RBACState()  # We must keep it before super because dependant plugins will be initialized in super()
+        self.rbac = CRBACState()  # We must keep it before super because dependant plugins will be initialized in super()
         self.ccda_endpoint = ccda_endpoint
         self.cmw_env = cmw_env
         self.use_inca = use_inca

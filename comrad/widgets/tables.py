@@ -6,7 +6,7 @@ from pydm.widgets.logdisplay import PyDMLogDisplay
 
 
 # TODO: Uncomment when proven useful
-# class CWaveFormTable(WidgetRulesMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMWaveformTable):
+# class CWaveFormTable(CWidgetRulesMixin, CCustomizedTooltipMixin, CHideUnusedFeaturesMixin, PyDMWaveformTable):
 #
 #     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, **kwargs):
 #         """
@@ -21,9 +21,9 @@ from pydm.widgets.logdisplay import PyDMLogDisplay
 #             init_channel: The channel to be used by the widget.
 #             **kwargs: Any future extras that need to be passed down to PyDM.
 #         """
-#         WidgetRulesMixin.__init__(self)
-#         CustomizedTooltipMixin.__init__(self)
-#         HideUnusedFeaturesMixin.__init__(self)
+#         CWidgetRulesMixin.__init__(self)
+#         CCustomizedTooltipMixin.__init__(self)
+#         CHideUnusedFeaturesMixin.__init__(self)
 #         PyDMWaveformTable.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
 
 

@@ -7,5 +7,5 @@ Rules
 
    cnumrangerule
    cchannelerror
-   colorrulesmixin
-   widgetrulesmixin
+   ../widgets/mixins/ccolorrulesmixin
+   ../widgets/mixins/cwidgetrulesmixin

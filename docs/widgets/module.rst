@@ -24,3 +24,4 @@ Widgets
     cvalueaggregator
     cdisplay
     graphs/module
+    mixins/module

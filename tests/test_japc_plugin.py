@@ -3,7 +3,7 @@ from unittest import mock
 from typing import cast
 from comrad.data import japc_plugin
 from comrad import CApplication
-from comrad.rbac import RBACLoginStatus, RBACStartupLoginPolicy
+from comrad.rbac import CRBACLoginStatus, CRBACStartupLoginPolicy
 
 
 class FakeToken:
@@ -23,16 +23,16 @@ def test_japc_singleton():
 
 
 @pytest.mark.parametrize('succeeds,by_location,expected_status', [
-    (True, True, RBACLoginStatus.LOGGED_IN_BY_LOCATION),
-    (False, True, RBACLoginStatus.LOGGED_OUT),
-    (True, False, RBACLoginStatus.LOGGED_IN_BY_CREDENTIALS),
-    (False, False, RBACLoginStatus.LOGGED_OUT),
+    (True, True, CRBACLoginStatus.LOGGED_IN_BY_LOCATION),
+    (False, True, CRBACLoginStatus.LOGGED_OUT),
+    (True, False, CRBACLoginStatus.LOGGED_IN_BY_CREDENTIALS),
+    (False, False, CRBACLoginStatus.LOGGED_OUT),
 ])
-def test_rbac_login(succeeds: bool, by_location: bool, expected_status: RBACLoginStatus, mocker):
+def test_rbac_login(succeeds: bool, by_location: bool, expected_status: CRBACLoginStatus, mocker):
     japc = japc_plugin._JapcService()
     rbac = cast(CApplication, CApplication.instance()).rbac
     assert japc._logged_in is False
-    assert rbac.status == RBACLoginStatus.LOGGED_OUT
+    assert rbac.status == CRBACLoginStatus.LOGGED_OUT
     assert rbac.user is None
 
     def set_logged_in(*_, **__):
@@ -65,13 +65,13 @@ def test_rbac_logout_succeeds(mocked_super, mocker):
     japc._logged_in = True
     rbac = cast(CApplication, CApplication.instance()).rbac
     rbac.user = 'TEST_USER'
-    rbac._status = RBACLoginStatus.LOGGED_IN_BY_LOCATION
+    rbac._status = CRBACLoginStatus.LOGGED_IN_BY_LOCATION
 
     mocker.patch.object(japc, 'rbacGetToken')
     japc.rbacLogout()
     mocked_super.assert_called_once()
     japc.rbacGetToken.assert_not_called()
-    assert rbac.status == RBACLoginStatus.LOGGED_OUT
+    assert rbac.status == CRBACLoginStatus.LOGGED_OUT
 
 
 @mock.patch('pyjapc.PyJapc.rbacLogin')
@@ -101,8 +101,8 @@ def test_rbac_logout_only_once(mocked_super):
 
 # TODO: Test case with login by credentials
 @pytest.mark.parametrize('login_policy,args', [
-    (RBACStartupLoginPolicy.LOGIN_BY_LOCATION, {}),
-    (RBACStartupLoginPolicy.NO_LOGIN, None),
+    (CRBACStartupLoginPolicy.LOGIN_BY_LOCATION, {}),
+    (CRBACStartupLoginPolicy.NO_LOGIN, None),
 ])
 @mock.patch('pyjapc.PyJapc.rbacLogin')
 def test_rbac_login_on_startup(mocked_super, login_policy, args):

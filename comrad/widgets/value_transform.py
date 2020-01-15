@@ -10,7 +10,7 @@ from pydm.utilities import macro, is_pydm_app
 logger = logging.getLogger(__name__)
 
 
-class FileTracking:
+class CFileTracking:
 
     def __init__(self):
         """Common mixin for widgets that have to work with files and parse macros inside them."""
@@ -76,7 +76,7 @@ class FileTracking:
         return macro.replace_macros_in_template(template=text, macros=self.parsed_macros()).getvalue()
 
 
-class ValueTransformationBase(FileTracking):
+class CValueTransformationBase(CFileTracking):
     """ Caveats:
         If you are using macros template in the imported modules, it will produce SyntaxError. Wrap it in strings.
     """
@@ -217,8 +217,8 @@ __builtins__['output'] = {output_func_name}
     if file:
         global_base['__file__'] = str(file)
     del global_base['macro']
-    del global_base['ValueTransformationBase']
-    del global_base['FileTracking']
+    del global_base['CValueTransformationBase']
+    del global_base['CFileTracking']
     del global_base['_create_transformation_function']
 
     def __comrad_dcode_wrapper__(**inputs) -> Any:

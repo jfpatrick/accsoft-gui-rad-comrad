@@ -1662,7 +1662,7 @@ class CCyclicPlot(CPlotWidgetBase, accgraph.CyclicPlotWidget):
 
 
 # TODO: Make available when proven useful
-# class CImageView(WidgetRulesMixin, CustomizedTooltipMixin, HideUnusedFeaturesMixin, PyDMImageView):
+# class CImageView(CWidgetRulesMixin, CCustomizedTooltipMixin, CHideUnusedFeaturesMixin, PyDMImageView):
 #
 #     def __init__(self,
 #                  parent: Optional[QWidget] = None,
@@ -1688,9 +1688,9 @@ class CCyclicPlot(CPlotWidgetBase, accgraph.CyclicPlotWidget):
 #             width_channel: The channel to be used by the widget to receive the image width information.
 #             **kwargs: Any future extras that need to be passed down to PyDM.
 #         """
-#         WidgetRulesMixin.__init__(self)
-#         CustomizedTooltipMixin.__init__(self)
-#         HideUnusedFeaturesMixin.__init__(self)
+#         CWidgetRulesMixin.__init__(self)
+#         CCustomizedTooltipMixin.__init__(self)
+#         CHideUnusedFeaturesMixin.__init__(self)
 #         PyDMImageView.__init__(self, parent=parent, image_channel=image_channel, width_channel=width_channel, **kwargs)
 #
 #     def default_rule_channel(self) -> str:

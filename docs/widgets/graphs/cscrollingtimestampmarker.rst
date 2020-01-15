@@ -1,5 +1,5 @@
 CScrollingTimestampMarker
-=====================
+=========================
 
 .. inheritance-diagram:: comrad.CScrollingTimestampMarker
     :parts: 1
