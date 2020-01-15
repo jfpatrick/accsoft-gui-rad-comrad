@@ -76,7 +76,7 @@ twine:
 sphinx:
   extends:
     - .acc_py_build_docs
-    - .sphinx_graphviz
+    - .sphinx_custom
   image: $ACCPY_PYQT_DOCKER_IMAGE
   stage: Release
   only:
@@ -87,7 +87,7 @@ sphinx:
 sphinx on tag:
   extends:
     - .acc_py_build_docs_on_tag
-    - .sphinx_graphviz
+    - .sphinx_custom
   image: $ACCPY_PYQT_DOCKER_IMAGE
   stage: Release
 
