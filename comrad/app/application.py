@@ -15,7 +15,7 @@ from comrad.icons import icon
 from comrad.rbac import CRBACState
 from .plugins.common import (load_plugins_from_path, CToolbarActionPlugin, CActionPlugin, CToolbarWidgetPlugin,
                              CPositionalPlugin, CToolbarID, CPluginPosition, CPlugin, CMenuBarPlugin, CStatusBarPlugin,
-                             CToolbarPlugin)
+                             CToolbarPlugin, filter_enabled_plugins)
 
 
 logger = logging.getLogger(__name__)
@@ -253,9 +253,9 @@ class CApplication(PyDMApplication):
 
         stored_plugins: List[CPlugin] = []
 
-        for plugin_id, plugin_type in CApplication._filter_enabled_plugins(plugins=toolbar_plugins.values(),
-                                                                           blacklist=blacklist,
-                                                                           whitelist=whitelist):
+        for plugin_id, plugin_type in filter_enabled_plugins(plugins=toolbar_plugins.values(),
+                                                             blacklist=blacklist,
+                                                             whitelist=whitelist):
             if order is not None and plugin_id not in order:
                 logger.debug(f'Skipping init for "{plugin_type.__name__}", as it is not going to be used.')
                 # Do not instantiate a plugin that is not going to be used
@@ -370,9 +370,9 @@ class CApplication(PyDMApplication):
 
         stored_plugins: List[CPlugin] = []
 
-        for _, plugin_type in CApplication._filter_enabled_plugins(plugins=menubar_plugins.values(),
-                                                                   whitelist=whitelist,
-                                                                   blacklist=blacklist):
+        for _, plugin_type in filter_enabled_plugins(plugins=menubar_plugins.values(),
+                                                     whitelist=whitelist,
+                                                     blacklist=blacklist):
             logger.debug(f'Instantiating plugin "{plugin_type.plugin_id}"')
             plugin: CMenuBarPlugin = plugin_type()
             try:
@@ -419,9 +419,9 @@ class CApplication(PyDMApplication):
         status_bar_right: List[Tuple[QWidget, bool]] = []  # Items succeeding spacer
 
         stored_plugins: List[CPlugin] = []
-        for _, plugin_type in CApplication._filter_enabled_plugins(plugins=status_bar_plugins.values(),
-                                                                   whitelist=whitelist,
-                                                                   blacklist=blacklist):
+        for _, plugin_type in filter_enabled_plugins(plugins=status_bar_plugins.values(),
+                                                     whitelist=whitelist,
+                                                     blacklist=blacklist):
             logger.debug(f'Instantiating plugin "{plugin_type.plugin_id}"')
             plugin = cast(CStatusBarPlugin, plugin_type())
             widget = plugin.create_widget()
@@ -469,35 +469,3 @@ class CApplication(PyDMApplication):
         return load_plugins_from_path(locations=locations,
                                       token='_plugin.py',
                                       base_type=base_type)
-
-    @staticmethod
-    def _filter_enabled_plugins(plugins: Iterable[Type[CPlugin]],
-                                whitelist: Optional[Iterable[str]],
-                                blacklist: Optional[Iterable[str]]):
-
-        def extract_type_attr(plugin_class: Type[CPlugin], attr_name: str):
-            val = getattr(plugin_class, attr_name, None)
-            if val is None or (not isinstance(val, bool) and not val):
-                # Allow False, but do not allow empty strings, lists, etc
-                logger.exception(f'Plugin "{plugin_class.__name__}" is missing "{attr_name}" class attribute '
-                                 f'that is essential for all toolbar plugins')
-                raise AttributeError
-            return val
-
-        for plugin_type in plugins:
-            try:
-                plugin_id: str = extract_type_attr(plugin_type, 'plugin_id')
-                is_enabled: bool = extract_type_attr(plugin_type, 'enabled')
-            except AttributeError:
-                continue
-
-            if not is_enabled and whitelist and plugin_id in whitelist:
-                is_enabled = True
-                logger.debug(f'Enabling whitelisted plugin "{plugin_type.__name__}"')
-            elif is_enabled and blacklist and plugin_id in blacklist:
-                is_enabled = False
-                logger.debug(f'Disabling blacklisted plugin "{plugin_type.__name__}"')
-
-            if not is_enabled:
-                continue
-            yield plugin_id, plugin_type

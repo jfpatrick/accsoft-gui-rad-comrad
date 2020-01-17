@@ -2,14 +2,17 @@
 Utilities for Qt Designer intergation.
 """
 
-from typing import Type, List, Optional
+from typing import Type, List, Optional, TypeVar
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QWidget
 from pydm.widgets.qtplugin_extensions import RulesExtension
 from pydm.widgets.qtplugin_base import PyDMDesignerPlugin
 
 
-def qtplugin_factory(cls: Type[QWidget],
+_T = TypeVar('_T', bound=QWidget)
+
+
+def qtplugin_factory(cls: Type[_T],
                      is_container: bool = False,
                      icon: Optional[QIcon] = None,
                      group: str = 'ComRAD Widgets',
@@ -23,7 +26,7 @@ def qtplugin_factory(cls: Type[QWidget],
      - allows modifying the widget on creation in Qt Designer (useful for setting initial text)
 
     Args:
-        cls: Widget class.
+        cls: Widget class (QWidget subclass).
         is_container: Is a container type of a widget.
         icon: Icon as visible in the Widget Box and Object Inspector.
         group: Category of the Widget Box, where the widget should be placed.

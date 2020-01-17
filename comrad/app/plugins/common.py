@@ -4,7 +4,7 @@ import uuid
 import inspect
 import logging
 from pathlib import Path
-from typing import Optional, Union, Iterable, Dict, List, cast, Type
+from typing import Optional, Union, Iterable, Dict, List, cast, Type, Generator, Tuple, TypeVar
 from types import ModuleType
 from enum import Enum, auto, unique
 from qtpy.QtWidgets import QWidget, QAction, QMenu
@@ -138,6 +138,9 @@ class CStatusBarPlugin(CWidgetPlugin, metaclass=abc.ABCMeta):
     defined by `position` property."""
 
 
+_T = TypeVar('_T', bound=CPlugin)
+
+
 def load_plugins_from_path(locations: List[Path], token: str, base_type: Type[CPlugin] = CPlugin):
     """
     Load plugins from file locations that match a specific token.
@@ -180,3 +183,35 @@ def load_plugins_from_path(locations: List[Path], token: str, base_type: Type[CP
                 logger.debug(f'Found new plugin classes:\n{classes}')
                 plugin_classes.update(classes)
     return plugin_classes
+
+
+def filter_enabled_plugins(plugins: Iterable[Type[_T]],
+                           whitelist: Optional[Iterable[str]],
+                           blacklist: Optional[Iterable[str]]) -> Generator[Tuple[str, Type[_T]], None, None]:
+
+    def extract_type_attr(plugin_class: Type[_T], attr_name: str):
+        val = getattr(plugin_class, attr_name, None)
+        if val is None or (not isinstance(val, bool) and not val):
+            # Allow False, but do not allow empty strings, lists, etc
+            logger.exception(f'Plugin "{plugin_class.__name__}" is missing "{attr_name}" class attribute '
+                             f'that is essential for all window plugins')
+            raise AttributeError
+        return val
+
+    for plugin_type in plugins:
+        try:
+            plugin_id: str = extract_type_attr(plugin_type, 'plugin_id')
+            is_enabled: bool = extract_type_attr(plugin_type, 'enabled')
+        except AttributeError:
+            continue
+
+        if not is_enabled and whitelist and plugin_id in whitelist:
+            is_enabled = True
+            logger.debug(f'Enabling whitelisted plugin "{plugin_type.__name__}"')
+        elif is_enabled and blacklist and plugin_id in blacklist:
+            is_enabled = False
+            logger.debug(f'Disabling blacklisted plugin "{plugin_type.__name__}"')
+
+        if not is_enabled:
+            continue
+        yield plugin_id, plugin_type

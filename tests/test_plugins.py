@@ -1,10 +1,10 @@
 import pytest
 import inspect
 import operator
-from typing import Tuple, List
+from typing import Tuple, List, Type
 from unittest import mock
 from pathlib import Path
-from comrad.app.plugins.common import load_plugins_from_path, CPlugin
+from comrad.app.plugins.common import load_plugins_from_path, filter_enabled_plugins, CPlugin
 
 
 class CPluginSubclass(CPlugin):
@@ -21,8 +21,8 @@ class NotCPluginSubclass:
             ('/loc1/dir1', None, ['file1{token}', 'file2{token}']),
             ('/loc1/dir2', None, []),
             ('/loc1/__pymodules__', None, ['file3{token}', 'file4{token}']),
-            ('/loc1/dir3', None, ['__init__.py'])
-        ])
+            ('/loc1/dir3', None, ['__init__.py']),
+        ]),
     ], ['/loc1/dir1/file1{token}', '/loc1/dir1/file2{token}']),
     ([
         (Path('/loc1'), [
@@ -32,15 +32,15 @@ class NotCPluginSubclass:
         (Path('/loc2'), [
             ('/loc2/dir1', None, ['file3{token}', 'file4{token}']),
             ('/loc2/dir2', None, []),
-        ])
+        ]),
     ], ['/loc1/dir1/file1{token}', '/loc1/dir1/file2{token}', '/loc2/dir1/file3{token}', '/loc2/dir1/file4{token}']),
     ([], []),
 ])
 @pytest.mark.parametrize('expected_token,real_token,should_find_file', [
-    ('_plugin.py','_smth_else.py', False),
-    ('_plugin.py','_plugin.txt', False),
+    ('_plugin.py', '_smth_else.py', False),
+    ('_plugin.py', '_plugin.txt', False),
     ('_plugin', '_plugin.py', False),
-    ('_plugin.py','_plugin.py', True),
+    ('_plugin.py', '_plugin.py', True),
 ])
 @pytest.mark.parametrize('base_class,requested_base_class,should_find_class', [
     (CPlugin, CPlugin, True),
@@ -83,6 +83,7 @@ def test_load_plugins_from_path(locations, locatable_files, expected_token, real
             return []
 
     fake_members = inspect.getmembers(FakeModule)
+
     def get_fake_members(*_, **__):
         return fake_members
 
@@ -96,9 +97,6 @@ def test_load_plugins_from_path(locations, locatable_files, expected_token, real
                     loaded_classes = load_plugins_from_path(locations=map(operator.itemgetter(0), locations),
                                                             token=expected_token,
                                                             **kwargs)
-
-                    print(list(c.__mro__ for c in loaded_classes.values()))
-
                     if should_find_file and len(locatable_files) > 0:
                         spec_mock.assert_has_calls([mock.call(location=Path(path), name=mock.ANY)
                                                     for path in map(map_filenames, locatable_files)],
@@ -117,10 +115,55 @@ def test_load_plugins_from_path(locations, locatable_files, expected_token, real
                     assert loaded_classes == {}
 
 
-@pytest.mark.skip
-def test_filter_enabled_plugins():
-    # TODO: Move this method from application to plugins.common
-    pass
+@pytest.mark.parametrize('whitelist,blacklist,plugins', [
+    ([], [], [('enabled', 'PluginEnabled')]),
+    (['enabled'], [], [('enabled', 'PluginEnabled')]),
+    (['enabled'], ['disabled'], [('enabled', 'PluginEnabled')]),
+    (['disabled'], [], [('enabled', 'PluginEnabled'), ('disabled', 'PluginDisabled')]),
+    (['disabled'], ['enabled'], [('disabled', 'PluginDisabled')]),
+    ([], ['enabled'], []),
+])
+def test_filter_enabled_plugins(whitelist, blacklist, plugins):
+
+    class PluginEnabled(CPlugin):
+        plugin_id = 'enabled'
+        enabled = True
+
+    class PluginDisabled(CPlugin):
+        plugin_id = 'disabled'
+        enabled = False
+
+    class PluginIncomplete(CPlugin):
+        pass
+
+    class PluginNotSubclass:
+        pass
+
+    mapping = {cls.__name__: cls for cls in [PluginEnabled, PluginDisabled, PluginIncomplete, PluginNotSubclass]}
+
+    enabled_plugins = set(filter_enabled_plugins(plugins=[PluginIncomplete, PluginNotSubclass],
+                                                 whitelist=whitelist,
+                                                 blacklist=blacklist))
+    assert enabled_plugins == set()
+
+    def map_plugins(plugin: Tuple[str, str]) -> Tuple[str, Type]:
+        return plugin[0], mapping[plugin[1]]
+
+    plugins = set(map(map_plugins, plugins))
+    print(f'Expecting {plugins}')
+
+    enabled_plugins = set(filter_enabled_plugins(plugins=[PluginEnabled, PluginDisabled],
+                                                 whitelist=whitelist,
+                                                 blacklist=blacklist))
+    assert enabled_plugins == plugins
+
+    enabled_plugins = set(filter_enabled_plugins(plugins=[PluginEnabled,
+                                                          PluginDisabled,
+                                                          PluginIncomplete,
+                                                          PluginNotSubclass],
+                                                 whitelist=whitelist,
+                                                 blacklist=blacklist))
+    assert enabled_plugins == plugins
 
 
 @pytest.mark.skip
