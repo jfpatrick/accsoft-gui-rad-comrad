@@ -51,7 +51,6 @@ def modify_in_place(new_cls: Type):
     Returns:
         Modified superclass instance.
     """
-    logger.setLevel(logging.DEBUG)
     super_class = new_cls.__mro__[1]
     logger.debug(f'Monkey-patching {super_class.__name__}...')
     predicate = lambda x: inspect.isfunction(x) or inspect.isdatadescriptor(x)
