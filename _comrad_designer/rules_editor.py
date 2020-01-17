@@ -14,7 +14,7 @@ from qtpy.QtCore import Qt
 from qtpy.QtGui import QColor, QFont
 from qtpy.QtDesigner import QDesignerFormWindowInterface
 from qtpy.uic import loadUi
-from comrad.rules import BaseRule, CNumRangeRule, CExpressionRule, unpack_rules
+from comrad.rules import CBaseRule, CNumRangeRule, CExpressionRule, unpack_rules
 from comrad.qsci import configure_common_qsci, QSCI_INDENTATION
 from comrad.json import CJSONEncoder, CJSONDeserializeError
 from comrad.widgets.mixins import CWidgetRulesMixin
@@ -87,7 +87,7 @@ class RulesEditor(QDialog):
         self.source_ranges_editor.setReadOnly(False)
 
         rules = cast(str, widget.rules)  # In Qt Designer it's going to be JSON-encoded string
-        self._rules: List[BaseRule]
+        self._rules: List[CBaseRule]
         if rules is None:
             self._rules = []
         else:
@@ -102,8 +102,8 @@ class RulesEditor(QDialog):
         for name, prop in widget.RULE_PROPERTIES.items():
             self.prop_combobox.addItem(name, prop)
 
-        self.eval_type_combobox.addItem('Numeric ranges', BaseRule.Type.NUM_RANGE)
-        # self.eval_type.addItem('Python expression', BaseRule.Type.PY_EXPR) # TODO: Uncomment when python ready
+        self.eval_type_combobox.addItem('Numeric ranges', CBaseRule.Type.NUM_RANGE)
+        # self.eval_type.addItem('Python expression', CBaseRule.Type.PY_EXPR) # TODO: Uncomment when python ready
 
         self.default_channel_checkbox.stateChanged.connect(
             lambda check: self.custom_channel_frame.setHidden(check))
@@ -179,7 +179,7 @@ class RulesEditor(QDialog):
         default_prop = self._widget.DEFAULT_RULE_PROPERTY
         new_rule = CNumRangeRule(name=default_name,
                                  prop=default_prop,
-                                 channel=BaseRule.Channel.DEFAULT)
+                                 channel=CBaseRule.Channel.DEFAULT)
         self._rules.append(new_rule)
         self._current_rule_item = QListWidgetItem()
         self._current_rule_item.setText(default_name)
@@ -320,10 +320,10 @@ class RulesEditor(QDialog):
                     self._update_source_view()
 
     def _eval_type_changed(self):
-        eval_type: BaseRule.Type = self.eval_type_combobox.currentData()
+        eval_type: CBaseRule.Type = self.eval_type_combobox.currentData()
         self.eval_stack_widget.setCurrentIndex(eval_type.value())
         curr_rule = self._get_current_rule()
-        if eval_type == BaseRule.Type.NUM_RANGE:
+        if eval_type == CBaseRule.Type.NUM_RANGE:
             new_rule = CNumRangeRule(name=curr_rule.name,
                                      prop=curr_rule.prop,
                                      channel=curr_rule.channel)
@@ -348,7 +348,7 @@ class RulesEditor(QDialog):
             return -1
         return self.rules_list_widget.indexFromItem(self._current_rule_item).row()
 
-    def _get_current_rule(self) -> BaseRule:
+    def _get_current_rule(self) -> CBaseRule:
         idx = self._get_current_index()
         return self._rules[idx]
 

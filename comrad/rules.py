@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 RangeValue = Union[str, bool, float]
 
 
-class BaseRule(CJSONSerializable, metaclass=ABCMeta):
+class CBaseRule(CJSONSerializable, metaclass=ABCMeta):
 
     class Channel(Enum):
         """Predefined channel values."""
@@ -68,7 +68,7 @@ class BaseRule(CJSONSerializable, metaclass=ABCMeta):
         COLOR = 'Color'
         """String value with HEX code of the RGB color to be applied on the widget."""
 
-    def __init__(self, name: str, prop: Union['BaseRule.Property', str], channel: Union[str, Channel]):
+    def __init__(self, name: str, prop: Union['CBaseRule.Property', str], channel: Union[str, Channel]):
         """
         Rule that can be applied to widgets to change their behavior based on incoming value.
 
@@ -81,7 +81,7 @@ class BaseRule(CJSONSerializable, metaclass=ABCMeta):
                      value because of the bug.
         """
         self._name = name
-        self._prop: str = prop.value if isinstance(prop, BaseRule.Property) else prop
+        self._prop: str = prop.value if isinstance(prop, CBaseRule.Property) else prop
         self.channel = channel
 
     def validate(self):
@@ -119,20 +119,20 @@ class BaseRule(CJSONSerializable, metaclass=ABCMeta):
         self._prop = new_val
 
     @property
-    def type(self) -> 'BaseRule.Type':
+    def type(self) -> 'CBaseRule.Type':
         return self._type
 
     @type.setter
-    def type(self, new_val: 'BaseRule.Type'):
+    def type(self, new_val: 'CBaseRule.Type'):
         self._type = new_val
 
 
-class CExpressionRule(BaseRule):
+class CExpressionRule(CBaseRule):
 
     def __init__(self,
                  name: str,
                  prop: str,
-                 channel: Union[str, BaseRule.Channel],
+                 channel: Union[str, CBaseRule.Channel],
                  expression: str):
         """
         Rule that evaluates Python expressions.
@@ -140,8 +140,8 @@ class CExpressionRule(BaseRule):
         Args:
             name: Name of the rule as it's visible in the rules list.
             prop: Name corresponding to the key in :attr:`CWidgetRulesMixin.RULE_PROPERTIES`.
-            channel: Channel address. Use :attr:`BaseRule.Channel.DEFAULT` to use the default channel of the widget
-                     or :attr:`BaseRule.Channel.NOT_IMPORTANT` if the rule body is responsible for collecting the channel
+            channel: Channel address. Use :attr:`CBaseRule.Channel.DEFAULT` to use the default channel of the widget
+                     or :attr:`CBaseRule.Channel.NOT_IMPORTANT` if the rule body is responsible for collecting the channel
                      information, e.g. in Python expressions. We never set it to None, to not confuse with absent
                      value because of the bug.
             expression: Python expression.
@@ -157,7 +157,7 @@ class CExpressionRule(BaseRule):
         raise NotImplementedError()
 
 
-class CNumRangeRule(BaseRule):
+class CNumRangeRule(CBaseRule):
 
     class Range(CJSONSerializable):
 
@@ -242,7 +242,7 @@ class CNumRangeRule(BaseRule):
     def __init__(self,
                  name: str,
                  prop: str,
-                 channel: Union[str, BaseRule.Channel] = BaseRule.Channel.DEFAULT,
+                 channel: Union[str, CBaseRule.Channel] = CBaseRule.Channel.DEFAULT,
                  ranges: Optional[Iterable['CNumRangeRule.Range']] = None):
         """
         Rule that evaluates property based on a number of ranges, given that connected channel produces a number.
@@ -250,8 +250,8 @@ class CNumRangeRule(BaseRule):
         Args:
             name: Name of the rule as it's visible in the rules list.
             prop: Name corresponding to the key in :attr:`CWidgetRulesMixin.RULE_PROPERTIES`.
-            channel: Channel address. Use :attr:`BaseRule.Channel.DEFAULT` to use the default channel of the widget
-                     or :attr:`BaseRule.Channel.NOT_IMPORTANT` if the rule body is responsible for collecting the channel
+            channel: Channel address. Use :attr:`CBaseRule.Channel.DEFAULT` to use the default channel of the widget
+                     or :attr:`CBaseRule.Channel.NOT_IMPORTANT` if the rule body is responsible for collecting the channel
                      information, e.g. in Python expressions. We never set it to None, to not confuse with absent
                      value because of the bug.
             ranges: A list of numerical ranges that define which value should be set to the property when an incoming
@@ -267,7 +267,7 @@ class CNumRangeRule(BaseRule):
         logger.debug(f'Unpacking JSON rule: {contents}')
         name: str = contents.get('name', None)
         prop: str = contents.get('prop', None)
-        channel: Union[str, BaseRule.Channel] = contents.get('channel', None)
+        channel: Union[str, CBaseRule.Channel] = contents.get('channel', None)
 
         if not isinstance(name, str):
             raise CJSONDeserializeError(f'Can\'t parse range JSON: "name" is not a string, "{type(name).__name__}" given.', None, 0)
@@ -285,7 +285,7 @@ class CNumRangeRule(BaseRule):
 
         # If a string corresponds to enum, try to extract it
         try:
-            channel = BaseRule.Channel(channel)
+            channel = CBaseRule.Channel(channel)
         except ValueError:
             pass
 
@@ -295,7 +295,7 @@ class CNumRangeRule(BaseRule):
         return {
             'name': self.name,
             'prop': self.prop,
-            'type': BaseRule.Type.NUM_RANGE,
+            'type': CBaseRule.Type.NUM_RANGE,
             'channel': self.channel,
             'ranges': self.ranges,
         }
@@ -343,7 +343,7 @@ class CNumRangeRule(BaseRule):
         return f'<{type(self).__name__} "{self.name}" [{self.prop}]>\n' + '\n'.join(map(repr, self.ranges))
 
 
-def unpack_rules(contents: str) -> List[BaseRule]:
+def unpack_rules(contents: str) -> List[CBaseRule]:
     """Converts JSON-encoded string into a list of rule objects.
 
     Args:
@@ -354,15 +354,15 @@ def unpack_rules(contents: str) -> List[BaseRule]:
     """
     logger.debug(f'Unpacking JSON rules into the object: {contents}')
     parsed_contents: List[Dict[str, Any]] = json.loads(contents)
-    res: List[BaseRule] = []
+    res: List[CBaseRule] = []
     if isinstance(parsed_contents, list):
         for json_rule in parsed_contents:
             rule_type: int = json_rule['type']
             if not isinstance(rule_type, int):
                 raise CJSONDeserializeError(f'Rule {json_rule} must have integer type, given {type(rule_type).__name__}.')
-            if rule_type == BaseRule.Type.NUM_RANGE:
+            if rule_type == CBaseRule.Type.NUM_RANGE:
                 res.append(CNumRangeRule.from_json(json_rule))
-            elif rule_type == BaseRule.Type.PY_EXPR:
+            elif rule_type == CBaseRule.Type.PY_EXPR:
                 res.append(CExpressionRule.from_json(json_rule))
             else:
                 raise CJSONDeserializeError(f'Unknown rule type {rule_type} for JSON {json_rule}')
@@ -387,7 +387,7 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
         logger.debug(f'Instantiating custom rules engine')
         self._overridden_members['__init__'](self)
 
-    def register(self, widget: QWidget, rules: List[BaseRule]):
+    def register(self, widget: QWidget, rules: List[CBaseRule]):
 
         if is_qt_designer() and not config.DESIGNER_ONLINE:
             logger.debug(f"Not registering rules because channels won't be connected in the offline designer")
@@ -411,7 +411,7 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
                     continue
 
                 # TODO: Will this work with wildcard channel? Certainly not dynamically changing one because it's evaluated once
-                if rule.channel == BaseRule.Channel.DEFAULT:
+                if rule.channel == CBaseRule.Channel.DEFAULT:
                     from comrad.widgets.mixins import CWidgetRulesMixin
                     default_channel = cast(CWidgetRulesMixin, widget_ref()).default_rule_channel()
                     if default_channel is None:
@@ -420,7 +420,7 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
                         'channel': default_channel,
                         'trigger': True,
                     }]
-                elif rule.channel == BaseRule.Channel.NOT_IMPORTANT:
+                elif rule.channel == CBaseRule.Channel.NOT_IMPORTANT:
                     # TODO: This is probably Python expression. Handle it differently from the body
                     logger.warning(f'Rules without explicit channel cannot be handled yet')
                     continue

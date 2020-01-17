@@ -6,7 +6,7 @@ from qtpy.QtWidgets import QWidget
 from pydm.utilities import is_qt_designer
 from pydm.widgets.base import PyDMWidget
 from pydm.widgets.rules import RulesDispatcher
-from comrad.rules import BaseRule, CChannelError, unpack_rules
+from comrad.rules import CBaseRule, CChannelError, unpack_rules
 from comrad.json import CJSONEncoder, CJSONDeserializeError
 from .value_transform import CValueTransformationBase
 from .deprecations import superclass_deprecated
@@ -130,9 +130,9 @@ class CWidgetRulesMixin:
     """Default rule property visible in the dialog."""
 
     RULE_PROPERTIES: Dict[str, Tuple[str, Callable[[Any], Any]]] = {
-        BaseRule.Property.ENABLED.value: ('setEnabled', bool),
-        BaseRule.Property.VISIBILITY.value: ('setVisible', bool),
-        BaseRule.Property.OPACITY.value: ('set_opacity', float),
+        CBaseRule.Property.ENABLED.value: ('setEnabled', bool),
+        CBaseRule.Property.VISIBILITY.value: ('setVisible', bool),
+        CBaseRule.Property.OPACITY.value: ('set_opacity', float),
     }
     """All available rule properties with associated callbacks and data types."""
 
@@ -162,13 +162,13 @@ class CWidgetRulesMixin:
             base._rules = None
             base.rules = rules
 
-    def _get_custom_rules(self) -> List[BaseRule]:
+    def _get_custom_rules(self) -> List[CBaseRule]:
         rules = cast(PyDMWidget, self)._rules
         if is_qt_designer():
-            return cast(List[BaseRule], json.dumps(rules, cls=CJSONEncoder))
+            return cast(List[CBaseRule], json.dumps(rules, cls=CJSONEncoder))
         return rules
 
-    def _set_custom_rules(self, new_rules: Union[str, List[BaseRule], None]):
+    def _set_custom_rules(self, new_rules: Union[str, List[CBaseRule], None]):
         if isinstance(new_rules, str):
             try:
                 new_rules = unpack_rules(new_rules)
@@ -185,7 +185,7 @@ class CWidgetRulesMixin:
             # Set internal data structure without activating property setter behavior
             cast(PyDMWidget, self)._rules = new_rules
 
-    rules: List[BaseRule] = Property(type=str, fget=_get_custom_rules, fset=_set_custom_rules, designable=False)
+    rules: List[CBaseRule] = Property(type=str, fget=_get_custom_rules, fset=_set_custom_rules, designable=False)
     """
     This property will appear as a list of object oriented rules when used programmatically.
 
@@ -196,7 +196,7 @@ class CWidgetRulesMixin:
 
 class CColorRulesMixin(CWidgetRulesMixin):
 
-    RULE_PROPERTIES = dict(**{BaseRule.Property.COLOR.value: ('set_color', str)},
+    RULE_PROPERTIES = dict(**{CBaseRule.Property.COLOR.value: ('set_color', str)},
                            **CWidgetRulesMixin.RULE_PROPERTIES)
 
     def __init__(self):
