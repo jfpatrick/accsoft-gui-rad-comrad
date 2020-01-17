@@ -385,7 +385,7 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
         for all the widgets in the application.
         """
         logger.debug(f'Instantiating custom rules engine')
-        self._overridden_methods['__init__'](self)
+        self._overridden_members['__init__'](self)
 
     def register(self, widget: QWidget, rules: List[BaseRule]):
 

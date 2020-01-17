@@ -39,7 +39,7 @@ class CMainWindow(PyDMMainWindow, MonkeyPatchedClass):
             hide_status_bar: Hide status bar initially.
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
-        self._overridden_methods['__init__'](self,
+        self._overridden_members['__init__'](self,
                                              parent=parent,
                                              hide_nav_bar=hide_nav_bar,
                                              hide_menu_bar=hide_menu_bar,
@@ -432,13 +432,13 @@ class _UiMainWindow(Ui_MainWindow, MonkeyPatchedClass):
         self.action_exit.setEnabled(True)
         self.action_exit.setShortcutContext(Qt.ApplicationShortcut)
         self.action_exit.setObjectName('action_exit')
-        self._overridden_methods['setupUi'](self, MainWindow)
+        self._overridden_members['setupUi'](self, MainWindow)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.action_exit)
 
     def retranslateUi(self, MainWindow: QMainWindow):
         _translate = QCoreApplication.translate
-        self._overridden_methods['retranslateUi'](self, MainWindow)
+        self._overridden_members['retranslateUi'](self, MainWindow)
         MainWindow.setWindowTitle(_translate('MainWindow', 'ComRAD Main Window'))
         self.actionAbout_PyDM.setText(_translate('MainWindow', 'About ComRAD'))
         self.action_exit.setText(_translate('MainWindow', 'Exit'))
