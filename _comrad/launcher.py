@@ -256,7 +256,7 @@ def _run_subcommand(parser: argparse.ArgumentParser):
 
     debug_group = parser.add_argument_group('Debugging')
     _install_debug_arguments(debug_group)
-    debug_group.add_argument('--perfmon',
+    debug_group.add_argument('--perf-mon',
                              action='store_true',
                              help='Enable performance monitoring, and print CPU usage to the terminal.')
 
@@ -339,7 +339,7 @@ def _run_comrad(args: argparse.Namespace) -> bool:
                        ccda_endpoint=ccda_endpoint,
                        cmw_env=args.cmw_env,
                        java_env=java_env,
-                       perfmon=args.perfmon,
+                       perf_mon=args.perf_mon,
                        hide_nav_bar=args.hide_nav_bar,
                        hide_menu_bar=args.hide_menu_bar,
                        hide_status_bar=args.hide_status_bar,

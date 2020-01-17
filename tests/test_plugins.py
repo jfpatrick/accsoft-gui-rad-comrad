@@ -164,27 +164,3 @@ def test_filter_enabled_plugins(whitelist, blacklist, plugins):
                                                  whitelist=whitelist,
                                                  blacklist=blacklist))
     assert enabled_plugins == plugins
-
-
-@pytest.mark.skip
-def test_get_or_create_menu():
-    pass
-
-
-@pytest.mark.skip
-def test_load_toolbar_plugins():
-    # TODO: Test order as well
-    pass
-
-
-@pytest.mark.skip
-@pytest.mark.parametrize('cmdline_path,env_path,shipped_path', [
-    ('', '', ''),
-])
-def test_load_menubar_plugins(cmdline_path, env_path, shipped_path):
-    pass
-
-
-@pytest.mark.skip
-def test_load_statusbar_plugins():
-    pass
