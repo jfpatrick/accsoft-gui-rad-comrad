@@ -10,7 +10,7 @@ stages:
 
 variables:
   ACCPY_PYQT_DOCKER_IMAGE: gitlab-registry.cern.ch/acc-co/accsoft/gui/accsoft-gui-pyqt-distro/acc-py-pyqt:ci
-  project_name: comrad
+  project_name: comrad  # Required by acc-py templates
 
 .init_sequence: &init_sequence
 - source /opt/venv/bin/activate
@@ -39,9 +39,8 @@ pytest:
   image: $ACCPY_PYQT_DOCKER_IMAGE
   stage: Unit Tests
   script:
-    - yum install -y python36-tkinter  # TODO: This should go away, when PyJapc loses this dependency
     - pip install .[test]
-    - run_headless python -m pytest --random-order --junitxml=report.xml --cov-report html:coverage --cov-report term-missing:skip-covered --cov=comrad --cov=_comrad --cov=_comrad_designer -vx --color=yes tests/
+    - run_headless python -m pytest --random-order --junitxml=report.xml --cov-report html:coverage --cov-report term-missing:skip-covered --cov=comrad --cov=_comrad --cov=_comrad_designer -vx --color=yes
   artifacts:
     name: coverage-report
     paths:

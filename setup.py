@@ -24,9 +24,9 @@ requirements = {
         'argcomplete>=1.10.0&&<2',
         'colorlog>=4.0.2&&<5',
         'QtPy>=1.7&&<2',
-        'pyjapc @ git+ssh://git@gitlab.cern.ch:7999/scripting-tools/pyjapc.git',
+        'pyjapc>=2.0.7&&<3',
         'accwidgets>=0.1.1&&accwidgets<1',
-        'papc>=0.1.0&&<1',
+        'papc>=0.2.0&&<1',
         'pydm @ git+ssh://git@gitlab.cern.ch:7999/acc-co/accsoft/gui/rad/accsoft-gui-rad-pydm.git@multi-fix#egg=pydm',
     ],
     'test': [
