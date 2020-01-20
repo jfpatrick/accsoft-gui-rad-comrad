@@ -403,6 +403,7 @@ class ExamplesWindow(QMainWindow):
             # Mirror current log level to the child app (e.g. when running in DEBUG, also launch example in DEBUG)
             args.append('--log-level')
             args.append(logging.getLevelName(logging.getLogger().level))
+        ExamplesWindow._turn_off_implicit_rbac_plugin(args)
         args.append(str(file_path))
         logger.debug(f'Launching app with args: {args}')
         env = dict(os.environ, PYJAPC_SIMULATION_INIT=(self._selected_example_japc_generator or ''))
@@ -414,6 +415,28 @@ class ExamplesWindow(QMainWindow):
             return subprocess.run(args=args, shell=False, env=env, check=True)
         except subprocess.CalledProcessError as ex:
             logger.error(f'comrad run has failed: {str(ex)}')
+
+    @staticmethod
+    def _turn_off_implicit_rbac_plugin(input_args: List[str]):
+        disable_plugins_idx: Optional[int] = None
+        disable_plugins_list: Optional[List[str]] = None
+        for idx, arg in enumerate(input_args):
+            if arg in ['--enable-plugins', '--disable-plugins', '--nav-bar-order']:
+                try:
+                    plugins = input_args[idx + 1]
+                except IndexError:
+                    continue
+                plugin_ids = [x.strip() for x in plugins.split(',')]
+                if 'comrad.rbac' in plugin_ids:
+                    return  # Do not modify args, comrad.rbac is explicitly participating in the example
+                if arg == '--disable-plugins':
+                    disable_plugins_idx = idx + 1
+                    disable_plugins_list = plugin_ids
+        if disable_plugins_idx is not None and disable_plugins_list is not None:
+            disable_plugins_list.append('comrad.rbac')
+            input_args[disable_plugins_idx] = ','.join(disable_plugins_list)
+        else:
+            input_args.extend(['--disable-plugins', 'comrad.rbac'])
 
     @staticmethod
     def _open_designer_file(file_path: str):
