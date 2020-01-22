@@ -199,15 +199,21 @@ def test_japc_get_set_fails_on_cmw_exception(mocker, method, display_popup, valu
     callback.assert_called_once_with('Test exception', display_popup)
 
 
-@mock.patch('jpype.java')
-def test_jvm_flags_are_passed(mocked_java):
-    cast(CApplication, CApplication.instance()).jvm_flags = {
-        'FLAG1': 'val1',
-        'FLAG2': 2,
-    }
-    _ = japc_plugin._JapcService()
-    mocked_java.lang.System.setProperty.assert_any_call('FLAG1', 'val1')
-    mocked_java.lang.System.setProperty.assert_any_call('FLAG2', '2')
+def test_jvm_flags_are_passed():
+
+    # Make sure common build resolves java version before we mock out that whole jvm library
+    import cmmnbuild_dep_manager
+    mgr = cmmnbuild_dep_manager.Manager()
+    mgr.start_jpype_jvm()
+
+    with mock.patch('jpype.java') as mocked_java:
+        cast(CApplication, CApplication.instance()).jvm_flags = {
+            'FLAG1': 'val1',
+            'FLAG2': 2,
+        }
+        _ = japc_plugin._JapcService()
+        mocked_java.lang.System.setProperty.assert_any_call('FLAG1', 'val1')
+        mocked_java.lang.System.setProperty.assert_any_call('FLAG2', '2')
 
 
 @mock.patch('pydm.widgets.channel.PyDMChannel')
