@@ -27,7 +27,7 @@ requirements = {
         'pyjapc>=2.0.7&&<3',
         'accwidgets>=0.1.1&&accwidgets<1',
         'papc>=0.2.0&&<1',
-        'pydm @ git+ssh://git@gitlab.cern.ch:7999/acc-co/accsoft/gui/rad/accsoft-gui-rad-pydm.git@multi-fix#egg=pydm',
+        'pydm @ git+ssh://git@gitlab.cern.ch:7999/acc-co/accsoft/gui/rad/accsoft-gui-rad-pydm.git@multi-fix-open-file#egg=pydm',
     ],
     'test': [
         'pytest>=5.0.1&&<5.1',
