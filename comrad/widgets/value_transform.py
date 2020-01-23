@@ -155,22 +155,27 @@ class CValueTransformationBase(CFileTracking):
             Value transformation code with substituted macros.
         """
         if not self._value_transform_fn:
-            if self.valueTransformation:
-                parsed_code = self.substituted_string(self.valueTransformation)
-                file = None
-            elif self.snippetFilename:
-                parent_display = cast(PyDMPrimitiveWidget, self).find_parent_display()
-                base_path = None
-                if parent_display:
-                    base_path = Path(parent_display.loaded_file()).parent.absolute()
-                file_path = find_file(fname=self.snippetFilename, base_path=base_path)
-                if file_path:
-                    file = Path(file_path).absolute()
-                    parsed_code = self.open_file(file)
-                else:
-                    parsed_code = None
-            else:
+            if not self.valueTransformation and not self.snippetFilename:
                 parsed_code = None
+            else:
+                parent_display = cast(PyDMPrimitiveWidget, self).find_parent_display()
+                parent_display_file: Optional[Path] = None
+                if parent_display:
+                    parent_display_file = Path(parent_display.loaded_file()).absolute()
+
+                if self.valueTransformation:
+                    parsed_code = self.substituted_string(self.valueTransformation)
+                    file = parent_display_file
+                elif self.snippetFilename:
+                    base_path: Optional[Path] = None
+                    if parent_display_file:
+                        base_path = parent_display_file.parent
+                    file_path = find_file(fname=self.snippetFilename, base_path=base_path)
+                    if file_path:
+                        file = Path(file_path).absolute()
+                        parsed_code = self.open_file(file)
+                    else:
+                        parsed_code = None
 
             if parsed_code:
                 self._value_transform_fn = _create_transformation_function(parsed_code, file=file)
@@ -183,7 +188,8 @@ def _create_transformation_function(transformation: str, file: Optional[Path] = 
 
     Args:
         transformation: Python snippet.
-        file: Path to the Python executable file to be set in ``__file__`` variable.
+        file: Path to the Python executable file to be set in ``__file__`` variable. This will also set sys.path to
+            its containing directory, so that imports of the adjacent files are possible.
 
     Returns:
         Function that can transform incoming values (passed as keyword args and are embedded into globals)
@@ -218,6 +224,13 @@ __builtins__['output'] = {output_func_name}
     del global_base[CFileTracking.__name__]
     del global_base[_create_transformation_function.__name__]
     del global_base[PyDMPrimitiveWidget.__name__]
+
+    if file:
+        # Make sure "import local_file" is possible from the included script
+        # This will use the containing directory of the Python file for the widgets using snippetFilename
+        # or containing directory for the *.ui file for widgets using valueTransformation.
+        import sys
+        sys.path.insert(0, str(file.parent))
 
     def __comrad_dcode_wrapper__(**inputs) -> Any:
         import traceback
