@@ -7,7 +7,7 @@ from pydm.data_plugins.plugin import PyDMConnection
 from pydm.utilities import is_qt_designer
 from qtpy.QtWidgets import QWidget, QFrame, QVBoxLayout, QLabel, QSizePolicy
 from qtpy.QtCore import Property, Signal, Slot, Q_ENUM, Qt, QSize
-from .mixins import CHideUnusedFeaturesMixin, CInitializedMixin, superclass_deprecated
+from .mixins import CHideUnusedFeaturesMixin, CInitializedMixin, deprecated_parent_prop
 from .value_transform import CValueTransformationBase
 
 
@@ -218,7 +218,7 @@ class CValueAggregator(QWidget, CInitializedMixin, CHideUnusedFeaturesMixin, PyD
         return ''
 
     @channel.setter  # type: ignore
-    @superclass_deprecated(logger)
+    @deprecated_parent_prop(logger)
     def channel(self, _):
         pass
 
@@ -227,7 +227,7 @@ class CValueAggregator(QWidget, CInitializedMixin, CHideUnusedFeaturesMixin, PyD
         return super().minimumSize()
 
     @minimumSize.setter  # type: ignore
-    @superclass_deprecated(logger)
+    @deprecated_parent_prop(logger)
     def minimumSize(self, _):
         pass
 
@@ -236,7 +236,7 @@ class CValueAggregator(QWidget, CInitializedMixin, CHideUnusedFeaturesMixin, PyD
         return super().maximumSize()
 
     @maximumSize.setter  # type: ignore
-    @superclass_deprecated(logger)
+    @deprecated_parent_prop(logger)
     def maximumSize(self, _):
         pass
 
@@ -245,7 +245,7 @@ class CValueAggregator(QWidget, CInitializedMixin, CHideUnusedFeaturesMixin, PyD
         return super().baseSize()
 
     @baseSize.setter  # type: ignore
-    @superclass_deprecated(logger)
+    @deprecated_parent_prop(logger)
     def baseSize(self, _):
         pass
 
@@ -254,7 +254,7 @@ class CValueAggregator(QWidget, CInitializedMixin, CHideUnusedFeaturesMixin, PyD
         return super().sizeIncrement()
 
     @sizeIncrement.setter  # type: ignore
-    @superclass_deprecated(logger)
+    @deprecated_parent_prop(logger)
     def sizeIncrement(self, _):
         pass
 
@@ -263,7 +263,7 @@ class CValueAggregator(QWidget, CInitializedMixin, CHideUnusedFeaturesMixin, PyD
         return QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
     @sizePolicy.setter  # type: ignore
-    @superclass_deprecated(logger)
+    @deprecated_parent_prop(logger)
     def sizePolicy(self, _):
         pass
 

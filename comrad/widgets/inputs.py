@@ -7,9 +7,9 @@ from pydm.widgets.slider import PyDMSlider
 from pydm.widgets.spinbox import PyDMSpinbox
 from pydm.widgets.checkbox import PyDMCheckbox
 from pydm.widgets.enum_combo_box import PyDMEnumComboBox
+from comrad.deprecations import deprecated_parent_prop
 from .mixins import (CHideUnusedFeaturesMixin, CNoPVTextFormatterMixin, CCustomizedTooltipMixin,
                      CValueTransformerMixin, CColorRulesMixin, CWidgetRulesMixin, CInitializedMixin)
-from .deprecations import superclass_deprecated
 
 
 logger = logging.getLogger(__name__)
@@ -124,7 +124,7 @@ class CSlider(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixin
         return True
 
     @userDefinedLimits.setter  # type: ignore
-    @superclass_deprecated(logger)
+    @deprecated_parent_prop(logger)
     def userDefinedLimits(self, _):
         pass
 

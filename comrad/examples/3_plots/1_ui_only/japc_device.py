@@ -53,34 +53,36 @@ class DemoDevice(Device):
         self._timer = RepeatedTimer(1 / self.frequency, self.emit_point)
         self.emit_threshold = 9
 
-    def emit_point(self):
+    def emit_point(self, initial: bool = False):
         """Callback on timer fire."""
         timestamp = datetime.now().timestamp()
         random_value = random.random()
         random_text = f'L {int(random_value * 10)}'
         random_color = ['r', 'b', 'g'][int(random_value * 3)]
+        # The order of values is important, see accwidget.graph's
+        # SignalBoundDataSource for the order of updates
         self.set_state({'Acquisition#RandomPoint': [
-            timestamp,           # x value
-            random_value,        # y value
+            random_value,  # y value
+            timestamp,     # x value
         ]}, '')
         self.set_state({'Acquisition#RandomBar': [
-            timestamp,           # x value
-            0.5 * random_value,  # y value
-            random_value,        # height
+            random_value,  # height
+            0.0,           # y value
+            timestamp,     # x value
         ]}, '')
-        if self.emit_threshold % 4 == 0:
+        if initial or self.emit_threshold % 4 == 0:
             self.set_state({'Acquisition#RandomInjectionBar': [
-                timestamp,           # x value
-                random_value,        # y value
-                1.0,                 # height
-                0.5,                 # width
-                random_text,         # label
+                1.0,           # height
+                random_value,  # y value
+                0.5,           # width
+                timestamp,     # x value
+                random_text,   # label
             ]}, '')
-        if self.emit_threshold % 10 == 0:
+        if initial or self.emit_threshold % 10 == 0:
             self.set_state({'Acquisition#RandomTimestampMarker': [
-                timestamp,           # x value
-                random_color,        # color
-                random_text,         # label
+                timestamp,     # x value
+                random_text,   # label
+                random_color,  # color
             ]}, '')
 
         if self.emit_threshold > 1:
@@ -91,5 +93,5 @@ class DemoDevice(Device):
 
 def create_device():
     d = DemoDevice()
-    d.emit_point()  # Trigger the first/initial tick (gives us nicer values).
+    d.emit_point(initial=True)  # Trigger the first/initial tick (gives us nicer values).
     return System(devices=[d])

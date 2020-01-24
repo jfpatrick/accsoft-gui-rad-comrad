@@ -8,8 +8,8 @@ from pydm.widgets.base import PyDMWidget
 from pydm.widgets.rules import RulesDispatcher
 from comrad.rules import CBaseRule, CChannelError, unpack_rules
 from comrad.json import CJSONEncoder, CJSONDeserializeError
+from comrad.deprecations import deprecated_parent_prop
 from .value_transform import CValueTransformationBase
-from .deprecations import superclass_deprecated
 
 
 logger = logging.getLogger(__name__)
@@ -30,7 +30,7 @@ class CHideUnusedFeaturesMixin:
         return False
 
     @alarmSensitiveBorder.setter  # type: ignore
-    @superclass_deprecated(logger)
+    @deprecated_parent_prop(logger)
     def alarmSensitiveBorder(self, _):
         pass
 
@@ -39,7 +39,7 @@ class CHideUnusedFeaturesMixin:
         return False
 
     @alarmSensitiveContent.setter  # type: ignore
-    @superclass_deprecated(logger)
+    @deprecated_parent_prop(logger)
     def alarmSensitiveContent(self, _):
         pass
 
@@ -55,7 +55,7 @@ class CNoPVTextFormatterMixin:
         return False
 
     @precisionFromPV.setter  # type: ignore
-    @superclass_deprecated(logger)
+    @deprecated_parent_prop(logger)
     def precisionFromPV(self, _):
         pass
 
@@ -65,7 +65,7 @@ class CNoPVTextFormatterMixin:
         return False
 
     @showUnits.setter  # type: ignore
-    @superclass_deprecated(logger)
+    @deprecated_parent_prop(logger)
     def showUnits(self, _):
         pass
 
