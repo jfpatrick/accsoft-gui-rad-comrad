@@ -1,40 +1,18 @@
 import logging
 import re
+import copy
 from pathlib import Path
 from string import Template
-from typing import Callable, Optional, Any
+from typing import Callable, Optional, Any, cast
 from qtpy.QtCore import Property
-from pydm.utilities import macro, is_pydm_app
+from pydm.utilities import macro, find_file
+from pydm.widgets.base import PyDMPrimitiveWidget
 
 
 logger = logging.getLogger(__name__)
 
 
 class CFileTracking:
-
-    def __init__(self):
-        """Common mixin for widgets that have to work with files and parse macros inside them."""
-        self.base_path: Optional[Path] = None
-        self.base_macros = {}
-        if is_pydm_app():
-            self.base_path = Path(self.app.directory_stack[-1])
-            self.base_macros = self.app.macro_stack[-1]
-
-    def relative_path(self, filename: str) -> Optional[Path]:
-        """
-        Finds the full path to the Python snippet.
-
-        Args:
-            filename: Filename of the Python snippet.
-
-        Returns:
-            Parsed contents of the file with substituted macros.
-        """
-        if not filename:
-            return None
-        path = Path(filename)
-        file_path = self.base_path / path if self.base_path else path
-        return file_path.expanduser().resolve()
 
     def open_file(self, full_path: Optional[Path]) -> str:
         """
@@ -58,7 +36,13 @@ class CFileTracking:
         --------
             Dictionary
         """
-        return macro.find_base_macros(self)
+        parent_display = cast(PyDMPrimitiveWidget, self).find_parent_display()
+        parent_macros = {}
+        if parent_display:
+            parent_macros = copy.copy(parent_display.macros())
+        widget_macros = macro.parse_macro_string(self.macros)
+        parent_macros.update(widget_macros)
+        return parent_macros
 
     def substituted_string(self, string: str) -> str:
         """
@@ -171,14 +155,28 @@ class CValueTransformationBase(CFileTracking):
             Value transformation code with substituted macros.
         """
         if not self._value_transform_fn:
-            if self.valueTransformation:
-                parsed_code = self.substituted_string(self.valueTransformation)
-                file = None
+            if not self.valueTransformation and not self.snippetFilename:
+                parsed_code = None
             else:
-                file = self.relative_path(self.snippetFilename)
-                parsed_code = self.open_file(file)
-                if file:
-                    file = file.absolute()
+                parent_display = cast(PyDMPrimitiveWidget, self).find_parent_display()
+                parent_display_file: Optional[Path] = None
+                if parent_display:
+                    parent_display_file = Path(parent_display.loaded_file()).absolute()
+
+                if self.valueTransformation:
+                    parsed_code = self.substituted_string(self.valueTransformation)
+                    file = parent_display_file
+                elif self.snippetFilename:
+                    base_path: Optional[Path] = None
+                    if parent_display_file:
+                        base_path = parent_display_file.parent
+                    file_path = find_file(fname=self.snippetFilename, base_path=base_path)
+                    if file_path:
+                        file = Path(file_path).absolute()
+                        parsed_code = self.open_file(file)
+                    else:
+                        parsed_code = None
+
             if parsed_code:
                 self._value_transform_fn = _create_transformation_function(parsed_code, file=file)
         return self._value_transform_fn
@@ -190,7 +188,8 @@ def _create_transformation_function(transformation: str, file: Optional[Path] = 
 
     Args:
         transformation: Python snippet.
-        file: Path to the Python executable file to be set in ``__file__`` variable.
+        file: Path to the Python executable file to be set in ``__file__`` variable. This will also set sys.path to
+            its containing directory, so that imports of the adjacent files are possible.
 
     Returns:
         Function that can transform incoming values (passed as keyword args and are embedded into globals)
@@ -220,9 +219,18 @@ __builtins__['output'] = {output_func_name}
     if file:
         global_base['__file__'] = str(file)
     del global_base['macro']
-    del global_base['CValueTransformationBase']
-    del global_base['CFileTracking']
-    del global_base['_create_transformation_function']
+    del global_base[find_file.__name__]
+    del global_base[CValueTransformationBase.__name__]
+    del global_base[CFileTracking.__name__]
+    del global_base[_create_transformation_function.__name__]
+    del global_base[PyDMPrimitiveWidget.__name__]
+
+    if file:
+        # Make sure "import local_file" is possible from the included script
+        # This will use the containing directory of the Python file for the widgets using snippetFilename
+        # or containing directory for the *.ui file for widgets using valueTransformation.
+        import sys
+        sys.path.insert(0, str(file.parent))
 
     def __comrad_dcode_wrapper__(**inputs) -> Any:
         import traceback
