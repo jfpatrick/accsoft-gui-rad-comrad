@@ -257,7 +257,10 @@ class _JapcConnection(PyDMConnection):
                 except (KeyError, TypeError):
                     pass
             if channel.value_signal is not None:
-                channel.value_signal.disconnect(self._on_set_device_property)
+                try:
+                    channel.value_signal.disconnect(self._on_set_device_property)
+                except (TypeError):
+                    pass
                 try:
                     channel.value_signal[str].disconnect(self._on_set_device_property)
                 except (KeyError, TypeError):

@@ -91,7 +91,7 @@ class RulesEditor(QDialog):
         if rules is None:
             self._rules = []
         else:
-            logger.debug(f'Loading widget rules into the editor: {rules}')
+            logger.debug(f'Loading rules for {cast(QWidget, widget).objectName()} into the editor: {rules}')
             self._rules = unpack_rules(rules)
 
         self._source_valid: bool = True
@@ -105,8 +105,8 @@ class RulesEditor(QDialog):
         self.eval_type_combobox.addItem('Numeric ranges', CBaseRule.Type.NUM_RANGE)
         # self.eval_type.addItem('Python expression', CBaseRule.Type.PY_EXPR) # TODO: Uncomment when python ready
 
-        self.default_channel_checkbox.stateChanged.connect(
-            lambda check: self.custom_channel_frame.setHidden(check))
+        self.default_channel_checkbox.stateChanged.connect(self._custom_channel_changed)
+        self.custom_channel_edit.textChanged.connect(self._custom_channel_changed)
         self.range_add_btn.clicked.connect(self._add_range)
         self.range_del_btn.clicked.connect(self._del_range)
         self.custom_channel_search_btn.clicked.connect(self._search_channel)
@@ -230,6 +230,14 @@ class RulesEditor(QDialog):
         rule_type = 0 if isinstance(rule, CNumRangeRule) else 1
         self.eval_type_combobox.setCurrentIndex(rule_type)
         self.eval_stack_widget.setCurrentIndex(rule_type)
+        is_default_channel = rule.channel == CBaseRule.Channel.DEFAULT
+        self.default_channel_checkbox.setChecked(is_default_channel)
+        self.custom_channel_frame.setHidden(is_default_channel)
+        if is_default_channel:
+            self.custom_channel_edit.clear()
+        else:
+            self.custom_channel_edit.setText(rule.channel)
+
         if isinstance(rule, CExpressionRule):
             # TODO: Handle Python expression here
             #         if 'manual_rule' in data.keys():
@@ -261,6 +269,7 @@ class RulesEditor(QDialog):
             logger.exception(f'Unsupported rule type: {type(rule).__name__}')
 
         self._loading_data = False
+        self._custom_channel_changed()
         self.details_frame.setEnabled(True)
 
     def _save_changes(self):
@@ -332,6 +341,16 @@ class RulesEditor(QDialog):
         idx = self._get_current_index()
         self._rules[idx] = new_rule
         self._load_from_list()
+
+    def _custom_channel_changed(self):
+        if self._loading_data:
+            return
+        uses_default = self.default_channel_checkbox.isChecked()
+        if uses_default:
+            self._get_current_rule().channel = CBaseRule.Channel.DEFAULT
+        else:
+            self._get_current_rule().channel = self.custom_channel_edit.text()
+        self.custom_channel_frame.setHidden(uses_default)
 
     def _ranges_tab_changed(self, idx: int):
         # Update view when coming from a different tab

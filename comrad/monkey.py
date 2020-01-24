@@ -69,7 +69,7 @@ def modify_in_place(new_cls: Type):
     for name, impl in modified_members.items():
         setattr(super_class, name, impl)
         super_class._overridden_members[name] = super_members[name]
-        logger.debug(f'Class {super_class.__name__} received an overridden member "{name}"')
+        logger.debug(f'Overriding "{super_class.__name__}.{name}"')
     for name, impl in new_members.items():
         setattr(super_class, name, impl)
 

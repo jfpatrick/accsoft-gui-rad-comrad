@@ -393,7 +393,8 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
             logger.debug(f"Not registering rules because channels won't be connected in the offline designer")
             return
 
-        logger.debug(f'Registering rules for "{type(widget).__name__}" ({id(widget)}):\n{list(rules)}')
+        widget_name = widget.objectName()
+        logger.debug(f'Registering rules for "{widget_name}":\n{list(rules)}')
         widget_ref = weakref.ref(widget, self.widget_destroyed)
         if widget_ref in self.widget_map:
             self.unregister(widget_ref)
@@ -430,7 +431,7 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
                         'trigger': True,
                     }]
 
-                logger.debug(f'Channel list for rule "{rule.name}" will be {channels_list}')
+                logger.debug(f'Channel list for rule "{widget_name}.{rule.name}" will be {channels_list}')
 
                 job_unit: Dict[str, Any] = {}
                 job_unit['rule'] = rule
@@ -498,3 +499,12 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
         else:
             logger.exception(f'Unsupported rule type: {type(rule_obj).__name__}')
             return
+
+    def warn_unconnected_channels(self, widget_ref: ReferenceType, index: int):
+        """
+        Overrides the method because original method accesses in a dictionary-style way, which breaks
+        our OO rule. It also changes the severity form error to warning.
+        """
+        job_unit = self.widget_map[widget_ref][index]
+        rule_obj: CBaseRule = job_unit['rule']
+        logger.warning(f'Rule "{rule_obj.name}": Not all channels are connected, skipping execution.')
