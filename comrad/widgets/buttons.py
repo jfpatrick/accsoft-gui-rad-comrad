@@ -8,8 +8,8 @@ from pydm.widgets.enum_button import PyDMEnumButton
 from qtpy.QtWidgets import QWidget, QPushButton
 from qtpy.QtGui import QIcon
 from qtpy.QtCore import Signal, Property
+from comrad.deprecations import deprecated_parent_prop
 from .mixins import CHideUnusedFeaturesMixin, CCustomizedTooltipMixin, CValueTransformerMixin, CWidgetRulesMixin, CInitializedMixin
-from .deprecations import superclass_deprecated
 
 
 logger = logging.getLogger(__name__)
@@ -69,7 +69,7 @@ class CPushButton(CWidgetRulesMixin, CCustomizedTooltipMixin, CInitializedMixin,
         return False
 
     @passwordProtected.setter  # type: ignore
-    @superclass_deprecated(logger)
+    @deprecated_parent_prop(logger)
     def passwordProtected(self, _):
         pass
 
@@ -78,7 +78,7 @@ class CPushButton(CWidgetRulesMixin, CCustomizedTooltipMixin, CInitializedMixin,
         return super().password
 
     @password.setter  # type: ignore
-    @superclass_deprecated(logger)
+    @deprecated_parent_prop(logger)
     def password(self, _):
         pass
 
@@ -87,7 +87,7 @@ class CPushButton(CWidgetRulesMixin, CCustomizedTooltipMixin, CInitializedMixin,
         return super().protectedPassword
 
     @protectedPassword.setter  # type: ignore
-    @superclass_deprecated(logger)
+    @deprecated_parent_prop(logger)
     def protectedPassword(self, _):
         pass
 

@@ -6,9 +6,9 @@ from qtpy.QtCore import Slot, Property
 from pydm.widgets.scale import PyDMScaleIndicator
 from pydm.widgets.label import PyDMLabel
 from pydm.widgets.byte import PyDMByteIndicator
+from comrad.deprecations import deprecated_parent_prop
 from .mixins import (CHideUnusedFeaturesMixin, CNoPVTextFormatterMixin, CCustomizedTooltipMixin,
                      CValueTransformerMixin, CColorRulesMixin, CWidgetRulesMixin, CInitializedMixin)
-from .deprecations import superclass_deprecated
 
 
 logger = logging.getLogger(__name__)
@@ -158,6 +158,6 @@ class CScaleIndicator(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTool
         return False
 
     @limitsFromChannel.setter  # type: ignore
-    @superclass_deprecated(logger)
+    @deprecated_parent_prop(logger)
     def limitsFromChannel(self, _):
         pass

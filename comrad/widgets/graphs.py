@@ -2,7 +2,6 @@
 
 import abc
 import json
-import time
 import copy
 import functools
 import logging
@@ -71,6 +70,7 @@ class PyDMChannelDataSource(accgraph.UpdateSource):
         self._channel: Optional[PyDMChannel] = None
         # Save last state to check if new value contains any changes
         self._last_value: Union[List[int], List[float], None] = None
+        self._transform = accgraph.PlottingItemDataFactory.get_transformation(self._data_type_to_emit)
         self.address = channel_address
 
     @property
@@ -131,19 +131,9 @@ class PyDMChannelDataSource(accgraph.UpdateSource):
                    appended to a graph.
         """
         value = self._to_list_and_check_value_change(value)
-        if value is None:
-            return
-        if issubclass(self._data_type_to_emit, accgraph.PointData):
-            kwargs = self._prepare_point_data_arguments(value)
-        elif issubclass(self._data_type_to_emit, accgraph.BarData):
-            kwargs = self._prepare_bar_data_arguments(value)
-        elif issubclass(self._data_type_to_emit, accgraph.InjectionBarData):
-            kwargs = self._prepare_injection_bar_data_arguments(value)
-        elif issubclass(self._data_type_to_emit, accgraph.TimestampMarkerData):
-            kwargs = self._prepare_timestamp_marker_data_arguments(value)
-        else:
-            return
-        self.sig_new_data[self._data_type_to_emit].emit(self._data_type_to_emit(**kwargs))
+        if value is not None:
+            envelope = self._transform(value)
+            self.sig_new_data[self._data_type_to_emit].emit(envelope)
 
     def _to_list_and_check_value_change(
             self,
@@ -175,90 +165,6 @@ class PyDMChannelDataSource(accgraph.UpdateSource):
         value = cast(List[float], value)
         self._last_value = copy.copy(value)
         return value
-
-    @staticmethod
-    def _prepare_point_data_arguments(
-            values: Union[
-                List[float],
-                List[int],
-            ],
-    ) -> Dict:
-        """
-        Convert list to a dictionary of keyword arguments for PointData.
-        """
-        kwargs = OrderedDict(
-            x_value=time.time(),
-            y_value=0.0,
-        )
-        if len(values) == 1:
-            kwargs['y_value'] = values[0]
-            return kwargs
-        return PyDMChannelDataSource._list_to_dict(kwargs, values)
-
-    @staticmethod
-    def _prepare_bar_data_arguments(
-            values: Union[List[float], List[int]],
-    ) -> Dict:
-        """
-        Convert list to a dictionary of keyword arguments for BarData.
-        """
-        kwargs = OrderedDict(
-            x_value=time.time(),
-            y_value=0.0,
-            height=0.0,
-        )
-        if len(values) == 1:
-            kwargs['height'] = values[0]
-            kwargs['y_value'] = 0.5 * values[0]
-            return kwargs
-        return PyDMChannelDataSource._list_to_dict(kwargs, values)
-
-    @staticmethod
-    def _prepare_injection_bar_data_arguments(
-            values: Union[List[float], List[int]],
-    ) -> Dict:
-        """Convert list to a dictionary of keyword arguments for InjectionBarData."""
-        kwargs = OrderedDict(
-            x_value=time.time(),
-            y_value=0.0,
-            height=0.0,
-            width=0.0,
-            label='',
-        )
-        if len(values) == 1:
-            kwargs['height'] = values[0]
-            return kwargs
-        return PyDMChannelDataSource._list_to_dict(kwargs, values)
-
-    @staticmethod
-    def _prepare_timestamp_marker_data_arguments(
-            values: Union[List[float], List[int]],
-    ) -> Dict:
-        """Convert list to a dictionary of keyword arguments for TimestampMarkerData."""
-        kwargs = OrderedDict(
-            x_value=time.time(),
-            color='w',
-            label='',
-        )
-        if len(values) == 1:
-            kwargs['x_value'] = values[0]
-            return kwargs
-        return PyDMChannelDataSource._list_to_dict(kwargs, values)
-
-    @staticmethod
-    def _list_to_dict(keyword_args: OrderedDict, values_list: List):
-        """
-        Set values in dictionary according to the passed values list.
-        If more keys exist than values in the list, values are set in the
-        order the keys are listed in the dict. If more values are passed,
-        they will be ignored.
-        """
-        for key in keyword_args.keys():
-            try:
-                keyword_args[key] = values_list.pop(0)
-            except IndexError:
-                break
-        return keyword_args
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~ Base Classes ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -656,7 +562,7 @@ class CPlotWidgetBase(PyDMPrimitiveWidget):
             raise ValueError(f"{type(self).__name__} does not support style '{style}'")
         return self.ITEM_TYPES[style](
             plot_item=self.plotItem,
-            data_source=data_source,
+            data_model=data_source,
         )
 
     def _add_created_item(
@@ -1350,7 +1256,7 @@ class CScrollingCurve(
     def __init__(
             self,
             plot_item: accgraph.ExPlotItem,
-            data_source: accgraph.UpdateSource,
+            data_model: Union[accgraph.LiveCurveDataModel, accgraph.UpdateSource],
             buffer_size: int = accgraph.DEFAULT_BUFFER_SIZE,
             color: Optional[str] = None,
             line_width: Optional[int] = None,
@@ -1362,8 +1268,11 @@ class CScrollingCurve(
 
         Args:
             plot_item: plot item that the item will be added to
-            data_source: source the item receives data from
-            buffer_size: buffer size for the items data model
+            data_model: Either an Update Source or a already initialized data
+                        model
+            buffer_size: Buffer size, which will be passed to the data model,
+                         will only be used if the data_model is only an Update
+                         Source.
             color: color for the item
             line_width: thickness of the lines of the item
             line_style: style of the lines of them item
@@ -1372,7 +1281,7 @@ class CScrollingCurve(
         accgraph.ScrollingPlotCurve.__init__(
             self,
             plot_item=plot_item,
-            data_source=data_source,
+            data_model=data_model,
             buffer_size=buffer_size,
             pen=color,
             lineWidth=line_width,
@@ -1401,7 +1310,7 @@ class CScrollingBarGraph(
     def __init__(
             self,
             plot_item: accgraph.ExPlotItem,
-            data_source: accgraph.UpdateSource,
+            data_model: Union[accgraph.LiveBarGraphItem, accgraph.UpdateSource],
             buffer_size: int = accgraph.DEFAULT_BUFFER_SIZE,
             color: Optional[str] = None,
             line_width: Optional[int] = None,
@@ -1413,8 +1322,11 @@ class CScrollingBarGraph(
 
         Args:
             plot_item: plot item that the item will be added to
-            data_source: source the item receives data from
-            buffer_size: buffer size for the items data model
+            data_model: Either an Update Source or a already initialized data
+                        model
+            buffer_size: Buffer size, which will be passed to the data model,
+                         will only be used if the data_model is only an Update
+                         Source.
             color: color for the item
             line_width: thickness of the lines of the item
             line_style: will have no visual effect, this parameter
@@ -1427,7 +1339,7 @@ class CScrollingBarGraph(
         accgraph.ScrollingBarGraphItem.__init__(
             self,
             plot_item=plot_item,
-            data_source=data_source,
+            data_model=data_model,
             buffer_size=buffer_size,
             **kwargs,
         )
@@ -1453,7 +1365,7 @@ class CScrollingInjectionBarGraph(
     def __init__(
             self,
             plot_item: accgraph.ExPlotItem,
-            data_source: accgraph.UpdateSource,
+            data_model: Union[accgraph.LiveInjectionBarDataModel, accgraph.UpdateSource],
             buffer_size: int = accgraph.DEFAULT_BUFFER_SIZE,
             color: Optional[str] = None,
             line_width: Optional[int] = None,
@@ -1465,8 +1377,11 @@ class CScrollingInjectionBarGraph(
 
         Args:
             plot_item: plot item that the item will be added to
-            data_source: source the item receives data from
-            buffer_size: buffer size for the items data model
+            data_model: Either an Update Source or a already initialized data
+                        model
+            buffer_size: Buffer size, which will be passed to the data model,
+                         will only be used if the data_model is only an Update
+                         Source.
             color: color for the item
             line_width: thickness of the lines of the item
             line_style: will have no visual effect, this parameter
@@ -1477,7 +1392,7 @@ class CScrollingInjectionBarGraph(
         accgraph.ScrollingInjectionBarGraphItem.__init__(
             self,
             plot_item=plot_item,
-            data_source=data_source,
+            data_model=data_model,
             buffer_size=buffer_size,
             **kwargs,
         )
@@ -1503,7 +1418,7 @@ class CScrollingTimestampMarker(
     def __init__(
             self,
             plot_item: accgraph.ExPlotItem,
-            data_source: accgraph.UpdateSource,
+            data_model: Union[accgraph.LiveTimestampMarkerDataModel, accgraph.UpdateSource],
             buffer_size: int = accgraph.DEFAULT_BUFFER_SIZE,
             color: Optional[str] = None,
             line_width: Optional[int] = None,
@@ -1515,8 +1430,11 @@ class CScrollingTimestampMarker(
 
         Args:
             plot_item: plot item that the item will be added to
-            data_source: source the item receives data from
-            buffer_size: buffer size for the items data model
+            data_model: Either an Update Source or a already initialized data
+                        model
+            buffer_size: Buffer size, which will be passed to the data model,
+                         will only be used if the data_model is only an Update
+                         Source.
             color: will have no visual effect, this parameter
                    exists just for saving it between different
                    plotting items to not loose it
@@ -1529,7 +1447,7 @@ class CScrollingTimestampMarker(
         accgraph.ScrollingTimestampMarker.__init__(
             self,
             plot_item=plot_item,
-            data_source=data_source,
+            data_model=data_model,
             buffer_size=buffer_size,
             **kwargs,
         )
@@ -1562,10 +1480,12 @@ class CScrollingPlot(CPlotWidgetBase, accgraph.ScrollingPlotWidget):
             **plotitem_kwargs,
     ):
         """
-        Plot widget for displaying scrolling curves, bar graphs and other plotting items.
+        Plot widget for displaying scrolling curves, bar graphs and other
+        plotting items.
 
         Args:
-
+            parent: Parent item for the Plot
+            background: Background color for the Plot
         """
         accgraph.ScrollingPlotWidget.__init__(
             self,
@@ -1592,7 +1512,7 @@ class CCyclicCurve(accgraph.CyclicPlotCurve, CCurvePropertiesBase):
     def __init__(
             self,
             plot_item: accgraph.ExPlotItem,
-            data_source: accgraph.UpdateSource,
+            data_model: Union[accgraph.LiveCurveDataModel, accgraph.UpdateSource],
             buffer_size: int = accgraph.DEFAULT_BUFFER_SIZE,
             color: Optional[str] = None,
             line_width: Optional[int] = None,
@@ -1604,8 +1524,11 @@ class CCyclicCurve(accgraph.CyclicPlotCurve, CCurvePropertiesBase):
 
         Args:
             plot_item: plot item that the item will be added to
-            data_source: source the item receives data from
-            buffer_size: buffer size for the items data model
+            data_model: Either an Update Source or a already initialized data
+                        model
+            buffer_size: Buffer size, which will be passed to the data model,
+                         will only be used if the data_model is only an Update
+                         Source.
             color: color for the item
             line_width: thickness of the lines of the item
             line_style: style of the lines of them item
@@ -1614,8 +1537,8 @@ class CCyclicCurve(accgraph.CyclicPlotCurve, CCurvePropertiesBase):
         accgraph.CyclicPlotCurve.__init__(
             self,
             plot_item=plot_item,
-            data_source=data_source,
             buffer_size=buffer_size,
+            data_model=data_model,
             pen=color,
             lineWidth=line_width,
             lineStyle=line_style,
