@@ -20,7 +20,7 @@
       <string notr="true">japc:///DemoDevice/Acquisition#Demo</string>
      </property>
      <property name="valueTransformation">
-      <string notr="true">output(f'&lt;&lt;{new_val}&gt;&gt;')</string>
+      <string notr="true">output(f'&lt;&lt;{new_val}&gt;&gt; - from {__file__}')</string>
      </property>
     </widget>
    </item>
