@@ -9,7 +9,7 @@ stages:
   - Release
 
 variables:
-  ACCPY_PYQT_DOCKER_IMAGE: gitlab-registry.cern.ch/acc-co/accsoft/gui/accsoft-gui-pyqt-distro/acc-py-pyqt:ci
+  ACCPY_PYQT_DOCKER_IMAGE: gitlab-registry.cern.ch/acc-co/accsoft/gui/accsoft-gui-pyqt-distro/acc-py-pyqt:ci-v19.10.3
   project_name: comrad  # Required by acc-py templates
 
 .init_sequence: &init_sequence
