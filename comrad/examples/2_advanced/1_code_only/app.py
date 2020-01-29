@@ -15,9 +15,3 @@ class DemoDisplay(CDisplay):
 
         self.layout().addWidget(label)
         layout.addWidget(label)
-
-    def ui_filename(self):
-        return None
-
-    def ui_filepath(self):
-        return None

@@ -29,12 +29,6 @@ class PlotDisplay(CDisplay):
         self._add_curves_to_scrolling_plot()
         self._add_curves_to_sliding_plot()
 
-    def ui_filename(self):
-        return None
-
-    def ui_filepath(self):
-        return None
-
     def _configure_scrolling_plot(self):
         """
         Configure different visual aspects of the scrolling plot.

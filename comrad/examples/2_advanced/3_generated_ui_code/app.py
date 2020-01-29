@@ -10,9 +10,3 @@ class DemoDisplay(CDisplay, Ui_Form):
         self.label.channel = 'japc:///DemoDevice/Acquisition#Demo'
         # Make sure it's more visible, so restyle
         self.label.setStyleSheet('background-color:yellow')
-
-    def ui_filename(self):
-        return None
-
-    def ui_filepath(self):
-        return None
