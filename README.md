@@ -1,8 +1,5 @@
 # ComRAD
 
-[![pipeline status](https://gitlab.cern.ch/acc-co/accsoft/gui/rad/accsoft-gui-rad-comrad/badges/develop/pipeline.svg)](https://gitlab.cern.ch/acc-co/accsoft/gui/rad/accsoft-gui-rad-comrad/pipelines)
-[![coverage report](https://gitlab.cern.ch/acc-co/accsoft/gui/rad/accsoft-gui-rad-comrad/badges/develop/coverage.svg)](https://gitlab.cern.ch/acc-co/accsoft/gui/rad/accsoft-gui-rad-comrad/pipelines)
-
 CO Multi-purpose Rapid Application Development
 
 This framework integrates several tools to be used for developing applications in Python.
