@@ -128,22 +128,6 @@ python -m pytest --random-order
 ```
 >
 
-## Code coverage
-
-You can also collect coverage information.
->
-**Note!** Currently pytest-cov may report incorrect coverage.
-It is suggested to use `coverage` command directly to produce accurate results:
-
-```bash
-coverage run --source rad -m py.test && coverage report -m
-```
-
-or for HTML version: 
-```bash
-coverage run --source rad -m py.test && coverage html
-```
->
 
 # Development
 
@@ -163,43 +147,22 @@ For flake8:
 flake8
 ```
 
-For mypy:
+For mypy (it does not handle PEP420 packages, so you'd need to specify them as arguments):
 ```bash
-mypy .
+mypy . tests docs comrad/app comrad/app/plugins/toolbar comrad/data _comrad
 ```
 
 ## Building documentation
 
 Use sphinx to build the docs:
 ```bash
-cd docs
+sphinx-build docs/ path/to/docs/output/dir
 ```
 
-### Confluence
-
-Prefered way, would be to build the documentation for confluence. We want to keep all the documentation in the same place.
-To build new version of docs for confluence, simply run
-
+To browse it, just locate the `index.html`:
 ```bash
-make confluence
+xdg-open path/to/docs/output/dir/index.html
 ```
-
-and enter confluence password.
-
->
-If you want to upload the docs with a different confluence user that default, locate variable `confluence_server_user` in
-`docs/source/conf.py` and change it to your confluence user.
->
-
-### Self-hosted web
-
-To build a HTML documentation, run
-
-```bash
-make html
-```
-
-and locate the index page in `docs/build/index.html`.
 
 ## Uploading package to CO package index
 Make sure that you have tools installed
