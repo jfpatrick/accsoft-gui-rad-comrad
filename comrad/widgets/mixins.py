@@ -1,7 +1,7 @@
 import json
 import logging
 from typing import Any, List, cast, Union, Dict, Tuple, Callable
-from qtpy.QtCore import Property
+from qtpy.QtCore import Property, Signal
 from qtpy.QtWidgets import QWidget
 from pydm.utilities import is_qt_designer
 from pydm.widgets.base import PyDMWidget
@@ -9,6 +9,7 @@ from pydm.widgets.rules import RulesDispatcher
 from comrad.rules import CBaseRule, CChannelError, unpack_rules
 from comrad.json import CJSONEncoder, CJSONDeserializeError
 from comrad.deprecations import deprecated_parent_prop
+from comrad.data.channel import CChannel, allow_connections
 from .value_transform import CValueTransformationBase
 
 
@@ -42,6 +43,90 @@ class CHideUnusedFeaturesMixin:
     @deprecated_parent_prop(logger)
     def alarmSensitiveContent(self, _):
         pass
+
+
+class CRequestingMixin:
+    """
+    Mixin for widgets that want to proactively request data from the channel, as opposed to regularly receiving udpates.
+    (Relies on monkey-patched PyDMChannel instances).
+    """
+
+    request_signal = Signal(str)
+    """Signal that is issued when the widget wants to actively request new data from the channel.
+    Argument is a unique identifier of the widget so that it can filter only notifications that it is interested in."""
+
+    def __init__(self, connect_value_slot: bool = True):
+        """
+        Args:
+            connect_value_slot: Connect the default propagation slot automatically. Some widgets, that have ability to
+                                request value explicitly, may want to opt out from receiving regular updates. Then this
+                                value should be set to ``False``.
+        """
+        self._connect_value_slot = connect_value_slot
+
+    def request_data(self):
+        """Issue a request signal to the control system in order to retrieve data on demand."""
+        self.request_signal.emit(self._request_uuid)
+
+    def _on_request_fulfilled(self, value: Any, uuid: str):
+        """
+        Callback with additional filtering.
+        """
+        if uuid and uuid != self._request_uuid:  # None uuid will be empty string, when transferred thru signal
+            # When it is None, everybody should handle the value (usually happens on initial populate)
+            return
+        cast(PyDMWidget, self).channelValueChanged(value)
+
+    def _set_channel(self, value: str):
+        """
+        Overridden setter that also connects "requested" signals and slots.
+        """
+        widget = cast(PyDMWidget, self)
+        if widget._channel == value:
+            # Avoid custom logic, since super would not do anything under this condition anyway
+            return
+        allow_connections(False)
+        PyDMWidget.channel.fset(self, value)
+        new_channel = cast(CChannel, widget._channels[-1])
+        if not self.connect_value_slot:
+            new_channel.request_signal = self.request_signal
+            new_channel.request_slot = self._on_request_fulfilled
+            logger.debug(f'Disabling "value_slot" on {self}')
+            new_channel.value_slot = None
+        allow_connections(True)
+        new_channel.connect()  # Establish connection here
+
+    channel: str = Property(str, fget=PyDMWidget.channel.fget, fset=_set_channel)
+    """Overridden setter that also connects "requested" signals and slots."""
+
+    def _set_connect_value_slot(self, new_val: bool):
+        if new_val != self._connect_value_slot:
+            self._connect_value_slot = new_val
+            # Provoke channel recreation so that we don't have dangling slots
+            # in case we disabled them with the new setting
+            me = cast(PyDMWidget, self)
+            prev_val = me._channel
+            if prev_val is not None:
+                me._channel = None
+                # Because above statement will prevent existing channels from disconnecting, we need to perform it manually
+                for channel in me._channels:
+                    if channel.address == prev_val:
+                        channel.disconnect()
+                        me._channels.remove(channel)
+                # Now trigger the setter with full procedure
+                me.channel = prev_val
+
+    connect_value_slot = property(fget=lambda self: self._connect_value_slot, fset=_set_connect_value_slot)
+    """
+    Connect the default propagation slot automatically. Some widgets, that have ability to
+                            request value explicitly, may want to opt out from receiving regular updates. Then this
+                            value should be set to ``False``.
+    """
+
+    @property
+    def _request_uuid(self):
+        """Identifier to filter incoming notifications on-request to act only on those that are requested by us."""
+        return cast(QWidget, self).objectName()
 
 
 class CNoPVTextFormatterMixin:

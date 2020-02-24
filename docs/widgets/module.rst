@@ -20,6 +20,7 @@ Widgets
     cshellcommand
     cslider
     cspinbox
+    cpropertyedit
     ctemplaterepeater
     cvalueaggregator
     cdisplay

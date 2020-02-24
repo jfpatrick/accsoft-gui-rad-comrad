@@ -1,14 +1,16 @@
 import logging
-from typing import Optional
+from typing import Optional, Dict, Any
 from qtpy.QtWidgets import QWidget
-from qtpy.QtCore import Property
+from qtpy.QtCore import Property, QVariant, Signal, Slot
+from pydm.widgets.base import PyDMWritableWidget
 from pydm.widgets.line_edit import PyDMLineEdit
 from pydm.widgets.slider import PyDMSlider
 from pydm.widgets.spinbox import PyDMSpinbox
 from pydm.widgets.checkbox import PyDMCheckbox
 from pydm.widgets.enum_combo_box import PyDMEnumComboBox
+from accwidgets.property_edit import PropertyEdit, PropertyEditField as _PropertyEditField
 from comrad.deprecations import deprecated_parent_prop
-from .mixins import (CHideUnusedFeaturesMixin, CNoPVTextFormatterMixin, CCustomizedTooltipMixin,
+from .mixins import (CHideUnusedFeaturesMixin, CNoPVTextFormatterMixin, CCustomizedTooltipMixin, CRequestingMixin,
                      CValueTransformerMixin, CColorRulesMixin, CWidgetRulesMixin, CInitializedMixin)
 
 
@@ -148,3 +150,59 @@ class CSpinBox(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixi
         PyDMSpinbox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         CValueTransformerMixin.__init__(self)
         self._widget_initialized = True
+
+
+CPropertyEditField = _PropertyEditField
+
+
+class CPropertyEdit(CRequestingMixin, CWidgetRulesMixin, CInitializedMixin, CHideUnusedFeaturesMixin, PropertyEdit, PyDMWritableWidget):
+
+    send_value_signal = Signal(QVariant)
+    """Overridden signal to define custom overload."""
+
+    def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, title: Optional[str] = None):
+        """
+        A :class:`accwidgets.property_edit.PropertyEdit` with support for channels and more from the control system.
+
+        Args:
+            parent: The parent widget for the spinbox.
+            init_channel: The channel to be used by the widget.
+            title: Optional title to be displayed when selected style is GroupBox.
+        """
+        CRequestingMixin.__init__(self)
+        CWidgetRulesMixin.__init__(self)
+        CInitializedMixin.__init__(self)
+        CHideUnusedFeaturesMixin.__init__(self)
+        PropertyEdit.__init__(self, parent=parent, title=title)
+        PyDMWritableWidget.__init__(self, init_channel=init_channel)
+        self._alarm_sensitive_border = False
+        self.valueUpdated.connect(self.send_value_signal[QVariant].emit)
+        self.valueRequested.connect(self.request_data)
+
+    def value_changed(self, new_val: Dict[str, Any]):
+        """
+        Callback invoked when the Channel value is changed.
+
+        Args:
+            new_val: The new value from the channel.
+        """
+        if not isinstance(new_val, dict):
+            return
+
+        super().value_changed(new_val)
+        self.setValue(new_val)
+
+    @Slot(QVariant)
+    def channelValueChanged(self, new_val: Dict[str, Any]):
+        """Overridden method to define custom slot overload."""
+        super().channelValueChanged(new_val)
+
+    @PropertyEdit.buttons.setter
+    def buttons(self, new_val: PropertyEdit.Buttons):
+        """
+        Overridden in order to regulate default slot connection (when "Get" button is present,
+        we do not want to receive values via SUBSCRIBE).
+        """
+        PropertyEdit.buttons.fset(self, new_val)
+        disable_subscribe = bool(new_val & PropertyEdit.Buttons.GET)
+        self.connect_value_slot = not disable_subscribe
