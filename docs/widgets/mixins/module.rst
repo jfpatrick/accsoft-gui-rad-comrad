@@ -12,3 +12,4 @@ Mix-ins
     chideunusedfeaturesmixin
     cnopvtextformattermixin
     ccustomizedtooltipmixin
+    crequestingmixin

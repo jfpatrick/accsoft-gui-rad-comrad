@@ -250,15 +250,13 @@ def test_remove_listener_disconnects_slots(mocked_channel, mocker):
 ])
 @mock.patch('pydm.widgets.channel.PyDMChannel')
 @mock.patch('pyjapc.PyJapc')
-def test_close_stops_subscriptions(mocked_channel, mocked_pyjapc, connected):
+def test_close_clears_subscriptions(mocked_channel, mocked_pyjapc, connected):
     japc_plugin._japc = mocked_pyjapc
     connection = japc_plugin._JapcConnection(channel=mocked_channel, address='dev/prop#field')
     connection.online = connected
+    mocked_pyjapc.clearSubscriptions.assert_not_called()
     connection.close()
-    if connected:
-        mocked_pyjapc.stopSubscriptions.assert_called_once()
-    else:
-        mocked_pyjapc.stopSubscriptions.assert_not_called()
+    mocked_pyjapc.clearSubscriptions.assert_called_with(parameterName='dev/prop#field', selector=None)
 
 
 def test_split_device_property():

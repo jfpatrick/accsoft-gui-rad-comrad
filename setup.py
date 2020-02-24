@@ -24,9 +24,9 @@ requirements = {
         'argcomplete>=1.10.0&&<2',
         'colorlog>=4.0.2&&<5',
         'QtPy>=1.7&&<2',
-        'pyjapc>=2.0.7&&<3',
-        'accwidgets>=0.2&&accwidgets<1',
-        'papc>=0.2.0&&<1',
+        'pyjapc @ git+ssh://git@gitlab.cern.ch:7999/scripting-tools/pyjapc.git',  # 'pyjapc>=2.0.7&&<3',
+        'accwidgets @ git+ssh://git@gitlab.cern.ch:7999/acc-co/accsoft/gui/accsoft-gui-pyqt-widgets.git#egg=accwidgets',  # 'accwidgets>=0.1.1&&<1',
+        'papc @ git+ssh://git@gitlab.cern.ch:7999/pelson/papc.git',  # 'papc>=0.2.0&&<1',
         'pydm==1.8.0.post0',
     ],
     'test': [

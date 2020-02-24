@@ -7,6 +7,8 @@ import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 import functools
+import accwidgets.property_edit.designer
+from pathlib import Path
 from typing import List
 from qtpy.QtWidgets import QAction, QWidget
 
@@ -16,9 +18,11 @@ setup_logging()
 
 # from pydm.widgets.tab_bar_qtplugin import TabWidgetPlugin as PyDMTabWidgetPlugin
 from pydm.widgets.qtplugin_extensions import PyDMExtension
+from accwidgets.property_edit.designer.designer_extensions import PropertyFieldExtension
 from comrad import (CScrollingPlot, CCyclicPlot, CValueAggregator, CCommandButton, CScaleIndicator, CLogDisplay,
                     CEnumComboBox, CSlider, CSpinBox, CLabel, CByteIndicator, CLineEdit, CTemplateRepeater,
-                    CEmbeddedDisplay, CShellCommand, CRelatedDisplayButton, CPushButton, CEnumButton, CCheckBox)
+                    CEmbeddedDisplay, CShellCommand, CRelatedDisplayButton, CPushButton, CEnumButton, CCheckBox,
+                    CPropertyEdit)
 from comrad.icons import icon
 from _comrad_designer.utils import qtplugin_factory
 from _comrad_designer.rules_editor import RulesEditor
@@ -89,6 +93,10 @@ _CEnumComboBox = qtplugin_factory(CEnumComboBox, group=_COMRAD_GROUP_INPUT, icon
 _CLineEdit = qtplugin_factory(CLineEdit, group=_COMRAD_GROUP_INPUT, icon=_load_icon('line_edit'), extensions=_BASE_EXTENSIONS)
 _CSlider = qtplugin_factory(CSlider, group=_COMRAD_GROUP_INPUT, icon=_load_icon('slider'), extensions=_BASE_EXTENSIONS)
 _CSpinbox = qtplugin_factory(CSpinBox, group=_COMRAD_GROUP_INPUT, icon=_load_icon('spinbox'), extensions=_BASE_EXTENSIONS)
+_CPropertyEdit = qtplugin_factory(CPropertyEdit,
+                                  group=_COMRAD_GROUP_INPUT,
+                                  icon=icon('PropertyEdit', file_path=Path(accwidgets.property_edit.designer.__file__)),
+                                  extensions=[PropertyFieldExtension, *_BASE_EXTENSIONS])
 
 # Display Widgets
 _CLabel = qtplugin_factory(CLabel, group=_COMRAD_GROUP_DISPLAY, icon=_load_icon('label'), extensions=_BASE_EXTENSIONS)

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>820</width>
+    <height>319</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Press &quot;Set&quot; to see the updated value in the control system.</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="CPropertyEdit" name="writable_edit">
+       <property name="decoration" stdset="0">
+        <enum>PropertyEdit::Frame</enum>
+       </property>
+       <property name="fields" stdset="0">
+        <string>[{&quot;field&quot;: &quot;IntVal&quot;, &quot;type&quot;: 1, &quot;rw&quot;: true}, {&quot;field&quot;: &quot;FloatVal&quot;, &quot;type&quot;: 2, &quot;rw&quot;: true}, {&quot;field&quot;: &quot;StrVal&quot;, &quot;type&quot;: 4, &quot;rw&quot;: true}, {&quot;field&quot;: &quot;BoolVal&quot;, &quot;type&quot;: 3, &quot;rw&quot;: true}, {&quot;field&quot;: &quot;EnumVal&quot;, &quot;type&quot;: 5, &quot;rw&quot;: true, &quot;ud&quot;: {&quot;options&quot;: [[&quot;ON&quot;, 1], [&quot;OFF&quot;, 2], [&quot;UNKNOWN&quot;, 3]]}}]</string>
+       </property>
+       <property name="buttons" stdset="0">
+        <enum>PropertyEdit::Both</enum>
+       </property>
+       <property name="channel" stdset="0">
+        <string notr="true">japc:///DemoDevice/Settings</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="CPropertyEdit" name="readonly_edit">
+       <property name="title" stdset="0">
+        <string>Read-only widget</string>
+       </property>
+       <property name="decoration" stdset="0">
+        <enum>PropertyEdit::GroupBox</enum>
+       </property>
+       <property name="fields" stdset="0">
+        <string>[{&quot;field&quot;: &quot;IntVal&quot;, &quot;type&quot;: 1, &quot;rw&quot;: true}, {&quot;field&quot;: &quot;FloatVal&quot;, &quot;type&quot;: 2, &quot;rw&quot;: true}, {&quot;field&quot;: &quot;StrVal&quot;, &quot;type&quot;: 4, &quot;rw&quot;: true}, {&quot;field&quot;: &quot;BoolVal&quot;, &quot;type&quot;: 3, &quot;rw&quot;: true}, {&quot;field&quot;: &quot;EnumVal&quot;, &quot;type&quot;: 5, &quot;rw&quot;: true, &quot;ud&quot;: {&quot;options&quot;: [[&quot;ON&quot;, 1], [&quot;OFF&quot;, 2], [&quot;UNKNOWN&quot;, 3]]}}]</string>
+       </property>
+       <property name="channel" stdset="0">
+        <string notr="true">japc:///DemoDevice/Settings</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item>
+    <widget class="CLabel" name="CLabel">
+     <property name="channel" stdset="0">
+      <string notr="true">japc:///DemoDevice/SettingsRepr#str</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PyDMLabel</class>
+   <extends>QLabel</extends>
+   <header>pydm.widgets.label</header>
+  </customwidget>
+  <customwidget>
+   <class>PropertyEdit</class>
+   <extends>QWidget</extends>
+   <header>accwidgets.property_edit.propedit</header>
+  </customwidget>
+  <customwidget>
+   <class>CPropertyEdit</class>
+   <extends>PropertyEdit</extends>
+   <header>comrad.widgets.inputs</header>
+  </customwidget>
+  <customwidget>
+   <class>CLabel</class>
+   <extends>PyDMLabel</extends>
+   <header>comrad.widgets.indicators</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

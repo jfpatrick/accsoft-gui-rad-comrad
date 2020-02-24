@@ -1,4 +1,4 @@
-from PyQt5.Qsci import QsciScintilla
+from PyQt5.Qsci import QsciScintilla  # qtpy does not support QScintilla yet. Track here: https://github.com/spyder-ide/qtpy/issues/134
 from qtpy.QtGui import QColor
 
 

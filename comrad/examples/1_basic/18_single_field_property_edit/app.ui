@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>374</width>
+    <height>244</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="CPropertyEdit" name="CPropertyEdit">
+     <property name="decoration" stdset="0">
+      <enum>PropertyEdit::Frame</enum>
+     </property>
+     <property name="fields" stdset="0">
+      <string>[{&quot;field&quot;: &quot;Demo&quot;, &quot;type&quot;: 4, &quot;rw&quot;: true, &quot;label&quot;: &quot;Value&quot;}]</string>
+     </property>
+     <property name="channel" stdset="0">
+      <string notr="true">japc://DemoDevice/Settings</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="CPropertyEdit" name="CPropertyEdit_2">
+     <property name="buttonPosition" stdset="0">
+      <enum>PropertyEdit::Right</enum>
+     </property>
+     <property name="decoration" stdset="0">
+      <enum>PropertyEdit::Frame</enum>
+     </property>
+     <property name="fields" stdset="0">
+      <string>[{&quot;field&quot;: &quot;Demo&quot;, &quot;type&quot;: 4, &quot;rw&quot;: true, &quot;label&quot;: &quot;Value&quot;}]</string>
+     </property>
+     <property name="buttons" stdset="0">
+      <enum>PropertyEdit::Get</enum>
+     </property>
+     <property name="channel" stdset="0">
+      <string notr="true">japc://DemoDevice/Settings</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="CPropertyEdit" name="CPropertyEdit_3">
+     <property name="buttonPosition" stdset="0">
+      <enum>PropertyEdit::Right</enum>
+     </property>
+     <property name="decoration" stdset="0">
+      <enum>PropertyEdit::Frame</enum>
+     </property>
+     <property name="fields" stdset="0">
+      <string>[{&quot;field&quot;: &quot;Demo&quot;, &quot;type&quot;: 4, &quot;rw&quot;: true, &quot;label&quot;: &quot;Value&quot;}]</string>
+     </property>
+     <property name="buttons" stdset="0">
+      <enum>PropertyEdit::Set</enum>
+     </property>
+     <property name="channel" stdset="0">
+      <string notr="true">japc://DemoDevice/Settings</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QFormLayout" name="formLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Control system value:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="CLabel" name="CLabel">
+       <property name="channel" stdset="0">
+        <string notr="true">japc://DemoDevice/Settings#Demo</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PyDMLabel</class>
+   <extends>QLabel</extends>
+   <header>pydm.widgets.label</header>
+  </customwidget>
+  <customwidget>
+   <class>PropertyEdit</class>
+   <extends>QWidget</extends>
+   <header>accwidgets.property_edit.propedit</header>
+  </customwidget>
+  <customwidget>
+   <class>CPropertyEdit</class>
+   <extends>PropertyEdit</extends>
+   <header>comrad.widgets.inputs</header>
+  </customwidget>
+  <customwidget>
+   <class>CLabel</class>
+   <extends>PyDMLabel</extends>
+   <header>comrad.widgets.indicators</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
