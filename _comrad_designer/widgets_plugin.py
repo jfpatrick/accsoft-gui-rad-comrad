@@ -19,7 +19,7 @@ setup_logging()
 # from pydm.widgets.tab_bar_qtplugin import TabWidgetPlugin as PyDMTabWidgetPlugin
 from pydm.widgets.qtplugin_extensions import PyDMExtension
 from accwidgets.property_edit.designer.designer_extensions import PropertyFieldExtension
-from comrad import (CScrollingPlot, CCyclicPlot, CValueAggregator, CCommandButton, CScaleIndicator, CLogDisplay,
+from comrad import (CScrollingPlot, CCyclicPlot, CStaticPlot, CValueAggregator, CCommandButton, CScaleIndicator, CLogDisplay,
                     CEnumComboBox, CSlider, CSpinBox, CLabel, CByteIndicator, CLineEdit, CTemplateRepeater,
                     CEmbeddedDisplay, CShellCommand, CRelatedDisplayButton, CPushButton, CEnumButton, CCheckBox,
                     CPropertyEdit)
@@ -109,6 +109,7 @@ _CScaleIndicator = qtplugin_factory(CScaleIndicator, group=_COMRAD_GROUP_DISPLAY
 # Charts
 _CScrollingPlot = qtplugin_factory(CScrollingPlot, group=_COMRAD_GROUP_PLOT, icon=_load_icon('graph_scrolling_plot'), extensions=_PLOT_EXTENSIONS)
 _CCyclicPlot = qtplugin_factory(CCyclicPlot, group=_COMRAD_GROUP_PLOT, icon=_load_icon('graph_sliding_plot'), extensions=_PLOT_EXTENSIONS)
+_CStaticPlot = qtplugin_factory(CStaticPlot, group=_COMRAD_GROUP_PLOT, icon=_load_icon('graph_static_plot'), extensions=_PLOT_EXTENSIONS)
 
 # Invisible
 _CValueAggregator = qtplugin_factory(CValueAggregator, group=_COMRAD_GROUP_VIRTUAL, icon=_load_icon('calc'))
