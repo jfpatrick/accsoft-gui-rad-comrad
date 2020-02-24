@@ -6,12 +6,13 @@ import functools
 from pydm.data_plugins import is_read_only
 from pydm.data_plugins.plugin import PyDMPlugin, PyDMConnection
 from qtpy.QtCore import Qt, QObject, Slot, Signal, QVariant
-from typing import Any, Optional, cast, Callable, List, Type
+from typing import Any, Optional, cast, Callable, List, Type, Tuple
 from collections import namedtuple
 from comrad.rbac import CRBACLoginStatus, CRBACStartupLoginPolicy
 from comrad.app.application import CApplication
-from comrad.data.jpype import get_user_message
+from comrad.data.jpype import get_user_message, meaning_from_jpype
 from comrad.data.channel import CChannel
+from comrad.data.japc_enum import SimpleValueStandardMeaning
 
 
 logger = logging.getLogger('comrad_japc')
@@ -117,14 +118,14 @@ class _JapcService(QObject, pyjapc.PyJapc):
             self._set_online(False)
 
     def getParam(self, *args, **kwargs):
-        return self._expect_cmw_error(super().getParam, *args, **kwargs)
+        return self._expect_japc_error(super().getParam, *args, **kwargs)
 
     def setParam(self, *args, **kwargs):
         if not self._use_inca and 'checkDims' not in kwargs:
             # Because when InCA is not set up, setter will crash because it will fail to
             # receive valueDescriptor while trying to verify dimensions.
             kwargs['checkDims'] = False
-        self._expect_cmw_error(super().setParam, *args, display_popup=True, **kwargs)
+        self._expect_japc_error(super().setParam, *args, display_popup=True, **kwargs)
 
     def _set_online(self, logged_in: bool):
         self._logged_in = logged_in
@@ -135,10 +136,11 @@ class _JapcService(QObject, pyjapc.PyJapc):
     def _login_err(self, message: str, login_by_location: bool):
         self.japc_login_error.emit((message, login_by_location))
 
-    def _expect_cmw_error(self, fn: Callable, *args, display_popup: bool = False, **kwargs):
+    def _expect_japc_error(self, fn: Callable, *args, display_popup: bool = False, **kwargs):
         try:
             return fn(*args, **kwargs)
-        except jpype.JException(cern.japc.core.ParameterException) as e:  # type: ignore
+        except (jpype.JException(cern.japc.core.ParameterException),  # type: ignore  # CMW error, e.g. SET not supported
+                jpype.JException(cern.japc.value.ValueConversionException)) as e:  # type: ignore  # JAPC error, e.g. wrong enum value
             message = get_user_message(e)
             self.japc_param_error.emit(message, display_popup)
 
@@ -148,6 +150,23 @@ class _JapcService(QObject, pyjapc.PyJapc):
         for name, val in self._app.jvm_flags.items():
             logger.debug(f'Setting extra JVM flag: {name}={val}')
             jpype.java.lang.System.setProperty(name, str(val))  # type: ignore
+
+    def _convertSimpleValToPy(self, val) -> Any:
+        """Overrides internal PyJapc method to emit different data struct for enums."""
+        typename = val.getValueType().typeString.lower()
+
+        def enum_item_to_tuple(enum_item: Any) -> Tuple[int, str, SimpleValueStandardMeaning, bool]:
+            return (enum_item.getCode(),
+                    enum_item.getString(),
+                    meaning_from_jpype(enum_item.getStandardMeaning()),
+                    enum_item.isSettable())
+
+        if typename == 'enum':
+            return enum_item_to_tuple(val.getEnumItem())
+        elif typename == 'enumset':
+            return [enum_item_to_tuple(v) for v in val.value]
+        else:
+            return super()._convertSimpleValToPy(val)
 
 
 _japc: Optional[_JapcService] = None
@@ -173,9 +192,9 @@ class _JapcConnection(PyDMConnection):
     """ PyDM adaptation for JAPC protocol. """
 
     # Superclass does not implement signal for bool values
-    new_value_signal = Signal([float], [int], [str], [np.ndarray], [bool], [QVariant], [list])  # dict will go as QVariant here
+    new_value_signal = Signal([float], [int], [str], [np.ndarray], [bool], [QVariant], [list])  # dict and tuple will go as QVariant here
 
-    requested_value_signal = Signal([float, str], [int, str], [str, str], [np.ndarray, str], [bool, str], [QVariant, str], [list, str])  # dict will go as QVariant here
+    requested_value_signal = Signal([float, str], [int, str], [str, str], [np.ndarray, str], [bool, str], [QVariant, str], [list, str])  # dict and tuple will go as QVariant here
     """Similar to new_value_signal, but issued only on active requests (or initial get)."""
 
     def __init__(self, channel: CChannel, address: str, protocol: Optional[str] = None, parent: Optional[QObject] = None, *args, **kwargs):
@@ -211,7 +230,7 @@ class _JapcConnection(PyDMConnection):
             channel.request_signal.connect(slot=self._requested_get, type=Qt.QueuedConnection)
             logger.debug(f'{self}: Connected request_signal to proactively GET')
         if channel.request_slot is not None:
-            for data_type in [str, bool, int, float, QVariant, np.ndarray]:
+            for data_type in [str, bool, int, float, QVariant, np.ndarray, list]:
                 try:
                     self.requested_value_signal[data_type, str].connect(slot=channel.request_slot, type=Qt.QueuedConnection)
                 except (KeyError, TypeError):
@@ -286,7 +305,7 @@ class _JapcConnection(PyDMConnection):
                     pass
 
             if channel.request_slot is not None:
-                for data_type in [str, bool, int, float, QVariant, np.ndarray]:
+                for data_type in [str, bool, int, float, QVariant, np.ndarray, list]:
                     try:
                         self.requested_value_signal[data_type, str].disconnect(channel.request_slot)
                         logger.debug(f'{self}: Disconnected requested_value_signal[{data_type.__name__}, str] from {channel.request_slot}')
@@ -354,7 +373,7 @@ class _JapcConnection(PyDMConnection):
         self.online = True
 
         data_type = type(value)
-        if data_type == dict:
+        if data_type == dict or data_type == tuple:
             data_type = QVariant
 
         for signal in callback_signals or []:
@@ -364,8 +383,7 @@ class _JapcConnection(PyDMConnection):
                 else:
                     signal[data_type].emit(value)
             except (KeyError, TypeError):
-                logger.warning(f'{self}: Cannot propagate JAPC value ({type(value)}) to the widget. '
-                               'Signal override is not defined.')
+                logger.warning(f'{self}: Cannot propagate JAPC value ({type(value)}) to the widget.')
 
     @Slot()
     def _on_device_command(self):
