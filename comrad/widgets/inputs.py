@@ -66,6 +66,24 @@ class CEnumComboBox(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedToolti
         CValueTransformerMixin.__init__(self)
         self._widget_initialized = True
 
+    def value_changed(self, new_val: Any):
+        """
+        Overridden data handler to allow JAPC enums coming as tuples.
+
+        Args:
+            new_val: The new value from the channel.
+        """
+        if isinstance(new_val, tuple):
+            option_name = new_val[1]
+            super().value_changed(option_name)
+        else:
+            super().value_changed(new_val)
+
+    @Slot(QVariant)
+    def channelValueChanged(self, new_val: Any):
+        """Overridden method to define custom slot overload."""
+        super().channelValueChanged(new_val)
+
 
 class CLineEdit(CColorRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixin, CInitializedMixin, CHideUnusedFeaturesMixin, CNoPVTextFormatterMixin, PyDMLineEdit):
 
