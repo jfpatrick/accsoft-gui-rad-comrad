@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="CStaticPlot" name="CStaticPlot">
+     <property name="plotTitle" stdset="0">
+      <string>Waveform Plot</string>
+     </property>
+     <property name="showLegend" stdset="0">
+      <bool>true</bool>
+     </property>
+     <property name="layerIDs" stdset="0">
+      <stringlist/>
+     </property>
+     <property name="axisLabels" stdset="0">
+      <string>{&quot;bottom&quot;: &quot;&quot;, &quot;left&quot;: &quot;&quot;, &quot;right&quot;: &quot;&quot;, &quot;top&quot;: &quot;&quot;}</string>
+     </property>
+     <property name="axisRanges" stdset="0">
+      <string>{&quot;x&quot;: [-0.5, 0.5], &quot;y&quot;: [-1.0, 1.0]}</string>
+     </property>
+     <property name="axisAutoRange" stdset="0">
+      <string>{&quot;x&quot;: true, &quot;y&quot;: false}</string>
+     </property>
+     <property name="curves" stdset="0">
+      <stringlist>
+       <string>{&quot;channel&quot;: &quot;japc://DemoDevice/Acquisition#Curve&quot;, &quot;style&quot;: &quot;Line Graph&quot;, &quot;layer&quot;: &quot;&quot;, &quot;name&quot;: &quot;Waveform Sinus&quot;, &quot;color&quot;: &quot;#ffff7f&quot;, &quot;line_style&quot;: 1, &quot;line_width&quot;: 2, &quot;symbol&quot;: null, &quot;symbol_size&quot;: 10}</string>
+      </stringlist>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>CStaticPlot</class>
+   <extends>QGraphicsView</extends>
+   <header>comrad.widgets.graphs</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

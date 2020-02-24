@@ -6,7 +6,9 @@ import copy
 import functools
 import logging
 import pyqtgraph as pg
+import numpy as np
 from enum import Enum
+import collections
 from typing import cast, Type, Optional, Union, List, Dict, Iterable, Any
 from collections import OrderedDict
 from qtpy.QtWidgets import QWidget
@@ -132,8 +134,30 @@ class PyDMChannelDataSource(accgraph.UpdateSource):
         """
         value = self._to_list_and_check_value_change(value)
         if value is not None:
-            envelope = self._transform(value)
+            if self._should_unwrap(value):
+                envelope = self._transform(*value)
+            else:
+                envelope = self._transform(value)
             self.sig_new_data[self._data_type_to_emit].emit(envelope)
+
+    def _should_unwrap(self, value: Any) -> bool:
+        """
+        Check if the value should be unwrapped for the transformation function.
+        This is the case if the value is a list of multiple value which each
+        being a separate parrameter for the transformation function.
+
+        Args:
+            value: value that will be passed to the transformation function
+
+        Returns:
+            True, if the values should be passed to the transform function
+            unwrapped
+        """
+        if isinstance(value, collections.Sequence) and not isinstance(value, str):
+            if self._data_type_to_emit.is_collection:
+                return isinstance(value[0], collections.Sequence) and not isinstance(value, str)
+            return True
+        return False
 
     def _to_list_and_check_value_change(
             self,
@@ -152,11 +176,15 @@ class PyDMChannelDataSource(accgraph.UpdateSource):
         Returns:
              Values as a list or None, if the values have been received before.
         """
-        if value is None or (isinstance(value, (tuple, list)) and len(value) == 0):
-            logger.warning(f'Data {value} could not be properly interpreted and will be dropped.')
+        if value is None or (isinstance(value, collections.Sized) and len(value) == 0):
+            # logger.info(f'Data {value} could not be properly interpreted and will be dropped.')
             return None
-        if value == self._last_value:
-            return None
+        if self._last_value is not None:
+            if isinstance(value, np.ndarray) and isinstance(self._last_value, np.ndarray):
+                if np.array_equal(value, self._last_value):
+                    return None
+            elif value == self._last_value:
+                return None
         if isinstance(value, (int, float)):
             value = [value]
         if isinstance(value, tuple):
@@ -860,12 +888,12 @@ class CItemPropertiesBase(metaclass=abc.ABCMeta):
             self._line_style = new_style
 
     @property
-    def line_width(self) -> int:
+    def line_width(self) -> Union[float, int]:
         """Return the width of the line connecting the data points."""
         return getattr(self, '_line_width', 1)
 
     @line_width.setter
-    def line_width(self, new_width: int) -> None:
+    def line_width(self, new_width: Union[float, int]) -> None:
         """Set the width of the line connecting the data points."""
         if new_width >= 0:
             self._line_width = new_width
@@ -911,10 +939,10 @@ class CCurvePropertiesBase(CItemPropertiesBase):
 
     def __init__(self):
         CItemPropertiesBase.__init__(self)
-        if not isinstance(self, accgraph.LivePlotCurve):
+        if not isinstance(self, accgraph.AbstractBasePlotCurve):
             logger.warning(
                 f'{CCurvePropertiesBase.__name__} implementation relies '
-                f'on attributes provided by {accgraph.LivePlotCurve.__name__}. '
+                f'on attributes provided by {accgraph.AbstractBasePlotCurve.__name__}. '
                 f'Use {CCurvePropertiesBase.__name__} only as base class '
                 f'of classes derived from {accgraph.LivePlotCurve.__name__}.',
             )
@@ -994,11 +1022,11 @@ class CCurvePropertiesBase(CItemPropertiesBase):
             self.pen.setStyle(line_style)
 
     @property
-    def line_width(self) -> int:
+    def line_width(self) -> Union[float, int]:
         return self.pen.width()
 
     @line_width.setter
-    def line_width(self, line_width: int) -> None:
+    def line_width(self, line_width: Union[float, int]) -> None:
         self.pen.setWidth(int(line_width))
 
     @property
@@ -1040,10 +1068,10 @@ class CBarGraphPropertiesBase(CItemPropertiesBase):
 
     def __init__(self):
         CItemPropertiesBase.__init__(self)
-        if not isinstance(self, accgraph.LiveBarGraphItem):
+        if not isinstance(self, accgraph.AbstractBaseBarGraphItem):
             logger.warning(
                 f'{CBarGraphPropertiesBase.__name__} implementation relies '
-                f'on attributes provided by {accgraph.LiveBarGraphItem.__name__}. '
+                f'on attributes provided by {accgraph.AbstractBaseBarGraphItem.__name__}. '
                 f'Use {CBarGraphPropertiesBase.__name__} only as base class '
                 f'of classes derived from {accgraph.LiveBarGraphItem.__name__}.',
             )
@@ -1105,11 +1133,11 @@ class CBarGraphPropertiesBase(CItemPropertiesBase):
             cast(pg.BarGraphItem, self).setOpts(brush=pg.mkBrush(new_color), pen=None)
 
     @property
-    def line_width(self) -> int:
+    def line_width(self) -> Union[float, int]:
         return self._fixed_bar_width
 
     @line_width.setter
-    def line_width(self, line_width: int) -> None:
+    def line_width(self, line_width: Union[float, int]) -> None:
         if line_width >= 0:
             self._fixed_bar_width = line_width
 
@@ -1134,10 +1162,10 @@ class CInjectionBarGraphPropertiesBase(CItemPropertiesBase):
 
     def __init__(self):
         CItemPropertiesBase.__init__(self)
-        if not isinstance(self, accgraph.LiveInjectionBarGraphItem):
+        if not isinstance(self, accgraph.AbstractBaseInjectionBarGraphItem):
             logger.warning(
                 f'{CInjectionBarGraphPropertiesBase.__name__} implementation relies '
-                f'on attributes provided by {accgraph.LiveInjectionBarGraphItem.__name__}. '
+                f'on attributes provided by {accgraph.AbstractBaseInjectionBarGraphItem.__name__}. '
                 f'Use {CInjectionBarGraphPropertiesBase.__name__} only as base class '
                 f'of classes derived from {accgraph.LiveInjectionBarGraphItem.__name__}.',
             )
@@ -1190,11 +1218,11 @@ class CInjectionBarGraphPropertiesBase(CItemPropertiesBase):
             self.pen.setColor(new_color)
 
     @property
-    def line_width(self) -> int:
+    def line_width(self) -> Union[float, int]:
         return self.pen.width()
 
     @line_width.setter
-    def line_width(self, line_width: int) -> None:
+    def line_width(self, line_width: Union[float, int]) -> None:
         self.pen.setWidth(int(line_width))
 
 
@@ -1217,10 +1245,10 @@ class CTimestampMarkerPropertiesBase(CItemPropertiesBase):
 
     def __init__(self):
         CItemPropertiesBase.__init__(self)
-        if not isinstance(self, accgraph.LiveTimestampMarker):
+        if not isinstance(self, accgraph.AbstractBaseTimestampMarker):
             logger.warning(
                 f'{CTimestampMarkerPropertiesBase.__name__} implementation relies '
-                f'on attributes provided by {accgraph.LiveTimestampMarker.__name__}. '
+                f'on attributes provided by {accgraph.AbstractBaseTimestampMarker.__name__}. '
                 f'Use {CTimestampMarkerPropertiesBase.__name__} only as base class '
                 f'of classes derived from {accgraph.LiveTimestampMarker.__name__}.',
             )
@@ -1232,11 +1260,11 @@ class CTimestampMarkerPropertiesBase(CItemPropertiesBase):
     # Functions implemented from superclass
 
     @property
-    def line_width(self) -> int:
+    def line_width(self) -> Union[float, int]:
         return self.opts.get('pen_width', 0)
 
     @line_width.setter
-    def line_width(self, line_width: int) -> None:
+    def line_width(self, line_width: Union[float, int]) -> None:
         self.opts['pen_width'] = line_width
 
 
@@ -1585,6 +1613,226 @@ class CCyclicPlot(CPlotWidgetBase, accgraph.CyclicPlotWidget):
         )
         CPlotWidgetBase.__init__(self)
 
+
+# ~~~~~~~~~~~~~~~~~~~~~ Static Plot ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+class CStaticCurve(accgraph.StaticPlotCurve, CCurvePropertiesBase):
+
+    def __init__(
+            self,
+            plot_item: accgraph.ExPlotItem,
+            data_model: Union[accgraph.LiveCurveDataModel, accgraph.UpdateSource],
+            color: Optional[str] = None,
+            line_width: Optional[int] = None,
+            line_style: Optional[int] = None,
+            **kwargs,
+    ):
+        """
+        Static Curve for a static plot widget that
+        receives its data through a :class:`~pydm.widgets.channel.PyDMChannel`.
+
+        Args:
+            plot_item: plot item that the item will be added to
+            data_model: Either an Update Source or a already initialized data
+                        model
+            color: color for the item
+            line_width: thickness of the lines of the item
+            line_style: style of the lines of them item
+            kwargs: further keyword arguments for the base class
+        """
+        accgraph.StaticPlotCurve.__init__(
+            self,
+            plot_item=plot_item,
+            data_model=data_model,
+            pen=color,
+            lineWidth=line_width,
+            lineStyle=line_style,
+            **kwargs,
+        )
+        CCurvePropertiesBase.__init__(self)
+        CCurvePropertiesBase.initialize_style_properties(
+            self,
+            color=color,
+            line_style=line_style,
+            line_width=line_width,
+        )
+
+
+class CStaticBarGraph(accgraph.StaticBarGraphItem, CBarGraphPropertiesBase):
+
+    def __init__(
+            self,
+            plot_item: accgraph.ExPlotItem,
+            data_model: Union[accgraph.LiveBarGraphItem, accgraph.UpdateSource],
+            color: Optional[str] = None,
+            line_width: Optional[int] = None,
+            line_style: Optional[int] = None,
+            **kwargs,
+    ):
+        """
+        Static bar graph item for a static plot widget that
+        receives its data through a :class:`~pydm.widgets.channel.PyDMChannel`.
+
+        Args:
+            plot_item: plot item that the item will be added to
+            data_model: Either an Update Source or a already initialized data
+                        model
+            color: color for the item
+            line_width: thickness of the lines of the item
+            line_style: will have no visual effect, this parameter
+                        exists just for saving it between different
+                        plotting items to not loose it
+            kwargs: further keyword arguments for the base class
+        """
+        if line_width is not None:
+            kwargs['width'] = line_width
+        accgraph.StaticBarGraphItem.__init__(
+            self,
+            plot_item=plot_item,
+            data_model=data_model,
+            **kwargs,
+        )
+        CBarGraphPropertiesBase.__init__(self)
+        CBarGraphPropertiesBase.initialize_style_properties(
+            self,
+            color=color,
+            line_style=line_style,
+            line_width=line_width,
+        )
+
+
+class CStaticInjectionBarGraph(accgraph.StaticInjectionBarGraphItem,
+                               CInjectionBarGraphPropertiesBase):
+
+    def __init__(
+            self,
+            plot_item: accgraph.ExPlotItem,
+            data_model: Union[accgraph.LiveInjectionBarDataModel, accgraph.UpdateSource],
+            color: Optional[str] = None,
+            line_width: Optional[int] = None,
+            line_style: Optional[int] = None,
+            **kwargs,
+    ):
+        """
+        Static injection bar graph for a static plot widget
+        that receives its data through a :class:`~pydm.widgets.channel.PyDMChannel`.
+
+        Args:
+            plot_item: plot item that the item will be added to
+            data_model: Either an Update Source or a already initialized data
+                        model
+            color: color for the item
+            line_width: thickness of the lines of the item
+            line_style: will have no visual effect, this parameter
+                        exists just for saving it between different
+                        plotting items to not loose it
+            kwargs: further keyword arguments for the base class
+        """
+        accgraph.StaticInjectionBarGraphItem.__init__(
+            self,
+            plot_item=plot_item,
+            data_model=data_model,
+            **kwargs,
+        )
+        CInjectionBarGraphPropertiesBase.__init__(self)
+        CInjectionBarGraphPropertiesBase.initialize_style_properties(
+            self,
+            color=color,
+            line_style=line_style,
+            line_width=line_width,
+        )
+
+
+class CStaticTimestampMarker(accgraph.StaticTimestampMarker,
+                             CTimestampMarkerPropertiesBase):
+
+    def __init__(
+            self,
+            plot_item: accgraph.ExPlotItem,
+            data_model: Union[accgraph.LiveTimestampMarkerDataModel, accgraph.UpdateSource],
+            color: Optional[str] = None,
+            line_width: Optional[int] = None,
+            line_style: Optional[int] = None,
+            **kwargs,
+    ):
+        """
+        Static timestamp markers for a static plot widget that
+        receives its data through a :class:`~pydm.widgets.channel.PyDMChannel`.
+
+        Args:
+            plot_item: plot item that the item will be added to
+            data_model: Either an Update Source or a already initialized data
+                        model
+            color: will have no visual effect, this parameter
+                   exists just for saving it between different
+                   plotting items to not loose it
+            line_width: thickness of the lines of the item
+            line_style: will have no visual effect, this parameter
+                        exists just for saving it between different
+                        plotting items to not loose it
+            kwargs: further keyword arguments for the base class
+        """
+        accgraph.StaticTimestampMarker.__init__(
+            self,
+            plot_item=plot_item,
+            data_model=data_model,
+            **kwargs,
+        )
+        CTimestampMarkerPropertiesBase.__init__(self)
+        CTimestampMarkerPropertiesBase.initialize_style_properties(
+            self,
+            color=color,
+            line_style=line_style,
+            line_width=line_width,
+        )
+
+
+class CStaticPlot(CPlotWidgetBase, accgraph.StaticPlotWidget):
+
+    ITEM_TYPES: OrderedDict = OrderedDict([
+        (PlottingItemTypes.LINE_GRAPH.value, CStaticCurve),
+        (PlottingItemTypes.BAR_GRAPH.value, CStaticBarGraph),
+        (PlottingItemTypes.INJECTION_BAR_GRAPH.value, CStaticInjectionBarGraph),
+        (PlottingItemTypes.TIMESTAMP_MARKERS.value, CStaticTimestampMarker),
+    ])
+
+    _SOURCE_EMIT_TYPE: OrderedDict = OrderedDict([
+        (PlottingItemTypes.LINE_GRAPH.value, accgraph.CurveData),
+        (PlottingItemTypes.BAR_GRAPH.value, accgraph.BarCollectionData),
+        (PlottingItemTypes.INJECTION_BAR_GRAPH.value, accgraph.InjectionBarCollectionData),
+        (PlottingItemTypes.TIMESTAMP_MARKERS.value, accgraph.TimestampMarkerCollectionData),
+    ])
+
+    def __init__(
+            self,
+            parent: QWidget = None,
+            background: str = 'default',
+            axis_items: Optional[Dict[str, pg.AxisItem]] = None,
+            **plotitem_kwargs,
+    ):
+        """
+        Plot widget for displaying static items. Static means in this case,
+        that the plot itself is not moving its view anywhere (other than with
+        live data plots). Example items that are suitable for this plot are
+        waveform curves.
+
+        Args:
+            parent: parent widget for this plot
+            background: background color for the plot widget
+            axis_items: mapping of positions in the plot ('left', 'right', ...)
+                        to axis items which should be used
+            plotitem_kwargs: Further Keyword arguments for the plot item base
+                             class
+        """
+        accgraph.StaticPlotWidget.__init__(
+            self,
+            parent=parent,
+            background=background,
+            axis_items=axis_items,
+            **plotitem_kwargs,
+        )
+        CPlotWidgetBase.__init__(self)
 
 # TODO: Make available when proven useful
 # class CImageView(CWidgetRulesMixin, CCustomizedTooltipMixin, CHideUnusedFeaturesMixin, PyDMImageView):

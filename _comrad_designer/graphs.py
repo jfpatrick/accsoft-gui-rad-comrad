@@ -103,7 +103,8 @@ class CPlottingItemModel(BasePlotCurvesModel):
         if column_name == ColumnNames.LINE_STYLE.value:
             return self.name_for_line[item.line_style]
         if column_name == ColumnNames.LINE_WIDTH.value:
-            return int(item.line_width)
+            # For defining bar sizes < 1
+            return float(item.line_width)
         if column_name == ColumnNames.SYMBOL.value:
             return self.name_for_symbol[item.symbol]
         if column_name == ColumnNames.SYMBOL_SIZE.value:
@@ -253,7 +254,8 @@ class CPlottingItemModel(BasePlotCurvesModel):
         elif column_name == ColumnNames.LINE_STYLE.value:
             item.line_style = int(value)
         elif column_name == ColumnNames.LINE_WIDTH.value:
-            item.line_width = int(value)
+            # For defining bar sizes < 1
+            item.line_width = float(value)
         elif column_name == ColumnNames.SYMBOL.value:
             if value is None:
                 item.symbol = None
@@ -272,7 +274,7 @@ class CPlottingItemModel(BasePlotCurvesModel):
             name: Optional[str] = None,
             color: Optional[str] = None,
             line_style: Optional[int] = None,
-            line_width: Optional[int] = None,
+            line_width: Union[float, int, None] = None,
             symbol: Optional[str] = None,
             symbol_size: Optional[int] = None,
             layer: Optional[str] = None,
