@@ -8,7 +8,9 @@ from pydm.widgets.slider import PyDMSlider
 from pydm.widgets.spinbox import PyDMSpinbox
 from pydm.widgets.checkbox import PyDMCheckbox
 from pydm.widgets.enum_combo_box import PyDMEnumComboBox
-from accwidgets.property_edit import PropertyEdit, PropertyEditField as _PropertyEditField
+from accwidgets.property_edit import (PropertyEdit, PropertyEditField as _PropertyEditField,
+                                      AbstractPropertyEditLayoutDelegate as _AbstractPropertyEditLayoutDelegate,
+                                      AbstractPropertyEditWidgetDelegate as _AbstractPropertyEditWidgetDelegate)
 from comrad.deprecations import deprecated_parent_prop
 from .mixins import (CHideUnusedFeaturesMixin, CNoPVTextFormatterMixin, CCustomizedTooltipMixin, CRequestingMixin,
                      CValueTransformerMixin, CColorRulesMixin, CWidgetRulesMixin, CInitializedMixin)
@@ -171,6 +173,8 @@ class CSpinBox(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixi
 
 
 CPropertyEditField = _PropertyEditField
+CAbstractPropertyEditLayoutDelegate = _AbstractPropertyEditLayoutDelegate
+CAbstractPropertyEditWidgetDelegate = _AbstractPropertyEditWidgetDelegate
 
 
 class CPropertyEdit(CRequestingMixin, CWidgetRulesMixin, CInitializedMixin, CHideUnusedFeaturesMixin, PropertyEdit, PyDMWritableWidget):
