@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="CCheckBox" name="CCheckBox">
+     <property name="text">
+      <string>Click me!</string>
+     </property>
+     <property name="channel" stdset="0">
+      <string notr="true">japc:///DemoDevice/Settings#BoolVal</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="CLed" name="CLed_2">
+     <property name="channel" stdset="0">
+      <string notr="true">japc:///DemoDevice/Settings#IntVal</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="CLed" name="CLed">
+     <property name="channel" stdset="0">
+      <string notr="true">japc:///DemoDevice/Settings#BoolVal</string>
+     </property>
+     <property name="offColor" stdset="0">
+      <color>
+       <red>204</red>
+       <green>0</green>
+       <blue>0</blue>
+      </color>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="CEnumComboBox" name="CEnumComboBox">
+     <property name="channel" stdset="0">
+      <string notr="true">japc:///DemoDevice/Settings#IntVal</string>
+     </property>
+     <item>
+      <property name="text">
+       <string>NONE</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>ON</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>OFF</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>WARNING</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>ERROR</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PyDMCheckbox</class>
+   <extends>QCheckBox</extends>
+   <header>pydm.widgets.checkbox</header>
+  </customwidget>
+  <customwidget>
+   <class>PyDMEnumComboBox</class>
+   <extends>QComboBox</extends>
+   <header>pydm.widgets.enum_combo_box</header>
+  </customwidget>
+  <customwidget>
+   <class>CCheckBox</class>
+   <extends>PyDMCheckbox</extends>
+   <header>comrad.widgets.inputs</header>
+  </customwidget>
+  <customwidget>
+   <class>CEnumComboBox</class>
+   <extends>PyDMEnumComboBox</extends>
+   <header>comrad.widgets.inputs</header>
+  </customwidget>
+  <customwidget>
+   <class>CLed</class>
+   <extends>QWidget</extends>
+   <header>comrad.widgets.indicators</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

@@ -286,17 +286,17 @@ class CColorRulesMixin(CWidgetRulesMixin):
 
     def __init__(self):
         """Mixing that introduces color rule on top of the standard rules."""
-        self._color = None
+        self.__color = None
 
-    def color(self) -> str:
+    def rule_color(self) -> str:
         """
         Hexadecimal color in ``#XXXXXX`` format.
 
         Returns:
             color
         """
-        return self._color
+        return self.__color
 
     def set_color(self, val: str):
         """ Set new color. Val is assumed to be ``#XXXXXX`` string here. """
-        self._color = val
+        self.__color = val

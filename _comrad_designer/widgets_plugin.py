@@ -8,6 +8,7 @@ signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 import functools
 import accwidgets.property_edit.designer
+import accwidgets.led.designer
 from pathlib import Path
 from typing import List
 from qtpy.QtWidgets import QAction, QWidget
@@ -22,7 +23,7 @@ from accwidgets.property_edit.designer.designer_extensions import PropertyFieldE
 from comrad import (CScrollingPlot, CCyclicPlot, CStaticPlot, CValueAggregator, CCommandButton, CScaleIndicator, CLogDisplay,
                     CEnumComboBox, CSlider, CSpinBox, CLabel, CByteIndicator, CLineEdit, CTemplateRepeater,
                     CEmbeddedDisplay, CShellCommand, CRelatedDisplayButton, CPushButton, CEnumButton, CCheckBox,
-                    CPropertyEdit)
+                    CPropertyEdit, CLed)
 from comrad.icons import icon
 from _comrad_designer.utils import qtplugin_factory
 from _comrad_designer.rules_editor import RulesEditor
@@ -105,6 +106,7 @@ _CByteIndicator = qtplugin_factory(CByteIndicator, group=_COMRAD_GROUP_DISPLAY, 
 # _CImageView = qtplugin_factory(CImageView, group=_COMRAD_GROUP_DISPLAY, icon=_load_icon('image_view'), extensions=_BASE_EXTENSIONS)
 _CLogDisplay = qtplugin_factory(CLogDisplay, group=_COMRAD_GROUP_DISPLAY, icon=_load_icon('log_viewer'), extensions=_BASE_EXTENSIONS)
 _CScaleIndicator = qtplugin_factory(CScaleIndicator, group=_COMRAD_GROUP_DISPLAY, icon=_load_icon('scale_indicator'), extensions=_BASE_EXTENSIONS)
+_CEnumLed = qtplugin_factory(CLed, group=_COMRAD_GROUP_DISPLAY, icon=icon('Led', file_path=Path(accwidgets.led.designer.__file__)), extensions=_BASE_EXTENSIONS)
 
 # Charts
 _CScrollingPlot = qtplugin_factory(CScrollingPlot, group=_COMRAD_GROUP_PLOT, icon=_load_icon('graph_scrolling_plot'), extensions=_PLOT_EXTENSIONS)
