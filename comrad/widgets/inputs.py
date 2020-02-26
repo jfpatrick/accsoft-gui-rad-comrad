@@ -1,6 +1,6 @@
 import logging
-from typing import Optional, Dict, Any
-from qtpy.QtWidgets import QWidget
+from typing import Optional, Dict, Any, cast, Tuple
+from qtpy.QtWidgets import QWidget, QLabel, QComboBox
 from qtpy.QtCore import Property, QVariant, Signal, Slot
 from pydm.widgets.base import PyDMWritableWidget
 from pydm.widgets.line_edit import PyDMLineEdit
@@ -11,6 +11,9 @@ from pydm.widgets.enum_combo_box import PyDMEnumComboBox
 from accwidgets.property_edit import (PropertyEdit, PropertyEditField as _PropertyEditField,
                                       AbstractPropertyEditLayoutDelegate as _AbstractPropertyEditLayoutDelegate,
                                       AbstractPropertyEditWidgetDelegate as _AbstractPropertyEditWidgetDelegate)
+from accwidgets.property_edit.propedit import PropertyEditWidgetDelegate as _PropertyEditWidgetDelegate
+from accwidgets.led import Led
+from comrad.widgets.indicators import CLed, _JapcEnum
 from comrad.deprecations import deprecated_parent_prop
 from .mixins import (CHideUnusedFeaturesMixin, CNoPVTextFormatterMixin, CCustomizedTooltipMixin, CRequestingMixin,
                      CValueTransformerMixin, CColorRulesMixin, CWidgetRulesMixin, CInitializedMixin)
@@ -198,6 +201,7 @@ class CPropertyEdit(CRequestingMixin, CWidgetRulesMixin, CInitializedMixin, CHid
         PropertyEdit.__init__(self, parent=parent, title=title)
         PyDMWritableWidget.__init__(self, init_channel=init_channel)
         self._alarm_sensitive_border = False
+        self.widget_delegate = CPropertyEditWidgetDelegate()
         self.valueUpdated.connect(self.send_value_signal[QVariant].emit)
         self.valueRequested.connect(self.request_data)
 
@@ -228,3 +232,29 @@ class CPropertyEdit(CRequestingMixin, CWidgetRulesMixin, CInitializedMixin, CHid
         PropertyEdit.buttons.fset(self, new_val)
         disable_subscribe = bool(new_val & PropertyEdit.Buttons.GET)
         self.connect_value_slot = not disable_subscribe
+
+
+class CPropertyEditWidgetDelegate(_PropertyEditWidgetDelegate):
+    """
+    Subclass to make sure that tuple-based enums with meaning can be represented correctly by inner LEDs.
+    """
+    def display_data(self,
+                     field_id: str,
+                     value: Any,
+                     user_data: Optional[Dict[str, Any]],
+                     item_type: PropertyEdit.ValueType,
+                     widget: QWidget):
+        if isinstance(value, tuple) and len(value) == 4:  # Enum tuples
+            if isinstance(widget, Led) and item_type == PropertyEdit.ValueType.BOOLEAN:
+                try:
+                    value = CLed.meaning_to_status(cast(_JapcEnum, value))
+                except ValueError:
+                    return
+            elif item_type == PropertyEdit.ValueType.ENUM:
+                if isinstance(widget, QLabel) or isinstance(widget, QComboBox):
+                    value = value[0]  # Communicate the code to the widget, which will choose the correct text
+        super().display_data(field_id=field_id,
+                             value=value,
+                             user_data=user_data,
+                             item_type=item_type,
+                             widget=widget)

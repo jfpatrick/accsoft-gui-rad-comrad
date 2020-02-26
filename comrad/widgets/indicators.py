@@ -223,18 +223,11 @@ class CLed(CColorRulesMixin, CValueTransformerMixin, CInitializedMixin, CHideUnu
                 status = Led.Status(new_val)
             except ValueError:
                 pass
-        elif isinstance(new_val, tuple) and len(new_val) == 4:
-            orig_status = cast(_JapcEnum, new_val)[2]
-            if orig_status == SimpleValueStandardMeaning.NONE:
-                status = Led.Status.NONE
-            elif orig_status == SimpleValueStandardMeaning.ON:
-                status = Led.Status.ON
-            elif orig_status == SimpleValueStandardMeaning.OFF:
-                status = Led.Status.OFF
-            elif orig_status == SimpleValueStandardMeaning.WARNING:
-                status = Led.Status.WARNING
-            elif orig_status == SimpleValueStandardMeaning.ERROR:
-                status = Led.Status.ERROR
+        else:
+            try:
+                status = CLed.meaning_to_status(new_val)
+            except ValueError:
+                pass
 
         if color is None and status is None:
             return
@@ -267,3 +260,32 @@ class CLed(CColorRulesMixin, CValueTransformerMixin, CInitializedMixin, CHideUnu
     @status.setter  # type: ignore
     def status(self, new_val: Led.Status):
         Led._set_status(self, new_val)
+
+    @staticmethod
+    def meaning_to_status(new_val: _JapcEnum) -> Led.Status:
+        """
+        Recognizes and extracts meaning flag from product of japc_plugin and then converts it to status
+        understandable by :class:`~accwidgets.led.Led`.
+
+        Args:
+            new_val: Incoming JAPC value. Should be enum type, but it's safe to pass anything else as well.
+
+        Returns:
+            Status corresponding to the meaning.
+
+        Raises:
+            ValueError: If value is not a tuple of expected shape or the value is not recognized.
+        """
+        if isinstance(new_val, tuple) and len(new_val) == 4:
+            orig_status = cast(_JapcEnum, new_val)[2]
+            if orig_status == SimpleValueStandardMeaning.NONE:
+                return Led.Status.NONE
+            elif orig_status == SimpleValueStandardMeaning.ON:
+                return Led.Status.ON
+            elif orig_status == SimpleValueStandardMeaning.OFF:
+                return Led.Status.OFF
+            elif orig_status == SimpleValueStandardMeaning.WARNING:
+                return Led.Status.WARNING
+            elif orig_status == SimpleValueStandardMeaning.ERROR:
+                return Led.Status.ERROR
+        raise ValueError(f'Cannot extract enum meaning from value {new_val}')
