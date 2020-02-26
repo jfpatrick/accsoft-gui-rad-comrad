@@ -8,21 +8,22 @@ Widgets
     cbyteindicator
     ccheckbox
     ccommandbutton
+    cdisplay
     cembeddeddisplay
     cenumbutton
     cenumcombobox
     clabel
+    cled
     clineedit
     clogdisplay
+    cpropertyedit
     cpushbutton
     crelateddisplaybutton
     cscaleindicator
     cshellcommand
     cslider
     cspinbox
-    cpropertyedit
     ctemplaterepeater
     cvalueaggregator
-    cdisplay
     graphs/module
     mixins/module
