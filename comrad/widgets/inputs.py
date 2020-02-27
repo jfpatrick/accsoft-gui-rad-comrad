@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Dict, Any, cast, Tuple
+from typing import Optional, Dict, Any, cast
 from qtpy.QtWidgets import QWidget, QLabel, QComboBox
 from qtpy.QtCore import Property, QVariant, Signal, Slot
 from pydm.widgets.base import PyDMWritableWidget
