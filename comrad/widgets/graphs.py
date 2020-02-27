@@ -134,30 +134,11 @@ class PyDMChannelDataSource(accgraph.UpdateSource):
         """
         value = self._to_list_and_check_value_change(value)
         if value is not None:
-            if self._should_unwrap(value):
+            if accgraph.PlottingItemDataFactory.should_unwrap(value, self._data_type_to_emit):
                 envelope = self._transform(*value)
             else:
                 envelope = self._transform(value)
             self.sig_new_data[self._data_type_to_emit].emit(envelope)
-
-    def _should_unwrap(self, value: Any) -> bool:
-        """
-        Check if the value should be unwrapped for the transformation function.
-        This is the case if the value is a list of multiple value which each
-        being a separate parrameter for the transformation function.
-
-        Args:
-            value: value that will be passed to the transformation function
-
-        Returns:
-            True, if the values should be passed to the transform function
-            unwrapped
-        """
-        if isinstance(value, collections.Sequence) and not isinstance(value, str):
-            if self._data_type_to_emit.is_collection:
-                return isinstance(value[0], collections.Sequence) and not isinstance(value, str)
-            return True
-        return False
 
     def _to_list_and_check_value_change(
             self,
