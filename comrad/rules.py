@@ -20,6 +20,7 @@ from pydm.data_plugins.plugin import PyDMPlugin, PyDMConnection
 from pydm.utilities import is_qt_designer
 from pydm import config
 from comrad.json import CJSONSerializable, CJSONDeserializeError
+from comrad.data.channel import CChannelData
 from .monkey import modify_in_place, MonkeyPatchedClass
 
 
@@ -488,13 +489,17 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
         elif isinstance(rule_obj, CNumRangeRule):
             from comrad.widgets.mixins import CWidgetRulesMixin
             _, base_type = cast(CWidgetRulesMixin, widget_ref()).RULE_PROPERTIES[rule_obj.prop]
-            val = float(job_unit['values'][0])
-            for range in rule_obj.ranges:
-                if range.min_val <= val < range.max_val:
-                    notify_value(base_type(range.prop_val))
-                    break
-            else:
+            packet = cast(CChannelData[Any], job_unit['values'][0])
+            if not isinstance(packet, CChannelData):
                 notify_value(None)
+            else:
+                val = float(packet.value)
+                for range in rule_obj.ranges:
+                    if range.min_val <= val < range.max_val:
+                        notify_value(base_type(range.prop_val))
+                        break
+                else:
+                    notify_value(None)
             return
         else:
             logger.exception(f'Unsupported rule type: {type(rule_obj).__name__}')

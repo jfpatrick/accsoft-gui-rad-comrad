@@ -1,7 +1,7 @@
 import logging
-from typing import Optional, Dict, Any, cast
+from typing import Optional, Dict, Any, cast, Union
 from qtpy.QtWidgets import QWidget, QLabel, QComboBox
-from qtpy.QtCore import Property, QVariant, Signal, Slot
+from qtpy.QtCore import Property, QVariant, Signal
 from pydm.widgets.base import PyDMWritableWidget
 from pydm.widgets.line_edit import PyDMLineEdit
 from pydm.widgets.slider import PyDMSlider
@@ -13,10 +13,13 @@ from accwidgets.property_edit import (PropertyEdit, PropertyEditField as _Proper
                                       AbstractPropertyEditWidgetDelegate as _AbstractPropertyEditWidgetDelegate)
 from accwidgets.property_edit.propedit import PropertyEditWidgetDelegate as _PropertyEditWidgetDelegate
 from accwidgets.led import Led
-from comrad.widgets.indicators import CLed, _JapcEnum
+from comrad.widgets.indicators import CLed
+from comrad.data.japc_enum import JapcEnum
+from comrad.data.channel import CChannelData
 from comrad.deprecations import deprecated_parent_prop
 from .mixins import (CHideUnusedFeaturesMixin, CNoPVTextFormatterMixin, CCustomizedTooltipMixin, CRequestingMixin,
-                     CValueTransformerMixin, CColorRulesMixin, CWidgetRulesMixin, CInitializedMixin)
+                     CValueTransformerMixin, CColorRulesMixin, CWidgetRulesMixin, CInitializedMixin,
+                     CChannelDataProcessingMixin)
 
 
 logger = logging.getLogger(__name__)
@@ -37,8 +40,8 @@ class CCheckBox(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTooltipMix
         CCustomizedTooltipMixin.__init__(self)
         CInitializedMixin.__init__(self)
         CHideUnusedFeaturesMixin.__init__(self)
-        PyDMCheckbox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         CValueTransformerMixin.__init__(self)
+        PyDMCheckbox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         self._widget_initialized = True
 
     def init_for_designer(self):
@@ -67,27 +70,25 @@ class CEnumComboBox(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedToolti
         CCustomizedTooltipMixin.__init__(self)
         CInitializedMixin.__init__(self)
         CHideUnusedFeaturesMixin.__init__(self)
-        PyDMEnumComboBox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         CValueTransformerMixin.__init__(self)
+        PyDMEnumComboBox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         self._widget_initialized = True
 
-    def value_changed(self, new_val: Any):
+    def value_changed(self, packet: CChannelData[Union[str, int, JapcEnum]]):
         """
         Overridden data handler to allow JAPC enums coming as tuples.
 
         Args:
-            new_val: The new value from the channel.
+            packet: The new value from the channel.
         """
-        if isinstance(new_val, tuple):
-            option_name = new_val[1]
-            super().value_changed(option_name)
-        else:
-            super().value_changed(new_val)
+        if not isinstance(packet, CChannelData):
+            return
 
-    @Slot(QVariant)
-    def channelValueChanged(self, new_val: Any):
-        """Overridden method to define custom slot overload."""
-        super().channelValueChanged(new_val)
+        if isinstance(packet.value, tuple) and len(packet.value) > 1:
+            option_name = packet.value[1]
+            packet.value = option_name
+
+        super().value_changed(packet)
 
 
 class CLineEdit(CColorRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixin, CInitializedMixin, CHideUnusedFeaturesMixin, CNoPVTextFormatterMixin, PyDMLineEdit):
@@ -109,8 +110,8 @@ class CLineEdit(CColorRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixi
         CInitializedMixin.__init__(self)
         CHideUnusedFeaturesMixin.__init__(self)
         CNoPVTextFormatterMixin.__init__(self)
-        PyDMLineEdit.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         CValueTransformerMixin.__init__(self)
+        PyDMLineEdit.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         self._widget_initialized = True
 
     def set_color(self, val: str):
@@ -134,13 +135,14 @@ class CSlider(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixin
             init_channel: The channel to be used by the widget.
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
+        CChannelDataProcessingMixin.__init__(self)
         CWidgetRulesMixin.__init__(self)
         CCustomizedTooltipMixin.__init__(self)
         CInitializedMixin.__init__(self)
         CHideUnusedFeaturesMixin.__init__(self)
         CNoPVTextFormatterMixin.__init__(self)
-        PyDMSlider.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         CValueTransformerMixin.__init__(self)
+        PyDMSlider.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         self._user_defined_limits = True
         self._widget_initialized = True
 
@@ -162,13 +164,14 @@ class CSpinBox(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixi
             init_channel: The channel to be used by the widget.
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
+        CChannelDataProcessingMixin.__init__(self)
         CWidgetRulesMixin.__init__(self)
         CCustomizedTooltipMixin.__init__(self)
         CInitializedMixin.__init__(self)
         CHideUnusedFeaturesMixin.__init__(self)
         CNoPVTextFormatterMixin.__init__(self)
-        PyDMSpinbox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         CValueTransformerMixin.__init__(self)
+        PyDMSpinbox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         self._widget_initialized = True
 
 
@@ -177,7 +180,7 @@ CAbstractPropertyEditLayoutDelegate = _AbstractPropertyEditLayoutDelegate
 CAbstractPropertyEditWidgetDelegate = _AbstractPropertyEditWidgetDelegate
 
 
-class CPropertyEdit(CRequestingMixin, CWidgetRulesMixin, CInitializedMixin, CHideUnusedFeaturesMixin, PropertyEdit, PyDMWritableWidget):
+class CPropertyEdit(CChannelDataProcessingMixin, CRequestingMixin, CWidgetRulesMixin, CInitializedMixin, CHideUnusedFeaturesMixin, PropertyEdit, PyDMWritableWidget):
 
     send_value_signal = Signal(QVariant)
     """Overridden signal to define custom overload."""
@@ -191,6 +194,7 @@ class CPropertyEdit(CRequestingMixin, CWidgetRulesMixin, CInitializedMixin, CHid
             init_channel: The channel to be used by the widget.
             title: Optional title to be displayed when selected style is GroupBox.
         """
+        CChannelDataProcessingMixin.__init__(self)
         CRequestingMixin.__init__(self)
         CWidgetRulesMixin.__init__(self)
         CInitializedMixin.__init__(self)
@@ -202,23 +206,21 @@ class CPropertyEdit(CRequestingMixin, CWidgetRulesMixin, CInitializedMixin, CHid
         self.valueUpdated.connect(self.send_value_signal[QVariant].emit)
         self.valueRequested.connect(self.request_data)
 
-    def value_changed(self, new_val: Dict[str, Any]):
+    def value_changed(self, packet: CChannelData[Dict[str, Any]]):
         """
         Callback invoked when the Channel value is changed.
 
         Args:
-            new_val: The new value from the channel.
+            packet: The new value from the channel.
         """
-        if not isinstance(new_val, dict):
+        if not isinstance(packet, CChannelData):
             return
 
-        super().value_changed(new_val)
-        self.setValue(new_val)
+        if not isinstance(packet.value, dict):
+            return
 
-    @Slot(QVariant)
-    def channelValueChanged(self, new_val: Dict[str, Any]):
-        """Overridden method to define custom slot overload."""
-        super().channelValueChanged(new_val)
+        super().value_changed(packet)
+        self.setValue(packet.value)
 
     @PropertyEdit.buttons.setter
     def buttons(self, new_val: PropertyEdit.Buttons):
@@ -244,7 +246,7 @@ class CPropertyEditWidgetDelegate(_PropertyEditWidgetDelegate):
         if isinstance(value, tuple) and len(value) == 4:  # Enum tuples
             if isinstance(widget, Led) and item_type == PropertyEdit.ValueType.BOOLEAN:
                 try:
-                    value = CLed.meaning_to_status(cast(_JapcEnum, value))
+                    value = CLed.meaning_to_status(cast(JapcEnum, value))
                 except ValueError:
                     return
             elif item_type == PropertyEdit.ValueType.ENUM:

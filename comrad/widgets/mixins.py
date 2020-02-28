@@ -1,7 +1,8 @@
 import json
 import logging
-from typing import Any, List, cast, Union, Dict, Tuple, Callable
-from qtpy.QtCore import Property, Signal
+import copy
+from typing import Any, List, cast, Union, Dict, Tuple, Callable, Optional
+from qtpy.QtCore import Property, Signal, Slot
 from qtpy.QtWidgets import QWidget
 from pydm.utilities import is_qt_designer
 from pydm.widgets.base import PyDMWidget
@@ -9,7 +10,7 @@ from pydm.widgets.rules import RulesDispatcher
 from comrad.rules import CBaseRule, CChannelError, unpack_rules
 from comrad.json import CJSONEncoder, CJSONDeserializeError
 from comrad.deprecations import deprecated_parent_prop
-from comrad.data.channel import CChannel, allow_connections
+from comrad.data.channel import CChannel, allow_connections, CChannelData
 from .value_transform import CValueTransformationBase
 
 
@@ -62,7 +63,7 @@ class CRequestingMixin:
         """Issue a request signal to the control system in order to retrieve data on demand."""
         self.request_signal.emit(self._request_uuid)
 
-    def _on_request_fulfilled(self, value: Any, uuid: str):
+    def _on_request_fulfilled(self, value: Optional[Tuple[Any, Dict[str, Any]]], uuid: str):
         """
         Callback with additional filtering.
         """
@@ -156,11 +157,54 @@ class CCustomizedTooltipMixin:
         cast(QWidget, super()).setToolTip(tooltip.replace('PyDM', 'ComRAD').replace('PV ', 'Device Property '))
 
 
-class CValueTransformerMixin(CValueTransformationBase):
-    """
-    Mixin that introduces :attr:`~comrad.widgets.value_transform.CValueTransformationBase.valueTransformation`
-    property for client-side Python snippets acting on incoming values.
-    """
+class CChannelDataProcessingMixin:
+
+    def __init__(self):
+        """
+        Mixing that allows PyDM-derived widgets to work with updated
+        channels that use :class:`~comrad.data.channel.CChannelData`.
+        """
+        self.header: Optional[Dict[str, Any]] = None
+
+    def value_changed(self, packet: CChannelData[Any]):
+        """
+        Overridden method to treat the incoming value with the header.
+
+        Args:
+            packet: New value from the channel.
+        """
+        if not isinstance(packet, CChannelData):
+            new_val = None
+        else:
+            self.header = packet.meta_info
+            new_val = packet.value
+
+        # Down to PyDM level, where widgets only expect actual data
+        super().value_changed(new_val)  # type: ignore
+
+    @Slot(CChannelData)
+    def channelValueChanged(self, packet: CChannelData[Any]):
+        """
+        Define slot override for tuples.
+
+        Args:
+            packet: New value from the channel.
+        """
+        if not isinstance(packet, CChannelData):
+            return
+
+        self.value_changed(packet)
+
+
+class CValueTransformerMixin(CChannelDataProcessingMixin, CValueTransformationBase):
+
+    def __init__(self):
+        """
+        Mixin that introduces :attr:`~comrad.widgets.value_transform.CValueTransformationBase.valueTransformation`
+        property for client-side Python snippets acting on incoming values.
+        """
+        CChannelDataProcessingMixin.__init__(self)
+        CValueTransformationBase.__init__(self)
 
     def getValueTransformation(self) -> str:
         return CValueTransformationBase.getValueTransformation(self)
@@ -176,21 +220,29 @@ class CValueTransformerMixin(CValueTransformationBase):
             CValueTransformationBase.setValueTransformation(self, str(new_formatter))
             self.value_changed(self.value)  # type: ignore   # This is coming from PyDMWidget
 
-    def value_changed(self, new_val: Any) -> None:
+    def value_changed(self, packet: CChannelData[Any]) -> None:
         """
         Callback transforms the channel value through the
         :attr:`~comrad.widgets.value_transform.CValueTransformationBase.valueTransformation`
         code before displaying it in a standard way.
 
         Args:
-            new_val: The new value from the channel. The type depends on the channel.
+            packet: The new value from the channel. The type depends on the channel.
         """
-        if is_qt_designer():
-            val = new_val  # Avoid code evaluation in Designer, as it can produce unnecessary errors with broken code
+        if is_qt_designer() or not isinstance(packet, CChannelData):
+            # Avoid code evaluation in Designer, as it can produce unnecessary errors with broken code
+            super().value_changed(None)  # type: ignore
+            return
+
+        transform = self.cached_value_transformation()
+        if transform:
+            new_val = transform(new_val=packet.value, header=packet.meta_info, widget=self)
+            # Need a copy here, otherwise running transform on the same packet twice can happen
+            new_packet = copy.copy(packet)
+            new_packet.value = new_val
+            super().value_changed(new_packet)
         else:
-            transform = self.cached_value_transformation()
-            val = transform(new_val=new_val, widget=self) if transform else new_val
-        super().value_changed(val)  # type: ignore
+            super().value_changed(packet)
 
 
 class CWidgetRulesMixin:

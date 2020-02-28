@@ -16,3 +16,4 @@ from .widgets.tables import *
 from .widgets.inputs import *
 from .app.application import *
 from .app.plugins import *
+from .data.channel import CChannelData

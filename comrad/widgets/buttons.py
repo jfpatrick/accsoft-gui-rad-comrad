@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Union, Any
+from typing import Optional, Union
 from pydm.widgets.base import PyDMWritableWidget
 from pydm.widgets.pushbutton import PyDMPushButton
 from pydm.widgets.related_display_button import PyDMRelatedDisplayButton
@@ -7,15 +7,18 @@ from pydm.widgets.shell_command import PyDMShellCommand
 from pydm.widgets.enum_button import PyDMEnumButton
 from qtpy.QtWidgets import QWidget, QPushButton
 from qtpy.QtGui import QIcon
-from qtpy.QtCore import Signal, Property, Slot, QVariant
+from qtpy.QtCore import Signal, Property
 from comrad.deprecations import deprecated_parent_prop
-from .mixins import CHideUnusedFeaturesMixin, CCustomizedTooltipMixin, CValueTransformerMixin, CWidgetRulesMixin, CInitializedMixin
+from comrad.data.channel import CChannelData
+from comrad.data.japc_enum import JapcEnum
+from .mixins import (CHideUnusedFeaturesMixin, CCustomizedTooltipMixin, CValueTransformerMixin,
+                     CWidgetRulesMixin, CInitializedMixin, CChannelDataProcessingMixin)
 
 
 logger = logging.getLogger(__name__)
 
 
-class CPushButton(CWidgetRulesMixin, CCustomizedTooltipMixin, CInitializedMixin, CHideUnusedFeaturesMixin, PyDMPushButton):
+class CPushButton(CChannelDataProcessingMixin, CWidgetRulesMixin, CCustomizedTooltipMixin, CInitializedMixin, CHideUnusedFeaturesMixin, PyDMPushButton):
 
     def __init__(self,
                  parent: Optional[QWidget] = None,
@@ -47,6 +50,7 @@ class CPushButton(CWidgetRulesMixin, CCustomizedTooltipMixin, CInitializedMixin,
             init_channel: ID of channel to manipulate.
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
+        CChannelDataProcessingMixin.__init__(self)
         CWidgetRulesMixin.__init__(self)
         CCustomizedTooltipMixin.__init__(self)
         CInitializedMixin.__init__(self)
@@ -139,35 +143,34 @@ class CEnumButton(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTooltipM
         CCustomizedTooltipMixin.__init__(self)
         CInitializedMixin.__init__(self)
         CHideUnusedFeaturesMixin.__init__(self)
-        PyDMEnumButton.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         CValueTransformerMixin.__init__(self)
+        PyDMEnumButton.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         self._widget_initialized = True
 
     def init_for_designer(self):
         super().init_for_designer()
         self.items = ['RAD Item 1', 'RAD Item 2', 'RAD Item ...']
 
-    def value_changed(self, new_val: Any):
+    def value_changed(self, packet: CChannelData[JapcEnum]):
         """
         Overridden data handler to allow JAPC enums coming as tuples.
 
         Args:
-            new_val: The new value from the channel.
+            packet: The new value from the channel.
         """
-        if isinstance(new_val, tuple):
+        if not isinstance(packet, CChannelData):
+            return
+
+        new_val = packet.value
+        if isinstance(new_val, tuple) and len(new_val) > 1:
             button_name = new_val[1]
             try:
                 idx = self.enum_strings.index(button_name)
             except ValueError:
                 return
-            super().value_changed(idx)
-        else:
-            super().value_changed(new_val)
+            packet.value = idx
 
-    @Slot(QVariant)
-    def channelValueChanged(self, new_val: Any):
-        """Overridden method to define custom slot overload."""
-        super().channelValueChanged(new_val)
+        super().value_changed(packet)
 
 
 class CCommandButton(CCustomizedTooltipMixin, QPushButton, CInitializedMixin, CHideUnusedFeaturesMixin, PyDMWritableWidget):

@@ -1,3 +1,4 @@
+from typing import Tuple
 from enum import IntEnum, auto
 
 
@@ -12,3 +13,6 @@ class SimpleValueStandardMeaning(IntEnum):
     """There is a problem with the controlled equipment or the control chain."""
     NONE = auto()
     """There is no standard meaning associated with the value. This is the default value."""
+
+
+JapcEnum = Tuple[int, str, SimpleValueStandardMeaning, bool]

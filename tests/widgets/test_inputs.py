@@ -2,36 +2,39 @@ import pytest
 import numpy as np
 from pytestqt.qtbot import QtBot
 from unittest import mock
-from comrad import CPropertyEdit
-from PyQt5.QtTest import QSignalSpy  # TODO: qtpy does not seem to expose QSignalSpy: https://github.com/spyder-ide/qtpy/issues/197
+from comrad import CPropertyEdit, CPropertyEditField
+from comrad.data.channel import CChannelData
 
 
 def test_cpropertyedit_get_btn_emits_signal(qtbot: QtBot):
     widget = CPropertyEdit()
     widget.setObjectName('test-widget')
     qtbot.addWidget(widget)
-    spy = QSignalSpy(widget.request_signal)
-    assert len(spy) == 0
-    widget.valueRequested.emit()
-    assert len(spy) == 1
-    assert len(spy[0]) == 1
-    assert spy[0][0] == widget.objectName()
+    with qtbot.wait_signal(widget.request_signal) as blocker:
+        widget._get_btn.click()
+    assert blocker.args == [widget.objectName()]
 
 
 def test_cpropertyedit_set_btn_emits_signal(qtbot: QtBot):
     widget = CPropertyEdit()
+    widget.fields = [
+        CPropertyEditField(field='str', type=CPropertyEdit.ValueType.STRING, editable=False),
+        CPropertyEditField(field='int', type=CPropertyEdit.ValueType.INTEGER, editable=False),
+        CPropertyEditField(field='bool', type=CPropertyEdit.ValueType.BOOLEAN, editable=False),
+        CPropertyEditField(field='float', type=CPropertyEdit.ValueType.REAL, editable=False),
+    ]
+    widget.sendOnlyUpdatedValues = False
     qtbot.addWidget(widget)
-    spy = QSignalSpy(widget.send_value_signal)
     val = {
         'str': 'val1',
         'int': 10,
         'bool': True,
         'float': 0.5,
     }
-    widget.valueUpdated.emit(val)
-    send_value_spy = spy[0]
-    received_val = send_value_spy[0]
-    assert received_val == val
+    widget.setValue(val)
+    with qtbot.wait_signal(widget.send_value_signal) as blocker:
+        widget._set_btn.click()
+    assert blocker.args == [val]
 
 
 @pytest.mark.parametrize('val,should_set_value', [
@@ -47,13 +50,12 @@ def test_cpropertyedit_set_btn_emits_signal(qtbot: QtBot):
 def test_cpropertyedit_value_changed(qtbot: QtBot, val, should_set_value):
     widget = CPropertyEdit()
     qtbot.addWidget(widget)
-    with mock.patch.object(widget, 'setValue') as mocked_set_value:
-
-        widget.channelValueChanged(val)
+    with mock.patch.object(widget, 'setValue') as setValue:
+        widget.channelValueChanged(CChannelData(value=val, meta_info={}))
         if should_set_value:
-            mocked_set_value.assert_called_with(val)
+            setValue.assert_called_with(val)
         else:
-            mocked_set_value.assert_not_called()
+            setValue.assert_not_called()
 
 
 @pytest.mark.parametrize('buttons,expected_connect_slot', [
