@@ -1,5 +1,5 @@
-from qtpy.QtWidgets import QVBoxLayout
-from comrad import CLabel, CDisplay
+from qtpy.QtWidgets import QHBoxLayout
+from comrad import CLabel, CDisplay, CLed
 from comrad.rules import CNumRangeRule
 
 
@@ -8,7 +8,7 @@ class DemoDisplay(CDisplay):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        layout = QVBoxLayout()
+        layout = QHBoxLayout()
         self.setLayout(layout)
 
         label = CLabel()
@@ -23,3 +23,8 @@ class DemoDisplay(CDisplay):
 
         self.layout().addWidget(label)
         layout.addWidget(label)
+
+        led = CLed()
+        led.channel = label.channel
+        led.rules = label.rules
+        layout.addWidget(led)

@@ -188,6 +188,7 @@ class CLed(CColorRulesMixin, CValueTransformerMixin, CInitializedMixin, CHideUnu
         CValueTransformerMixin.__init__(self)
         self._on_color = Led.Status.color_for_status(Led.Status.ON)
         self._off_color = Led.Status.color_for_status(Led.Status.OFF)
+        self.color = self._off_color
 
     def _get_on_color(self) -> QColor:
         return self._on_color
@@ -234,9 +235,9 @@ class CLed(CColorRulesMixin, CValueTransformerMixin, CInitializedMixin, CHideUnu
 
         super().value_changed(new_val)
         if status is not None:
-            self.status = status  # type: ignore
+            self.status = status
         else:
-            self.color = color  # type: ignore
+            self.color = color
 
     @Slot(QVariant)
     @Slot(bool)
@@ -245,21 +246,23 @@ class CLed(CColorRulesMixin, CValueTransformerMixin, CInitializedMixin, CHideUnu
         """Overridden method to define custom slot overload."""
         super().channelValueChanged(new_val)
 
-    @Property('QColor', designable=False)
-    def color(self) -> QColor:
+    def __get_color(self) -> QColor:
         return super().color
 
-    @color.setter  # type: ignore
-    def color(self, new_val: QColor):
+    def __set_color(self, new_val: QColor):
         Led._set_color_prop_wrapper(self, new_val)
 
-    @Property(int, designable=False)
-    def status(self) -> Led.Status:
+    color: QColor = Property('QColor', __get_color, __set_color, designable=False)
+    """Fill color of the LED."""
+
+    def __get_status(self) -> Led.Status:
         return super().status
 
-    @status.setter  # type: ignore
-    def status(self, new_val: Led.Status):
+    def __set_status(self, new_val: Led.Status):
         Led._set_status(self, new_val)
+
+    status = Property(int, __get_status, __set_status, designable=False)
+    """Status to switch LED to a predefined color."""
 
     @staticmethod
     def meaning_to_status(new_val: _JapcEnum) -> Led.Status:
@@ -289,3 +292,11 @@ class CLed(CColorRulesMixin, CValueTransformerMixin, CInitializedMixin, CHideUnu
             elif orig_status == SimpleValueStandardMeaning.ERROR:
                 return Led.Status.ERROR
         raise ValueError(f'Cannot extract enum meaning from value {new_val}')
+
+    def set_color(self, val: str):
+        """Overridden method of :class:`~comrad.widgets.mixins.CColorRulesMixin`.
+
+        Args:
+            val: The new value of the color."""
+        super().set_color(val)
+        self.color = self._off_color if val is None else QColor(val)
