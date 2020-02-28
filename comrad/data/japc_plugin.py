@@ -6,13 +6,13 @@ import functools
 from pydm.data_plugins import is_read_only
 from pydm.data_plugins.plugin import PyDMPlugin, PyDMConnection
 from qtpy.QtCore import Qt, QObject, Slot, Signal, QVariant
-from typing import Any, Optional, cast, Callable, List, Type, Tuple
-from collections import namedtuple
+from typing import Any, Optional, cast, Callable, List, Type, Tuple, Dict
 from comrad.rbac import CRBACLoginStatus, CRBACStartupLoginPolicy
 from comrad.app.application import CApplication
 from comrad.data.jpype import get_user_message, meaning_from_jpype
 from comrad.data.channel import CChannel
 from comrad.data.japc_enum import SimpleValueStandardMeaning
+from comrad.data.addr import ControlEndpointAddress
 
 
 logger = logging.getLogger('comrad_japc')
@@ -188,37 +188,87 @@ def get_japc() -> _JapcService:
     return _japc
 
 
-class _JapcConnection(PyDMConnection):
-    """ PyDM adaptation for JAPC protocol. """
+class CJapcConnection(PyDMConnection):
 
-    # Superclass does not implement signal for bool values
+    SPECIAL_FIELDS = {
+        'acqStamp': 'acqStamp',
+        'setStamp': 'setStamp',
+        'cycleStamp': 'cycleStamp',
+        'cycleName': 'selector',
+        # This is not supported for now,
+        # as this bitmask is separated into several booleans by JAPC.
+        # It is not advised to query this field and I should report anyone
+        # Who decides to do so.
+        # 'updateFlags': ???
+    }
+    """
+    Special fields defined by FESA which are meta-information and will be packaged in the header of RDA or JAPC message.
+    Thus they should be accessed in the header and not main data block. Unfortunately, there's difference between FESA
+    names and JAPC, thus we need a map of what to request vs what to retrieve.
+    """
+
     new_value_signal = Signal([float], [int], [str], [np.ndarray], [bool], [QVariant], [list])  # dict and tuple will go as QVariant here
+    """Overrides superclass signal to implement additional overrides."""
 
     requested_value_signal = Signal([float, str], [int, str], [str, str], [np.ndarray, str], [bool, str], [QVariant, str], [list, str])  # dict and tuple will go as QVariant here
     """Similar to new_value_signal, but issued only on active requests (or initial get)."""
 
     def __init__(self, channel: CChannel, address: str, protocol: Optional[str] = None, parent: Optional[QObject] = None, *args, **kwargs):
+        """
+        Connection serves one or multiple listeners that communicate with JAPC protocol by directing the calls into
+        PyJapc API.
+
+        Args:
+            channel: Initial channel to connect to the PyJapc.
+            address: Address string of the device to be connected to.
+            protocol: Protocol representation. Should be japc://.
+            parent: Optional parent owner.
+            *args: Any additional arguments needed by :class:`~pydm.data_plugins.plugin.PyDMConnection`.
+            **kwargs: Any additional keyword arguments needed by :class:`~pydm.data_plugins.plugin.PyDMConnection`
+        """
         super().__init__(channel=channel,
                          address=address,
                          protocol=protocol,
                          parent=parent,
                          *args,
                          **kwargs)
-        self._device_prop = self.address[1:] if self.address.startswith('/') else self.address
+        full_addr = f'{self.protocol}://{self.address}'
+        japc_address = ControlEndpointAddress.from_string(full_addr)
+        if japc_address is None:
+            logger.error(f'Cannot create connection for address "{full_addr}"!')
+            return
+
+        self._meta_field: Optional[str] = (japc_address.field
+                                           if japc_address.field and japc_address.field in self.SPECIAL_FIELDS
+                                           else None)
         self._subscriptions_active: bool = False
         self._selector: Optional[str] = None
         self._japc_additional_args = {}
         self._some_subscriptions_failed: bool = False
-        self._on_subscribe_device_property = functools.partial(self._on_get_device_property, callback_signals=[self.new_value_signal])
-        parsed_addr = split_device_property(self._device_prop)
-        if parsed_addr.selector:
-            self._device_prop = parsed_addr.address
-            self._japc_additional_args['timingSelectorOverride'] = self._selector = parsed_addr.selector
 
+        if self._meta_field:
+            japc_address.field = None  # We need to request property itself and then get its header
+        if japc_address.selector:
+            self._japc_additional_args['timingSelectorOverride'] = self._selector = japc_address.selector
+            japc_address.selector = None  # This is passed separately to PyJapc
+
+        japc_address.protocol = None  # Remove so that it does not propagate into PyJapc calls
+        self._pyjapc_param_name = str(japc_address)
+
+        self._on_subscribe_device_property = functools.partial(self._notify_listeners, callback_signals=[self.new_value_signal])
         get_japc().japc_status_changed.connect(self._on_japc_status_changed)
         self.add_listener(channel)
 
     def add_listener(self, channel: CChannel):
+        """
+        Adds a listener to the connection.
+
+        Listener is a channel that mediates the data between widgets and PyJapc, by passing widget's signals and slots
+        to be connected to :class:`CJapcConnection`.
+
+        Args:
+            channel: A new listener.
+        """
         logger.debug(f'Adding a listener for {self}')
         super().add_listener(channel)
         self._connect_extra_signal_types(channel)
@@ -319,24 +369,26 @@ class _JapcConnection(PyDMConnection):
 
     def close(self):
         logger.debug(f'{self}: Closing connection, stopping and removing any JAPC subscriptions')
-        get_japc().clearSubscriptions(parameterName=self._device_prop,
+        get_japc().clearSubscriptions(parameterName=self._pyjapc_param_name,
                                       selector=self._selector)
         self.online = False
         super().close()
 
-    def _on_async_get(self, initial_value: Any):
+    def _on_async_get(self, initial_data: Tuple[Any, Dict[str, Any]]):
         logger.debug(f'{self}: Received async GET callback')
-        self._on_get_device_property(parameterName=self._device_prop, value=initial_value, callback_signals=[
+        initial_value, header = initial_data
+        self._notify_listeners(parameterName=self._pyjapc_param_name, value=initial_value, headerInfo=header, callback_signals=[
             self.new_value_signal,
         ])
 
-    def _on_requested_get(self, initial_value: Any, uuid: Optional[str] = None):
+    def _on_requested_get(self, initial_data: Tuple[Any, Dict[str, Any]], uuid: Optional[str] = None):
         logger.debug(f'{self}: Received GET callback on request')
+        initial_value, header = initial_data
 
         def emit_signals(sig: Signal, value: Any, data_type: Type):
             sig[data_type, str].emit(value, uuid)
 
-        self._on_get_device_property(parameterName=self._device_prop, value=initial_value, callback_signals=[
+        self._notify_listeners(parameterName=self._pyjapc_param_name, value=initial_value, headerInfo=header, callback_signals=[
             self.requested_value_signal,
         ], signal_handle=emit_signals)
 
@@ -367,10 +419,25 @@ class _JapcConnection(PyDMConnection):
             except (KeyError, TypeError):
                 pass
 
-    def _on_get_device_property(self, parameterName: str, value: Any, headerInfo=None, signal_handle: Optional[Callable[[Signal, Any, Type], None]] = None, callback_signals: Optional[List[Signal]] = None):
-        del parameterName, headerInfo  # Unused argument (https://google.github.io/styleguide/pyguide.html#214-decision)
+    def _notify_listeners(self,
+                          parameterName: str,
+                          value: Any,
+                          headerInfo: Dict[str, Any],
+                          signal_handle: Optional[Callable[[Signal, Any, Type], None]] = None,
+                          callback_signals: Optional[List[Signal]] = None):
+        del parameterName  # Unused argument (https://google.github.io/styleguide/pyguide.html#214-decision)
 
         self.online = True
+
+        if self._meta_field is not None:
+            # We are looking inside header instead of the value, because user has requested
+            # data from a "special" field, which is a meta-field that is placed in header on the transport level
+            reply_key = self.SPECIAL_FIELDS[self._meta_field]
+            try:
+                value = headerInfo[reply_key]
+            except KeyError:
+                logger.warning(f'{self}: Cannot locate meta-field "{self._meta_field}" inside packet header ({headerInfo}).')
+                return
 
         data_type = type(value)
         if data_type == dict or data_type == tuple:
@@ -387,7 +454,7 @@ class _JapcConnection(PyDMConnection):
 
     @Slot()
     def _on_device_command(self):
-        get_japc().setParam(parameterName=self._device_prop,
+        get_japc().setParam(parameterName=self._pyjapc_param_name,
                             parameterValue={},
                             **self._japc_additional_args)
 
@@ -398,7 +465,7 @@ class _JapcConnection(PyDMConnection):
     @Slot(QVariant)
     @Slot(np.ndarray)
     def _on_set_device_property(self, new_val: Any):
-        get_japc().setParam(parameterName=self._device_prop,
+        get_japc().setParam(parameterName=self._pyjapc_param_name,
                             parameterValue=new_val,
                             **self._japc_additional_args)
 
@@ -417,9 +484,10 @@ class _JapcConnection(PyDMConnection):
     def _create_subscription(self):
         japc = get_japc()
         logger.debug(f'{self}: Subscribing to JAPC')
-        japc.subscribeParam(parameterName=self._device_prop,
+        japc.subscribeParam(parameterName=self._pyjapc_param_name,
                             onValueReceived=self._on_subscribe_device_property,
                             onException=self._on_subscription_exception,
+                            getHeader=True,  # Needed for meta-fields
                             **self._japc_additional_args)
         self._start_subscriptions()
 
@@ -427,18 +495,19 @@ class _JapcConnection(PyDMConnection):
     def _requested_get(self, uuid: str):
         self._single_get(callback=functools.partial(self._on_requested_get, uuid=uuid))
 
-    def _single_get(self, callback: Optional[Callable[[Any], None]] = None):
+    def _single_get(self, callback: Optional[Callable[[Tuple[Any, Dict[str, Any]]], None]] = None):
         japc = get_japc()
         if callback is None:
             callback = self._on_requested_get
-        japc.getParam(parameterName=self._device_prop,
+        japc.getParam(parameterName=self._pyjapc_param_name,
                       onValueReceived=callback,
+                      getHeader=True,  # Needed for meta-fields
                       **self._japc_additional_args)
 
     def _start_subscriptions(self):
         logger.debug(f'{self}: Starting subscriptions')
         try:
-            get_japc().startSubscriptions(parameterName=self._device_prop, selector=self._selector)
+            get_japc().startSubscriptions(parameterName=self._pyjapc_param_name, selector=self._selector)
         except Exception as e:
             # TODO: Catch more specific Jpype errors here
             logger.exception(f'Unexpected error while subscribing to {self.address}'
@@ -457,7 +526,7 @@ class _JapcConnection(PyDMConnection):
             logger.debug(f'{self}: Reviving blocked subscriptions after login')
             self._some_subscriptions_failed = False
             # Need to stop subscriptions before restarting, otherwise they will not start
-            get_japc().stopSubscriptions(parameterName=self._device_prop, selector=self._selector)
+            get_japc().stopSubscriptions(parameterName=self._pyjapc_param_name, selector=self._selector)
             self._start_subscriptions()
 
     def __repr__(self):
@@ -470,7 +539,7 @@ class JapcPlugin(PyDMPlugin):
     """
 
     protocol = 'japc'
-    connection_class = _JapcConnection
+    connection_class = CJapcConnection
 
 
 class Rda3Plugin(PyDMPlugin):
@@ -479,7 +548,7 @@ class Rda3Plugin(PyDMPlugin):
     """
 
     protocol = 'rda3'
-    connection_class = _JapcConnection
+    connection_class = CJapcConnection
 
 
 class Rda2Plugin(PyDMPlugin):
@@ -488,7 +557,7 @@ class Rda2Plugin(PyDMPlugin):
     """
 
     protocol = 'rda'
-    connection_class = _JapcConnection
+    connection_class = CJapcConnection
 
 
 class TgmPlugin(PyDMPlugin):
@@ -497,7 +566,7 @@ class TgmPlugin(PyDMPlugin):
     """
 
     protocol = 'tgm'
-    connection_class = _JapcConnection
+    connection_class = CJapcConnection
 
 
 class NoPlugin(PyDMPlugin):
@@ -506,26 +575,4 @@ class NoPlugin(PyDMPlugin):
     """
 
     protocol = 'no'
-    connection_class = _JapcConnection
-
-
-_DevicePropertySplitModel = namedtuple('_DevicePropertySplitModel', 'address selector')
-
-
-def split_device_property(address: str) -> _DevicePropertySplitModel:
-    """
-    Separates device/property/field bunch from the timing user selector.
-
-    Produces a named tuple with corresponding fields.
-
-    Args:
-        address: Original address string
-
-    Returns:
-        Named tuple with "address" and "selector" fields.
-    """
-    try:
-        addr, sel = address.split('@')
-    except ValueError:
-        return _DevicePropertySplitModel(address=address, selector=None)
-    return _DevicePropertySplitModel(address=addr, selector=sel)
+    connection_class = CJapcConnection
