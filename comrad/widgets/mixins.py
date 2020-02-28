@@ -26,23 +26,17 @@ class CInitializedMixin:
 class CHideUnusedFeaturesMixin:
     """Mixin that hides PyDM properties that are exposed to Qt Designer and are not used in ComRAD."""
 
-    @Property(bool, designable=False)
-    def alarmSensitiveBorder(self) -> bool:
-        return False
-
-    @alarmSensitiveBorder.setter  # type: ignore
     @deprecated_parent_prop(logger)
-    def alarmSensitiveBorder(self, _):
+    def __set_alarmSensitiveBorder(self, _):
         pass
 
-    @Property(bool, designable=False)
-    def alarmSensitiveContent(self) -> bool:
-        return False
+    alarmSensitiveBorder = Property(bool, lambda _: False, __set_alarmSensitiveBorder, designable=False)
 
-    @alarmSensitiveContent.setter  # type: ignore
     @deprecated_parent_prop(logger)
-    def alarmSensitiveContent(self, _):
+    def __set_alarmSensitiveContent(self, _):
         pass
+
+    alarmSensitiveContent = Property(bool, lambda _: False, __set_alarmSensitiveContent, designable=False)
 
 
 class CRequestingMixin:
@@ -135,24 +129,18 @@ class CNoPVTextFormatterMixin:
     Qt Designer and are not used in ComRAD.
     """
 
-    @Property(bool, designable=False)
-    def precisionFromPV(self) -> bool:
-        return False
-
-    @precisionFromPV.setter  # type: ignore
     @deprecated_parent_prop(logger)
-    def precisionFromPV(self, _):
+    def __set_precisionFromPV(self, _):
+        pass
+
+    precisionFromPV = Property(bool, lambda _: False, __set_precisionFromPV, designable=False)
+
+    @deprecated_parent_prop(logger)
+    def __set_showUnits(self, _):
         pass
 
     # TODO: We should enable showUnits, when unit support is implemented on the CS level
-    @Property(bool, designable=False)
-    def showUnits(self) -> bool:
-        return False
-
-    @showUnits.setter  # type: ignore
-    @deprecated_parent_prop(logger)
-    def showUnits(self, _):
-        pass
+    showUnits = Property(bool, lambda _: False, __set_showUnits, designable=False)
 
 
 class CCustomizedTooltipMixin:

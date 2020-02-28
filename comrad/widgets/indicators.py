@@ -157,14 +157,11 @@ class CScaleIndicator(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTool
         self._limits_from_channel = False
         self._widget_initialized = True
 
-    @Property(bool, designable=False)
-    def limitsFromChannel(self) -> bool:
-        return False
-
-    @limitsFromChannel.setter  # type: ignore
     @deprecated_parent_prop(logger)
-    def limitsFromChannel(self, _):
+    def __set_limitsFromChannel(self, _):
         pass
+
+    limitsFromChannel = Property(bool, lambda _: False, __set_limitsFromChannel, designable=False)
 
 
 _JapcEnum = Tuple[int, str, SimpleValueStandardMeaning, bool]

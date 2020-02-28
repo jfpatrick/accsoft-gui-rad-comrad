@@ -144,14 +144,11 @@ class CSlider(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixin
         self._user_defined_limits = True
         self._widget_initialized = True
 
-    @Property(bool, designable=False)
-    def userDefinedLimits(self) -> bool:
-        return True
-
-    @userDefinedLimits.setter  # type: ignore
     @deprecated_parent_prop(logger)
-    def userDefinedLimits(self, _):
+    def __set_userDefinedLimits(self, _):
         pass
+
+    userDefinedLimits = Property(bool, lambda _: True, __set_userDefinedLimits, designable=False)
 
 
 class CSpinBox(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixin, CInitializedMixin, CHideUnusedFeaturesMixin, CNoPVTextFormatterMixin, PyDMSpinbox):

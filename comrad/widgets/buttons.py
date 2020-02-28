@@ -64,32 +64,29 @@ class CPushButton(CWidgetRulesMixin, CCustomizedTooltipMixin, CInitializedMixin,
         super().init_for_designer()
         self.setText('RAD PushButton')
 
-    @Property(bool, designable=False)
-    def passwordProtected(self) -> bool:
-        return False
-
-    @passwordProtected.setter  # type: ignore
     @deprecated_parent_prop(logger)
-    def passwordProtected(self, _):
+    def __set_passwordProtected(self, _):
         pass
 
-    @Property(str, designable=False)
-    def password(self) -> str:
+    passwordProtected = Property(bool, lambda _: False, __set_passwordProtected, designable=False)
+
+    def __get_password(self) -> str:
         return super().password
 
-    @password.setter  # type: ignore
     @deprecated_parent_prop(logger)
-    def password(self, _):
+    def __set_password(self, _):
         pass
 
-    @Property(str, designable=False)
-    def protectedPassword(self) -> str:
+    password = Property(str, __get_password, __set_password, designable=False)
+
+    def __get_protectedPassword(self) -> str:
         return super().protectedPassword
 
-    @protectedPassword.setter  # type: ignore
     @deprecated_parent_prop(logger)
-    def protectedPassword(self, _):
+    def __set_protectedPassword(self, _):
         pass
+
+    protectedPassword = Property(str, __get_protectedPassword, __set_protectedPassword, designable=False)
 
 
 class CRelatedDisplayButton(PyDMRelatedDisplayButton):

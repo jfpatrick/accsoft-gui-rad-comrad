@@ -33,8 +33,8 @@ class CValueAggregator(QWidget, CInitializedMixin, CHideUnusedFeaturesMixin, PyD
     Q_ENUM(GeneratorTrigger)
     GeneratorTrigger = GeneratorTrigger
 
-    # Emitted when the user changes the value.
     updateTriggered = Signal([int], [float], [str], [bool], [np.ndarray])
+    """Emitted when the user changes the value."""
 
     def __init__(self, parent: Optional[QWidget] = None, init_channels: Optional[List[str]] = None):
         """
@@ -66,28 +66,14 @@ class CValueAggregator(QWidget, CInitializedMixin, CHideUnusedFeaturesMixin, PyD
             self._setup_ui_for_designer()
         else:
             # Trigger connection creation
-            self.inputChannels = init_channels or []  # type: ignore
+            self.inputChannels = init_channels or []
             # Should be invisible in runtime
             self.hide()
 
-    @Property('QStringList')
-    def inputChannels(self) -> List[str]:
-        """
-        This property exposes :class:`PyDMWidget`'s channels that we use as input primarily.
-
-        Returns:
-            List of :class:`PyDMChannel` objects.
-        """
+    def _get_input_channels(self) -> List[str]:
         return self._channel_ids
 
-    @inputChannels.setter  # type: ignore
-    def inputChannels(self, channels: List[str]):
-        """
-        Channel setter exposed to Qt Designer.
-
-        Args:
-            channels: List of new channels.
-        """
+    def _set_input_channels(self, channels: List[str]):
         new_channels = set(channels)
         old_channels = set(self._channel_ids)
 
@@ -121,6 +107,9 @@ class CValueAggregator(QWidget, CInitializedMixin, CHideUnusedFeaturesMixin, PyD
             channel = PyDMChannel(address=addr, value_slot=self.channelValueChanged)
             channel.connect()
             self._channels.append(channel)
+
+    inputChannels = Property('QStringList', _get_input_channels, _set_input_channels)
+    """This property exposes :class:`PyDMWidget`'s channels that we use as input primarily."""
 
     @Slot(int)
     @Slot(float)
@@ -181,22 +170,10 @@ class CValueAggregator(QWidget, CInitializedMixin, CHideUnusedFeaturesMixin, PyD
                 else:
                     ch.disconnect()
 
-    @Property(GeneratorTrigger)
-    def generatorTrigger(self):
-        """
-        Trigger defines when the output is fired.
-
-         - OnEveryValue will fire an update on any new incoming value from any channel
-         - OnAggregatedValue will wait until all channels deliver value since the last
-           update and only then fire a new one
-
-        Returns:
-            New update triggering type.
-        """
+    def _get_generator_trigger(self):
         return self._trigger_type
 
-    @generatorTrigger.setter  # type: ignore
-    def generatorTrigger(self, new_type: int):
+    def _set_generator_trigger(self, new_type: int):
         """
         Update for the generator trigger type.
 
@@ -213,59 +190,62 @@ class CValueAggregator(QWidget, CInitializedMixin, CHideUnusedFeaturesMixin, PyD
                 self._obsolete_values = set(self._channel_ids)
             self._trigger_type = new_type
 
-    @Property(str, designable=False)
-    def channel(self) -> str:
-        return ''
+    generatorTrigger = Property(GeneratorTrigger, _get_generator_trigger, _set_generator_trigger)
+    """
+    Trigger defines when the output is fired.
 
-    @channel.setter  # type: ignore
+    - OnEveryValue will fire an update on any new incoming value from any channel
+    - OnAggregatedValue will wait until all channels deliver value since the last
+      update and only then fire a new one.
+    """
+
     @deprecated_parent_prop(logger)
-    def channel(self, _):
+    def __set_channel(self, _):
         pass
 
-    @Property('QSize', designable=False)
-    def minimumSize(self) -> QSize:
+    channel = Property(str, lambda _: '', __set_channel, designable=False)
+
+    def __get_minimumSize(self) -> QSize:
         return super().minimumSize()
 
-    @minimumSize.setter  # type: ignore
     @deprecated_parent_prop(logger)
-    def minimumSize(self, _):
+    def __set_minimumSize(self, _):
         pass
 
-    @Property('QSize', designable=False)
-    def maximumSize(self) -> QSize:
+    minimumSize = Property('QSize', __get_minimumSize, __set_minimumSize, designable=False)
+
+    def __get_maximumSize(self) -> QSize:
         return super().maximumSize()
 
-    @maximumSize.setter  # type: ignore
     @deprecated_parent_prop(logger)
-    def maximumSize(self, _):
+    def __set_maximumSize(self, _):
         pass
 
-    @Property('QSize', designable=False)
-    def baseSize(self) -> QSize:
+    maximumSize = Property('QSize', __get_maximumSize, __set_maximumSize, designable=False)
+
+    def __get_baseSize(self) -> QSize:
         return super().baseSize()
 
-    @baseSize.setter  # type: ignore
     @deprecated_parent_prop(logger)
-    def baseSize(self, _):
+    def __set_baseSize(self, _):
         pass
 
-    @Property('QSize', designable=False)
-    def sizeIncrement(self) -> QSize:
+    baseSize = Property('QSize', __get_baseSize, __set_baseSize, designable=False)
+
+    def __get_sizeIncrement(self) -> QSize:
         return super().sizeIncrement()
 
-    @sizeIncrement.setter  # type: ignore
     @deprecated_parent_prop(logger)
-    def sizeIncrement(self, _):
+    def __set_sizeIncrement(self, _):
         pass
 
-    @Property('QSizePolicy', designable=False)
-    def sizePolicy(self) -> QSizePolicy:
-        return QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+    sizeIncrement = Property('QSize', __get_sizeIncrement, __set_sizeIncrement, designable=False)
 
-    @sizePolicy.setter  # type: ignore
     @deprecated_parent_prop(logger)
-    def sizePolicy(self, _):
+    def __set_sizePolicy(self, _):
         pass
+
+    sizePolicy = Property('QSizePolicy', lambda _: QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed), __set_sizePolicy, designable=False)
 
     def _trigger_update(self):
         if ((not self.valueTransformation and not self.snippetFilename)

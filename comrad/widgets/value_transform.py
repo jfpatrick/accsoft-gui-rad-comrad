@@ -93,52 +93,35 @@ class CValueTransformationBase(CFileTracking):
 
     valueTransformation = Property(str, getValueTransformation, setValueTransformation)
 
-    @Property(str)
-    def snippetFilename(self) -> str:
-        """
-        Path to the file that contains Python snippet for transformation.
-        If :attr:`~comrad.widgets.value_transform.CValueTransformationBase.valueTransformation` is defined,
-        it will override the code coming from this file.
-
-        Returns:
-            Filename of the Python file.
-        """
+    def _get_snippet_filename(self) -> str:
         return self._value_transform_filename
 
-    @snippetFilename.setter  # type: ignore
-    def snippetFilename(self, new_val: str):
-        """
-        Sets the path to the Python file.
-
-        Args:
-            new_val: Filename of the Python code.
-        """
+    def _set_snippet_filename(self, new_val: str):
         self._value_transform_filename = new_val
 
-    @Property(str)
-    def macros(self) -> str:
-        """
-        Similar to the macros of :class:`pydm.widgets.PyDMEmbeddedDisplay` and
-        :class:`pydm.widgets.PyDMRelatedDisplayButton`,
-        this is will substitute variables in the value transformation code,
-        either defined with the inline snippet, or coming from a file.
+    snippetFilename = Property(str, _get_snippet_filename, _set_snippet_filename)
+    """
+    Path to the file that contains Python snippet for transformation.
+    If :attr:`~comrad.widgets.value_transform.CValueTransformationBase.valueTransformation` is defined,
+    it will override the code coming from this file.
+    """
 
-        Returns:
-            JSON-formatted string containing macro variables.
-        """
+    def _get_macros(self) -> str:
         if self._value_transform_macros is None:
             return ''
         return self._value_transform_macros
 
-    @macros.setter  # type: ignore
-    def macros(self, new_macros: str):
-        """
-            JSON-formatted string containing macro variables.
-
-        Args:
-            new_macros: new string.
-        """
+    def _set_macros(self, new_macros: str):
         self._value_transform_macros = str(new_macros)
+
+    macros = Property(str, _get_macros, _set_macros)
+    """
+    Similar to the macros of :class:`pydm.widgets.PyDMEmbeddedDisplay` and
+    :class:`pydm.widgets.PyDMRelatedDisplayButton`,
+    this is will substitute variables in the value transformation code,
+    either defined with the inline snippet, or coming from a file.
+    String must be JSON-formatted.
+    """
 
     def parsed_macros(self):
         m = super().parsed_macros()
