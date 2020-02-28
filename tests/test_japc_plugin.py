@@ -216,21 +216,24 @@ def test_jvm_flags_are_passed():
         mocked_java.lang.System.setProperty.assert_any_call('FLAG2', '2')
 
 
+@pytest.mark.parametrize(f'input_addr, expected_param, expected_selector, expected_meta_field', [
+    ('/mydevice/myprop#myfield@CERN.TEST.SELECTOR', 'mydevice/myprop#myfield', 'CERN.TEST.SELECTOR', None),
+    ('/mydevice/myprop#myfield', 'mydevice/myprop#myfield', None, None),
+    ('/mydevice/myprop@CERN.TEST.SELECTOR', 'mydevice/myprop', 'CERN.TEST.SELECTOR', None),
+    ('/mydevice/myprop', 'mydevice/myprop', None, None),
+    ('/mydevice/myprop#cycleName@CERN.TEST.SELECTOR', 'mydevice/myprop', 'CERN.TEST.SELECTOR', 'cycleName'),
+    ('/mydevice/myprop#cycleName', 'mydevice/myprop', None, 'cycleName'),
+])
 @mock.patch('pydm.widgets.channel.PyDMChannel')
-def test_connection_address(mocked_channel, mocker):
+def test_connection_address(mocked_channel, mocker, input_addr, expected_param, expected_selector, expected_meta_field):
     mocker.patch('pyjapc.PyJapc')
-    connection = japc_plugin._JapcConnection(channel=mocked_channel, address='mydevice/myprop#myfield@CERN.TEST.SELECTOR')
-    assert connection._device_prop == 'mydevice/myprop#myfield'
-    assert connection._japc_additional_args['timingSelectorOverride'] == 'CERN.TEST.SELECTOR'
-    connection = japc_plugin._JapcConnection(channel=mocked_channel, address='mydevice/myprop#myfield')
-    assert connection._device_prop == 'mydevice/myprop#myfield'
-    assert 'timingSelectorOverride' not in connection._japc_additional_args
-    connection = japc_plugin._JapcConnection(channel=mocked_channel, address='mydevice/myprop@CERN.TEST.SELECTOR')
-    assert connection._device_prop == 'mydevice/myprop'
-    assert connection._japc_additional_args['timingSelectorOverride'] == 'CERN.TEST.SELECTOR'
-    connection = japc_plugin._JapcConnection(channel=mocked_channel, address='mydevice/myprop')
-    assert connection._device_prop == 'mydevice/myprop'
-    assert 'timingSelectorOverride' not in connection._japc_additional_args
+    connection = japc_plugin.CJapcConnection(channel=mocked_channel, protocol='japc', address=input_addr)
+    assert connection._pyjapc_param_name == expected_param
+    if expected_selector is None:
+        assert 'timingSelectorOverride' not in connection._japc_additional_args
+    else:
+        assert connection._japc_additional_args['timingSelectorOverride'] == expected_selector
+    assert connection._meta_field == expected_meta_field
 
 
 @pytest.mark.skip
@@ -240,7 +243,7 @@ def test_remove_listener_disconnects_slots(mocked_channel, mocker):
     japc = japc_plugin.get_japc()
     mocker.patch.object(japc, 'stopSubscriptions')
     mocker.patch.object(mocked_channel.value_signal, 'connect')
-    _ = japc_plugin._JapcConnection(channel=mocked_channel, address='test_addr')
+    _ = japc_plugin.CJapcConnection(channel=mocked_channel, address='test_addr')
     mocked_channel.value_signal.connect.assert_called_once()
 
 
@@ -252,20 +255,8 @@ def test_remove_listener_disconnects_slots(mocked_channel, mocker):
 @mock.patch('pyjapc.PyJapc')
 def test_close_clears_subscriptions(mocked_channel, mocked_pyjapc, connected):
     japc_plugin._japc = mocked_pyjapc
-    connection = japc_plugin._JapcConnection(channel=mocked_channel, address='dev/prop#field')
+    connection = japc_plugin.CJapcConnection(channel=mocked_channel, address='/dev/prop#field', protocol='japc')
     connection.online = connected
     mocked_pyjapc.clearSubscriptions.assert_not_called()
     connection.close()
     mocked_pyjapc.clearSubscriptions.assert_called_with(parameterName='dev/prop#field', selector=None)
-
-
-def test_split_device_property():
-    res = japc_plugin.split_device_property('japc://dev/prop#field@selector')
-    assert res.address == 'japc://dev/prop#field'
-    assert res.selector == 'selector'
-    res = japc_plugin.split_device_property('japc://dev/prop#field@')
-    assert res.address == 'japc://dev/prop#field'
-    assert res.selector == ''
-    res = japc_plugin.split_device_property('japc://dev/prop#field')
-    assert res.address == 'japc://dev/prop#field'
-    assert res.selector is None
