@@ -125,8 +125,8 @@ class CByteIndicator(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedToolt
             PyDMByteIndicator.channelValueChanged(self, bit_mask)
         elif isinstance(new_val, list):
             bit_mask = 0
-            for val, _ in new_val:
-                bit_mask |= val
+            for val in new_val:
+                bit_mask |= val[0]
             PyDMByteIndicator.channelValueChanged(self, bit_mask)
         else:
             # Fallback to the original Byte indicator
