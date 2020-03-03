@@ -11,7 +11,7 @@ from pydm.widgets.label import PyDMLabel
 from pydm.widgets.byte import PyDMByteIndicator
 from accwidgets.led import Led
 from comrad.deprecations import deprecated_parent_prop
-from comrad.data.japc_enum import SimpleValueStandardMeaning, JapcEnum
+from comrad.data.japc_enum import CEnumValue
 from comrad.data.channel import CChannelData
 from .mixins import (CHideUnusedFeaturesMixin, CNoPVTextFormatterMixin, CCustomizedTooltipMixin,
                      CValueTransformerMixin, CColorRulesMixin, CWidgetRulesMixin, CInitializedMixin)
@@ -99,7 +99,7 @@ class CByteIndicator(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedToolt
         PyDMByteIndicator.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         self._widget_initialized = True
 
-    def value_changed(self, packet: CChannelData[Union[bool, int, List[JapcEnum]]]):
+    def value_changed(self, packet: CChannelData[Union[bool, int, List[CEnumValue]]]):
         """
         Slot that accepts types, not natively supported by PyDM
         list: Currently, :mod:`pyjapc` is expected to convert EnumItemSet into ``List[Tuple[code, name]]``.
@@ -125,8 +125,8 @@ class CByteIndicator(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedToolt
             new_packet.value = bit_mask
         elif isinstance(packet.value, list):
             bit_mask = 0
-            for val in packet.value:
-                bit_mask |= val[0]
+            for val in cast(List[CEnumValue], packet.value):
+                bit_mask |= val.code
             new_packet.value = bit_mask
         else:
             # Fallback to the original Byte indicator
@@ -204,7 +204,7 @@ class CLed(CColorRulesMixin, CValueTransformerMixin, CInitializedMixin, CHideUnu
     offColor = Property('QColor', _get_off_color, _set_off_color)
     """Color that is used when incoming boolean value is ``False``."""
 
-    def value_changed(self, packet: CChannelData[Union[int, bool, JapcEnum]]):
+    def value_changed(self, packet: CChannelData[Union[int, bool, CEnumValue]]):
         """
         Callback invoked when the Channel value is changed.
 
@@ -223,9 +223,9 @@ class CLed(CColorRulesMixin, CValueTransformerMixin, CInitializedMixin, CHideUnu
                 status = Led.Status(packet.value)
             except ValueError:
                 pass
-        else:
+        elif isinstance(packet.value, CEnumValue):
             try:
-                status = CLed.meaning_to_status(packet.value)
+                status = CLed.meaning_to_status(packet.value.meaning)
             except ValueError:
                 pass
 
@@ -257,33 +257,32 @@ class CLed(CColorRulesMixin, CValueTransformerMixin, CInitializedMixin, CHideUnu
     """Status to switch LED to a predefined color."""
 
     @staticmethod
-    def meaning_to_status(new_val: JapcEnum) -> Led.Status:
+    def meaning_to_status(orig_status: CEnumValue.Meaning) -> Led.Status:
         """
         Recognizes and extracts meaning flag from product of japc_plugin and then converts it to status
         understandable by :class:`~accwidgets.led.Led`.
 
         Args:
-            new_val: Incoming JAPC value. Should be enum type, but it's safe to pass anything else as well.
+            new_val: Meaning of the incoming enum.
 
         Returns:
             Status corresponding to the meaning.
 
         Raises:
-            ValueError: If value is not a tuple of expected shape or the value is not recognized.
+            ValueError: If input meaning has unexpected value.
         """
-        if isinstance(new_val, tuple) and len(new_val) == 4:
-            orig_status = cast(JapcEnum, new_val)[2]
-            if orig_status == SimpleValueStandardMeaning.NONE:
-                return Led.Status.NONE
-            elif orig_status == SimpleValueStandardMeaning.ON:
-                return Led.Status.ON
-            elif orig_status == SimpleValueStandardMeaning.OFF:
-                return Led.Status.OFF
-            elif orig_status == SimpleValueStandardMeaning.WARNING:
-                return Led.Status.WARNING
-            elif orig_status == SimpleValueStandardMeaning.ERROR:
-                return Led.Status.ERROR
-        raise ValueError(f'Cannot extract enum meaning from value {new_val}')
+        if orig_status == CEnumValue.Meaning.NONE:
+            return Led.Status.NONE
+        elif orig_status == CEnumValue.Meaning.ON:
+            return Led.Status.ON
+        elif orig_status == CEnumValue.Meaning.OFF:
+            return Led.Status.OFF
+        elif orig_status == CEnumValue.Meaning.WARNING:
+            return Led.Status.WARNING
+        elif orig_status == CEnumValue.Meaning.ERROR:
+            return Led.Status.ERROR
+        else:
+            raise ValueError(f'Cannot correlate LED status with meaning "{orig_status}"')
 
     def set_color(self, val: str):
         """Overridden method of :class:`~comrad.widgets.mixins.CColorRulesMixin`.

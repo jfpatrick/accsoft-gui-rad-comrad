@@ -1,5 +1,5 @@
 from typing import Any
-from comrad.data.japc_enum import SimpleValueStandardMeaning
+from comrad import CEnumValue
 
 
 def get_java_exc(jpype_exc: Any) -> Any:
@@ -69,7 +69,7 @@ def get_user_message(jpype_exc: Any) -> str:
     return parts[-1]
 
 
-def meaning_from_jpype(orig: object) -> SimpleValueStandardMeaning:
+def meaning_from_jpype(orig: object) -> CEnumValue.Meaning:
     """
     Convert JPype enum into Python one.
 
@@ -82,13 +82,13 @@ def meaning_from_jpype(orig: object) -> SimpleValueStandardMeaning:
     import jpype
     cern = jpype.JPackage('cern')  # type: ignore
     if orig == cern.japc.value.SimpleValueStandardMeaning.ON:
-        return SimpleValueStandardMeaning.ON
+        return CEnumValue.Meaning.ON
     elif orig == cern.japc.value.SimpleValueStandardMeaning.OFF:
-        return SimpleValueStandardMeaning.OFF
+        return CEnumValue.Meaning.OFF
     elif orig == cern.japc.value.SimpleValueStandardMeaning.WARNING:
-        return SimpleValueStandardMeaning.WARNING
+        return CEnumValue.Meaning.WARNING
     elif orig == cern.japc.value.SimpleValueStandardMeaning.ERROR:
-        return SimpleValueStandardMeaning.ERROR
+        return CEnumValue.Meaning.ERROR
     elif orig == cern.japc.value.SimpleValueStandardMeaning.NONE:
-        return SimpleValueStandardMeaning.NONE
+        return CEnumValue.Meaning.NONE
     raise ValueError(f'Unsupported meaning value "{orig}"')

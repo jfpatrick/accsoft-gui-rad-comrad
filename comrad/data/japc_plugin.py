@@ -11,7 +11,7 @@ from comrad.rbac import CRBACLoginStatus, CRBACStartupLoginPolicy
 from comrad.app.application import CApplication
 from comrad.data.jpype import get_user_message, meaning_from_jpype
 from comrad.data.channel import CChannel, CChannelData
-from comrad.data.japc_enum import JapcEnum
+from comrad.data.japc_enum import CEnumValue
 from comrad.data.addr import ControlEndpointAddress
 
 
@@ -36,7 +36,7 @@ class _JapcService(QObject, pyjapc.PyJapc):
         # This has to be set before super, as it will be accessed in JVM setup hook
         self._app = app
 
-        # We don't need to call separate initializers here, because QObject will call PyJapc intializer by default.
+        # We don't need to call separate initializers here, because QObject will call PyJapc initializer by default.
         # It is also reflected in the examples of the PyQt5 documentation:
         # https://www.riverbankcomputing.com/static/Docs/PyQt5/multiinheritance.html
 
@@ -155,16 +155,16 @@ class _JapcService(QObject, pyjapc.PyJapc):
         """Overrides internal PyJapc method to emit different data struct for enums."""
         typename = val.getValueType().typeString.lower()
 
-        def enum_item_to_tuple(enum_item: Any) -> JapcEnum:
-            return (enum_item.getCode(),
-                    enum_item.getString(),
-                    meaning_from_jpype(enum_item.getStandardMeaning()),
-                    enum_item.isSettable())
+        def enum_item_to_obj(enum_item: Any) -> CEnumValue:
+            return CEnumValue(code=enum_item.getCode(),
+                              label=enum_item.getString(),
+                              meaning=meaning_from_jpype(enum_item.getStandardMeaning()),
+                              settable=enum_item.isSettable())
 
         if typename == 'enum':
-            return enum_item_to_tuple(val.getEnumItem())
+            return enum_item_to_obj(val.getEnumItem())
         elif typename == 'enumset':
-            return [enum_item_to_tuple(v) for v in val.value]
+            return [enum_item_to_obj(v) for v in val.value]
         else:
             return super()._convertSimpleValToPy(val)
 

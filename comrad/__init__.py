@@ -17,3 +17,4 @@ from .widgets.inputs import *
 from .app.application import *
 from .app.plugins import *
 from .data.channel import CChannelData
+from .data.japc_enum import CEnumValue

@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Dict, Any, cast, Union
+from typing import Optional, Dict, Any, Union
 from qtpy.QtWidgets import QWidget, QLabel, QComboBox
 from qtpy.QtCore import Property, QVariant, Signal
 from pydm.widgets.base import PyDMWritableWidget
@@ -14,7 +14,7 @@ from accwidgets.property_edit import (PropertyEdit, PropertyEditField as _Proper
 from accwidgets.property_edit.propedit import PropertyEditWidgetDelegate as _PropertyEditWidgetDelegate
 from accwidgets.led import Led
 from comrad.widgets.indicators import CLed
-from comrad.data.japc_enum import JapcEnum
+from comrad.data.japc_enum import CEnumValue
 from comrad.data.channel import CChannelData
 from comrad.deprecations import deprecated_parent_prop
 from .mixins import (CHideUnusedFeaturesMixin, CNoPVTextFormatterMixin, CCustomizedTooltipMixin, CRequestingMixin,
@@ -74,7 +74,7 @@ class CEnumComboBox(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedToolti
         PyDMEnumComboBox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
         self._widget_initialized = True
 
-    def value_changed(self, packet: CChannelData[Union[str, int, JapcEnum]]):
+    def value_changed(self, packet: CChannelData[Union[str, int, CEnumValue]]):
         """
         Overridden data handler to allow JAPC enums coming as tuples.
 
@@ -84,9 +84,8 @@ class CEnumComboBox(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedToolti
         if not isinstance(packet, CChannelData):
             return
 
-        if isinstance(packet.value, tuple) and len(packet.value) > 1:
-            option_name = packet.value[1]
-            packet.value = option_name
+        if isinstance(packet.value, CEnumValue):
+            packet.value = packet.value.label
 
         super().value_changed(packet)
 
@@ -243,15 +242,15 @@ class CPropertyEditWidgetDelegate(_PropertyEditWidgetDelegate):
                      user_data: Optional[Dict[str, Any]],
                      item_type: PropertyEdit.ValueType,
                      widget: QWidget):
-        if isinstance(value, tuple) and len(value) == 4:  # Enum tuples
+        if isinstance(value, CEnumValue):
             if isinstance(widget, Led) and item_type == PropertyEdit.ValueType.BOOLEAN:
                 try:
-                    value = CLed.meaning_to_status(cast(JapcEnum, value))
+                    value = CLed.meaning_to_status(value.meaning)
                 except ValueError:
                     return
             elif item_type == PropertyEdit.ValueType.ENUM:
                 if isinstance(widget, QLabel) or isinstance(widget, QComboBox):
-                    value = value[0]  # Communicate the code to the widget, which will choose the correct text
+                    value = value.code  # Communicate the code to the widget, which will choose the correct text
         super().display_data(field_id=field_id,
                              value=value,
                              user_data=user_data,

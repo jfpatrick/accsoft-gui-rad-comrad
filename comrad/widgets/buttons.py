@@ -10,7 +10,7 @@ from qtpy.QtGui import QIcon
 from qtpy.QtCore import Signal, Property
 from comrad.deprecations import deprecated_parent_prop
 from comrad.data.channel import CChannelData
-from comrad.data.japc_enum import JapcEnum
+from comrad.data.japc_enum import CEnumValue
 from .mixins import (CHideUnusedFeaturesMixin, CCustomizedTooltipMixin, CValueTransformerMixin,
                      CWidgetRulesMixin, CInitializedMixin, CChannelDataProcessingMixin)
 
@@ -151,7 +151,7 @@ class CEnumButton(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTooltipM
         super().init_for_designer()
         self.items = ['RAD Item 1', 'RAD Item 2', 'RAD Item ...']
 
-    def value_changed(self, packet: CChannelData[JapcEnum]):
+    def value_changed(self, packet: CChannelData[Union[int, CEnumValue]]):
         """
         Overridden data handler to allow JAPC enums coming as tuples.
 
@@ -161,14 +161,11 @@ class CEnumButton(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTooltipM
         if not isinstance(packet, CChannelData):
             return
 
-        new_val = packet.value
-        if isinstance(new_val, tuple) and len(new_val) > 1:
-            button_name = new_val[1]
+        if isinstance(packet.value, CEnumValue):
             try:
-                idx = self.enum_strings.index(button_name)
+                packet.value = self.enum_strings.index(packet.value.label)
             except ValueError:
                 return
-            packet.value = idx
 
         super().value_changed(packet)
 
