@@ -576,3 +576,12 @@ class NoPlugin(PyDMPlugin):
 
     protocol = 'no'
     connection_class = CJapcConnection
+
+
+class RmiPlugin(PyDMPlugin):
+    """
+    PyDM data plugin that handles communications with the channels on "rmi://" scheme.
+    """
+
+    protocol = 'rmi'
+    connection_class = CJapcConnection
