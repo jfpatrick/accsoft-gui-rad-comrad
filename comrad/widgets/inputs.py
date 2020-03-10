@@ -1,7 +1,8 @@
 import logging
-from typing import Optional, Dict, Any, Union
+from typing import Optional, Dict, Any, Union, cast
 from qtpy.QtWidgets import QWidget, QLabel, QComboBox
 from qtpy.QtCore import Property, QVariant, Signal
+from qtpy.QtGui import QFocusEvent
 from pydm.widgets.base import PyDMWritableWidget
 from pydm.widgets.line_edit import PyDMLineEdit
 from pydm.widgets.slider import PyDMSlider
@@ -72,6 +73,7 @@ class CEnumComboBox(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedToolti
         CHideUnusedFeaturesMixin.__init__(self)
         CValueTransformerMixin.__init__(self)
         PyDMEnumComboBox.__init__(self, parent=parent, init_channel=init_channel, **kwargs)
+        self.setInsertPolicy(QComboBox.NoInsert)
         self._widget_initialized = True
 
     def value_changed(self, packet: CChannelData[Union[str, int, CEnumValue]]):
@@ -85,9 +87,22 @@ class CEnumComboBox(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedToolti
             return
 
         if isinstance(packet.value, CEnumValue):
-            packet.value = packet.value.label
+            if not packet.value.settable and self.findText(packet.value.label) == -1:
+                # Jump over PyDMEnumComboBox to not emit error,
+                # but rather display it in the combobox without any other logic involved
+                self.setEditable(True)
+                self.setEditText(packet.value.label)
+                return
+            else:
+                packet.value = packet.value.label
 
+        self.setEditable(False)
         super().value_changed(packet)
+
+    def focusInEvent(self, e: QFocusEvent) -> None:
+        if self.isEditable():
+            self.setEditable(False)
+        super().focusInEvent(e)
 
 
 class CLineEdit(CColorRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixin, CInitializedMixin, CHideUnusedFeaturesMixin, CNoPVTextFormatterMixin, PyDMLineEdit):
@@ -236,6 +251,32 @@ class CPropertyEditWidgetDelegate(_PropertyEditWidgetDelegate):
     """
     Subclass to make sure that tuple-based enums with meaning can be represented correctly by inner LEDs.
     """
+
+    class _SensitiveCombobox(QComboBox):
+
+        def focusInEvent(self, e: QFocusEvent) -> None:
+            if self.isEditable():
+                self.setEditable(False)
+            super().focusInEvent(e)
+
+    def create_widget(self,
+                      field_id: str,
+                      item_type: PropertyEdit.ValueType,
+                      editable: bool,
+                      user_data: Optional[Dict[str, Any]],
+                      parent: Optional[QWidget] = None) -> QWidget:
+        if editable and item_type == PropertyEdit.ValueType.ENUM:
+            widget = CPropertyEditWidgetDelegate._SensitiveCombobox(parent)
+            for label, code in (user_data or {}).get('options', []):
+                widget.addItem(label, code)
+            return widget
+
+        return super().create_widget(field_id=field_id,
+                                     item_type=item_type,
+                                     editable=editable,
+                                     user_data=user_data,
+                                     parent=parent)
+
     def display_data(self,
                      field_id: str,
                      value: Any,
@@ -249,8 +290,20 @@ class CPropertyEditWidgetDelegate(_PropertyEditWidgetDelegate):
                 except ValueError:
                     return
             elif item_type == PropertyEdit.ValueType.ENUM:
-                if isinstance(widget, QLabel) or isinstance(widget, QComboBox):
+                if isinstance(widget, QLabel):
                     value = value.code  # Communicate the code to the widget, which will choose the correct text
+                elif isinstance(widget, QComboBox):
+                    combo = cast(QComboBox, widget)
+                    if not value.settable and combo.findText(value.label) == -1:
+                        # Jump over PyDMEnumComboBox to not emit error,
+                        # but rather display it in the combobox without any other logic involved
+                        combo.setEditable(True)
+                        combo.setEditText(value.label)
+                        return
+                    else:
+                        combo.setEditable(False)
+                        value = value.code
+
         super().display_data(field_id=field_id,
                              value=value,
                              user_data=user_data,
