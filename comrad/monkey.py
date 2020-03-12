@@ -72,5 +72,6 @@ def modify_in_place(new_cls: Type):
         logger.debug(f'Overriding "{super_class.__name__}.{name}"')
     for name, impl in new_members.items():
         setattr(super_class, name, impl)
+        logger.debug(f'Attaching new member "{super_class.__name__}.{name}" ({type(impl)})')
 
     return super_class
