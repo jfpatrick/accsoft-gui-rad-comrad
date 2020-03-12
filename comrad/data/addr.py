@@ -1,7 +1,12 @@
-from typing import Optional
+import re
+from typing import Optional, Dict, Any
+from comrad.data.context import CContext
 
 
 class ControlEndpointAddress:
+
+    param_name_regex = r'^((?P<protocol>[^:/]+)://(?P<service>[^/]+)?/)?(?P<device>[^/#@&\n\t]+)/' \
+                       r'(?P<property>[^/#@\?\n\t]+)(#(?P<field>[^@?\n\t]+))?'
 
     def __init__(self,
                  device: str,
@@ -9,7 +14,8 @@ class ControlEndpointAddress:
                  field: Optional[str] = None,
                  protocol: Optional[str] = None,
                  service: Optional[str] = None,
-                 selector: Optional[str] = None):
+                 selector: Optional[str] = None,
+                 data_filters: Optional[Dict[str, Any]] = None):
         """
         Address of the device property (field) in the control system.
 
@@ -21,6 +27,7 @@ class ControlEndpointAddress:
             service: Service is the control node that resolves the device names,
                      if the main directory service is unaware of it.
             selector: Optional timing/cycle/user selector, e.g. LHC.USER.ALL
+            data_filters: Optional data filters for expert users in equipment groups.
         """
         self.device = device
         self.property = prop
@@ -28,6 +35,7 @@ class ControlEndpointAddress:
         self.protocol = protocol
         self.service = service
         self.selector = selector
+        self.data_filters = data_filters
 
     @property
     def valid(self) -> bool:
@@ -37,23 +45,53 @@ class ControlEndpointAddress:
                 or self.protocol is not None))
 
     @classmethod
-    def from_string(cls, input: str) -> Optional['ControlEndpointAddress']:
+    def validate_parameter_name(cls, input_addr: str) -> bool:
+        """Convenience method to validate only the parameter name value, as it is
+        separated from the context, containing selectors and data filters.
+
+        Args:
+            input_addr: String formatted according to the device-property specification.
+
+        Returns:
+             ``True`` if validation succeeds.
+        """
+        mo = re.match(cls.param_name_regex + r'$', input_addr)
+        return bool(mo and mo.groups())
+
+    @classmethod
+    def from_string(cls, input_addr: str) -> Optional['ControlEndpointAddress']:
         """
         Factory method to construct an object from string representation.
 
         Args:
-            input: String formatted according to the device-property specification.
+            input_addr: String formatted according to the device-property specification.
+
+        Returns:
+            New object or ``None`` if could not parse the string.
         """
-        import re
-        mo = re.match(r'^((?P<protocol>[^:/]+)://(?P<service>[^/]+)?/)?(?P<device>[^/#@\n\t]+)/(?P<property>[^/#@\n\t]+)(#(?P<field>[^@\n\t]+))?(@(?P<selector>[^\.]+\.[^\.]+\.[^\.]+))?$', input)
+        mo = re.match(cls.param_name_regex
+                      + r'(@(?P<selector>[^\.\?]+'
+                        r'\.[^\.\?]+\.[^\.\?]+))?(\?(?P<filter>[^=&\n\t]+=[^=&\n\t]+(&[^=&\n\t]+=[^=&\n\t]+)*))?$', input_addr)
         if mo and mo.groups():
             captures = mo.groupdict()
+            filters: Optional[Dict[str, Any]] = None
+            captured_filters: Optional[str]
+            try:
+                captured_filters = captures['filter']
+            except KeyError:
+                captured_filters = None
+            if captured_filters:
+                filters = {}
+                for pair in captured_filters.split('&'):
+                    key, value = tuple(pair.split('='))
+                    filters[key] = value
             return cls(device=captures['device'],
                        prop=captures['property'],
                        field=captures['field'],
                        protocol=captures['protocol'],
                        service=captures['service'],
-                       selector=captures['selector'])
+                       selector=captures['selector'],
+                       data_filters=filters)
         else:
             return None
 
@@ -75,7 +113,4 @@ class ControlEndpointAddress:
         if self.field:
             res += '#'
             res += self.field
-        if self.selector:
-            res += '@'
-            res += self.selector
-        return res
+        return res + CContext.to_string_suffix(data_filters=self.data_filters, selector=self.selector)
