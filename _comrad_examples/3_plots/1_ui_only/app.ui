@@ -26,13 +26,10 @@
       </stringlist>
      </property>
      <property name="axisLabels" stdset="0">
-      <string>{&quot;right&quot;: &quot;Bar Graph&quot;, &quot;top&quot;: &quot;&quot;, &quot;bottom&quot;: &quot;&quot;, &quot;left&quot;: &quot;Bar Graph&quot;, &quot;y_0&quot;: &quot;Curve&quot;, &quot;y_1&quot;: &quot;Injection Bars&quot;}</string>
+      <string>{&quot;bottom&quot;: &quot;&quot;, &quot;right&quot;: &quot;Bar Graph&quot;, &quot;left&quot;: &quot;Bar Graph&quot;, &quot;top&quot;: &quot;&quot;, &quot;y_0&quot;: &quot;Curve&quot;, &quot;y_1&quot;: &quot;Injection Bars&quot;}</string>
      </property>
      <property name="axisRanges" stdset="0">
       <string>{&quot;x&quot;: [-0.5, 0.5], &quot;y&quot;: [0.0, 3.0], &quot;y_0&quot;: [-1.0, 2.0], &quot;y_1&quot;: [-5.0, 2.0]}</string>
-     </property>
-     <property name="axisAutoRange" stdset="0">
-      <string>{&quot;x&quot;: true, &quot;y&quot;: false, &quot;y_0&quot;: false, &quot;y_1&quot;: false}</string>
      </property>
      <property name="curves" stdset="0">
       <stringlist>
@@ -52,13 +49,10 @@
       </stringlist>
      </property>
      <property name="axisLabels" stdset="0">
-      <string>{&quot;right&quot;: &quot;Dotted Curve&quot;, &quot;top&quot;: &quot;&quot;, &quot;bottom&quot;: &quot;&quot;, &quot;left&quot;: &quot;Dotted Curve&quot;, &quot;y_0&quot;: &quot;Triangle Scatter&quot;}</string>
+      <string>{&quot;bottom&quot;: &quot;&quot;, &quot;right&quot;: &quot;Dotted Curve&quot;, &quot;left&quot;: &quot;Dotted Curve&quot;, &quot;top&quot;: &quot;&quot;, &quot;y_0&quot;: &quot;Triangle Scatter&quot;}</string>
      </property>
      <property name="axisRanges" stdset="0">
-      <string>{&quot;x&quot;: [4.0, 16.0], &quot;y&quot;: [0, 1], &quot;y_0&quot;: [0, 1]}</string>
-     </property>
-     <property name="axisAutoRange" stdset="0">
-      <string>{&quot;x&quot;: true, &quot;y&quot;: true, &quot;y_0&quot;: true}</string>
+      <string>{&quot;x&quot;: [0.0, 10.0], &quot;y&quot;: &quot;auto&quot;, &quot;y_0&quot;: &quot;auto&quot;}</string>
      </property>
      <property name="leftBoundary" stdset="0">
       <double>10.000000000000000</double>
