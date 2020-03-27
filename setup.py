@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 # We use implicit packages (PEP420) that are not obliged
-# to have __init__.py. Default implementation of setuptools.find_packages will
+# to have __main__.py. Default implementation of setuptools.find_packages will
 # expect that file to exist and thus skip everything else. We need a tailored
 # version.
 find_packages = PEP420PackageFinder.find
@@ -85,7 +85,7 @@ setup(
     author='Ivan Sinkarenko',
     author_email='ivan.sinkarenko@cern.ch',
     url='https://wikis.cern.ch/display/ACCPY/Rapid+Application+Development',
-    packages=find_packages(exclude=('build*', 'dist*', 'docs*', 'tests', '*.egg-info')),
+    packages=find_packages(exclude=('build*', 'dist*', 'docs*', 'tests', '*.egg-info', '_comrad.debug')),
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: X11 Applications :: Qt',
