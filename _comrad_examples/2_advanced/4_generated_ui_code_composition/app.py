@@ -8,6 +8,6 @@ class DemoDisplay(CDisplay):
         super().__init__(*args, **kwargs)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
-        self.ui.label.channel = 'japc:///DemoDevice/Acquisition#Demo'
+        self.ui.label.channel = 'DemoDevice/Acquisition#Demo'
         # Make sure it's more visible, so restyle
         self.ui.label.setStyleSheet('background-color:yellow')

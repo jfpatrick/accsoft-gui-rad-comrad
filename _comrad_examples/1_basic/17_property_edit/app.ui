@@ -35,7 +35,7 @@
         <enum>PropertyEdit::Both</enum>
        </property>
        <property name="channel" stdset="0">
-        <string notr="true">japc:///DemoDevice/Settings</string>
+        <string notr="true">DemoDevice/Settings</string>
        </property>
       </widget>
      </item>
@@ -51,7 +51,7 @@
         <string>[{&quot;field&quot;: &quot;IntVal&quot;, &quot;type&quot;: 1, &quot;rw&quot;: true}, {&quot;field&quot;: &quot;FloatVal&quot;, &quot;type&quot;: 2, &quot;rw&quot;: true}, {&quot;field&quot;: &quot;StrVal&quot;, &quot;type&quot;: 4, &quot;rw&quot;: true}, {&quot;field&quot;: &quot;BoolVal&quot;, &quot;type&quot;: 3, &quot;rw&quot;: true}, {&quot;field&quot;: &quot;EnumVal&quot;, &quot;type&quot;: 5, &quot;rw&quot;: true, &quot;ud&quot;: {&quot;options&quot;: [[&quot;ON&quot;, 1], [&quot;OFF&quot;, 2], [&quot;UNKNOWN&quot;, 3]]}}]</string>
        </property>
        <property name="channel" stdset="0">
-        <string notr="true">japc:///DemoDevice/Settings</string>
+        <string notr="true">DemoDevice/Settings</string>
        </property>
       </widget>
      </item>
@@ -73,7 +73,7 @@
    <item>
     <widget class="CLabel" name="CLabel">
      <property name="channel" stdset="0">
-      <string notr="true">japc:///DemoDevice/SettingsRepr#str</string>
+      <string notr="true">DemoDevice/SettingsRepr#str</string>
      </property>
     </widget>
    </item>

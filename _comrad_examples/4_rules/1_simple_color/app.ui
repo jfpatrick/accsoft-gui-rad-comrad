@@ -23,7 +23,7 @@
       <enum>PyDMLabel::Decimal</enum>
      </property>
      <property name="channel" stdset="0">
-      <string notr="true">japc:///DemoDevice/Acquisition#Demo</string>
+      <string notr="true">DemoDevice/Acquisition#Demo</string>
      </property>
      <property name="rules" stdset="0">
       <string>[{&quot;name&quot;: &quot;Simple color&quot;, &quot;prop&quot;: &quot;Color&quot;, &quot;type&quot;: 0, &quot;channel&quot;: &quot;__auto__&quot;, &quot;ranges&quot;: [{&quot;min&quot;: 0.5, &quot;max&quot;: 1.01, &quot;value&quot;: &quot;#ff0000&quot;}]}]</string>
@@ -33,7 +33,7 @@
    <item>
     <widget class="CLed" name="CLed">
      <property name="channel" stdset="0">
-      <string notr="true">japc:///DemoDevice/Acquisition#Demo</string>
+      <string notr="true">DemoDevice/Acquisition#Demo</string>
      </property>
      <property name="rules" stdset="0">
       <string>[{&quot;name&quot;: &quot;Simple color&quot;, &quot;prop&quot;: &quot;Color&quot;, &quot;type&quot;: 0, &quot;channel&quot;: &quot;__auto__&quot;, &quot;ranges&quot;: [{&quot;min&quot;: 0.5, &quot;max&quot;: 1.01, &quot;value&quot;: &quot;#ff0000&quot;}]}]</string>

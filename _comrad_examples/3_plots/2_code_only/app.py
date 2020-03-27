@@ -81,13 +81,13 @@ class PlotDisplay(CDisplay):
         """
         # Add yellow bargraph to default layer
         bars = self.scrolling_plot.addBarGraph(
-            data_source='japc:///DemoDevice/Acquisition#RandomBar',
+            data_source='DemoDevice/Acquisition#RandomBar',
             color=QColor('yellow'),
         )
         bars.line_width = 1
         # Add red curve in layer_0
         self.scrolling_plot.addCurve(
-            data_source='japc:///DemoDevice/Acquisition#RandomPoint',
+            data_source='DemoDevice/Acquisition#RandomPoint',
             layer='layer_0',
             color=QColor('red'),
             line_width=2,
@@ -96,14 +96,14 @@ class PlotDisplay(CDisplay):
         )
         # Add blue injection bar graph into layer_1
         self.scrolling_plot.addInjectionBar(
-            data_source='japc:///DemoDevice/Acquisition#RandomInjectionBar',
+            data_source='DemoDevice/Acquisition#RandomInjectionBar',
             layer='layer_1',
             color=QColor('dodgerblue'),
             line_width=2,
         )
         # Add timestamp markers
         self.scrolling_plot.addTimestampMarker(
-            data_source='japc:///DemoDevice/Acquisition#RandomTimestampMarker',
+            data_source='DemoDevice/Acquisition#RandomTimestampMarker',
             line_width=3,
         )
 
@@ -114,7 +114,7 @@ class PlotDisplay(CDisplay):
         """
         # Add yellow dash line
         self.sliding_plot.addCurve(
-            data_source='japc:///DemoDevice/Acquisition#RandomPoint',
+            data_source='DemoDevice/Acquisition#RandomPoint',
             color=QColor('yellow'),
             line_width=2,
             line_style=Qt.DashLine,

@@ -17,14 +17,14 @@
    <item>
     <widget class="CLabel" name="CLabel">
      <property name="channel" stdset="0">
-      <string notr="true">japc:///DemoDevice/Acquisition#Demo@PSB.USER.TOF</string>
+      <string notr="true">DemoDevice/Acquisition#Demo@PSB.USER.TOF</string>
      </property>
     </widget>
    </item>
    <item>
     <widget class="CLabel" name="CLabel_2">
      <property name="channel" stdset="0">
-      <string notr="true">japc:///DemoDevice/Acquisition#Demo@PSB.USER.AD</string>
+      <string notr="true">DemoDevice/Acquisition#Demo@PSB.USER.AD</string>
      </property>
     </widget>
    </item>

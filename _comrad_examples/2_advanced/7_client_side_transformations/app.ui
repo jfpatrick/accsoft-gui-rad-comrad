@@ -17,7 +17,7 @@
    <item>
     <widget class="CLabel" name="CLabel">
      <property name="channel" stdset="0">
-      <string notr="true">japc:///DemoDevice/Acquisition#Demo</string>
+      <string notr="true">DemoDevice/Acquisition#Demo</string>
      </property>
      <property name="valueTransformation">
       <string notr="true">output(f'&lt;&lt;{new_val}&gt;&gt; - from {__file__}')</string>

@@ -36,10 +36,10 @@
      </property>
      <property name="curves" stdset="0">
       <stringlist>
-       <string>{&quot;channel&quot;: &quot;japc:///DemoDevice/Acquisition#RandomBar&quot;, &quot;style&quot;: &quot;Bar Graph&quot;, &quot;layer&quot;: &quot;&quot;, &quot;name&quot;: &quot;bars&quot;, &quot;color&quot;: &quot;yellow&quot;, &quot;line_style&quot;: 1, &quot;line_width&quot;: 1, &quot;symbol&quot;: null, &quot;symbol_size&quot;: 10}</string>
-       <string>{&quot;channel&quot;: &quot;japc:///DemoDevice/Acquisition#RandomPoint&quot;, &quot;style&quot;: &quot;Line Graph&quot;, &quot;layer&quot;: &quot;y_0&quot;, &quot;name&quot;: &quot;lines&quot;, &quot;color&quot;: &quot;red&quot;, &quot;line_style&quot;: 1, &quot;line_width&quot;: 2, &quot;symbol&quot;: null, &quot;symbol_size&quot;: 10}</string>
-       <string>{&quot;channel&quot;: &quot;japc:///DemoDevice/Acquisition#RandomInjectionBar&quot;, &quot;style&quot;: &quot;Injection Bar Graph&quot;, &quot;layer&quot;: &quot;y_1&quot;, &quot;name&quot;: &quot;injection bars&quot;, &quot;color&quot;: &quot;dodgerblue&quot;, &quot;line_style&quot;: 1, &quot;line_width&quot;: 1, &quot;symbol&quot;: null, &quot;symbol_size&quot;: 10}</string>
-       <string>{&quot;channel&quot;: &quot;japc:///DemoDevice/Acquisition#RandomTimestampMarker&quot;, &quot;style&quot;: &quot;Timestamp Marker&quot;, &quot;layer&quot;: &quot;&quot;, &quot;name&quot;: &quot;time stamp marker&quot;, &quot;color&quot;: &quot;forestgreen&quot;, &quot;line_style&quot;: 1, &quot;line_width&quot;: 3, &quot;symbol&quot;: null, &quot;symbol_size&quot;: 10}</string>
+       <string>{&quot;channel&quot;: &quot;DemoDevice/Acquisition#RandomBar&quot;, &quot;style&quot;: &quot;Bar Graph&quot;, &quot;layer&quot;: &quot;&quot;, &quot;name&quot;: &quot;bars&quot;, &quot;color&quot;: &quot;yellow&quot;, &quot;line_style&quot;: 1, &quot;line_width&quot;: 1, &quot;symbol&quot;: null, &quot;symbol_size&quot;: 10}</string>
+       <string>{&quot;channel&quot;: &quot;DemoDevice/Acquisition#RandomPoint&quot;, &quot;style&quot;: &quot;Line Graph&quot;, &quot;layer&quot;: &quot;y_0&quot;, &quot;name&quot;: &quot;lines&quot;, &quot;color&quot;: &quot;red&quot;, &quot;line_style&quot;: 1, &quot;line_width&quot;: 2, &quot;symbol&quot;: null, &quot;symbol_size&quot;: 10}</string>
+       <string>{&quot;channel&quot;: &quot;DemoDevice/Acquisition#RandomInjectionBar&quot;, &quot;style&quot;: &quot;Injection Bar Graph&quot;, &quot;layer&quot;: &quot;y_1&quot;, &quot;name&quot;: &quot;injection bars&quot;, &quot;color&quot;: &quot;dodgerblue&quot;, &quot;line_style&quot;: 1, &quot;line_width&quot;: 1, &quot;symbol&quot;: null, &quot;symbol_size&quot;: 10}</string>
+       <string>{&quot;channel&quot;: &quot;DemoDevice/Acquisition#RandomTimestampMarker&quot;, &quot;style&quot;: &quot;Timestamp Marker&quot;, &quot;layer&quot;: &quot;&quot;, &quot;name&quot;: &quot;time stamp marker&quot;, &quot;color&quot;: &quot;forestgreen&quot;, &quot;line_style&quot;: 1, &quot;line_width&quot;: 3, &quot;symbol&quot;: null, &quot;symbol_size&quot;: 10}</string>
       </stringlist>
      </property>
     </widget>
@@ -65,8 +65,8 @@
      </property>
      <property name="curves" stdset="0">
       <stringlist>
-       <string>{&quot;channel&quot;: &quot;japc:///DemoDevice/Acquisition#RandomPoint&quot;, &quot;style&quot;: &quot;Line Graph&quot;, &quot;layer&quot;: &quot;&quot;, &quot;name&quot;: &quot;curve&quot;, &quot;color&quot;: &quot;yellow&quot;, &quot;line_style&quot;: 2, &quot;line_width&quot;: 2, &quot;symbol&quot;: null, &quot;symbol_size&quot;: 10}</string>
-       <string>{&quot;channel&quot;: &quot;japc:///DemoDevice/Acquisition#RandomPoint&quot;, &quot;style&quot;: &quot;Line Graph&quot;, &quot;layer&quot;: &quot;y_0&quot;, &quot;name&quot;: &quot;triangles&quot;, &quot;color&quot;: &quot;red&quot;, &quot;line_style&quot;: 0, &quot;line_width&quot;: 1, &quot;symbol&quot;: &quot;t&quot;, &quot;symbol_size&quot;: 10}</string>
+       <string>{&quot;channel&quot;: &quot;DemoDevice/Acquisition#RandomPoint&quot;, &quot;style&quot;: &quot;Line Graph&quot;, &quot;layer&quot;: &quot;&quot;, &quot;name&quot;: &quot;curve&quot;, &quot;color&quot;: &quot;yellow&quot;, &quot;line_style&quot;: 2, &quot;line_width&quot;: 2, &quot;symbol&quot;: null, &quot;symbol_size&quot;: 10}</string>
+       <string>{&quot;channel&quot;: &quot;DemoDevice/Acquisition#RandomPoint&quot;, &quot;style&quot;: &quot;Line Graph&quot;, &quot;layer&quot;: &quot;y_0&quot;, &quot;name&quot;: &quot;triangles&quot;, &quot;color&quot;: &quot;red&quot;, &quot;line_style&quot;: 0, &quot;line_width&quot;: 1, &quot;symbol&quot;: &quot;t&quot;, &quot;symbol_size&quot;: 10}</string>
       </stringlist>
      </property>
     </widget>

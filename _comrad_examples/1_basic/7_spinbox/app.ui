@@ -45,7 +45,7 @@
       <number>2</number>
      </property>
      <property name="channel" stdset="0">
-      <string notr="true">japc:///DemoDevice/Settings#FloatVal</string>
+      <string notr="true">DemoDevice/Settings#FloatVal</string>
      </property>
      <property name="showStepExponent" stdset="0">
       <bool>false</bool>
@@ -67,7 +67,7 @@
         <number>2</number>
        </property>
        <property name="channel" stdset="0">
-        <string notr="true">japc:///DemoDevice/Settings#FloatVal</string>
+        <string notr="true">DemoDevice/Settings#FloatVal</string>
        </property>
        <property name="displayFormat" stdset="0">
         <enum>PyDMLabel::Decimal</enum>

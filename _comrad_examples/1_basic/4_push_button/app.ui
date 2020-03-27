@@ -22,7 +22,7 @@
         <string>Tick</string>
        </property>
        <property name="channel" stdset="0">
-        <string notr="true">japc:///DemoDevice/Settings#Demo</string>
+        <string notr="true">DemoDevice/Settings#Demo</string>
        </property>
        <property name="pressValue" stdset="0">
         <string>Tick</string>
@@ -35,7 +35,7 @@
         <string>Tock</string>
        </property>
        <property name="channel" stdset="0">
-        <string notr="true">japc:///DemoDevice/Settings#Demo</string>
+        <string notr="true">DemoDevice/Settings#Demo</string>
        </property>
        <property name="pressValue" stdset="0">
         <string>Tock</string>
@@ -56,7 +56,7 @@
      <item row="0" column="1">
       <widget class="CLabel" name="CLabel">
        <property name="channel" stdset="0">
-        <string notr="true">japc:///DemoDevice/Settings#Demo</string>
+        <string notr="true">DemoDevice/Settings#Demo</string>
        </property>
       </widget>
      </item>

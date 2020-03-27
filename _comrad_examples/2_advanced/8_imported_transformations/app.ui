@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>662</width>
-    <height>256</height>
+    <width>586</width>
+    <height>468</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -33,52 +33,20 @@
      <item row="0" column="1">
       <widget class="CLabel" name="CLabel_8">
        <property name="channel" stdset="0">
-        <string notr="true">japc:///DemoDevice/Acquisition#Demo</string>
+        <string notr="true">DemoDevice/Acquisition#Demo</string>
        </property>
       </widget>
      </item>
     </layout>
    </item>
    <item>
-    <layout class="QGridLayout" name="gridLayout">
-     <item row="0" column="0">
-      <widget class="QGroupBox" name="groupBox">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="title">
-        <string>External file</string>
-       </property>
-       <layout class="QHBoxLayout" name="horizontalLayout">
-        <item>
-         <widget class="QLabel" name="label_3">
-          <property name="text">
-           <string>from &quot;external.py&quot;:</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="CLabel" name="CLabel">
-          <property name="channel" stdset="0">
-           <string notr="true">japc:///DemoDevice/Acquisition#Demo</string>
-          </property>
-          <property name="snippetFilename" stdset="0">
-           <string>external.py</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-     </item>
-     <item row="0" column="1">
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <item>
       <widget class="QGroupBox" name="groupBox_3">
        <property name="title">
         <string>Inline snippet with external import</string>
        </property>
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
          <widget class="QLabel" name="label_4">
           <property name="text">
@@ -89,7 +57,7 @@
         <item>
          <widget class="CLabel" name="CLabel_3">
           <property name="channel" stdset="0">
-           <string notr="true">japc:///DemoDevice/Acquisition#Demo</string>
+           <string notr="true">DemoDevice/Acquisition#Demo</string>
           </property>
           <property name="valueTransformation">
            <string notr="true">from imported import decorate
@@ -100,12 +68,88 @@ output(decorate(new_val))</string>
        </layout>
       </widget>
      </item>
-     <item row="1" column="0">
+     <item>
+      <widget class="QGroupBox" name="groupBox">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="title">
+        <string>External file</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_5">
+        <item>
+         <widget class="QLabel" name="label_3">
+          <property name="text">
+           <string>from &quot;external.py&quot;:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="CLabel" name="CLabel">
+          <property name="channel" stdset="0">
+           <string notr="true">DemoDevice/Acquisition#Demo</string>
+          </property>
+          <property name="snippetFilename" stdset="0">
+           <string>external.py</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="groupBox_4">
+       <property name="title">
+        <string>Reused inline snippet and external import</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_6">
+        <item>
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>import &quot;reused.py&quot;:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="CLabel" name="CLabel_2">
+          <property name="channel" stdset="0">
+           <string notr="true">DemoDevice/Acquisition#Demo</string>
+          </property>
+          <property name="valueTransformation">
+           <string notr="true">from reused import decorate
+output(decorate(new_val))</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_8">
+          <property name="text">
+           <string>from &quot;reused.py&quot;:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="CLabel" name="CLabel_7">
+          <property name="channel" stdset="0">
+           <string notr="true">DemoDevice/Acquisition#Demo</string>
+          </property>
+          <property name="snippetFilename" stdset="0">
+           <string>reused.py</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
       <widget class="QGroupBox" name="groupBox_2">
        <property name="title">
         <string>External file with external import</string>
        </property>
-       <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
          <widget class="QLabel" name="label_6">
           <property name="text">
@@ -119,54 +163,10 @@ output(decorate(new_val))</string>
         <item>
          <widget class="CLabel" name="CLabel_5">
           <property name="channel" stdset="0">
-           <string notr="true">japc:///DemoDevice/Acquisition#Demo</string>
+           <string notr="true">DemoDevice/Acquisition#Demo</string>
           </property>
           <property name="snippetFilename" stdset="0">
            <string>external_importing.py</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QGroupBox" name="groupBox_4">
-       <property name="title">
-        <string>Reused inline snippet and external import</string>
-       </property>
-       <layout class="QGridLayout" name="gridLayout_2">
-        <item row="0" column="0">
-         <widget class="QLabel" name="label_2">
-          <property name="text">
-           <string>import &quot;reused.py&quot;:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="CLabel" name="CLabel_2">
-          <property name="channel" stdset="0">
-           <string notr="true">japc:///DemoDevice/Acquisition#Demo</string>
-          </property>
-          <property name="valueTransformation">
-           <string notr="true">from reused import decorate
-output(decorate(new_val))</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label_8">
-          <property name="text">
-           <string>from &quot;reused.py&quot;:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="CLabel" name="CLabel_7">
-          <property name="channel" stdset="0">
-           <string notr="true">japc:///DemoDevice/Acquisition#Demo</string>
-          </property>
-          <property name="snippetFilename" stdset="0">
-           <string>reused.py</string>
           </property>
          </widget>
         </item>

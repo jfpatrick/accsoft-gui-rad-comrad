@@ -10,7 +10,7 @@ class DemoDisplay(CDisplay):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        property_edit = CPropertyEdit(init_channel='japc:///DemoDevice/Settings')
+        property_edit = CPropertyEdit(init_channel='DemoDevice/Settings')
         property_edit.decoration = CPropertyEdit.Decoration.FRAME
         property_edit.buttons = CPropertyEdit.Buttons.SET | CPropertyEdit.Buttons.GET
         property_edit.fields = [
@@ -32,5 +32,5 @@ class DemoDisplay(CDisplay):
         layout.addWidget(self.property_edit)
         layout.addStretch()
 
-        self.label = CLabel(init_channel='japc:///DemoDevice/SettingsRepr#str')
+        self.label = CLabel(init_channel='DemoDevice/SettingsRepr#str')
         layout.addWidget(self.label)

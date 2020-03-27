@@ -20,7 +20,7 @@
       <number>2</number>
      </property>
      <property name="channel" stdset="0">
-      <string notr="true">japc:///DemoDevice/Acquisition#Demo</string>
+      <string notr="true">DemoDevice/Acquisition#Demo</string>
      </property>
      <property name="showTicks" stdset="0">
       <bool>false</bool>
