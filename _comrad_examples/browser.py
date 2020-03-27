@@ -16,7 +16,7 @@ from qtpy.QtWidgets import (QMainWindow, QTreeWidgetItem, QTreeWidget, QStackedW
 from pydm.utilities.iconfont import IconFont
 from comrad.icons import icon
 from comrad.app.about import AboutDialog
-from comrad.examples import examples as eg
+from _comrad_examples import examples as eg
 
 try:
     from PyQt5.Qsci import QsciScintilla, QsciLexerPython, QsciLexerJSON, QsciLexerCSS

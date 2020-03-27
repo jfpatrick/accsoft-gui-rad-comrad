@@ -1,5 +1,5 @@
 import pytest
-from comrad.examples import examples
+from _comrad_examples import examples
 
 
 all_examples = examples.find_runnable()

@@ -97,7 +97,7 @@ Environment:
     install_logger_level(vars(args).get('log_level'))
     if args.cmd == 'examples':
         # Importing it here to have a chance to setup root logger before
-        from comrad.examples.browser import run_browser as run_examples_browser
+        from _comrad_examples.browser import run_browser as run_examples_browser
         run_examples_browser(args)
     else:
         if args.cmd == 'run':
