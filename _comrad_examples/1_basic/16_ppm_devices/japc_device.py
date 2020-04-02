@@ -16,8 +16,8 @@ import random
 
 class DemoDevice(Device):
     """
-    Demo device produces "Tick"/"Tock" string values every second
-    on a 'Acquistion#Demo' field.
+    Demo device produces separate string values every second
+    on a 'Acquistion#Demo' field for one of the available timing selectors (each time randomly).
     """
     frequency = 1
 

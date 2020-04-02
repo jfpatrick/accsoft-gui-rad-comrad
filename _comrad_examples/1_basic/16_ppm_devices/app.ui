@@ -15,17 +15,35 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="CLabel" name="CLabel">
-     <property name="channel" stdset="0">
-      <string notr="true">DemoDevice/Acquisition#Demo@PSB.USER.TOF</string>
+    <widget class="CContextFrame" name="CContextFrame">
+     <property name="selector" stdset="0">
+      <string>PSB.USER.TOF</string>
      </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="CLabel" name="CLabel">
+        <property name="channel" stdset="0">
+         <string notr="true">DemoDevice/Acquisition#Demo</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
    <item>
-    <widget class="CLabel" name="CLabel_2">
-     <property name="channel" stdset="0">
-      <string notr="true">DemoDevice/Acquisition#Demo@PSB.USER.AD</string>
+    <widget class="CContextFrame" name="CContextFrame_2">
+     <property name="selector" stdset="0">
+      <string>PSB.USER.AD</string>
      </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="CLabel" name="CLabel_2">
+        <property name="channel" stdset="0">
+         <string notr="true">DemoDevice/Acquisition#Demo</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
   </layout>
@@ -35,6 +53,12 @@
    <class>PyDMLabel</class>
    <extends>QLabel</extends>
    <header>pydm.widgets.label</header>
+  </customwidget>
+  <customwidget>
+   <class>CContextFrame</class>
+   <extends>QFrame</extends>
+   <header>comrad.widgets.containers</header>
+   <container>1</container>
   </customwidget>
   <customwidget>
    <class>CLabel</class>
