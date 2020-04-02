@@ -288,7 +288,10 @@ class ExamplesWindow(QMainWindow):
         """Opens *.ui file in Qt Designer"""
         from _comrad.designer import run_designer
         from _comrad.comrad_info import CCDA_MAP
-        run_designer(files=[file_path], ccda_env=CCDA_MAP['PRO'])
+
+        run_designer(files=[file_path],
+                     ccda_env=CCDA_MAP['PRO'],
+                     log_level=logging.getLevelName(logging.getLogger().level))
 
 
 class DesignerTab(QWidget):
