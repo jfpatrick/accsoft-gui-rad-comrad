@@ -12,6 +12,7 @@ def run_designer(ccda_env: str,
                  files: Optional[List[Union[Path, str]]] = None,
                  online: bool = False,
                  use_inca: bool = True,
+                 selector: Optional[str] = None,
                  java_env: Optional[Dict[str, str]] = None,
                  server: bool = False,
                  client: Optional[int] = None,
@@ -27,6 +28,7 @@ def run_designer(ccda_env: str,
         files: files to be opened with Qt Designer (standard feature).
         online: Run Designer in online mode (receive live data). This is PyDM feature.
         use_inca: Run control system calls through InCA servers (only relevant when online is True)
+        selector: Default selector to use for window context at the startup.
         java_env: JVM flags to be passed to the control system libraries (only relevant when online is True)
         server: run as server (standard feature).
         client: port to use when run in the client mode (standard feature).
@@ -55,6 +57,8 @@ def run_designer(ccda_env: str,
             env['QT_DESIGNER_RAD_JVM'] = ';'.join((f'{key}:{value}' for key, value in java_env.items()))
     if log_level:
         env['COMRAD_DESIGNER_LOG_LEVEL'] = log_level
+    if selector:
+        env['COMRAD_DESIGNER_SELECTOR'] = selector
 
     cmd: List[str] = ['designer']
 

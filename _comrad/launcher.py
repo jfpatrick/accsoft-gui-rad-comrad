@@ -107,6 +107,13 @@ def _install_help(parser: argparse._ActionsContainer):
 
 
 def _install_controls_arguments(parser: argparse._ActionsContainer):
+    parser.add_argument('-s', '--selector',
+                        metavar='SELECTOR',
+                        help='Default selector for the window. Selectors allow specifying the timing user, so the data '
+                             'is received only when specific timing user is being played. ComRAD window will have a '
+                             'selector affecting all of its widgets. This selector can be changed via "PLS" toolbar '
+                             'item. When omitted, no selector will be used.',
+                        default=None)
     parser.add_argument('--no-inca',
                         action='store_true',
                         help='Do not use InCA server middleware and connect directly to devices. By default JAPC '
@@ -334,6 +341,7 @@ def _run_comrad(args: argparse.Namespace) -> bool:
                        use_inca=not args.no_inca,
                        ccda_endpoint=ccda_endpoint,
                        cmw_env=args.cmw_env,
+                       default_selector=args.selector or None,
                        java_env=java_env,
                        perf_mon=args.perf_mon,
                        hide_nav_bar=args.hide_nav_bar,
@@ -366,6 +374,7 @@ def _run_designer(args: argparse.Namespace) -> bool:
                  ccda_env=ccda_endpoint,
                  java_env=java_env,
                  use_inca=not args.no_inca,
+                 selector=args.selector or None,
                  online=args.online,
                  server=args.server,
                  client=args.client,

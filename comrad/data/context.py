@@ -1,5 +1,6 @@
 import logging
 import weakref
+import os
 from abc import abstractmethod
 from typing import Optional, Dict, Any, TypeVar, cast, Union
 from qtpy.QtCore import QObject, Signal, QEvent
@@ -226,7 +227,7 @@ def get_designer_window_stub() -> Union[QWidget, CContextProvider]:
             def __init__(self):
                 QWidget.__init__(self)
                 CContextProvider.__init__(self)
-                self._local_context = CContext()
+                self._local_context = CContext(selector=os.getenv('COMRAD_DESIGNER_SELECTOR', None))
 
             def get_context_view(self) -> CContext:
                 return self._local_context

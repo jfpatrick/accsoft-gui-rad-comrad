@@ -215,6 +215,7 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
                      blocking=False,
                      ccda_env=app.ccda_endpoint,
                      use_inca=app.use_inca,
+                     selector=self.window_context.selector,
                      java_env=app.jvm_flags)
 
     def _open_editor_generic(self, filename: str):

@@ -28,6 +28,7 @@ class CApplication(PyDMApplication):
                  command_line_args: Optional[List[str]] = None,
                  display_args: Optional[List[str]] = None,
                  use_inca: bool = True,
+                 default_selector: Optional[str] = None,
                  cmw_env: Optional[str] = None,
                  java_env: Optional[Dict[str, str]] = None,
                  perf_mon: bool = False,
@@ -62,6 +63,7 @@ class CApplication(PyDMApplication):
                 probably isn't something you will ever need to use when writing
                 code that instantiates :class:`CApplication`.
             use_inca: Whether to route JAPC connection through known InCA servers.
+            default_selector: Default selector to use for window context at the startup.
             cmw_env: Original CMW environment. While it is not directly used in this instance, instead relying on
                 ``java_env`` and ``ccda_endpoint``, it will be passed to any child ComRAD processes.
             java_env: JVM flags to be passed to the control system libraries.
@@ -140,6 +142,8 @@ class CApplication(PyDMApplication):
                                              toolbar_order=order,
                                              plugin_whitelist=plugin_whitelist,
                                              plugin_blacklist=plugin_blacklist)
+        if default_selector:
+            self.main_window.window_context.selector = default_selector
 
     def new_pydm_process(self,
                          ui_file: str,
@@ -190,6 +194,8 @@ class CApplication(PyDMApplication):
             args.extend(['-m', json.dumps(macros)])
         if not self.use_inca:
             args.append('--no-inca')
+        if self.main_window.window_context.selector:
+            args.extend(['--selector', self.main_window.window_context.selector])
         if self.jvm_flags:
             java_env = '--java-env'
             for key, flag_val in self.jvm_flags:
