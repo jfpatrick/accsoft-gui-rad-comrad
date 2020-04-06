@@ -9,226 +9,21 @@ from pytestqt.qtbot import QtBot
 from _pytest.logging import LogCaptureFixture
 from qtpy.QtCore import Signal, Slot, QObject
 from comrad.data import japc_plugin, channel
-from comrad import CApplication
-from comrad.rbac import CRBACLoginStatus, CRBACStartupLoginPolicy
 from _comrad.comrad_info import COMRAD_DEFAULT_PROTOCOL
 
 
 @pytest.fixture(autouse=True)
 def reset_singleton():
     japc_plugin._japc = None
-    yield
+    with mock.patch('comrad.data.japc_plugin.CPyJapc'):
+        yield
     japc_plugin._japc = None
 
 
-@mock.patch('pyjapc.PyJapc')  # These mocks help against repeated CBNG web-service and "JVM is already started" warnings
-def test_japc_singleton(_):
+def test_japc_singleton():
     obj1 = japc_plugin.get_japc()
     obj2 = japc_plugin.get_japc()
     assert obj1 is obj2
-
-
-@pytest.mark.parametrize('succeeds,by_location,expected_status', [
-    (True, True, CRBACLoginStatus.LOGGED_IN_BY_LOCATION),
-    (False, True, CRBACLoginStatus.LOGGED_OUT),
-    (True, False, CRBACLoginStatus.LOGGED_IN_BY_CREDENTIALS),
-    (False, False, CRBACLoginStatus.LOGGED_OUT),
-])
-@mock.patch('pyjapc.PyJapc')  # These mocks help against repeated CBNG web-service and "JVM is already started" warnings
-@mock.patch('comrad.data.japc_plugin._JapcService.rbacLogin')
-@mock.patch('comrad.data.japc_plugin._JapcService.rbacGetToken')
-def test_rbac_login(rbacGetToken, rbacLogin, _, succeeds: bool, by_location: bool, expected_status: CRBACLoginStatus):
-    japc = japc_plugin.get_japc()
-    rbac = cast(CApplication, CApplication.instance()).rbac
-    assert japc._logged_in is False
-    assert rbac.status == CRBACLoginStatus.LOGGED_OUT
-    assert rbac.user is None
-
-    def set_logged_in(*_, **__):
-        japc._logged_in = succeeds
-
-    rbacLogin.side_effect = set_logged_in
-    rbacGetToken.return_value.getUser.return_value.getName.return_value = 'TEST_USER'
-
-    if by_location:
-        japc.login_by_location()
-    else:
-        japc.login_by_credentials(username='fakeuser', password='fakepasswd')
-    rbacLogin.assert_called_once()
-    if succeeds:
-        rbacGetToken.assert_called_once()
-        assert rbac.user == 'TEST_USER'
-    else:
-        rbacGetToken.assert_not_called()
-        assert rbac.user is None
-    assert rbac.status == expected_status
-
-
-@mock.patch('pyjapc.PyJapc')  # These mocks help against repeated CBNG web-service and "JVM is already started" warnings
-@mock.patch('pyjapc.PyJapc.rbacLogout')
-@mock.patch('comrad.data.japc_plugin._JapcService.rbacGetToken')
-def test_rbac_logout_succeeds(_, rbacLogout, __):
-    japc = japc_plugin.get_japc()
-    japc._logged_in = True
-    rbac = cast(CApplication, CApplication.instance()).rbac
-    rbac.user = 'TEST_USER'
-    rbac._status = CRBACLoginStatus.LOGGED_IN_BY_LOCATION
-
-    japc.rbacLogout()
-    rbacLogout.assert_called_once()
-    japc.rbacGetToken.assert_not_called()
-    assert rbac.status == CRBACLoginStatus.LOGGED_OUT
-
-
-@mock.patch('pyjapc.PyJapc')  # These mocks help against repeated CBNG web-service and "JVM is already started" warnings
-@mock.patch('pyjapc.PyJapc.rbacLogin')
-def test_rbac_login_only_once(rbacLogin, _):
-    japc = japc_plugin.get_japc()
-    assert japc.logged_in is False
-
-    japc.login_by_location()
-    japc.login_by_location()
-    japc.login_by_location()
-    japc.login_by_location()
-    assert japc.logged_in is True
-    rbacLogin.assert_called_once()
-
-
-@mock.patch('pyjapc.PyJapc')  # These mocks help against repeated CBNG web-service and "JVM is already started" warnings
-@mock.patch('pyjapc.PyJapc.rbacLogout')
-def test_rbac_logout_only_once(rbacLogout, _):
-    japc = japc_plugin.get_japc()
-    japc._logged_in = True
-    japc.rbacLogout()
-    japc.rbacLogout()
-    japc.rbacLogout()
-    japc.rbacLogout()
-    assert japc.logged_in is False
-    rbacLogout.assert_called_once()
-
-
-# TODO: Test case with login by credentials when appropriate dialog is implemented
-@pytest.mark.parametrize('login_policy,args', [
-    (CRBACStartupLoginPolicy.LOGIN_BY_LOCATION, {}),
-    (CRBACStartupLoginPolicy.NO_LOGIN, None),
-])
-@mock.patch('pyjapc.PyJapc')  # These mocks help against repeated CBNG web-service and "JVM is already started" warnings
-@mock.patch('comrad.data.japc_plugin._JapcService.rbacLogin')
-def test_rbac_login_on_startup(rbacLogin, _, login_policy, args):
-    rbac = cast(CApplication, CApplication.instance()).rbac
-    rbac.startup_login_policy = login_policy
-    japc = japc_plugin.get_japc()
-    if login_policy == CRBACStartupLoginPolicy.NO_LOGIN:
-        rbacLogin.assert_not_called()
-    else:
-        rbacLogin.assert_called_once_with(**args, on_exception=japc._login_err)
-
-
-@mock.patch('pyjapc.PyJapc')  # These mocks help against repeated CBNG web-service and "JVM is already started" warnings
-@mock.patch('pyjapc.PyJapc.rbacLogin')
-def test_rbac_login_notifies_status(_, __, qtbot):
-    japc = japc_plugin.get_japc()
-    assert japc.logged_in is False
-    with qtbot.wait_signal(japc.japc_status_changed) as blocker:
-        japc.rbacLogin()
-    assert blocker.args == [True]
-    assert japc.logged_in is True
-
-
-@mock.patch('pyjapc.PyJapc')  # These mocks help against repeated CBNG web-service and "JVM is already started" warnings
-@mock.patch('pyjapc.PyJapc.rbacLogout')
-def test_rbac_logout_notifies_status(_, __, qtbot):
-    japc = japc_plugin.get_japc()
-    japc._logged_in = True
-    with qtbot.wait_signal(japc.japc_status_changed) as blocker:
-        japc.rbacLogout()
-    assert blocker.args == [False]
-    assert japc.logged_in is False
-
-
-@mock.patch('pyjapc.PyJapc')  # These mocks help against repeated CBNG web-service and "JVM is already started" warnings
-@mock.patch('pyjapc.PyJapc.rbacLogin')
-def test_rbac_login_fails_on_auth_exception(rbacLogin, _):
-
-    def raise_error(*_, **__):
-        # Stays here to have lazy import of jpype
-        import jpype
-        cern = jpype.JPackage('cern')
-        raise jpype.JException(cern.rbac.client.authentication.AuthenticationException)('Test exception')
-
-    rbacLogin.side_effect = raise_error
-    japc = japc_plugin.get_japc()
-    assert japc.logged_in is False
-
-    callback = mock.Mock()
-
-    japc.rbacLogin(on_exception=callback)
-    callback.assert_called_once_with('Test exception', True)
-
-
-@mock.patch('pyjapc.PyJapc')  # These mocks help against repeated CBNG web-service and "JVM is already started" warnings
-@mock.patch('pyjapc.PyJapc.getParam', return_value=3)
-def test_japc_get_succeeds(getParam, _):
-    japc = japc_plugin.get_japc()
-    assert japc.getParam('test_addr') == 3
-    getParam.assert_called_once_with('test_addr')
-
-
-@mock.patch('pyjapc.PyJapc')  # These mocks help against repeated CBNG web-service and "JVM is already started" warnings
-@mock.patch('pyjapc.PyJapc.setParam')
-def test_japc_set_succeeds(setParam, _):
-    japc = japc_plugin.get_japc()
-    japc.setParam('test_addr', 4)
-    setParam.assert_called_once_with('test_addr', 4, checkDims=False)
-
-
-@pytest.mark.parametrize('method,display_popup,value', [
-    ('getParam', False, None),
-    ('setParam', True, 4),
-])
-@mock.patch('pyjapc.PyJapc')  # These mocks help against repeated CBNG web-service and "JVM is already started" warnings
-@mock.patch('pyjapc.PyJapc.getParam')
-@mock.patch('pyjapc.PyJapc.setParam')
-def test_japc_get_set_fails_on_cmw_exception(setParam, getParam, _, method, display_popup, value, qtbot):
-
-    def raise_error(parameterName, *args, **__):
-        assert parameterName == 'test_addr'
-        if value is not None:
-            assert args[0] == value  # Test setParam value
-
-        # Stays here to have lazy import of jpype
-        import jpype
-        cern = jpype.JPackage('cern')
-        raise jpype.JException(cern.japc.core.ParameterException)('Test exception')
-
-    getParam.side_effect = raise_error
-    setParam.side_effect = raise_error
-
-    japc = japc_plugin.get_japc()
-    args = ['test_addr']
-    if value is not None:
-        args.append(value)
-    with qtbot.wait_signal(japc.japc_param_error) as blocker:
-        getattr(japc, method)(*args)
-    assert blocker.args == ['Test exception', display_popup]
-
-
-@mock.patch('pyjapc.PyJapc')  # These mocks help against repeated CBNG web-service and "JVM is already started" warnings
-def test_jvm_flags_are_passed(_):
-
-    # Make sure common build resolves java version before we mock out that whole jvm library
-    import cmmnbuild_dep_manager
-    mgr = cmmnbuild_dep_manager.Manager()
-    mgr.start_jpype_jvm()
-
-    with mock.patch('jpype.java') as java:
-        cast(CApplication, CApplication.instance()).jvm_flags = {
-            'FLAG1': 'val1',
-            'FLAG2': 2,
-        }
-        _ = japc_plugin.get_japc()
-        java.lang.System.setProperty.assert_any_call('FLAG1', 'val1')
-        java.lang.System.setProperty.assert_any_call('FLAG2', '2')
 
 
 @pytest.mark.parametrize('selector,filter,expected_selector', [
@@ -248,9 +43,7 @@ def test_jvm_flags_are_passed(_):
     ('rda://srv/mydevice/myprop', None, 'rda://srv/mydevice/myprop'),
     ('rda://srv/mydevice/myprop#cycleName', 'cycleName', 'rda://srv/mydevice/myprop'),
 ])
-@mock.patch('pyjapc.PyJapc')  # These mocks help against repeated CBNG web-service and "JVM is already started" warnings
-@mock.patch('pyjapc.PyJapc.subscribeParam')
-def test_connection_address(_, __, param_name, selector, filter, expected_meta_field, expected_param_name, expected_selector):
+def test_connection_address(param_name, selector, filter, expected_meta_field, expected_param_name, expected_selector):
     ch = channel.PyDMChannel(address=param_name)
     ctx = channel.CContext(selector=selector, data_filters=filter)
     cast(channel.CChannel, ch).context = ctx
@@ -275,9 +68,7 @@ def test_connection_address(_, __, param_name, selector, filter, expected_meta_f
     'device/property@LHC.USER.ALL',
     'device/property#field@LHC.USER.ALL',
 ])
-@mock.patch('pyjapc.PyJapc')  # These mocks help against repeated CBNG web-service and "JVM is already started" warnings
-@mock.patch('pyjapc.PyJapc.subscribeParam')
-def test_connection_fails_with_wrong_parameter_name(_, __, channel_address, caplog: LogCaptureFixture):
+def test_connection_fails_with_wrong_parameter_name(channel_address, caplog: LogCaptureFixture):
     ch = channel.PyDMChannel(address=channel_address)
     with mock.patch(f'comrad.data.japc_plugin.CJapcConnection.add_listener') as add_listener:
         _ = japc_plugin.CJapcConnection(channel=ch, protocol='rda', address=ch.address)
@@ -290,9 +81,7 @@ def test_connection_fails_with_wrong_parameter_name(_, __, channel_address, capl
     '@@@',
     'LHS.USER',
 ])
-@mock.patch('pyjapc.PyJapc')  # These mocks help against repeated CBNG web-service and "JVM is already started" warnings
-@mock.patch('pyjapc.PyJapc.subscribeParam')
-def test_connection_fails_with_wrong_context(_, __, selector, caplog: LogCaptureFixture):
+def test_connection_fails_with_wrong_context(selector, caplog: LogCaptureFixture):
     ch = channel.PyDMChannel(address='device/property')
     cast(channel.CChannel, ch).context = channel.CContext(selector=selector)
     with mock.patch(f'comrad.data.japc_plugin.CJapcConnection.add_listener') as add_listener:
@@ -318,15 +107,13 @@ def test_remove_listener_disconnects_slots(PyDMChannel):
     (True),
     (False),
 ])
-@mock.patch('comrad.data.japc_plugin._JapcService')
-def test_close_clears_subscriptions(PyJapc, connected):
+def test_close_clears_subscriptions(connected):
     ch = channel.PyDMChannel(address='dev/prop#field')
-    with mock.patch.object(japc_plugin, 'get_japc', return_value=PyJapc):
-        connection = japc_plugin.CJapcConnection(channel=ch, address='dev/prop#field', protocol='rda')
-        connection.online = connected
-        PyJapc.clearSubscriptions.assert_not_called()
-        connection.close()
-        PyJapc.clearSubscriptions.assert_called_with(parameterName='dev/prop#field', selector=None)
+    connection = japc_plugin.CJapcConnection(channel=ch, address='dev/prop#field', protocol='rda')
+    connection.online = connected
+    japc_plugin.get_japc().clearSubscriptions.assert_not_called()
+    connection.close()
+    japc_plugin.get_japc().clearSubscriptions.assert_called_with(parameterName='dev/prop#field', selector=None)
 
 
 @pytest.mark.parametrize('other_type,sim_val', [
@@ -339,8 +126,7 @@ def test_close_clears_subscriptions(PyJapc, connected):
     (japc_plugin.CChannelData, 'test'),
     (japc_plugin.CChannelData, np.array([1, 2])),
 ])
-@mock.patch('comrad.data.japc_plugin._JapcService')
-def test_all_new_values_are_emitted_with_channel_data(_, other_type, sim_val, qtbot: QtBot):
+def test_all_new_values_are_emitted_with_channel_data(other_type, sim_val, qtbot: QtBot):
 
     class Receiver(QObject):
 
@@ -356,15 +142,12 @@ def test_all_new_values_are_emitted_with_channel_data(_, other_type, sim_val, qt
     assert blocker.args == [japc_plugin.CChannelData(value=sim_val, meta_info={})]
 
 
-@mock.patch('pyjapc.PyJapc')  # These mocks help against repeated CBNG web-service and "JVM is already started" warnings
-@mock.patch('pyjapc.PyJapc.subscribeParam')
-@mock.patch('pyjapc.PyJapc.getParam')
-def test_requested_get_returns_same_uuid(getParam, _, __, qtbot: QtBot):
+def test_requested_get_returns_same_uuid(qtbot: QtBot):
     def side_effect(onValueReceived, **_):
         onValueReceived(None, 3, {})
         return mock.DEFAULT
 
-    getParam.side_effect = side_effect
+    japc_plugin.get_japc().getParam.side_effect = side_effect  # type: ignore
 
     ch = channel.PyDMChannel(address='device/property')
     cast(channel.CChannel, ch).request_slot = lambda *_: None
@@ -374,9 +157,8 @@ def test_requested_get_returns_same_uuid(getParam, _, __, qtbot: QtBot):
     assert blocker.args == [channel.CChannelData(value=3, meta_info={}), 'test-uuid']
 
 
-@pytest.mark.parametrize('meta_field,header_field', list(japc_plugin.CJapcConnection.SPECIAL_FIELDS.items()))
-@mock.patch('pyjapc.PyJapc')  # These mocks help against repeated CBNG web-service and "JVM is already started" warnings
-def test_meta_field_resolved_on_field_level(_, meta_field, header_field):
+@pytest.mark.parametrize('meta_field,header_field', list(japc_plugin.SPECIAL_FIELDS.items()))
+def test_meta_field_resolved_on_field_level(meta_field, header_field):
     ch = channel.PyDMChannel(address=f'device/property#{meta_field}')
     connection = japc_plugin.CJapcConnection(channel=ch, protocol='rda', address=f'/device/property#{meta_field}')
     callback = mock.Mock()
@@ -391,8 +173,7 @@ def test_meta_field_resolved_on_field_level(_, meta_field, header_field):
     callback.assert_called_once_with(sig, channel.CChannelData(value=header[header_field], meta_info=header))
 
 
-@mock.patch('pyjapc.PyJapc')  # These mocks help against repeated CBNG web-service and "JVM is already started" warnings
-def test_meta_field_missing_from_incoming_header(_, caplog: LogCaptureFixture):
+def test_meta_field_missing_from_incoming_header(caplog: LogCaptureFixture):
     ch = channel.PyDMChannel(address='device/property#acqStamp')
     connection = japc_plugin.CJapcConnection(channel=ch, protocol='rda', address=f'/device/property#acqStamp')
     callback = mock.Mock()
@@ -430,8 +211,7 @@ def test_meta_field_missing_from_incoming_header(_, caplog: LogCaptureFixture):
     ({'acqStamp': 'valAcqStamp'}, {'acqStamp': 'acqStamp'}, {'acqStamp': 'acqStamp'}),
     ({'acqStamp': 'valAcqStamp', 'val2': 'val2'}, {'acqStamp': 'acqStamp'}, {'acqStamp': 'acqStamp', 'val2': 'val2'}),
 ])
-@mock.patch('pyjapc.PyJapc')  # These mocks help against repeated CBNG web-service and "JVM is already started" warnings
-def test_meta_fields_are_injected_into_full_property(_, val, considered_header, disregarded_header, combined_val):
+def test_meta_fields_are_injected_into_full_property(val, considered_header, disregarded_header, combined_val):
     full_header = {**disregarded_header, **considered_header}
     ch = channel.PyDMChannel(address='device/property')
     connection = japc_plugin.CJapcConnection(channel=ch, protocol='japc', address=f'/device/property')
@@ -441,9 +221,7 @@ def test_meta_fields_are_injected_into_full_property(_, val, considered_header, 
     callback.assert_called_once_with(sig, channel.CChannelData(value=combined_val, meta_info=full_header))
 
 
-@mock.patch('pyjapc.PyJapc')  # These mocks help against repeated CBNG web-service and "JVM is already started" warnings
-@mock.patch('pyjapc.PyJapc.setParam')
-def test_write_slots_with_no_params_issue_empty_property_set(setParam, _, qtbot: QtBot):
+def test_write_slots_with_no_params_issue_empty_property_set(qtbot: QtBot):
     class TestWidget(QObject):
         sig = Signal()  # Notice no parameters here, this should be considered as "command"
 
@@ -452,7 +230,7 @@ def test_write_slots_with_no_params_issue_empty_property_set(setParam, _, qtbot:
     _ = japc_plugin.CJapcConnection(channel=ch, protocol='japc', address='/device/property')
     with qtbot.wait_signal(sender.sig):
         sender.sig.emit()
-    setParam.assert_called_once_with(parameterName='device/property', parameterValue={}, checkDims=False)
+    japc_plugin.get_japc().setParam.assert_called_once_with(parameterName='device/property', parameterValue={})  # type: ignore
 
 
 @pytest.mark.parametrize('protocol', ['japc', 'rda3', 'rda', 'tgm', 'no'])

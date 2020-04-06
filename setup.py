@@ -24,7 +24,7 @@ requirements = {
         'argcomplete>=1.10.0,<2',
         'colorlog>=4.0.2,<5',
         'QtPy>=1.7,<2',
-        'pyjapc @ git+ssh://git@gitlab.cern.ch:7999/isinkare/pyjapc.git@fix/async-get-scalar',  # 'pyjapc>=2.1.1&&<3',
+        'pyjapc==2.1.2',  # We must keep it pinned to this version, because comrad is obliged to override getParam, which makes it very fragile to changes
         'accwidgets @ git+ssh://git@gitlab.cern.ch:7999/acc-co/accsoft/gui/accsoft-gui-pyqt-widgets.git#egg=accwidgets',  # 'accwidgets>=0.1.1,<1',
         'papc @ git+ssh://git@gitlab.cern.ch:7999/isinkare/papc.git@fix/async-get-interface',  # 'papc>=0.4.0&&<1',
         'pydm==1.8.0.post0',
