@@ -10,7 +10,9 @@ from pydm.widgets.rules import RulesDispatcher
 from comrad.rules import CBaseRule, CChannelError, unpack_rules
 from comrad.json import CJSONEncoder, CJSONDeserializeError
 from comrad.deprecations import deprecated_parent_prop
-from comrad.data.channel import CChannel, allow_connections, CChannelData
+from comrad.data.channel import CChannelData, PyDMChannel
+from comrad.data.context import CContext
+from comrad.widgets.widget import CWidget
 from .value_transform import CValueTransformationBase
 
 
@@ -72,27 +74,14 @@ class CRequestingMixin:
             return
         cast(PyDMWidget, self).channelValueChanged(value)
 
-    def _set_channel(self, value: str):
-        """
-        Overridden setter that also connects "requested" signals and slots.
-        """
-        widget = cast(PyDMWidget, self)
-        if widget._channel == value:
-            # Avoid custom logic, since super would not do anything under this condition anyway
-            return
-        allow_connections(False)
-        PyDMWidget.channel.fset(self, value)
-        new_channel = cast(CChannel, widget._channels[-1])
+    def create_channel(self, channel_address: str, context: Optional[CContext]) -> PyDMChannel:
+        """Overridden method of CWidget to connect request signals/slots only when needed"""
+        ch = cast(CWidget, super()).create_channel(channel_address, context)
         if not self.connect_value_slot:
-            new_channel.request_signal = self.request_signal
-            new_channel.request_slot = self._on_request_fulfilled
-            logger.debug(f'Disabling "value_slot" on {self}')
-            new_channel.value_slot = None
-        allow_connections(True)
-        new_channel.connect()  # Establish connection here
-
-    channel: str = Property(str, fget=PyDMWidget.channel.fget, fset=_set_channel)
-    """Overridden setter that also connects "requested" signals and slots."""
+            ch.request_signal = self.request_signal
+            ch.request_slot = self._on_request_fulfilled
+            ch.value_slot = None
+        return ch
 
     def _set_connect_value_slot(self, new_val: bool):
         if new_val != self._connect_value_slot:
@@ -104,10 +93,11 @@ class CRequestingMixin:
             if prev_val is not None:
                 me._channel = None
                 # Because above statement will prevent existing channels from disconnecting, we need to perform it manually
-                for channel in me._channels:
+                for channel, ch_addr in zip(me._channels, me._channel_ids):
                     if channel.address == prev_val:
                         channel.disconnect()
                         me._channels.remove(channel)
+                        me._channel_ids.remove(ch_addr)
                 # Now trigger the setter with full procedure
                 me.channel = prev_val
 
@@ -269,7 +259,7 @@ class CWidgetRulesMixin:
             Address of the channel.
         """
         try:
-            return PyDMWidget.channel.fget(self)  # cast(PyDMWidget, self).channel
+            return self.channel
         except AttributeError:
             raise AttributeError(f'Rule is not supposed to be used with {type(self).__name__}, as it does not have a'
                                  f' default channel.')

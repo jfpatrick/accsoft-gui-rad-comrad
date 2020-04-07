@@ -5,7 +5,6 @@ from typing import List, Union, Optional, cast
 from qtpy.QtWidgets import QWidget
 from qtpy.QtCore import Property
 from qtpy.QtGui import QColor
-from pydm.widgets.base import PyDMWidget
 from pydm.widgets.scale import PyDMScaleIndicator
 from pydm.widgets.label import PyDMLabel
 from pydm.widgets.byte import PyDMByteIndicator
@@ -13,6 +12,7 @@ from accwidgets.led import Led
 from comrad.deprecations import deprecated_parent_prop
 from comrad.data.japc_enum import CEnumValue
 from comrad.data.channel import CChannelData
+from .widget import PyDMWidget
 from .mixins import (CHideUnusedFeaturesMixin, CNoPVTextFormatterMixin, CCustomizedTooltipMixin,
                      CValueTransformerMixin, CColorRulesMixin, CWidgetRulesMixin, CInitializedMixin)
 

@@ -40,17 +40,21 @@ def test_requesting_mixin_init(qtbot: QtBot, kwargs, expected_value):
 @pytest.mark.parametrize('initial_channel,connect_slot,slot_should_be_none', [
     (None, True, False),
     (None, False, True),
-    ('initial/channel', True, False),
-    ('initial/channel', False, True),
+    ('rda:///initial/channel', True, False),
+    ('rda:///initial/channel', False, True),
 ])
-def test_requesting_mixin_assigns_request_signal_slot_to_channel(qtbot: QtBot, initial_channel, connect_slot, slot_should_be_none):
+@mock.patch('pydm.data_plugins.plugin_for_address')  # Need both here, as both participate on comrad and pydm level
+def test_requesting_mixin_assigns_request_signal_slot_to_channel(_, qtbot: QtBot, initial_channel, connect_slot, slot_should_be_none):
     mixin_class = make_mixin_class(CRequestingMixin)
     obj = cast(Union[CRequestingMixin, QWidget, PyDMWidget], mixin_class(init_channel=initial_channel))
     qtbot.addWidget(obj)
+    obj.show()  # type: ignore
     obj.connect_value_slot = connect_slot
-    with mock.patch('pydm.widgets.channel.PyDMChannel.connect') as connect_mock:
-        obj.channel = 'some/other'
-        assert connect_mock.call_count == 2
+    obj._context_tracker = mock.MagicMock()  # type: ignore
+    obj._context_tracker.context_ready = True  # type: ignore
+    with mock.patch('pydm.widgets.channel.PyDMChannel.connect') as connect:
+        obj.channel = 'rda:///some/other'  # type: ignore
+        assert connect.call_count == 1
         assert len(obj.channels()) == 1  # type: ignore  # mypy does not resolve PyDMWidget here
         ch = cast(CChannel, obj.channels()[0])  # type: ignore  # mypy does not resolve PyDMWidget here
         if slot_should_be_none:
@@ -69,29 +73,32 @@ def test_requesting_mixin_skips_channel_setter(qtbot: QtBot):
     mixin_class = make_mixin_class(CRequestingMixin)
     obj = cast(Union[CRequestingMixin, QWidget], mixin_class(init_channel='test/channel'))
     qtbot.addWidget(obj)
-    with mock.patch.object(obj, 'request_signal', new_callable=mock.PropertyMock()) as mocked_attr:
-        obj.channel = 'test/channel'
-        mocked_attr.assert_not_called()
+    with mock.patch.object(obj, 'request_signal', new_callable=mock.PropertyMock()) as request_signal:
+        obj.channel = 'test/channel'  # type: ignore
+        request_signal.assert_not_called()
 
 
 def test_requesting_mixin_channels_are_reconnected_on_value_slot_config_change(qtbot: QtBot):
     mixin_class = make_mixin_class(CRequestingMixin)
-    obj = cast(Union[CRequestingMixin, QWidget, PyDMWidget], mixin_class())
-    qtbot.addWidget(obj)
-    with mock.patch('pydm.widgets.channel.PyDMChannel.connect') as connect_mock:
-        obj.channel = 'some/channel'
-        assert connect_mock.call_count == 2
-        assert len(obj.channels()) == 1  # type: ignore  # mypy does not resolve PyDMWidget here
-        prev_ch = cast(CChannel, obj.channels()[0])  # type: ignore  # mypy does not resolve PyDMWidget here
+    widget = cast(Union[CRequestingMixin, QWidget, PyDMWidget], mixin_class())
+    qtbot.addWidget(widget)
+    widget.show()  # type: ignore
+    widget._context_tracker = mock.MagicMock()  # type: ignore
+    widget._context_tracker.context_ready = True  # type: ignore
+    with mock.patch('pydm.widgets.channel.PyDMChannel.connect') as connect:
+        widget.channel = 'some/channel'  # type: ignore
+        assert connect.call_count == 1
+        assert len(widget.channels()) == 1  # type: ignore  # mypy does not resolve PyDMWidget here
+        prev_ch = cast(CChannel, widget.channels()[0])  # type: ignore  # mypy does not resolve PyDMWidget here
         assert prev_ch.address == 'some/channel'
-        connect_mock.reset_mock()
-        assert connect_mock.call_count == 0
-        with mock.patch.object(prev_ch, 'disconnect') as disconnect_mock:
-            obj.connect_value_slot = not obj.connect_value_slot
-            disconnect_mock.assert_called_once()
-            assert connect_mock.call_count == 2
-            assert len(obj.channels()) == 1  # type: ignore  # mypy does not resolve PyDMWidget here
-            new_ch = cast(CChannel, obj.channels()[0])  # type: ignore  # mypy does not resolve PyDMWidget here
+        connect.reset_mock()
+        assert connect.call_count == 0
+        with mock.patch.object(prev_ch, 'disconnect') as disconnect:
+            widget.connect_value_slot = not widget.connect_value_slot
+            disconnect.assert_called_once()
+            assert connect.call_count == 1
+            assert len(widget.channels()) == 1  # type: ignore  # mypy does not resolve PyDMWidget here
+            new_ch = cast(CChannel, widget.channels()[0])  # type: ignore  # mypy does not resolve PyDMWidget here
             assert new_ch.address == 'some/channel'
             assert prev_ch != new_ch
 
@@ -107,10 +114,10 @@ def test_requesting_mixin_filters_request_slot_value(qtbot: QtBot, uuid, should_
     obj = cast(Union[CRequestingMixin, QWidget], mixin_class(init_channel='test/channel'))
     cast(QWidget, obj).setObjectName('my-uuid')
     qtbot.addWidget(obj)
-    with mock.patch.object(obj, 'channelValueChanged') as mocked_method:
+    with mock.patch.object(obj, 'channelValueChanged') as channelValueChanged:
         some_data: Tuple[str, Dict[str, Any]] = ('blahblah', {})
         obj._on_request_fulfilled(some_data, uuid)
         if should_handle:
-            mocked_method.assert_called_with(some_data)
+            channelValueChanged.assert_called_with(some_data)
         else:
-            mocked_method.assert_not_called()
+            channelValueChanged.assert_not_called()

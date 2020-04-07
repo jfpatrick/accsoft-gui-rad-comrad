@@ -11,3 +11,5 @@ you can do
 >>> from comrad import CLabel
 
 """
+# flake8: noqa: E401,E403
+from . import widget

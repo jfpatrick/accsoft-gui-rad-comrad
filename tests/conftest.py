@@ -15,11 +15,16 @@ def patch_app_singleton(monkeypatch):
             self.use_inca = False
             self.jvm_flags = {}
 
-        processEvents = mock.MagicMock()  # Required for pytest-qt to operate properly
-        on_control_error = mock.MagicMock()  # Required for japc_plugin to instantiate
-        aboutToQuit = mock.MagicMock()
+        processEvents = mock.Mock()  # Required for pytest-qt to operate properly
+        on_control_error = mock.Mock()  # Required for japc_plugin to instantiate
+        aboutToQuit = mock.Mock()
+        main_window = mock.MagicMock()
 
     test_app = FakeApp()
+
+    from comrad.data.context import CContext
+    test_app.main_window.context_view = test_app.main_window.window_context = CContext()
+    test_app.main_window.context_ready = True
 
     def fake_app() -> FakeApp:
         return test_app
@@ -30,6 +35,9 @@ def patch_app_singleton(monkeypatch):
 
     import qtpy.QtCore
     monkeypatch.setattr(qtpy.QtCore.QCoreApplication, 'instance', fake_app)
+    # With queued connections the tested logic is asynchronous and even qtbot.wait_signal struggles with that
+    # So the simplest way is to force all queued connections to be direct.
+    qtpy.QtCore.Qt.QueuedConnection = qtpy.QtCore.Qt.DirectConnection
 
     import qtpy.QtGui
     monkeypatch.setattr(qtpy.QtGui.QGuiApplication, 'instance', fake_app)
