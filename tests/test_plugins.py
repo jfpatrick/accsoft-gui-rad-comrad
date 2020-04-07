@@ -88,7 +88,7 @@ def test_load_plugins_from_path(locations, locatable_files, expected_token, real
         return fake_members
 
     with mock.patch('os.walk', side_effect=fake_walk):
-        with mock.patch('importlib.util.spec_from_file_location') as spec_mock:
+        with mock.patch('importlib.util.spec_from_file_location') as spec_from_file_location:
             with mock.patch('importlib.util.module_from_spec', return_value=FakeModule):
                 with mock.patch('inspect.getmembers', side_effect=get_fake_members):
                     kwargs = {}
@@ -98,9 +98,9 @@ def test_load_plugins_from_path(locations, locatable_files, expected_token, real
                                                             token=expected_token,
                                                             **kwargs)
                     if should_find_file and len(locatable_files) > 0:
-                        spec_mock.assert_has_calls([mock.call(location=Path(path), name=mock.ANY)
-                                                    for path in map(map_filenames, locatable_files)],
-                                                   any_order=True)
+                        spec_from_file_location.assert_has_calls([mock.call(location=Path(path), name=mock.ANY)
+                                                                  for path in map(map_filenames, locatable_files)],
+                                                                 any_order=True)
 
                         if should_find_class:
                             assert any(x == FakeModule.FakePluginClass for x in loaded_classes.values())
@@ -111,7 +111,7 @@ def test_load_plugins_from_path(locations, locatable_files, expected_token, real
 
                             return
                     else:
-                        spec_mock.assert_not_called()
+                        spec_from_file_location.assert_not_called()
                     assert loaded_classes == {}
 
 
@@ -150,7 +150,6 @@ def test_filter_enabled_plugins(whitelist, blacklist, plugins):
         return plugin[0], mapping[plugin[1]]
 
     plugins = set(map(map_plugins, plugins))
-    print(f'Expecting {plugins}')
 
     enabled_plugins = set(filter_enabled_plugins(plugins=[PluginEnabled, PluginDisabled],
                                                  whitelist=whitelist,

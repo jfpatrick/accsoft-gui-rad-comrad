@@ -252,7 +252,12 @@ def test_unpack_rules_fails(err, err_type, json_str):
     True,
     False,
 ])
-def test_rules_engine_does_not_register_in_designer(qtbot: QtBot, designer_online):
+@mock.patch('comrad.rules.plugin_for_address')
+@mock.patch('pydm.data_plugins.plugin_for_address')  # Need both here, as both participate on comrad and pydm level
+@mock.patch('comrad.rules.is_qt_designer', return_value=True)
+@mock.patch('comrad.rules.config')
+def test_rules_engine_does_not_register_in_designer(config, _, __, ___, qtbot: QtBot, designer_online):
+    config.DESIGNER_ONLINE = designer_online
     engine = CRulesEngine()
     widget = QWidget()
     qtbot.addWidget(widget)
@@ -261,11 +266,6 @@ def test_rules_engine_does_not_register_in_designer(qtbot: QtBot, designer_onlin
                          channel='japc://dev/prop#field',
                          ranges=[CNumRangeRule.Range(min_val=0.0, max_val=0.0, prop_val=0.5)])
 
-    import comrad.rules
-    import pydm.data_plugins
-    pydm.data_plugins.plugin_for_address = comrad.rules.plugin_for_address = mock.MagicMock()
-    comrad.rules.config.DESIGNER_ONLINE = designer_online
-    comrad.rules.is_qt_designer = mock.MagicMock(return_value=True)
     engine.register(widget=widget, rules=[rule])
 
     try:
@@ -283,7 +283,10 @@ def test_rules_engine_does_not_register_in_designer(qtbot: QtBot, designer_onlin
     True,
     False,
 ])
-def test_rules_engine_does_not_register_faulty_rules(qtbot: QtBot, faulty):
+@mock.patch('comrad.rules.plugin_for_address')
+@mock.patch('pydm.data_plugins.plugin_for_address')  # Need both here, as both participate on comrad and pydm level
+@mock.patch('comrad.rules.is_qt_designer', return_value=False)
+def test_rules_engine_does_not_register_faulty_rules(_, __, ___, qtbot: QtBot, faulty):
     engine = CRulesEngine()
     widget = QWidget()
     qtbot.addWidget(widget)
@@ -291,11 +294,6 @@ def test_rules_engine_does_not_register_faulty_rules(qtbot: QtBot, faulty):
                          prop='test_prop',
                          channel='japc://dev/prop#field',
                          ranges=None if faulty else [CNumRangeRule.Range(min_val=0.0, max_val=0.0, prop_val=0.5)])
-
-    import comrad.rules
-    import pydm.data_plugins
-    pydm.data_plugins.plugin_for_address = comrad.rules.plugin_for_address = mock.MagicMock()
-    comrad.rules.is_qt_designer = mock.MagicMock(return_value=False)
 
     engine.register(widget=widget, rules=[rule])
 
@@ -309,15 +307,13 @@ def test_rules_engine_does_not_register_faulty_rules(qtbot: QtBot, faulty):
         assert len(job_summary) == 1
 
 
-def test_rules_engine_unregisters_old_rules(qtbot: QtBot):
+@mock.patch('comrad.rules.plugin_for_address')
+@mock.patch('pydm.data_plugins.plugin_for_address')  # Need both here, as both participate on comrad and pydm level
+@mock.patch('comrad.rules.is_qt_designer', return_value=False)
+def test_rules_engine_unregisters_old_rules(_, __, ___, qtbot: QtBot):
     engine = CRulesEngine()
     widget = QWidget()
     qtbot.addWidget(widget)
-
-    import comrad.rules
-    import pydm.data_plugins
-    pydm.data_plugins.plugin_for_address = comrad.rules.plugin_for_address = mock.MagicMock()
-    comrad.rules.is_qt_designer = mock.MagicMock(return_value=False)
 
     rule = CNumRangeRule(name='rule1',
                          prop='test_prop',
@@ -344,7 +340,10 @@ def test_rules_engine_unregisters_old_rules(qtbot: QtBot):
     'japc://default_dev/prop#field',
     None,
 ])
-def test_rules_engine_finds_default_channel(qtbot: QtBot, default_channel):
+@mock.patch('comrad.rules.plugin_for_address')
+@mock.patch('pydm.data_plugins.plugin_for_address')  # Need both here, as both participate on comrad and pydm level
+@mock.patch('comrad.rules.is_qt_designer', return_value=False)
+def test_rules_engine_finds_default_channel(_, __, ___, qtbot: QtBot, default_channel):
     from comrad.widgets.mixins import CWidgetRulesMixin
 
     class CustomWidget(QWidget, CWidgetRulesMixin):
@@ -359,11 +358,6 @@ def test_rules_engine_finds_default_channel(qtbot: QtBot, default_channel):
     engine = CRulesEngine()
     widget = CustomWidget()
     qtbot.addWidget(widget)
-
-    import comrad.rules
-    import pydm.data_plugins
-    pydm.data_plugins.plugin_for_address = comrad.rules.plugin_for_address = mock.MagicMock()
-    comrad.rules.is_qt_designer = mock.MagicMock(return_value=False)
 
     rule = CNumRangeRule(name='test_name',
                          prop='test_prop',
@@ -389,15 +383,13 @@ def test_rules_engine_finds_default_channel(qtbot: QtBot, default_channel):
         assert cast(PyDMChannel, job_summary[0]['channels'][0]).address == default_channel
 
 
-def test_rules_engine_uses_custom_channels(qtbot: QtBot):
+@mock.patch('comrad.rules.plugin_for_address')
+@mock.patch('pydm.data_plugins.plugin_for_address')  # Need both here, as both participate on comrad and pydm level
+@mock.patch('comrad.rules.is_qt_designer', return_value=False)
+def test_rules_engine_uses_custom_channels(_, __, ___, qtbot: QtBot):
     engine = CRulesEngine()
     widget = QWidget()
     qtbot.addWidget(widget)
-
-    import comrad.rules
-    import pydm.data_plugins
-    pydm.data_plugins.plugin_for_address = comrad.rules.plugin_for_address = mock.MagicMock()
-    comrad.rules.is_qt_designer = mock.MagicMock(return_value=False)
 
     rule = CNumRangeRule(name='test_name',
                          prop='test_prop',

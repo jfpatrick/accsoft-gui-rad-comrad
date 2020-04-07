@@ -1,6 +1,7 @@
 import pytest
+import logging
 from unittest import mock
-from typing import List
+from typing import List, cast
 from logging import LogRecord
 from _pytest.logging import LogCaptureFixture
 from qtpy.QtWidgets import QWidget
@@ -41,8 +42,8 @@ def test_fn_arg_deprecations(caplog: LogCaptureFixture, args, kwargs, expected_w
     assert res2 == 2
     assert res3 == 3
     assert res4 == 4
-    warning_records: List[LogRecord] = caplog.records
-    actual_warnings = [r.msg for r in warning_records]
+    # We have to protect from warnings leaking from dependencies, e.g. cmmnbuild_dep_manager, regarding JVM :(
+    actual_warnings = [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.WARNING and r.module == 'deprecations']
     assert actual_warnings == expected_warnings
 
 
@@ -106,10 +107,11 @@ def test_prop_deprecation_displays_warning(qtbot, caplog: LogCaptureFixture, obj
 
         obj = MyWidget()
         _ = obj.test_prop
+        # We have to protect from warnings leaking from dependencies, e.g. cmmnbuild_dep_manager, regarding JVM :(
+        warning_records = [r for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.WARNING and r.module == 'deprecations']
         if should_issue:
-            assert len(caplog.records) == 1
-            warning_records: List[LogRecord] = caplog.records
+            assert len(warning_records) == 1
             actual_warning = warning_records[0].msg
             assert actual_warning == expected_warning
         else:
-            assert len(caplog.records) == 0
+            assert len(warning_records) == 0

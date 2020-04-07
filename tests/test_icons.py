@@ -10,7 +10,7 @@ import comrad.icons
     (None, 'favicon', f'{str(Path(comrad.icons.__file__).parent.absolute())}/favicon.ico'),
 ])
 def test_load_icon(file_path, icon_name, expected_path):
-    with mock.patch('comrad.icons.QPixmap') as mocked_pixmap:
+    with mock.patch('comrad.icons.QPixmap') as QPixmap:
         with mock.patch('comrad.icons.QIcon'):
             _ = comrad.icons.icon(name=icon_name, file_path=file_path)
-            mocked_pixmap.assert_called_with(expected_path)
+            QPixmap.assert_called_with(expected_path)
