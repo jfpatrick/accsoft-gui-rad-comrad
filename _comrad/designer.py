@@ -43,6 +43,7 @@ def run_designer(ccda_env: str,
         'PYQTDESIGNERPATH': str(path_to_plugins),
         'QT_DESIGNER_RAD_EXTRAS': '1',
         'QT_DESIGNER_RAD_CCDA': ccda_env,
+        'PYCCDA_HOST': ccda_env,
     }
 
     if online:

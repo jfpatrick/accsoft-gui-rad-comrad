@@ -6,7 +6,7 @@ import importlib.util
 import importlib.machinery
 from pathlib import Path
 from typing import List, Optional, cast, Tuple, Dict, Any
-from comrad.app.plugins.toolbar.rbac_plugin import RBACButtonPlugin
+from comrad.app.plugins.toolbar import rbac_plugin
 
 
 logger = logging.getLogger(__name__)
@@ -182,7 +182,7 @@ def make_cmd(entrypoint: str,
         # Mirror current log level to the child app (e.g. when running in DEBUG, also launch example in DEBUG)
         args.append('--log-level')
         args.append(logging.getLevelName(logging.getLogger().level))
-    _disable_implicit_plugin(args, plugin_id=RBACButtonPlugin.plugin_id)
+    _disable_implicit_plugin(args, plugin_id=rbac_plugin.RBACButtonPlugin.plugin_id)
     args.append(str(file_path))
     logger.debug(f'Launching app with args: {args}')
     env = dict(os.environ, PYJAPC_SIMULATION_INIT=(japc_generator or ''))
@@ -207,7 +207,7 @@ def _disable_implicit_plugin(input_args: List[str], plugin_id: str):
                 continue
             plugin_ids = [x.strip() for x in plugins.split(',')]
             if plugin_id in plugin_ids:
-                return  # Do not modify args, comrad.rbac is explicitly participating in the example
+                return  # Do not modify args, given plugin is explicitly participating in the example
             if arg == '--disable-plugins':
                 disable_plugins_idx = idx + 1
                 disable_plugins_list = plugin_ids

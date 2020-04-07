@@ -24,21 +24,24 @@ class CPlugin(metaclass=abc.ABCMeta):
     """Reverse domain string that represents the unique ID of the plugin class."""
 
 
-class CPluginPosition(Enum):
-    """Position of the plugin's widget/button in the toolbar/statusbar."""
-
-    LEFT = auto()
-    """Positioned on the left items will follow standard items but will be aligned left after them."""
-
-    RIGHT = auto()
-    """Positioned on the right items will be sticking to the right edge of the application."""
-
-
 class CPositionalPlugin(metaclass=abc.ABCMeta):
     """Base class for ComRAD toolbar plugins."""
 
-    position: CPluginPosition = CPluginPosition.LEFT
+    class Position(Enum):
+        """Position of the plugin's widget/button in the toolbar/statusbar."""
+
+        LEFT = auto()
+        """Positioned on the left items will follow standard items but will be aligned left after them."""
+
+        RIGHT = auto()
+        """Positioned on the right items will be sticking to the right edge of the application."""
+
+    position: 'CPositionalPlugin.Position' = Position.LEFT
     """Whether plugin should be positioned following the navigation buttons or on the far right."""
+
+    gravity: int = -1
+    """Weight of how much to the side should the plugin be aligned. E.g. if several plugins on the same side are defined,
+    and no explicit order is given, how they should be aligned."""
 
 
 class CActionPlugin(CPlugin, metaclass=abc.ABCMeta):
@@ -88,7 +91,9 @@ class CToolbarPlugin(metaclass=abc.ABCMeta):
 
 class CToolbarActionPlugin(CActionPlugin, CPositionalPlugin, CToolbarPlugin, metaclass=abc.ABCMeta):
     """Base class for action-based ComRAD toolbar plugins."""
-    pass
+
+    show_in_menu: bool = True
+    """In addition to displaying the plugin in toolbar, add it to "Plugins->Toolbar" menu."""
 
 
 class CWidgetPlugin(CPlugin, CPositionalPlugin, metaclass=abc.ABCMeta):

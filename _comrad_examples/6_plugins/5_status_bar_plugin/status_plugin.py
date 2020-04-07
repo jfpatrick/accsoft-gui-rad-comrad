@@ -1,6 +1,6 @@
 import logging
 from qtpy.QtWidgets import QWidget, QLabel
-from comrad import CStatusBarPlugin, CPluginPosition
+from comrad import CStatusBarPlugin
 
 
 logger = logging.getLogger('Demo plugin')
@@ -11,7 +11,7 @@ class PermanentPlugin(CStatusBarPlugin):
 
     plugin_id = 'com.example.status-permanent'
     is_permanent = True
-    position = CPluginPosition.RIGHT
+    position = CStatusBarPlugin.Position.RIGHT
 
     def create_widget(self) -> QWidget:
         return QLabel('Permanent plugin')

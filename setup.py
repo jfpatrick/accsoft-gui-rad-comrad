@@ -30,6 +30,7 @@ requirements = {
         'pydm==1.8.0.post0',
         'JPype1==0.6.3',  # This is pinned explicitly, as long as we need custom jpype code in ComRAD
         'dataclasses~=0.7;python_version<"3.7"',
+        'pyccda~=0.10.1',
     ],
     'test': [
         'pytest>=5.0.1,<5.1',

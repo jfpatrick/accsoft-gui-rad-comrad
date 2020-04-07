@@ -8,7 +8,7 @@ from qtpy.QtCore import Signal, Qt, QEvent
 from comrad.app.application import CApplication
 from comrad.rbac import CRBACLoginStatus
 from comrad.icons import icon
-from comrad.app.plugins.common import CToolbarWidgetPlugin, CPluginPosition
+from comrad.app.plugins.common import CToolbarWidgetPlugin
 
 
 logger = logging.getLogger(__name__)
@@ -150,8 +150,9 @@ class RBACButton(QToolButton):
 class RBACButtonPlugin(CToolbarWidgetPlugin):
     """Plugin to display RBAC button in the toolbar."""
 
-    position = CPluginPosition.RIGHT
+    position = CToolbarWidgetPlugin.Position.RIGHT
     plugin_id = 'comrad.rbac'
+    gravity = 999
 
     def create_widget(self):
         return RBACButton()
