@@ -24,11 +24,12 @@ requirements = {
         'argcomplete>=1.10.0,<2',
         'colorlog>=4.0.2,<5',
         'QtPy>=1.7,<2',
-        'pyjapc @ git+ssh://git@gitlab.cern.ch:7999/scripting-tools/pyjapc.git',  # 'pyjapc>=2.0.7,<3',
+        'pyjapc @ git+ssh://git@gitlab.cern.ch:7999/isinkare/pyjapc.git@fix/async-get-scalar',  # 'pyjapc>=2.1.1&&<3',
         'accwidgets @ git+ssh://git@gitlab.cern.ch:7999/acc-co/accsoft/gui/accsoft-gui-pyqt-widgets.git#egg=accwidgets',  # 'accwidgets>=0.1.1,<1',
-        'papc @ git+ssh://git@gitlab.cern.ch:7999/pelson/papc.git',  # 'papc>=0.2.0,<1',
+        'papc @ git+ssh://git@gitlab.cern.ch:7999/isinkare/papc.git@fix/async-get-interface',  # 'papc>=0.4.0&&<1',
         'pydm==1.8.0.post0',
         'JPype1==0.6.3',  # This is pinned explicitly, as long as we need custom jpype code in ComRAD
+        'dataclasses~=0.7;python_version<"3.7"',
     ],
     'test': [
         'pytest>=5.0.1,<5.1',

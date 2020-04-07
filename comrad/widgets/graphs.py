@@ -20,6 +20,7 @@ from pydm.widgets.base import widget_destroyed
 from pydm.widgets.channel import PyDMChannel
 from pydm import utilities
 from accwidgets import graph as accgraph
+from comrad.data.channel import CChannelData
 
 
 logger = logging.getLogger(__name__)
@@ -95,7 +96,7 @@ class PyDMChannelDataSource(accgraph.UpdateSource):
             self._channel = PyDMChannel(
                 address=new_address.strip(),
                 connection_slot=self._connection_state_changes,
-                value_slot=self._emit_value,
+                value_slot=self.value_updated,
             )
             self._channel.connect()
 
@@ -111,16 +112,7 @@ class PyDMChannelDataSource(accgraph.UpdateSource):
         """
         pass
 
-    def _emit_value(
-            self,
-            value: Union[
-                float,
-                int,
-                Iterable[float],
-                Iterable[int],
-                None,
-            ],
-    ) -> None:
+    def value_updated(self, packet: CChannelData[Union[float, int, Iterable[float], Iterable[int], None]]):
         """
         Handle values emitted by the channel. The values get wrapped
         in a fitting data type that can be processed by the plotting item.
@@ -129,10 +121,12 @@ class PyDMChannelDataSource(accgraph.UpdateSource):
         arrival will be used as the x value for the point.
 
         Args:
-            value: Value coming from the data source that is supposed to be
+            packet: Value coming from the data source that is supposed to be
                    appended to a graph.
         """
-        value = self._to_list_and_check_value_change(value)
+        if not isinstance(packet, CChannelData):
+            return
+        value = self._to_list_and_check_value_change(packet.value)
         if value is not None:
             if accgraph.PlottingItemDataFactory.should_unwrap(value, self._data_type_to_emit):
                 envelope = self._transform(*value)

@@ -7,7 +7,8 @@ from pydm.data_plugins.plugin import PyDMConnection
 from pydm.utilities import is_qt_designer
 from qtpy.QtWidgets import QWidget, QFrame, QVBoxLayout, QLabel, QSizePolicy
 from qtpy.QtCore import Property, Signal, Slot, Q_ENUM, Qt, QSize
-from .mixins import CHideUnusedFeaturesMixin, CInitializedMixin, deprecated_parent_prop
+from comrad.data.channel import CChannelData
+from .mixins import CChannelDataProcessingMixin, CHideUnusedFeaturesMixin, CInitializedMixin, deprecated_parent_prop
 from .value_transform import CValueTransformationBase
 
 
@@ -29,7 +30,7 @@ class GeneratorTrigger:
     """First new value arriving since the last trigger."""
 
 
-class CValueAggregator(QWidget, CInitializedMixin, CHideUnusedFeaturesMixin, PyDMWidget, CValueTransformationBase, GeneratorTrigger):
+class CValueAggregator(QWidget, CChannelDataProcessingMixin, CInitializedMixin, CHideUnusedFeaturesMixin, PyDMWidget, CValueTransformationBase, GeneratorTrigger):
     Q_ENUM(GeneratorTrigger)
     GeneratorTrigger = GeneratorTrigger
 
@@ -45,6 +46,7 @@ class CValueAggregator(QWidget, CInitializedMixin, CHideUnusedFeaturesMixin, PyD
             init_channel: The channel to be used by the widget.
         """
         QWidget.__init__(self, parent)
+        CChannelDataProcessingMixin.__init__(self)
         CInitializedMixin.__init__(self)
         CHideUnusedFeaturesMixin.__init__(self)
         PyDMWidget.__init__(self)
@@ -58,6 +60,8 @@ class CValueAggregator(QWidget, CInitializedMixin, CHideUnusedFeaturesMixin, PyD
         # This table contains cached values of the channels that can be accessed from the generator logic.
         # Keys are channel addresses and values are cached values
         self._values: Dict[str, Any] = {}
+        # Similarly to values, we store headers arriving from the control system
+        self._headers: Dict[str, Optional[Dict[str, Any]]] = {}
         # This contains channels ids that have not yet updated their values and have not cached them
         # in _values
         self._obsolete_values: Optional[Set[str]] = None
@@ -94,9 +98,11 @@ class CValueAggregator(QWidget, CInitializedMixin, CHideUnusedFeaturesMixin, PyD
         # Update trigger table
         if self._trigger_type == self.GeneratorTrigger.Any:
             self._values.clear()
+            self._headers.clear()
             self._obsolete_values = None
         else:
             self._values = dict.fromkeys(seq=self._channel_ids, value=None)
+            self._headers = dict.fromkeys(seq=self._channel_ids, value=None)
             self._obsolete_values = set(self._channel_ids)
 
         # Add new connections
@@ -111,23 +117,18 @@ class CValueAggregator(QWidget, CInitializedMixin, CHideUnusedFeaturesMixin, PyD
     inputChannels = Property('QStringList', _get_input_channels, _set_input_channels)
     """This property exposes :class:`PyDMWidget`'s channels that we use as input primarily."""
 
-    @Slot(int)
-    @Slot(float)
-    @Slot(str)
-    @Slot(bool)
-    @Slot(np.ndarray)
-    def channelValueChanged(self, new_val: Any):
+    def value_changed(self, packet: CChannelData[Any]):
         """
         Callback when a new value arrives on any of the :attr:`inputChannels`.
 
         Args:
-            new_val: New value.
+            packet: New value.
         """
 
         # This is the way to identify the channel, instead of initially used functools.partial,
         # which results in reference cycle
         conn: Optional[PyDMConnection] = self.sender()
-        if conn is None:
+        if conn is None or not isinstance(packet, CChannelData):
             return
         channel_id: str = conn.address
         if channel_id.startswith('/'):
@@ -135,8 +136,11 @@ class CValueAggregator(QWidget, CInitializedMixin, CHideUnusedFeaturesMixin, PyD
             # in the address. We need to remove it to not confuse the user.
             channel_id = channel_id[1:]
 
+        super().value_changed(packet)
+
         if self._trigger_type == self.GeneratorTrigger.Any:
-            self._values[channel_id] = new_val
+            self._values[channel_id] = packet.value
+            self._headers[channel_id] = packet.meta_info
             self._trigger_update()
             return
 
@@ -145,7 +149,8 @@ class CValueAggregator(QWidget, CInitializedMixin, CHideUnusedFeaturesMixin, PyD
             return
 
         # Common logic for AggregatedFirst and AggregatedLast from here on
-        self._values[channel_id] = new_val
+        self._values[channel_id] = packet.value
+        self._headers[channel_id] = packet.meta_info
         if self._obsolete_values:
             try:
                 self._obsolete_values.remove(channel_id)
@@ -257,7 +262,7 @@ class CValueAggregator(QWidget, CInitializedMixin, CHideUnusedFeaturesMixin, PyD
         if not transform:
             return
 
-        result = transform(values=self._values)
+        result = transform(values=self._values, headers=self._headers)
         if result is None:
             # With None, it will be impossible to determine the signal override, therefore we simply don't send it
             return

@@ -1,8 +1,10 @@
 import logging
-from typing import Callable, Optional, cast, Any
+from typing import Callable, Optional, cast, Any, Generic, TypeVar, Dict
+from dataclasses import dataclass
 from qtpy.QtCore import Signal
 from pydm.widgets.channel import PyDMChannel
 from comrad.monkey import modify_in_place, MonkeyPatchedClass
+from comrad.generics import GenericMeta
 
 
 logger = logging.getLogger(__name__)
@@ -64,3 +66,19 @@ class CChannel(PyDMChannel, MonkeyPatchedClass):
             logger.debug(f'Preventing channel connection. Connections are temporarily disabled: {self}')
             return
         self._overridden_members['connect'](self)
+
+
+T = TypeVar('T')
+
+
+@dataclass
+class CChannelData(Generic[T], metaclass=GenericMeta):
+    """
+    Container to transmit data from the control system plugins to the widgets.
+    """
+
+    value: T
+    """Actual value that can be a dictionary for the whole property or a value of the data field."""
+
+    meta_info: Dict[str, Any]
+    """Meta information (or header as called by JAPC and RDA). This contains timestamps, cycle names and other related meta-information."""

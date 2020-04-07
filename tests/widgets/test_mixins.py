@@ -1,7 +1,7 @@
 import pytest
 from pytestqt.qtbot import QtBot
 from unittest import mock
-from typing import Type, Union, cast
+from typing import Type, Union, cast, Dict, Tuple, Any
 from qtpy.QtWidgets import QWidget
 from pydm.widgets.base import PyDMWidget
 from comrad.widgets.mixins import CRequestingMixin
@@ -108,7 +108,7 @@ def test_requesting_mixin_filters_request_slot_value(qtbot: QtBot, uuid, should_
     cast(QWidget, obj).setObjectName('my-uuid')
     qtbot.addWidget(obj)
     with mock.patch.object(obj, 'channelValueChanged') as mocked_method:
-        some_data = 'blahblah'
+        some_data: Tuple[str, Dict[str, Any]] = ('blahblah', {})
         obj._on_request_fulfilled(some_data, uuid)
         if should_handle:
             mocked_method.assert_called_with(some_data)

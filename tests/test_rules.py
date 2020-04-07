@@ -7,6 +7,7 @@ from qtpy.QtWidgets import QWidget
 from comrad.rules import (CNumRangeRule, CExpressionRule, CJSONDeserializeError, unpack_rules,
                           CRulesEngine, CChannelError)
 from comrad.json import CJSONEncoder
+from comrad.data.channel import CChannelData
 
 
 @pytest.mark.parametrize('channel,resulting_channel', [
@@ -434,7 +435,7 @@ def test_rules_engine_calculates_range_value(qtbot: QtBot, incoming_val, range_m
     job_unit = {
         'calculate': True,
         'rule': rule,
-        'values': [incoming_val],
+        'values': [CChannelData(value=incoming_val, meta_info={})],
     }
 
     if isinstance(incoming_val, int):

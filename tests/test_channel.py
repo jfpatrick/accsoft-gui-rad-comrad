@@ -2,7 +2,7 @@ import pytest
 from unittest import mock
 from typing import cast
 from qtpy.QtCore import Signal, QObject
-from comrad.data.channel import PyDMChannel, CChannel, allow_connections
+from comrad.data.channel import PyDMChannel, CChannel, allow_connections, CChannelData
 
 
 def test_equal_same():
@@ -76,3 +76,17 @@ def test_does_not_connect_when_connections_disabled(enable_conn, should_be_calle
     allow_connections(True)
     ch.connect()
     connect_mock.assert_called_once()
+
+
+@pytest.mark.parametrize('val1,val2,meta1,meta2,should_equal', [
+    (1, 2, {}, {}, False),
+    (1, 1, {}, {}, True),
+    (1, 'str', {}, {}, False),
+    (1, '1', {}, {}, False),
+    (1, 1, {'key1': 'val1'}, {}, False),
+])
+def test_channel_data(val1, val2, meta1, meta2, should_equal):
+    data1 = CChannelData(value=val1, meta_info=meta1)
+    data2 = CChannelData(value=val2, meta_info=meta2)
+    is_equal = data1 == data2
+    assert should_equal == is_equal
