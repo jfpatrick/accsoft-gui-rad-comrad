@@ -7,11 +7,12 @@ from pathlib import Path
 from typing import Optional, Union, Iterable, cast, Tuple, Type, List, Dict
 from qtpy.QtWidgets import (QWidget, QMenu, QAction, QMainWindow, QFileDialog, QApplication, QSpacerItem,
                             QSizePolicy, QHBoxLayout)
-from qtpy.QtCore import QCoreApplication, Qt
+from qtpy.QtCore import QCoreApplication, Qt, Signal, QObject
 from pydm.pydm_ui import Ui_MainWindow
 from pydm.main_window import PyDMMainWindow
 from pydm.data_plugins import is_read_only
 from comrad.monkey import modify_in_place, MonkeyPatchedClass
+from comrad.data.context import CContext, CContextProvider
 from .about import AboutDialog
 from .plugins.common import (load_plugins_from_path, CToolbarActionPlugin, CActionPlugin, CToolbarWidgetPlugin,
                              CPositionalPlugin, CToolbarID, CPluginPosition, CPlugin, CMenuBarPlugin, CStatusBarPlugin,
@@ -21,8 +22,32 @@ from .plugins.common import (load_plugins_from_path, CToolbarActionPlugin, CActi
 logger = logging.getLogger(__name__)
 
 
+class CMainWindowSignalHelper(QObject, CContextProvider):
+
+    contextUpdated = Signal()
+    """Signal to communicate to children that context need to be updated and possibly connections need to be re-established."""
+
+    def __init__(self, parent: Optional[QObject] = None):
+        """
+        Since we can't create signals on the main window, due to monkey-patching approach, we instead keep an object
+        owning the signals, which does that.
+
+        Args:
+            parent: Parent object.
+        """
+        QObject.__init__(self, parent)
+        CContextProvider.__init__(self)
+
+    @property
+    def context_ready(self) -> bool:
+        return True
+
+    def get_context_view(self) -> CContext:
+        return cast('CMainWindow', self.parent()).window_context
+
+
 @modify_in_place
-class CMainWindow(PyDMMainWindow, MonkeyPatchedClass):
+class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
 
     def __init__(self,
                  parent: Optional[QWidget] = None,
@@ -45,8 +70,29 @@ class CMainWindow(PyDMMainWindow, MonkeyPatchedClass):
                                              hide_menu_bar=hide_menu_bar,
                                              hide_status_bar=hide_status_bar,
                                              **kwargs)
+        CContextProvider.__init__(self)
         self._stored_plugins: List[CPlugin] = []  # Reference plugins to keep the objects alive
+        self._signal_helper = CMainWindowSignalHelper(self)
+        self.contextUpdated = self._signal_helper.contextUpdated
+        self._window_context = CContext()
+        self._window_context.dataFiltersChanged.connect(self.contextUpdated.emit)
+        self._window_context.wildcardsChanged.connect(self.contextUpdated.emit)
+        self._window_context.selectorChanged.connect(self.contextUpdated.emit)
         self.ui.action_exit.triggered.connect(self.close)
+
+    @property
+    def context_ready(self) -> bool:
+        return self._signal_helper.context_ready
+
+    def get_context_view(self) -> CContext:
+        # This API is used for supply chain (to be consistent between context providers
+        # While window_context is used also in the mutable sense, when plugins want to modify global context.
+        return self._signal_helper.get_context_view()
+
+    @property
+    def window_context(self) -> CContext:
+        """Global context for the window. All widgets should obey to it, unless it's overridden by a CContextContainer."""
+        return self._window_context
 
     def update_window_title(self):
         """Overridden method to enable ComRAD branding."""
