@@ -44,9 +44,10 @@ class _JapcService(QObject, pyjapc.PyJapc):
         # which fails to read data from private virtual devices.
         # When passing selector, it is important to set incaAcceleratorName, because default 'auto' name
         # will try to infer the accelerator from the selector and will fail, if we are passing None
-        super().__init__(None,
-                         selector='',
-                         incaAcceleratorName='' if app.use_inca else None)
+        QObject.__init__(self)
+        pyjapc.PyJapc.__init__(self,
+                               selector='',
+                               incaAcceleratorName='' if app.use_inca else None)
         self._logged_in: bool = False
         self._use_inca = app.use_inca
         self._app.rbac.rbac_logout_user.connect(self.rbacLogout)
@@ -241,15 +242,21 @@ class CJapcConnection(PyDMConnection):
         self._meta_field: Optional[str] = None
         self._subscriptions_active: bool = False
         self._selector: Optional[str] = None
-        self._japc_additional_args = {}
+        self._japc_additional_args: Dict[str, Any] = {}
         self._some_subscriptions_failed: bool = False
         self._pyjapc_param_name: str = ''
+        self._repr_name = channel.address
         self._is_property_level: bool = False
 
-        full_addr = f'{self.protocol}://{self.address}'
-        japc_address = ControlEndpointAddress.from_string(full_addr)
+        if not ControlEndpointAddress.validate_parameter_name(channel.address_no_ctx):
+            # Extra protection so that selector comes from the context and not directly from the address string
+            logger.error(f'Cannot create connection with invalid parameter name format "{channel.address_no_ctx}"!')
+            return
+
+        japc_address = ControlEndpointAddress.from_string(channel.address)
+
         if japc_address is None:
-            logger.error(f'Cannot create connection for address "{full_addr}"!')
+            logger.error(f'Cannot create connection for address "{channel.address}"!')
             return
 
         self._meta_field = (japc_address.field
@@ -261,10 +268,17 @@ class CJapcConnection(PyDMConnection):
         if japc_address.selector:
             self._japc_additional_args['timingSelectorOverride'] = self._selector = japc_address.selector
             japc_address.selector = None  # This is passed separately to PyJapc
+        if japc_address.data_filters:
+            # Normal parsing of data filters from string will always result in their types being strings,
+            # but we must preserve original types because otherwise it can cause FESA error.
+            # We still need to be able to parse data filters from string, because otherwise constructing
+            # ControlEndpointAddress with unknown addition will fail the regex.
+            self._japc_additional_args['dataFilterOverride'] = channel.context.data_filters
+            japc_address.data_filters = None  # This is passed separately to PyJapc
 
         self._is_property_level = not japc_address.field
 
-        japc_address.protocol = None  # Remove so that it does not propagate into PyJapc calls
+        japc_address.data_filters = None
         self._pyjapc_param_name = str(japc_address)
 
         self._on_subscribe_device_property = functools.partial(self._notify_listeners, callback_signals=[self.new_value_signal])
@@ -316,6 +330,7 @@ class CJapcConnection(PyDMConnection):
         # Start receiving values
         if channel.value_slot is not None:
             if not self.online:
+                logger.debug(f'{self}: First connection and value_slot available. Will initate subscriptions.')
                 self._create_subscription()
             else:
                 logger.debug(f'{self}: This was an additional listener. Initiating a single GET '
@@ -325,6 +340,10 @@ class CJapcConnection(PyDMConnection):
                 self._single_get(callback=self._on_async_get)
         elif channel.request_slot is not None:
             if not self.online:
+                # If no previous listeners were added, but we are not expecting to subscribe, still subscribe, because
+                # future listeners which will connect to the object will fail to receive updates
+                # FIXME: This is not very straghtforward. How can we fix it?
+                logger.debug(f'{self}: First connection and request_slot available. Will iniate subscriptions.')
                 self._create_subscription()
             else:
                 logger.debug(f'{self}: This was an additional listener. Initiating a single GET '
@@ -550,7 +569,7 @@ class CJapcConnection(PyDMConnection):
             self._start_subscriptions()
 
     def __repr__(self):
-        return f'<{type(self).__name__}[{self.protocol}://{self.address}{"" if not self._selector else "@" + self._selector}] at {hex(id(self))}>'
+        return f'<{type(self).__name__}[{self._repr_name}] at {hex(id(self))}>'
 
 
 class JapcPlugin(PyDMPlugin):
