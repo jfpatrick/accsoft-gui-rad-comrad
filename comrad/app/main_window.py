@@ -15,7 +15,7 @@ from comrad.monkey import modify_in_place, MonkeyPatchedClass
 from comrad.data.context import CContext, CContextProvider
 from .about import AboutDialog
 from .plugins.common import (load_plugins_from_path, CToolbarActionPlugin, CActionPlugin, CToolbarWidgetPlugin,
-                             CPositionalPlugin, CToolbarID, CPluginPosition, CPlugin, CMenuBarPlugin, CStatusBarPlugin,
+                             CPositionalPlugin, CToolbarID, CPlugin, CMenuBarPlugin, CStatusBarPlugin,
                              CToolbarPlugin, filter_enabled_plugins)
 
 
@@ -271,7 +271,8 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
                     item.setIcon(item_icon)
                 item.triggered.connect(action_plugin.triggered)
                 item.setText(action_plugin.title())
-                toolbar_actions.append(item)
+                if action_plugin.show_in_menu:
+                    toolbar_actions.append(item)
                 stored_plugins.append(action_plugin)
                 plugin = action_plugin
             else:
@@ -281,9 +282,13 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
                 plugin = widget_plugin
 
             setattr(item, 'plugin_id', plugin_id)  # noqa: B010
+            setattr(item, 'plugin_gravity', cast(CPositionalPlugin, plugin).gravity)  # noqa: B010
 
-            (toolbar_left if cast(CPositionalPlugin, plugin).position == CPluginPosition.LEFT
+            (toolbar_left if cast(CPositionalPlugin, plugin).position == CPositionalPlugin.Position.LEFT
              else toolbar_right).append(item)
+
+        toolbar_left.sort(key=lambda x: x.plugin_gravity, reverse=True)
+        toolbar_right.sort(key=lambda x: x.plugin_gravity)
 
         if toolbar_actions:
             menu = self._get_or_create_menu(name=('Plugins', 'Toolbar'))
@@ -347,7 +352,9 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
             for item in toolbar_left:
                 _add_item_to_nav_bar(item)
             _add_toolbar_spacer()
-            for item in toolbar_right:
+            for idx, item in enumerate(toolbar_right):
+                if idx > 0:
+                    self.ui.navbar.addSeparator()
                 _add_item_to_nav_bar(item)
 
         return stored_plugins
@@ -410,8 +417,8 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
         if not status_bar_plugins:
             return None
 
-        status_bar_left: List[Tuple[QWidget, bool]] = []  # Items preceding spacer
-        status_bar_right: List[Tuple[QWidget, bool]] = []  # Items succeeding spacer
+        status_bar_left: List[Tuple[QWidget, bool, int]] = []  # Items preceding spacer
+        status_bar_right: List[Tuple[QWidget, bool, int]] = []  # Items succeeding spacer
 
         stored_plugins: List[CPlugin] = []
         for _, plugin_type in filter_enabled_plugins(plugins=status_bar_plugins.values(),
@@ -420,13 +427,16 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
             logger.debug(f'Instantiating plugin "{plugin_type.plugin_id}"')
             plugin = cast(CStatusBarPlugin, plugin_type())
             widget = plugin.create_widget()
-            item = (widget, plugin.is_permanent)
-            (status_bar_left if plugin.position == CPluginPosition.LEFT else status_bar_right).append(item)
+            item = (widget, plugin.is_permanent, plugin.gravity)
+            (status_bar_left if plugin.position == CPositionalPlugin.Position.LEFT else status_bar_right).append(item)
             stored_plugins.append(plugin)
 
-        def _add_status_widgets(items: Iterable[Tuple[QWidget, bool]]):
+        status_bar_left.sort(key=lambda x: x[2], reverse=True)
+        status_bar_right.sort(key=lambda x: x[2])
+
+        def _add_status_widgets(items: Iterable[Tuple[QWidget, bool, int]]):
             status_bar = self.statusBar()
-            for widget, is_permanent in items:
+            for widget, is_permanent, _ in items:
                 if is_permanent:
                     status_bar.addPermanentWidget(widget)
                 else:
