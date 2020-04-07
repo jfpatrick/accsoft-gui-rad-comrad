@@ -35,6 +35,7 @@ class Versions(NamedTuple):
     comrad: str  # Version of ComRAD framework.
     widgets: str  # Version of Acc-Py widget library.
     cmmn_build: str  # Version of cmmn_build_dep_manager
+    jpype: str  # Version of JPype Java bindings
     pyjapc: str  # Version of PyJAPC library
     pydm: str  # Version of PyDM framework
     np: str  # Version of NumPy library
@@ -62,6 +63,7 @@ def get_versions_info() -> Versions:
     from numpy import __version__ as np_ver
     from pyqtgraph import __version__ as pg_ver
     from pydm import __version__ as pydm_ver
+    from jpype import __version__ as jpype_ver
 
     try:
         # Somehow qtpy imports only Qt version, but not PyQt, so we need to directly access PyQt5
@@ -84,6 +86,7 @@ def get_versions_info() -> Versions:
                     cmmn_build=cmmn_ver,
                     pyjapc=pyjapc_ver,
                     pydm=pydm_ver,
+                    jpype=jpype_ver,
                     np=np_ver,
                     pg=pg_ver,
                     python=python_ver,

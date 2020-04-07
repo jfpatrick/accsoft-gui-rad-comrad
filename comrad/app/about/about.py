@@ -29,6 +29,7 @@ class AboutDialog(QWidget):
         self.widget_ver: QLabel = None
         self.pyjapc_ver: QLabel = None
         self.cmmn_build_ver: QLabel = None
+        self.jpype_ver: QLabel = None
         self.accpy: QLabel = None
         self.accpy_pyqt: QLabel = None
         self.accpy_pyqt_ver: QLabel = None
@@ -61,6 +62,7 @@ class AboutDialog(QWidget):
         self.pg_ver.setText(versions.pg)
         self.widget_ver.setText(versions.widgets)
         self.cmmn_build_ver.setText(versions.cmmn_build)
+        self.jpype_ver.setText(versions.jpype)
         self.pyjapc_ver.setText(versions.pyjapc)
 
         if versions.accpy:

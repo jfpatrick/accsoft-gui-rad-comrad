@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>618</width>
-    <height>802</height>
+    <width>620</width>
+    <height>850</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -233,42 +233,42 @@
           <string>Based on</string>
          </property>
          <layout class="QFormLayout" name="formLayout_2">
-          <item row="3" column="0">
+          <item row="4" column="0">
            <widget class="QLabel" name="label_2">
             <property name="text">
              <string>PyDM</string>
             </property>
            </widget>
           </item>
-          <item row="3" column="1">
+          <item row="4" column="1">
            <widget class="QLabel" name="pydm_ver">
             <property name="text">
              <string>x.x.x</string>
             </property>
            </widget>
           </item>
-          <item row="4" column="0">
+          <item row="5" column="0">
            <widget class="QLabel" name="label_4">
             <property name="text">
              <string>NumPy</string>
             </property>
            </widget>
           </item>
-          <item row="4" column="1">
+          <item row="5" column="1">
            <widget class="QLabel" name="numpy_ver">
             <property name="text">
              <string>x.x.x</string>
             </property>
            </widget>
           </item>
-          <item row="5" column="0">
+          <item row="6" column="0">
            <widget class="QLabel" name="label_7">
             <property name="text">
              <string>PyQtGraph</string>
             </property>
            </widget>
           </item>
-          <item row="5" column="1">
+          <item row="6" column="1">
            <widget class="QLabel" name="pg_ver">
             <property name="text">
              <string>x.x.x</string>
@@ -312,6 +312,20 @@
           </item>
           <item row="2" column="1">
            <widget class="QLabel" name="cmmn_build_ver">
+            <property name="text">
+             <string>x.x.x</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_3">
+            <property name="text">
+             <string>Python-Java bindings (JPype)</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QLabel" name="jpype_ver">
             <property name="text">
              <string>x.x.x</string>
             </property>
