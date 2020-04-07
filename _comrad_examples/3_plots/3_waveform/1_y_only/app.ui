@@ -36,7 +36,7 @@
      </property>
      <property name="curves" stdset="0">
       <stringlist>
-       <string>{&quot;channel&quot;: &quot;japc:///DemoDevice/Acquisition#Curve&quot;, &quot;style&quot;: &quot;Line Graph&quot;, &quot;layer&quot;: &quot;&quot;, &quot;name&quot;: &quot;Waveform Sinus&quot;, &quot;color&quot;: &quot;#ffff7f&quot;, &quot;line_style&quot;: 1, &quot;line_width&quot;: 2, &quot;symbol&quot;: null, &quot;symbol_size&quot;: 10}</string>
+       <string>{&quot;channel&quot;: &quot;DemoDevice/Acquisition#Curve&quot;, &quot;style&quot;: &quot;Line Graph&quot;, &quot;layer&quot;: &quot;&quot;, &quot;name&quot;: &quot;Waveform Sinus&quot;, &quot;color&quot;: &quot;#ffff7f&quot;, &quot;line_style&quot;: 1, &quot;line_width&quot;: 2, &quot;symbol&quot;: null, &quot;symbol_size&quot;: 10}</string>
       </stringlist>
      </property>
     </widget>

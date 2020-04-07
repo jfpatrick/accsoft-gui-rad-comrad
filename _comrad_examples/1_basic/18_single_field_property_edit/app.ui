@@ -23,7 +23,7 @@
       <string>[{&quot;field&quot;: &quot;Demo&quot;, &quot;type&quot;: 4, &quot;rw&quot;: true, &quot;label&quot;: &quot;Value&quot;}]</string>
      </property>
      <property name="channel" stdset="0">
-      <string notr="true">japc://DemoDevice/Settings</string>
+      <string notr="true">DemoDevice/Settings</string>
      </property>
     </widget>
    </item>
@@ -42,7 +42,7 @@
       <enum>PropertyEdit::Get</enum>
      </property>
      <property name="channel" stdset="0">
-      <string notr="true">japc://DemoDevice/Settings</string>
+      <string notr="true">DemoDevice/Settings</string>
      </property>
     </widget>
    </item>
@@ -61,7 +61,7 @@
       <enum>PropertyEdit::Set</enum>
      </property>
      <property name="channel" stdset="0">
-      <string notr="true">japc://DemoDevice/Settings</string>
+      <string notr="true">DemoDevice/Settings</string>
      </property>
     </widget>
    </item>
@@ -77,7 +77,7 @@
      <item row="0" column="1">
       <widget class="CLabel" name="CLabel">
        <property name="channel" stdset="0">
-        <string notr="true">japc://DemoDevice/Settings#Demo</string>
+        <string notr="true">DemoDevice/Settings#Demo</string>
        </property>
       </widget>
      </item>

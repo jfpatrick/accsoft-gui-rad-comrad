@@ -61,14 +61,14 @@
         <item row="2" column="1">
          <widget class="CLabel" name="CLabel_2">
           <property name="channel" stdset="0">
-           <string notr="true">japc:///DemoDevice/Acquisition#ChannelB</string>
+           <string notr="true">DemoDevice/Acquisition#ChannelB</string>
           </property>
          </widget>
         </item>
         <item row="0" column="1">
          <widget class="CLabel" name="CLabel">
           <property name="channel" stdset="0">
-           <string notr="true">japc:///DemoDevice/Acquisition#ChannelA</string>
+           <string notr="true">DemoDevice/Acquisition#ChannelA</string>
           </property>
          </widget>
         </item>
@@ -98,8 +98,8 @@ except KeyError:
           </property>
           <property name="inputChannels" stdset="0">
            <stringlist>
-            <string>japc:///DemoDevice/Acquisition#ChannelA</string>
-            <string>japc:///DemoDevice/Acquisition#ChannelB</string>
+            <string>DemoDevice/Acquisition#ChannelA</string>
+            <string>DemoDevice/Acquisition#ChannelB</string>
            </stringlist>
           </property>
          </widget>
@@ -129,7 +129,7 @@ except KeyError:
         <item row="0" column="1">
          <widget class="CLabel" name="CLabel_3">
           <property name="channel" stdset="0">
-           <string notr="true">japc:///DemoDevice/Acquisition#ChannelA</string>
+           <string notr="true">DemoDevice/Acquisition#ChannelA</string>
           </property>
          </widget>
         </item>
@@ -143,7 +143,7 @@ except KeyError:
         <item row="1" column="1">
          <widget class="CLabel" name="CLabel_4">
           <property name="channel" stdset="0">
-           <string notr="true">japc:///DemoDevice/Acquisition#ChannelB</string>
+           <string notr="true">DemoDevice/Acquisition#ChannelB</string>
           </property>
          </widget>
         </item>
@@ -168,8 +168,8 @@ except KeyError:
           </property>
           <property name="inputChannels" stdset="0">
            <stringlist>
-            <string>japc:///DemoDevice/Acquisition#ChannelA</string>
-            <string>japc:///DemoDevice/Acquisition#ChannelB</string>
+            <string>DemoDevice/Acquisition#ChannelA</string>
+            <string>DemoDevice/Acquisition#ChannelB</string>
            </stringlist>
           </property>
          </widget>

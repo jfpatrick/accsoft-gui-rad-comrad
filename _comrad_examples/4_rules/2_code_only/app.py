@@ -14,7 +14,7 @@ class DemoDisplay(CDisplay):
         label = CLabel()
         label.displayFormat = CLabel.Decimal
         label.precision = 2
-        label.channel = 'japc:///DemoDevice/Acquisition#Demo'
+        label.channel = 'DemoDevice/Acquisition#Demo'
         label.rules = [
             CNumRangeRule(name='Demo colors',
                           prop=CNumRangeRule.Property.COLOR,

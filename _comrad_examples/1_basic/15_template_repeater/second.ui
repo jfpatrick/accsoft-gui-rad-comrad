@@ -26,7 +26,7 @@
      <item row="0" column="1">
       <widget class="CLabel" name="CLabel">
        <property name="channel" stdset="0">
-        <string notr="true">japc:///${device}/Acquisition#IntVal</string>
+        <string notr="true">${device}/Acquisition#IntVal</string>
        </property>
        <property name="displayFormat" stdset="0">
         <enum>PyDMLabel::Decimal</enum>

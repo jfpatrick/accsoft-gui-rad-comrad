@@ -194,7 +194,7 @@
               <item>
                <widget class="QLineEdit" name="custom_channel_edit">
                 <property name="placeholderText">
-                 <string>japc://device/property#field</string>
+                 <string>device/property#field</string>
                 </property>
                </widget>
               </item>

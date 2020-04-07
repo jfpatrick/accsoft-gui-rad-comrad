@@ -20,21 +20,21 @@
       <string>Click me!</string>
      </property>
      <property name="channel" stdset="0">
-      <string notr="true">japc:///DemoDevice/Settings#BoolVal</string>
+      <string notr="true">DemoDevice/Settings#BoolVal</string>
      </property>
     </widget>
    </item>
    <item row="1" column="1">
     <widget class="CLed" name="CLed_2">
      <property name="channel" stdset="0">
-      <string notr="true">japc:///DemoDevice/Settings#IntVal</string>
+      <string notr="true">DemoDevice/Settings#IntVal</string>
      </property>
     </widget>
    </item>
    <item row="1" column="0">
     <widget class="CLed" name="CLed">
      <property name="channel" stdset="0">
-      <string notr="true">japc:///DemoDevice/Settings#BoolVal</string>
+      <string notr="true">DemoDevice/Settings#BoolVal</string>
      </property>
      <property name="offColor" stdset="0">
       <color>
@@ -48,7 +48,7 @@
    <item row="0" column="1">
     <widget class="CEnumComboBox" name="CEnumComboBox">
      <property name="channel" stdset="0">
-      <string notr="true">japc:///DemoDevice/Settings#IntVal</string>
+      <string notr="true">DemoDevice/Settings#IntVal</string>
      </property>
      <item>
       <property name="text">

@@ -11,7 +11,7 @@ from comrad.data.channel import CChannelData
 
 
 @pytest.mark.parametrize('channel,resulting_channel', [
-    ('japc://dev/prop#field', 'japc://dev/prop#field'),
+    ('dev/prop#field', 'dev/prop#field'),
     ('__auto__', CNumRangeRule.Channel.DEFAULT),
 ])
 @pytest.mark.parametrize('range_min,range_max', [
@@ -74,7 +74,7 @@ def test_num_range_rule_deserialize_fails(json_obj, error_msg):
     None,
 ])
 @pytest.mark.parametrize('channel', [
-    'japc://dev/prop#field',
+    'dev/prop#field',
     '__auto__',
     None,
 ])
@@ -127,7 +127,7 @@ def test_num_range_rule_serialize_succeeds(name, prop, channel, ranges):
     'color',
 ])
 @pytest.mark.parametrize('channel', [
-    'japc://dev/prop#field',
+    'dev/prop#field',
     '__auto__',
 ])
 @pytest.mark.parametrize('ranges', [
@@ -194,7 +194,7 @@ def test_num_range_rule_validate_succeeds(prop, channel, ranges):
 def test_num_range_rule_validate_fails(attr, val, err):
     rule = CNumRangeRule(name='test_name',
                          prop='test_prop',
-                         channel='japc://dev/prop#field',
+                         channel='dev/prop#field',
                          ranges=[CNumRangeRule.Range(min_val=0.0, max_val=0.0, prop_val=0.5)])
     setattr(rule, attr, val)
     with pytest.raises(TypeError, match=fr'{err}'):
@@ -207,10 +207,10 @@ def test_num_range_rule_validate_fails(attr, val, err):
      '[{"type":0,"name":"rule1","prop":"color","channel":"__auto__","ranges":[{"min":0.0,"max":0.1,"value":"#FF0000"}]}]'),
     # (1, [CExpressionRule], ['rule1'], ['color'], ['__auto__'], ["expr1"],
     #  '[{"type":1,"name":"rule1","prop":"color","channel":"__auto__","expr":"expr1"}]'),
-    (1, [CNumRangeRule], ['rule2'], ['opacity'], ['japc://dev/prop#field'], [2],
-     '[{"type":0,"name":"rule2","prop":"opacity","channel":"japc://dev/prop#field","ranges":[{"min":0.0,"max":0.1,"value":0.9}, {"min":0.1,"max":0.2,"value":0.5}]}]'),
-    (1, [CNumRangeRule], ['rule2'], ['opacity'], ['japc://dev/prop#field'], [0],
-     '[{"type":0,"name":"rule2","prop":"opacity","channel":"japc://dev/prop#field","ranges":[]}]'),
+    (1, [CNumRangeRule], ['rule2'], ['opacity'], ['dev/prop#field'], [2],
+     '[{"type":0,"name":"rule2","prop":"opacity","channel":"dev/prop#field","ranges":[{"min":0.0,"max":0.1,"value":0.9}, {"min":0.1,"max":0.2,"value":0.5}]}]'),
+    (1, [CNumRangeRule], ['rule2'], ['opacity'], ['dev/prop#field'], [0],
+     '[{"type":0,"name":"rule2","prop":"opacity","channel":"dev/prop#field","ranges":[]}]'),
     (2, [CNumRangeRule, CNumRangeRule], ['rule1', 'rule2'], ['color', 'opacity'], ['__auto__', '__auto__'], [0, 0],
      '[{"type":0,"name":"rule1","prop":"color","channel":"__auto__","ranges":[]},{"type":0,"name":"rule2","prop":"opacity","channel":"__auto__","ranges":[]}]'),
     # (2, [CNumRangeRule, CExpressionRule], ['rule1', 'rule2'], ['color', 'opacity'], ['__auto__', '__auto__'], [0, 'expr2'],
@@ -233,16 +233,16 @@ def test_unpack_rules_succeeds(rule_cnt, rule_types, names, props, channels, pay
 
 
 @pytest.mark.parametrize('err,err_type,json_str', [
-    (r'type', KeyError, '[{"name":"rule2","prop":"opacity","channel":"japc://dev/prop#field","ranges":null}]'),
-    (r'Can\\\'t parse range JSON: "name" is not a string', CJSONDeserializeError, '[{"type":0,"prop":"opacity","channel":"japc://dev/prop#field","ranges":null}]'),
-    (r'Can\\\'t parse range JSON: "prop" is not a string', CJSONDeserializeError, '[{"name":"rule2","type":0,"channel":"japc://dev/prop#field","ranges":null}]'),
+    (r'type', KeyError, '[{"name":"rule2","prop":"opacity","channel":"dev/prop#field","ranges":null}]'),
+    (r'Can\\\'t parse range JSON: "name" is not a string', CJSONDeserializeError, '[{"type":0,"prop":"opacity","channel":"dev/prop#field","ranges":null}]'),
+    (r'Can\\\'t parse range JSON: "prop" is not a string', CJSONDeserializeError, '[{"name":"rule2","type":0,"channel":"dev/prop#field","ranges":null}]'),
     (r'Can\\\'t parse range JSON: "channel" is not a string', CJSONDeserializeError, '[{"name":"rule2","prop":"opacity","type":0,"ranges":null}]'),
     (r'Can\\\'t parse range JSON: "ranges" is not a list', CJSONDeserializeError, '[{"name":"rule2","prop":"opacity","type":0,"channel":"__auto__"}]'),
-    (r'Can\\\'t parse range JSON: "ranges" is not a list, "NoneType" given*', CJSONDeserializeError, '[{"type":0,"name":"rule2","prop":"opacity","channel":"japc://dev/prop#field","ranges":null}]'),
-    (r'must have integer type, given str', CJSONDeserializeError, '[{"type":"test","name":"rule1","prop":"opacity","channel":"japc://dev/prop#field","ranges":[]}]'),
-    (r'Rules does not appear to be a list', CJSONDeserializeError, '{"type":0,"name":"rule2","prop":"opacity","channel":"japc://dev/prop#field","ranges":[]}'),
-    (r'Unknown rule type 2 for JSON', CJSONDeserializeError, '[{"type":2,"name":"rule2","prop":"opacity","channel":"japc://dev/prop#field","ranges":[]}]'),
-    (r'', NotImplementedError, '[{"type":1,"name":"rule2","prop":"opacity","channel":"japc://dev/prop#field","expr":""}]'),  # TODO: Remove when expression rules are implemented
+    (r'Can\\\'t parse range JSON: "ranges" is not a list, "NoneType" given*', CJSONDeserializeError, '[{"type":0,"name":"rule2","prop":"opacity","channel":"dev/prop#field","ranges":null}]'),
+    (r'must have integer type, given str', CJSONDeserializeError, '[{"type":"test","name":"rule1","prop":"opacity","channel":"dev/prop#field","ranges":[]}]'),
+    (r'Rules does not appear to be a list', CJSONDeserializeError, '{"type":0,"name":"rule2","prop":"opacity","channel":"dev/prop#field","ranges":[]}'),
+    (r'Unknown rule type 2 for JSON', CJSONDeserializeError, '[{"type":2,"name":"rule2","prop":"opacity","channel":"dev/prop#field","ranges":[]}]'),
+    (r'', NotImplementedError, '[{"type":1,"name":"rule2","prop":"opacity","channel":"dev/prop#field","expr":""}]'),  # TODO: Remove when expression rules are implemented
 ])
 def test_unpack_rules_fails(err, err_type, json_str):
     with pytest.raises(err_type, match=err):
@@ -264,7 +264,7 @@ def test_rules_engine_does_not_register_in_designer(config, _, __, ___, qtbot: Q
     qtbot.addWidget(widget)
     rule = CNumRangeRule(name='test_name',
                          prop='test_prop',
-                         channel='japc://dev/prop#field',
+                         channel='dev/prop#field',
                          ranges=[CNumRangeRule.Range(min_val=0.0, max_val=0.0, prop_val=0.5)])
 
     engine.register(widget=widget, rules=[rule])
@@ -293,7 +293,7 @@ def test_rules_engine_does_not_register_faulty_rules(_, __, ___, qtbot: QtBot, f
     qtbot.addWidget(widget)
     rule = CNumRangeRule(name='test_name',
                          prop='test_prop',
-                         channel='japc://dev/prop#field',
+                         channel='dev/prop#field',
                          ranges=None if faulty else [CNumRangeRule.Range(min_val=0.0, max_val=0.0, prop_val=0.5)])
 
     engine.register(widget=widget, rules=[rule])
@@ -318,7 +318,7 @@ def test_rules_engine_unregisters_old_rules(_, __, ___, qtbot: QtBot):
 
     rule = CNumRangeRule(name='rule1',
                          prop='test_prop',
-                         channel='japc://dev/prop#field',
+                         channel='dev/prop#field',
                          ranges=[CNumRangeRule.Range(min_val=0.0, max_val=0.0, prop_val=0.5)])
     engine.register(widget=widget, rules=[rule])
     assert len(engine.widget_map) == 1
@@ -328,7 +328,7 @@ def test_rules_engine_unregisters_old_rules(_, __, ___, qtbot: QtBot):
 
     new_rule = CNumRangeRule(name='rule2',
                              prop='test_prop',
-                             channel='japc://dev/prop#field',
+                             channel='dev/prop#field',
                              ranges=[CNumRangeRule.Range(min_val=0.0, max_val=0.0, prop_val=0.5)])
     engine.register(widget=widget, rules=[new_rule])
     assert len(engine.widget_map) == 1
@@ -338,7 +338,7 @@ def test_rules_engine_unregisters_old_rules(_, __, ___, qtbot: QtBot):
 
 
 @pytest.mark.parametrize('default_channel', [
-    'japc://default_dev/prop#field',
+    'default_dev/prop#field',
     None,
 ])
 @mock.patch('comrad.rules.plugin_for_address')
@@ -394,7 +394,7 @@ def test_rules_engine_uses_custom_channels(_, __, ___, qtbot: QtBot):
 
     rule = CNumRangeRule(name='test_name',
                          prop='test_prop',
-                         channel='japc://dev/prop#field',
+                         channel='dev/prop#field',
                          ranges=[CNumRangeRule.Range(min_val=0.0, max_val=0.0, prop_val=0.5)])
     engine.register(widget=widget, rules=[rule])
     assert len(engine.widget_map) == 1
@@ -403,7 +403,7 @@ def test_rules_engine_uses_custom_channels(_, __, ___, qtbot: QtBot):
     assert len(job_summary[0]['channels']) == 1
     from pydm.widgets.channel import PyDMChannel
     channel = cast(PyDMChannel, job_summary[0]['channels'][0])
-    assert channel.address == 'japc://dev/prop#field'
+    assert channel.address == 'dev/prop#field'
 
 
 @pytest.mark.parametrize('incoming_val,range_min,range_max,should_calc', [
@@ -428,7 +428,7 @@ def test_rules_engine_calculates_range_value(qtbot: QtBot, incoming_val, range_m
 
     rule = CNumRangeRule(name='test_name',
                          prop='test_prop',
-                         channel='japc://dev/prop#field',
+                         channel='dev/prop#field',
                          ranges=[CNumRangeRule.Range(min_val=range_min, max_val=range_max, prop_val='HIT')])
     import weakref
     widget_ref = weakref.ref(widget, engine.widget_destroyed)

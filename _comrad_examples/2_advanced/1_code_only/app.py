@@ -11,7 +11,7 @@ class DemoDisplay(CDisplay):
         self.setLayout(layout)
 
         label = CLabel()
-        label.channel = 'japc:///DemoDevice/Acquisition#Demo'
+        label.channel = 'DemoDevice/Acquisition#Demo'
 
         self.layout().addWidget(label)
         layout.addWidget(label)

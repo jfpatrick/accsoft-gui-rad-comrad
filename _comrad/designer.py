@@ -2,6 +2,7 @@ import os
 import logging
 from pathlib import Path
 from typing import Optional, List, Dict, Union
+from .common import get_japc_support_envs
 
 
 logger = logging.getLogger(__name__)
@@ -47,6 +48,7 @@ def run_designer(ccda_env: str,
     }
 
     if online:
+        env.update(get_japc_support_envs())
         env['PYDM_DESIGNER_ONLINE'] = '1'
         env['QT_DESIGNER_RAD_INCA'] = str(int(use_inca))
         if java_env:

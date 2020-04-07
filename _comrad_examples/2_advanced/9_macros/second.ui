@@ -17,7 +17,7 @@
    <item>
     <widget class="CLabel" name="CLabel">
      <property name="channel" stdset="0">
-      <string notr="true">japc:///${addr}</string>
+      <string notr="true">${addr}</string>
      </property>
      <property name="valueTransformation">
       <string notr="true">dev = '${addr}'

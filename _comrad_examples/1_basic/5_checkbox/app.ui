@@ -20,7 +20,7 @@
       <string>Click me!</string>
      </property>
      <property name="channel" stdset="0">
-      <string notr="true">japc:///DemoDevice/Settings#BoolVal</string>
+      <string notr="true">DemoDevice/Settings#BoolVal</string>
      </property>
     </widget>
    </item>
@@ -36,7 +36,7 @@
      <item row="0" column="1">
       <widget class="CLabel" name="CLabel">
        <property name="channel" stdset="0">
-        <string notr="true">japc:///DemoDevice/Settings#BoolVal</string>
+        <string notr="true">DemoDevice/Settings#BoolVal</string>
        </property>
       </widget>
      </item>

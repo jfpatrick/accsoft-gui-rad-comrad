@@ -2,7 +2,7 @@
 
 
 def decorate(input: str) -> str:
-    return f'<<{input}>> - from {__file__}'
+    return f'<<{input}>>\nfrom {__file__}'
 
 
 if __name__ == '__main__':
