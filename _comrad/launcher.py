@@ -332,6 +332,7 @@ def _run_comrad(args: argparse.Namespace) -> bool:
     os.environ['PYDM_DATA_PLUGINS_PATH'] = _comrad_asset('data')
     os.environ['PYDM_TOOLS_PATH'] = _comrad_asset('tools')
     os.environ['PYDM_DEFAULT_PROTOCOL'] = 'japc'
+    os.environ['PYCCDA_HOST'] = ccda_endpoint
 
     app = CApplication(ui_file=args.display_file,
                        command_line_args=args.display_args,
