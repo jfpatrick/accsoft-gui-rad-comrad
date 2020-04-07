@@ -7,7 +7,7 @@ from pydm.data_plugins.plugin import PyDMConnection
 from pydm.utilities import is_qt_designer
 from qtpy.QtWidgets import QWidget, QFrame, QVBoxLayout, QLabel, QSizePolicy
 from qtpy.QtCore import Property, Signal, Slot, Q_ENUM, Qt, QSize
-from comrad.data.channel import CChannelData
+from comrad.data.channel import CChannelData, CContext
 from .mixins import CChannelDataProcessingMixin, CHideUnusedFeaturesMixin, CInitializedMixin, deprecated_parent_prop
 from .value_transform import CValueTransformationBase
 
@@ -49,10 +49,11 @@ class CValueAggregator(QWidget, CChannelDataProcessingMixin, CInitializedMixin, 
         CChannelDataProcessingMixin.__init__(self)
         CInitializedMixin.__init__(self)
         CHideUnusedFeaturesMixin.__init__(self)
+        self._channel_ids: List[str] = []  # Just for typing purposes. It should be set in PyDMWidget monkey-patch
+        self._local_context: CContext = None  # type: ignore  # Just for typing purposes. It should be set in PyDMWidget monkey-patch
         PyDMWidget.__init__(self)
         CValueTransformationBase.__init__(self)
         self._widget_initialized = True
-        self._channel_ids: List[str] = []
         self._active: bool = True
         # This type defines how often an update is fired and when cached values get overwritten
         self._trigger_type = self.GeneratorTrigger.Any
@@ -77,24 +78,21 @@ class CValueAggregator(QWidget, CChannelDataProcessingMixin, CInitializedMixin, 
     def _get_input_channels(self) -> List[str]:
         return self._channel_ids
 
-    def _set_input_channels(self, channels: List[str]):
-        new_channels = set(channels)
-        old_channels = set(self._channel_ids)
+    def _set_input_channels(self, new_val: List[str]):
+        if new_val != self._channel_ids:
+            self.reconnect(new_val, self._local_context)
 
-        channels_to_add = new_channels.difference(old_channels)
-        channels_to_remove = old_channels.difference(new_channels)
+    inputChannels = Property('QStringList', _get_input_channels, _set_input_channels)
+    """This property exposes :class:`PyDMWidget`'s channels that we use as input primarily."""
 
-        self._channel_ids = channels
+    def reconnect(self, channels: List[str], new_context: Optional[CContext]):
+        """
+        Overridden method of :class:`~comrad.widgets.widget.CWidget` that monkey-patches PyDMWidget.
 
-        # Remove old connections
-        channel_objs = self.channels()
-        if channel_objs:
-            for channel in channel_objs:
-                if channel.address not in channels_to_remove:
-                    continue
-                channel.disconnect()
-                self._channels.remove(channel)
-
+        Args:
+            new_ch_addresses: New channel addresses to connect to.
+            new_context: New context assisting the connection.
+        """
         # Update trigger table
         if self._trigger_type == self.GeneratorTrigger.Any:
             self._values.clear()
@@ -105,17 +103,8 @@ class CValueAggregator(QWidget, CChannelDataProcessingMixin, CInitializedMixin, 
             self._headers = dict.fromkeys(seq=self._channel_ids, value=None)
             self._obsolete_values = set(self._channel_ids)
 
-        # Add new connections
-        for addr in channels_to_add:
-            # This could be a generalized approach to put into PyDMWidget,
-            # currently it relies only on a single widget presence, but if changed to
-            # work with multiple ones, this code could be reused from the base class...
-            channel = PyDMChannel(address=addr, value_slot=self.channelValueChanged)
-            channel.connect()
-            self._channels.append(channel)
-
-    inputChannels = Property('QStringList', _get_input_channels, _set_input_channels)
-    """This property exposes :class:`PyDMWidget`'s channels that we use as input primarily."""
+        # Handle the channel reconnection by the base class
+        PyDMWidget.reconnect(self, channels, new_context)
 
     def value_changed(self, packet: CChannelData[Any]):
         """
