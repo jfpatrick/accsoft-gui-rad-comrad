@@ -26,13 +26,10 @@
       <stringlist/>
      </property>
      <property name="axisLabels" stdset="0">
-      <string>{&quot;bottom&quot;: &quot;&quot;, &quot;left&quot;: &quot;&quot;, &quot;right&quot;: &quot;&quot;, &quot;top&quot;: &quot;&quot;}</string>
+      <string>{&quot;right&quot;: &quot;&quot;, &quot;bottom&quot;: &quot;&quot;, &quot;top&quot;: &quot;&quot;, &quot;left&quot;: &quot;&quot;}</string>
      </property>
      <property name="axisRanges" stdset="0">
-      <string>{&quot;x&quot;: [-0.5, 0.5], &quot;y&quot;: [-1.0, 1.0]}</string>
-     </property>
-     <property name="axisAutoRange" stdset="0">
-      <string>{&quot;x&quot;: true, &quot;y&quot;: false}</string>
+      <string>{&quot;x&quot;: &quot;auto&quot;, &quot;y&quot;: [-1.0, 1.0]}</string>
      </property>
      <property name="curves" stdset="0">
       <stringlist>
