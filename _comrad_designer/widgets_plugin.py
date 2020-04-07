@@ -23,7 +23,7 @@ from accwidgets.property_edit.designer.designer_extensions import PropertyFieldE
 from comrad import (CScrollingPlot, CCyclicPlot, CStaticPlot, CValueAggregator, CCommandButton, CScaleIndicator, CLogDisplay,
                     CEnumComboBox, CSlider, CSpinBox, CLabel, CByteIndicator, CLineEdit, CTemplateRepeater,
                     CEmbeddedDisplay, CShellCommand, CRelatedDisplayButton, CPushButton, CEnumButton, CCheckBox,
-                    CPropertyEdit, CLed)
+                    CPropertyEdit, CLed, CContextFrame)
 from comrad.icons import icon
 from _comrad_designer.utils import qtplugin_factory
 from _comrad_designer.rules_editor import RulesEditor
@@ -88,6 +88,7 @@ _CShellCommand = qtplugin_factory(CShellCommand, group=_COMRAD_GROUP_BUTTONS, ic
 # _CFrame = qtplugin_factory(CFrame, group=_COMRAD_GROUP_CONTAINER, icon=load_icon('frame'), is_container=True, extensions=_BASE_EXTENSIONS)
 _CEmbeddedDisplay = qtplugin_factory(CEmbeddedDisplay, group=_COMRAD_GROUP_CONTAINER, icon=_load_icon('embedded_display'))
 _CTemplateRepeater = qtplugin_factory(CTemplateRepeater, group=_COMRAD_GROUP_CONTAINER, icon=_load_icon('template_repeater'))
+_CContextFrame = qtplugin_factory(CContextFrame, group=_COMRAD_GROUP_CONTAINER, icon=_load_icon('context_frame'), is_container=True)
 
 # Input Widgets
 _CEnumComboBox = qtplugin_factory(CEnumComboBox, group=_COMRAD_GROUP_INPUT, icon=_load_icon('combobox'), extensions=_BASE_EXTENSIONS)

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>411</width>
+    <height>87</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QComboBox" name="comboBox">
+     <item>
+      <property name="text">
+       <string>PSB.USER.TOF</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PSB.USER.AD</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item>
+    <widget class="CContextFrame" name="CContextFrame">
+     <property name="selector" stdset="0">
+      <string>PSB.USER.TOF</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <widget class="CLabel" name="CLabel">
+        <property name="channel" stdset="0">
+         <string notr="true">DemoDevice/Acquisition#Demo</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PyDMLabel</class>
+   <extends>QLabel</extends>
+   <header>pydm.widgets.label</header>
+  </customwidget>
+  <customwidget>
+   <class>CContextFrame</class>
+   <extends>QFrame</extends>
+   <header>comrad.widgets.containers</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>CLabel</class>
+   <extends>PyDMLabel</extends>
+   <header>comrad.widgets.indicators</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>comboBox</sender>
+   <signal>activated(QString)</signal>
+   <receiver>CContextFrame</receiver>
+   <slot>updateSelector(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>95</x>
+     <y>17</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>105</x>
+     <y>83</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
