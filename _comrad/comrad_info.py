@@ -20,6 +20,10 @@ COMRAD_VERSION = get_comrad_versions()['version']
 """ComRAD framework version to be presented in help messages and about dialogs."""
 
 
+COMRAD_DEFAULT_PROTOCOL = 'japc'
+"""Default protocol that is used for the control system connections that do not specify it explicitly."""
+
+
 class AccPyEnv(NamedTuple):
     """Tuple that accumulates versions of the Acc-py environment."""
     py: str  # Version of Python distribution.

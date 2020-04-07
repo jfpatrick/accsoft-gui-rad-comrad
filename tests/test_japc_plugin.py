@@ -11,6 +11,7 @@ from qtpy.QtCore import Signal, Slot, QObject
 from comrad.data import japc_plugin, channel
 from comrad import CApplication
 from comrad.rbac import CRBACLoginStatus, CRBACStartupLoginPolicy
+from _comrad.comrad_info import COMRAD_DEFAULT_PROTOCOL
 
 
 @pytest.fixture(autouse=True)
@@ -471,5 +472,26 @@ def test_japc_plugin_is_used_on_protocols(protocol):
         initialize_plugins_if_needed()
     plugin: PyDMPlugin = plugin_for_address(f'{protocol}:///device/property')
     assert plugin.protocol == protocol
+    # Direct comparison does not work because loaded plugin has mangled class path
+    assert plugin.connection_class.__name__ == japc_plugin.CJapcConnection.__name__
+
+
+def test_japc_plugin_is_used_on_no_protocol():
+    def custom_env(env_name, *_, **__):
+        if env_name == 'PYDM_DATA_PLUGINS_PATH':
+            return str(Path(japc_plugin.__file__).parent.absolute())
+        return mock.DEFAULT
+
+    from pydm.data_plugins import initialize_plugins_if_needed, plugin_for_address, PyDMPlugin
+    import pydm.data_plugins
+    pydm.data_plugins.__plugins_initialized = False  # Force to reinitialize
+    pydm.data_plugins.config.DEFAULT_PROTOCOL = COMRAD_DEFAULT_PROTOCOL
+
+    # In some tests custom environment maybe too late to create (because comrad and, subsequently pydm have already
+    # been imported and resolved the environment. So we mock the environment getter for the force re-initialization
+    with mock.patch('os.getenv', side_effect=custom_env):
+        initialize_plugins_if_needed()
+    plugin: PyDMPlugin = plugin_for_address(f'device/property')
+    assert plugin.protocol == COMRAD_DEFAULT_PROTOCOL
     # Direct comparison does not work because loaded plugin has mangled class path
     assert plugin.connection_class.__name__ == japc_plugin.CJapcConnection.__name__

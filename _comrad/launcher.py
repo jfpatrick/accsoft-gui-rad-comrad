@@ -6,10 +6,10 @@ import argparse
 import argcomplete
 import os
 import sys
-from pathlib import Path
 from typing import Optional, Iterable, cast, Tuple, Dict, List
-from .comrad_info import COMRAD_DESCRIPTION, get_versions_info
+from .comrad_info import COMRAD_DESCRIPTION, COMRAD_VERSION, get_versions_info
 from .log_config import install_logger_level
+from .common import get_japc_support_envs, comrad_asset
 
 
 # Allow smooth exit on Ctrl+C
@@ -33,35 +33,23 @@ def run():
         'formatter_class': argparse.RawDescriptionHelpFormatter,
     }
 
-    versions = get_versions_info()
-    version_str = f"""ComRAD {versions.comrad}
-
-Based on:
----------
-Acc-py Widgets v{versions.widgets}
-PyJAPC v{versions.pyjapc}
-Java Dependency Manager v{versions.cmmn_build}
-PyDM v{versions.pydm}
-NumPy v{versions.np}
-PyQtGraph v{versions.pg}
-
-Environment:
-------------\n"""
-
-    if versions.accpy:
-        version_str += f'Acc-py PyQt {versions.accpy.pyqt} (PyQt v{versions.pyqt}, Qt v{versions.qt})\n' + \
-                       f'Acc-py Python {versions.accpy.py} (Python v{versions.python})'
-    else:
-        version_str += f'PyQt v{versions.pyqt}\n' + \
-                       f'Qt v{versions.qt}\n' + \
-                       f'Python v{versions.python}'
-
     parser = argparse.ArgumentParser(description=logo + '\n\n' + COMRAD_DESCRIPTION, **common_parser_args)
 
-    parser.add_argument('-V', '--version',
-                        action='version',
-                        version=version_str,
-                        help="Show ComRAD's version number and exit.")
+    parse_private_fn = getattr(parser, '_print_message', None)
+    use_lazy_version = parse_private_fn and callable(parse_private_fn)
+    if use_lazy_version:
+        # This will use our custom command with delayed version resolution to avoid early imports of the
+        # dependencies that may break order of defining custom environment variables
+        parser.add_argument('-V', '--version',
+                            action='store_true',
+                            help="Show ComRAD's version number and exit.")
+    else:
+        # If the above assumption is incorrect, fallback to the simplest version
+        parser.add_argument('-V', '--version',
+                            action='version',
+                            version=COMRAD_VERSION,
+                            help="Show ComRAD's version number and exit.")
+
     _install_help(parser)
 
     subparsers = parser.add_subparsers(dest='cmd')
@@ -94,6 +82,10 @@ Environment:
     argcomplete.autocomplete(parser)
 
     args = parser.parse_args()
+    if use_lazy_version and args.version:
+        _run_version(parser)
+        return
+
     install_logger_level(vars(args).get('log_level'))
     if args.cmd == 'examples':
         # Importing it here to have a chance to setup root logger before
@@ -106,11 +98,6 @@ Environment:
             _run_designer(args) or parser.print_usage()
         else:
             parser.print_help()
-
-
-def _comrad_asset(file: str) -> str:
-    import comrad
-    return str(Path(comrad.__file__).parent.absolute() / file)
 
 
 def _install_help(parser: argparse._ActionsContainer):
@@ -302,12 +289,22 @@ def __designer_subcommand(parser: argparse.ArgumentParser):
 
 def _run_comrad(args: argparse.Namespace) -> bool:
 
+    environment = {
+        'PYDM_TOOLS_PATH': comrad_asset('tools'),
+        **get_japc_support_envs(),
+    }
+
+    for k, v in environment.items():
+        os.environ[k] = v
+
+    logger = logging.getLogger('')
+    logger.debug('Configured additional environment:\n'
+                 '{env_dict}'.format(env_dict='\n'.join([f'{k}={v}' for k, v in environment.items()])))
+
     # Importing stuff here and not in the beginning of the file to setup the root logger first.
     from comrad.app.application import CApplication
     from pydm.utilities.macro import parse_macro_string
     macros = parse_macro_string(args.macro) if args.macro is not None else None
-
-    logger = logging.getLogger('')
 
     try:
         ccda_endpoint, java_env = _parse_control_env(args)
@@ -327,12 +324,10 @@ def _run_comrad(args: argparse.Namespace) -> bool:
     if args.disable_plugins:
         blacklist = cast(str, args.disable_plugins).split(',')
 
-    stylesheet: Optional[str] = _comrad_asset('dark.qss') if args.dark_mode else args.stylesheet
-
-    os.environ['PYDM_DATA_PLUGINS_PATH'] = _comrad_asset('data')
-    os.environ['PYDM_TOOLS_PATH'] = _comrad_asset('tools')
-    os.environ['PYDM_DEFAULT_PROTOCOL'] = 'japc'
+    # This has to sit here, because other os.environ settings MUST be before comrad or pydm import
     os.environ['PYCCDA_HOST'] = ccda_endpoint
+
+    stylesheet: Optional[str] = comrad_asset('dark.qss') if args.dark_mode else args.stylesheet
 
     app = CApplication(ui_file=args.display_file,
                        command_line_args=args.display_args,
@@ -378,6 +373,34 @@ def _run_designer(args: argparse.Namespace) -> bool:
                  log_level=args.log_level,
                  enable_internal_props=args.enableinternaldynamicproperties)
     return True
+
+
+def _run_version(parser: argparse.ArgumentParser):
+    versions = get_versions_info()
+    version_str = f"""ComRAD {versions.comrad}
+
+Based on:
+---------
+Acc-py Widgets v{versions.widgets}
+PyJAPC v{versions.pyjapc}
+Java Dependency Manager v{versions.cmmn_build}
+PyDM v{versions.pydm}
+NumPy v{versions.np}
+PyQtGraph v{versions.pg}
+
+Environment:
+------------\n"""
+
+    if versions.accpy:
+        version_str += f'Acc-py PyQt {versions.accpy.pyqt} (PyQt v{versions.pyqt}, Qt v{versions.qt})\n' + \
+                       f'Acc-py Python {versions.accpy.py} (Python v{versions.python})'
+    else:
+        version_str += f'PyQt v{versions.pyqt}\n' + \
+                       f'Qt v{versions.qt}\n' + \
+                       f'Python v{versions.python}'
+
+    # This uses private API based on assumption that we checked when constructing the parser
+    parser._print_message(version_str)
 
 
 def _parse_control_env(args: argparse.Namespace) -> Tuple[str, Dict[str, str]]:
