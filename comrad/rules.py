@@ -9,7 +9,7 @@ import logging
 import json
 from weakref import ReferenceType
 from dataclasses import dataclass
-from typing import List, Dict, Any, Optional, cast, Union, Iterator, Iterable
+from typing import List, Dict, Any, Optional, cast, Union, Iterator, Iterable, Type
 from enum import IntEnum, Enum
 from abc import ABCMeta, abstractmethod
 from qtpy.QtWidgets import QWidget
@@ -130,16 +130,15 @@ class CBaseRule(CJSONSerializable, Validatable, metaclass=ABCMeta):
         if errors:
             raise TypeError(';'.join(errors))
 
-
-class CSingleChannelRule(CBaseRule, metaclass=ABCMeta):
-    """
-    Rule that is guaranteed to work with a single channel only.
-    """
-    pass
+    @classmethod
+    @abstractmethod
+    def type(cls) -> 'CBaseRule.Type':
+        """Defines to which type the given rule belongs."""
+        pass
 
 
 @dataclass(init=False, repr=False, eq=False)
-class CEnumRule(CSingleChannelRule):
+class CEnumRule(CBaseRule):
 
     class EnumField(IntEnum):
         """Defines which PyJapc CEnumValue field will be used for the comparison"""
@@ -209,7 +208,7 @@ class CEnumRule(CSingleChannelRule):
                 return
             elif self.field == CEnumRule.EnumField.LABEL and isinstance(self.field_val, str):
                 return
-            raise TypeError('The rule and value type are not compatible')
+            raise TypeError(f'Value of type "{type(self.field_val).__name__}" is not compatible with enum field "{str(self.field).split(".")[-1].title()}"')
 
         def __repr__(self) -> str:
             return f'<{type(self).__name__} {self.field}=={self.field_val} => {self.prop_val}>'
@@ -258,7 +257,7 @@ class CEnumRule(CSingleChannelRule):
         if not (isinstance(channel, str)):
             raise CJSONDeserializeError(f'Can\'t parse rule JSON: "channel" is not a string, "{type(channel).__name__}" given.', None, 0)
 
-        json_config: List[Any] = contents.get('config', None)
+        json_config: List[Any] = contents.get('config', [])
 
         if not isinstance(json_config, list):
             raise CJSONDeserializeError(f'Can\'t parse rule JSON: "config" is not a list, "{type(json_config).__name__}" given.', None, 0)
@@ -277,7 +276,7 @@ class CEnumRule(CSingleChannelRule):
         return {
             'name': self.name,
             'prop': self.prop,
-            'type': CBaseRule.Type.ENUM,
+            'type': self.type(),
             'channel': self.channel,
             'config': self.config,
         }
@@ -305,9 +304,13 @@ class CEnumRule(CSingleChannelRule):
 
                 for another_enum_value in self.config[row + 1:]:
                     if is_overlapping(enum_value, another_enum_value):
-                        errors.append(f'Rule "{self.name}" has redundant configuration')
+                        errors.append(f'Rule "{self.name}" has redundant configuration ({enum_value.field}=={enum_value.field_val})')
         if errors:
             raise TypeError(';'.join(errors))
+
+    @classmethod
+    def type(cls) -> 'CBaseRule.Type':
+        return CBaseRule.Type.ENUM
 
     def __repr__(self):
         return f'<{type(self).__name__} "{self.name}" [{self.prop}]>\n' + '\n'.join(map(repr, self.config))
@@ -346,9 +349,13 @@ class CExpressionRule(CBaseRule):
     def to_json(self):
         raise NotImplementedError()
 
+    @classmethod
+    def type(cls) -> 'CBaseRule.Type':
+        return CBaseRule.Type.PY_EXPR
+
 
 @dataclass(init=False, repr=False, eq=False)
-class CNumRangeRule(CSingleChannelRule):
+class CNumRangeRule(CBaseRule):
 
     @dataclass(repr=False)
     class Range(CJSONSerializable, Validatable):
@@ -390,7 +397,7 @@ class CNumRangeRule(CSingleChannelRule):
 
         def validate(self):
             if self.min_val is not None and self.max_val is not None and self.min_val > self.max_val:
-                raise TypeError('Some ranges have inverted boundaries (max < min)')
+                raise TypeError(f'Range {self.min_val}-{self.max_val} has inverted boundaries (max < min)')
 
         def __repr__(self) -> str:
             return f'<{type(self).__name__} {self.min_val}:{self.max_val} => {self.prop_val}>'
@@ -457,7 +464,7 @@ class CNumRangeRule(CSingleChannelRule):
         return {
             'name': self.name,
             'prop': self.prop,
-            'type': CBaseRule.Type.NUM_RANGE,
+            'type': self.type(),
             'channel': self.channel,
             'ranges': self.ranges,
         }
@@ -497,9 +504,14 @@ class CNumRangeRule(CSingleChannelRule):
                                       max1=range.max_val,
                                       min2=another_range.min_val,
                                       max2=another_range.max_val):
-                        errors.append(f'Rule "{self.name}" has overlapping ranges')
+                        errors.append(f'Rule "{self.name}" has overlapping ranges ({range.min_val}-{range.max_val} '
+                                      f'and {another_range.min_val}-{another_range.max_val})')
         if errors:
             raise TypeError(';'.join(errors))
+
+    @classmethod
+    def type(cls) -> 'CBaseRule.Type':
+        return CBaseRule.Type.NUM_RANGE
 
     def __repr__(self):
         return f'<{type(self).__name__} "{self.name}" [{self.prop}]>\n' + '\n'.join(map(repr, self.ranges))
@@ -517,19 +529,21 @@ def unpack_rules(contents: str) -> List[CBaseRule]:
     logger.debug(f'Unpacking JSON rules into the object: {contents}')
     parsed_contents: List[Dict[str, Any]] = json.loads(contents)
     res: List[CBaseRule] = []
+
+    rule_map: Dict[int, Type] = {}
+    for sub in CBaseRule.__subclasses__():
+        rule_map[sub.type()] = sub
+
     if isinstance(parsed_contents, list):
         for json_rule in parsed_contents:
             rule_type: int = json_rule['type']
             if not isinstance(rule_type, int):
                 raise CJSONDeserializeError(f'Rule {json_rule} must have integer type, given {type(rule_type).__name__}.')
-            if rule_type == CBaseRule.Type.NUM_RANGE:
-                res.append(CNumRangeRule.from_json(json_rule))
-            elif rule_type == CBaseRule.Type.PY_EXPR:
-                res.append(CExpressionRule.from_json(json_rule))
-            elif rule_type == CBaseRule.Type.ENUM:
-                res.append(CEnumRule.from_json(json_rule))
-            else:
+            try:
+                sub = rule_map[rule_type]
+            except KeyError:
                 raise CJSONDeserializeError(f'Unknown rule type {rule_type} for JSON {json_rule}')
+            res.append(sub.from_json(json_rule))
     elif parsed_contents is not None:
         raise CJSONDeserializeError('Rules does not appear to be a list')
     return res
@@ -650,7 +664,7 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
             # except Exception as e:
             #     logger.exception(f'Error while evaluating Rule: {e}')
             return
-        elif isinstance(rule_obj, CSingleChannelRule):
+        elif isinstance(rule_obj, (CEnumRule, CNumRangeRule)):
             from comrad.widgets.mixins import CWidgetRulesMixin
             _, base_type = cast(CWidgetRulesMixin, widget_ref()).RULE_PROPERTIES[rule_obj.prop]
             packet = cast(CChannelData[Any], job_unit['values'][0])
