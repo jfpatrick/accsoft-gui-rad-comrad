@@ -28,7 +28,7 @@ requirements = {
         'accwidgets @ git+ssh://git@gitlab.cern.ch:7999/acc-co/accsoft/gui/accsoft-gui-pyqt-widgets.git#egg=accwidgets',  # 'accwidgets>=0.1.1,<1',
         'papc @ git+ssh://git@gitlab.cern.ch:7999/isinkare/papc.git@fix/async-get-interface',  # 'papc>=0.4.0&&<1',
         'pydm==1.8.0.post0',
-        'JPype1==0.6.3',  # This is pinned explicitly, as long as we need custom jpype code in ComRAD
+        'JPype1>=0.7,<0.7.2',  # 0.7.2 seems incompatible with pyjapc as of now
         'dataclasses~=0.7;python_version<"3.7"',
         'pyccda~=0.10.1',
     ],

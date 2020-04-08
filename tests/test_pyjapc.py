@@ -11,6 +11,10 @@ def pyjapc_subclass():
     # we have to mock all super methods manually.
 
     # Make sure common build resolves java version before we mock out that whole jvm library
+    # Pay attention that your jars are downloaded. It sometimes happened to me, that jar directory stayed empty
+    # and common build would not resolve it. In this case, you get strange errors, e.g. Java exceptions
+    # not deriving from Python BaseException, but the real reason is that real Java classes from cern package
+    # are not loaded...
     import cmmnbuild_dep_manager
     mgr = cmmnbuild_dep_manager.Manager('pyjapc')
     mgr.start_jpype_jvm()
@@ -23,44 +27,69 @@ def pyjapc_subclass():
     # 1. cern.japc.core.ParameterException
     # 2. cern.japc.value.ValueConversionException
     # 3. cern.rbac.client.authentication.AuthenticationException
-    # They can't be mocks, because otherwise jpype.JException produces a mock, which is not derivative of BaseException
-    # and Python interpreter complains at the except statement. We have to keep these real, while mock everything else
+    # They can't be mocks, because otherwise Python interpreter complains at the except statement.
+    # We have to keep these real, while mock everything else.
     ParameterException = cern.japc.core.ParameterException
     ValueConversionException = cern.japc.value.ValueConversionException
     AuthenticationException = cern.rbac.client.authentication.AuthenticationException
 
-    def kill_jpype_calls(pkg_name):
-        print(f'Getting jpype package {pkg_name}')
-        if pkg_name == 'cern':  # Mock callable logic of cern
-            cern_mock = mock.MagicMock()
-            cern_mock.japc.core.ParameterException = ParameterException
-            cern_mock.japc.value.ValueConversionException = ValueConversionException
-            cern_mock.rbac.client.authentication.AuthenticationException = AuthenticationException
-            return cern_mock
-        elif pkg_name == 'org':  # Avoid troubles with log4j
-            return mock.MagicMock()
+    def mock_all_but_known_exceptions(pkg_name):
+        # This method mocks java modules imported through jpype.JPackage
+        # It helps preventing calls to InCA configurator in PyJapc init methods,
+        # or e.g. accessing log4j in JVM setup.
+
+        # Following the statements above, we must keep original exceptions
+        # We use recursive call to allow import on any level, e.g. JPackage('cern') or JPackage('cern.japc.core')
+        # leading to the mock that would still contain correct exception type at the given path.
+        if pkg_name == 'cern.japc.core.ParameterException':
+            return ParameterException
+        if pkg_name == 'cern.japc.value.ValueConversionException':
+            return ValueConversionException
+        if pkg_name == 'cern.rbac.client.authentication.AuthenticationException':
+            return AuthenticationException
+        if pkg_name == 'cern.rbac.client.authentication':
+            m = mock.MagicMock()
+            m.AuthenticationException = mock_all_but_known_exceptions(f'{pkg_name}.AuthenticationException')
+            return m
+        if pkg_name == 'cern.rbac.client':
+            m = mock.MagicMock()
+            m.authentication = mock_all_but_known_exceptions(f'{pkg_name}.authentication')
+            return m
+        if pkg_name == 'cern.rbac':
+            m = mock.MagicMock()
+            m.client = mock_all_but_known_exceptions(f'{pkg_name}.client')
+            return m
+        if pkg_name == 'cern.japc.core':
+            m = mock.MagicMock()
+            m.ParameterException = mock_all_but_known_exceptions(f'{pkg_name}.ParameterException')
+            return m
+        if pkg_name == 'cern.japc.value':
+            m = mock.MagicMock()
+            m.ValueConversionException = mock_all_but_known_exceptions(f'{pkg_name}.ValueConversionException')
+            return m
+        if pkg_name == 'cern.japc':
+            m = mock.MagicMock()
+            m.core = mock_all_but_known_exceptions(f'{pkg_name}.core')
+            m.value = mock_all_but_known_exceptions(f'{pkg_name}.value')
+            return m
+        if pkg_name == 'cern':
+            m = mock.MagicMock()
+            m.japc = mock_all_but_known_exceptions(f'{pkg_name}.japc')
+            m.rbac = mock_all_but_known_exceptions(f'{pkg_name}.rbac')
+            return m
         return mock.DEFAULT
 
-    # minimize the amount of java deps that cmmn_build pulls up, but we still can't have an empty array,
-    # since CBNG will complain, so we leave a single package that seems to be the most basic one.
-    # in addition, we do need to
-    # with mock.patch.multiple('pyjapc', __cmmnbuild_deps__=['japc-ext-inca']):
-    #     print(f'Mocked pyjapc Java dependencies')
-        # with mock.patch('cmmnbuild_dep_manager.Manager') as mgr_mock:
-        #     print(f'Mocked cmmnbuild with {mgr_mock}')
-    with mock.patch('jpype.JPackage', side_effect=kill_jpype_calls) as jpype_mock:
-        print(f'Mocked jpype top call with {jpype_mock}')
+    with mock.patch('jpype.JPackage', side_effect=mock_all_but_known_exceptions):
+        # Here is the real meat. Since we can't mock superclass, we mock all possible used methods of PyJapc
+        # This must be done before the first import of comrad.data.pyjapc_patch
         with mock.patch.multiple('comrad.data.pyjapc_patch.PyJapc',
                                  getParam=mock.DEFAULT,
                                  setParam=mock.DEFAULT,
                                  subscribeParam=mock.DEFAULT,
                                  rbacLogin=mock.DEFAULT,
                                  rbacLogout=mock.DEFAULT,
-                                 rbacGetToken=mock.DEFAULT) as mocked_pyjapc:
-            print(f'Importing CPyJapc')
-            from comrad.data.pyjapc_patch_patch import CPyJapc, PyJapc
-            print(f'Superclass {PyJapc} <=> {mocked_pyjapc} and its methods {PyJapc.getParam}, {PyJapc.rbacLogout}')
-            # yield mocked_pyjapc
+                                 rbacGetToken=mock.DEFAULT):
+            from comrad.data.pyjapc_patch import CPyJapc, PyJapc
             CPyJapc.super_mock = PyJapc  # Keep the pointer for the tests to check for call assertions
             CPyJapc.__del__ = mock.Mock()  # Avoid calling clearSubscriptions and other nonsense at the end of the test
             yield CPyJapc
@@ -176,11 +205,12 @@ def test_rbac_logout_notifies_status(pyjapc_subclass, qtbot):
 def test_rbac_login_fails_on_auth_exception(pyjapc_subclass):
 
     def raise_error(*_, **__):
-        # Stays here to have lazy import of jpype
+        # We must add a custom method, rather than assigning type directly to side_effect,
+        # because Java exception does not have a default Python initializer, causing error
+        # TypeError: No matching overloads found for constructor
+        # cern.rbac.client.authentication.AuthenticationException()
         import jpype
-        cern = jpype.JPackage('cern')
-        print(f'cern pkg: {cern}')
-        raise jpype.JException(cern.rbac.client.authentication.AuthenticationException)('Test exception')
+        raise jpype.JPackage('cern.rbac.client.authentication.AuthenticationException')('Test exception')
 
     pyjapc_subclass.super_mock.rbacLogin.side_effect = raise_error
     japc = pyjapc_subclass()
@@ -190,6 +220,39 @@ def test_rbac_login_fails_on_auth_exception(pyjapc_subclass):
 
     japc.rbacLogin(on_exception=callback)
     callback.assert_called_once_with('Test exception', True)
+
+
+@pytest.mark.parametrize('error_type', [ValueError, TypeError, RuntimeError, Exception])
+def test_rbac_login_does_not_catch_python_exception(pyjapc_subclass, error_type):
+    pyjapc_subclass.super_mock.rbacLogin.side_effect = error_type
+    japc = pyjapc_subclass()
+    assert japc.logged_in is False
+
+    callback = mock.Mock()
+
+    with pytest.raises(error_type):
+        japc.rbacLogin(on_exception=callback)
+    callback.assert_not_called()
+
+
+@pytest.mark.parametrize('error_type', [
+    'cern.japc.value.ValueConversionException',
+    'cern.japc.core.ParameterException',
+])
+@pytest.mark.parametrize('exc_getter', ['get_param_exc_type', 'get_val_exc_type'])
+def test_rbac_login_does_not_catch_other_java_exceptions(pyjapc_subclass, exc_getter, error_type):
+    import jpype
+    exc_type = jpype.JPackage(error_type)
+
+    pyjapc_subclass.super_mock.rbacLogin.side_effect = exc_type
+    japc = pyjapc_subclass()
+    assert japc.logged_in is False
+
+    callback = mock.Mock()
+
+    with pytest.raises(exc_type):
+        japc.rbacLogin(on_exception=callback)
+    callback.assert_not_called()
 
 
 def test_japc_get_succeeds(pyjapc_subclass):
@@ -205,26 +268,23 @@ def test_japc_set_succeeds(pyjapc_subclass):
     pyjapc_subclass.super_mock.setParam.assert_called_once_with('test_addr', 4, checkDims=False)
 
 
+@pytest.mark.parametrize('error_type', [
+    'cern.japc.value.ValueConversionException',
+    'cern.japc.core.ParameterException',
+])
 @pytest.mark.parametrize('method,display_popup,value', [
     ('getParam', False, None),
     ('setParam', True, 4),
 ])
-def test_japc_get_set_fails_on_cmw_exception(pyjapc_subclass, method, display_popup, value, qtbot):
+def test_japc_get_set_fails_on_cmw_exception(pyjapc_subclass, method, display_popup, value, qtbot, error_type):
 
     def raise_error(parameterName, *args, **__):
         assert parameterName == 'test_addr'
         if value is not None:
             assert args[0] == value  # Test setParam value
-
-        # Stays here to have lazy import of jpype
         import jpype
-        cern = jpype.JPackage('cern')
-        print(f'Cern type: {cern}')
-        print(f'Cern exception type: {cern.japc.core.ParameterException}')
-        print(f'Cern exception: {jpype.JException(cern.japc.core.ParameterException)}')
-        print(f'Java exception type: {jpype.java.lang.NullPointerException}')
-        print(f'Java exception: {jpype.JException(jpype.java.lang.NullPointerException)}')
-        raise jpype.JException(cern.japc.core.ParameterException)('Test exception')
+        exc_type = jpype.JPackage(error_type)
+        raise exc_type('Test exception')
 
     pyjapc_subclass.super_mock.getParam.side_effect = raise_error
     pyjapc_subclass.super_mock.setParam.side_effect = raise_error
@@ -238,13 +298,54 @@ def test_japc_get_set_fails_on_cmw_exception(pyjapc_subclass, method, display_po
     assert blocker.args == ['Test exception', display_popup]
 
 
+@pytest.mark.parametrize('method,value', [
+    ('getParam', None),
+    ('setParam', 4),
+])
+@pytest.mark.parametrize('error_type', [ValueError, TypeError, RuntimeError, Exception, BaseException])
+def test_japc_get_set_does_not_catch_python_exception(pyjapc_subclass, method, value, qtbot, error_type):
+    pyjapc_subclass.super_mock.getParam.side_effect = error_type
+    pyjapc_subclass.super_mock.setParam.side_effect = error_type
+
+    japc = pyjapc_subclass()
+    args = ['test_addr']
+    if value is not None:
+        args.append(value)
+    with pytest.raises(error_type):
+        with qtbot.assert_not_emitted(japc.japc_param_error):
+            getattr(japc, method)(*args)
+
+
+@pytest.mark.parametrize('error_type', ['cern.rbac.client.authentication.AuthenticationException'])
+@pytest.mark.parametrize('method,value', [
+    ('getParam', None),
+    ('setParam', 4),
+])
+def test_japc_get_set_does_not_catch_other_java_exception(pyjapc_subclass, method, value, qtbot, error_type):
+
+    import jpype
+    exc_type = jpype.JPackage(error_type)
+
+    def raise_error(*_, **__):
+        # We must add a custom method, rather than assigning type directly to side_effect,
+        # because Java exception does not have a default Python initializer, causing error
+        # TypeError: No matching overloads found for constructor
+        # cern.rbac.client.authentication.AuthenticationException()
+        raise exc_type('Test message')
+
+    pyjapc_subclass.super_mock.getParam.side_effect = raise_error
+    pyjapc_subclass.super_mock.setParam.side_effect = raise_error
+
+    japc = pyjapc_subclass()
+    args = ['test_addr']
+    if value is not None:
+        args.append(value)
+    with pytest.raises(exc_type, match=r'Test message'):
+        with qtbot.assert_not_emitted(japc.japc_param_error):
+            getattr(japc, method)(*args)
+
+
 def test_jvm_flags_are_passed(pyjapc_subclass):
-
-    # Make sure common build resolves java version before we mock out that whole jvm library
-    import cmmnbuild_dep_manager
-    mgr = cmmnbuild_dep_manager.Manager()
-    mgr.start_jpype_jvm()
-
     with mock.patch('jpype.java') as java:
         cast(CApplication, CApplication.instance()).jvm_flags = {
             'FLAG1': 'val1',

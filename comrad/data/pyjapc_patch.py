@@ -9,14 +9,14 @@ from qtpy.QtCore import QObject, Signal
 from pyjapc import PyJapc
 from comrad.rbac import CRBACLoginStatus, CRBACStartupLoginPolicy
 from comrad.app.application import CApplication
-from comrad.data.jpype import get_user_message, meaning_from_jpype
+from comrad.data.jpype_utils import get_user_message, meaning_from_jpype
 from comrad.data.japc_enum import CEnumValue
 
 
 logger = logging.getLogger('comrad_japc')
 
 
-cern = jpype.JPackage('cern')  # type: ignore
+cern = jpype.JPackage('cern')
 
 
 def _original_fixed_get_param(self,
@@ -154,13 +154,20 @@ class CPyJapc(QObject, PyJapc):
                               password=password,
                               loginDialog=loginDialog,
                               readEnv=readEnv)
-        except jpype.JException(cern.rbac.client.authentication.AuthenticationException) as e:  # type: ignore
-            if on_exception is not None:
-                message = get_user_message(e)
-                login_by_location = not username and not password
-                on_exception(message, login_by_location)
-            self._set_online(False)
-            return
+        except jpype.JException as e:
+            # We can't catch concrete exceptions in the 'except' clause directly, because Python
+            # interpreter will complain when used with PAPC, as cern package won't be loaded,
+            # and the exception won't be found. In PAPC scenario, this except block should never be
+            # executed, thus avoiding the error.
+            if isinstance(e, cern.rbac.client.authentication.AuthenticationException):
+                if on_exception is not None:
+                    message = get_user_message(e)
+                    login_by_location = not username and not password
+                    on_exception(message, login_by_location)
+                self._set_online(False)
+                return
+            else:
+                raise e
         self._set_online(True)
 
     def rbacLogout(self):
@@ -190,10 +197,17 @@ class CPyJapc(QObject, PyJapc):
     def _expect_japc_error(self, fn: Callable, *args, display_popup: bool = False, **kwargs):
         try:
             return fn(*args, **kwargs)
-        except (jpype.JException(cern.japc.core.ParameterException),  # type: ignore  # CMW error, e.g. SET not supported
-                jpype.JException(cern.japc.value.ValueConversionException)) as e:  # type: ignore  # JAPC error, e.g. wrong enum value
-            message = get_user_message(e)
-            self.japc_param_error.emit(message, display_popup)
+        except jpype.JException as e:
+            # We can't catch concrete exceptions in the 'except' clause directly, because Python
+            # interpreter will complain when used with PAPC, as cern package won't be loaded,
+            # and the exception won't be found. In PAPC scenario, this except block should never be
+            # executed, thus avoiding the error.
+            if isinstance(e, (cern.japc.core.ParameterException,  # CMW error, e.g. SET not supported
+                              cern.japc.value.ValueConversionException)):  # JAPC error, e.g. wrong enum value
+                message = get_user_message(e)
+                self.japc_param_error.emit(message, display_popup)
+            else:
+                raise e
 
     def _setup_jvm(self, log_level: int):
         """Overrides internal PyJapc hook to set any custom JVM flags"""
@@ -204,7 +218,7 @@ class CPyJapc(QObject, PyJapc):
 
     def _convertSimpleValToPy(self, val) -> Any:
         """Overrides internal PyJapc method to emit different data struct for enums."""
-        typename = val.getValueType().typeString.lower()
+        typename = val.getValueType().toString().lower()
 
         def enum_item_to_obj(enum_item: Any) -> CEnumValue:
             return CEnumValue(code=enum_item.getCode(),
