@@ -8,9 +8,10 @@ import weakref
 import logging
 import json
 from weakref import ReferenceType
+from dataclasses import dataclass
 from typing import List, Dict, Any, Optional, cast, Union, Iterator, Iterable
 from enum import IntEnum, Enum
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 from qtpy.QtWidgets import QWidget
 from qtpy.QtCore import QMutexLocker
 from pydm.widgets.rules import RulesEngine as PyDMRulesEngine
@@ -31,7 +32,21 @@ logger = logging.getLogger(__name__)
 AppliedValue = Union[str, bool, float]
 
 
-class CBaseRule(CJSONSerializable, metaclass=ABCMeta):
+class Validatable(metaclass=ABCMeta):
+
+    @abstractmethod
+    def validate(self):
+        """
+        Ensure that the object does not violate any common sense.
+
+        Raises:
+            TypeError: If any misuse is detected. The error message may contain multiple errors delimited by ';'.
+        """
+        pass
+
+
+# @dataclass(init=False, repr=False, eq=False)
+class CBaseRule(CJSONSerializable, Validatable, metaclass=ABCMeta):
 
     class Channel(Enum):
         """Predefined channel values."""
@@ -73,6 +88,20 @@ class CBaseRule(CJSONSerializable, metaclass=ABCMeta):
         COLOR = 'Color'
         """String value with HEX code of the RGB color to be applied on the widget."""
 
+    name: str
+    """Name of the rule as it's visible in the rules list."""
+
+    prop: str
+    """Name corresponding to the key in :attr:`~CWidgetRulesMixin.RULE_PROPERTIES`."""
+
+    channel: Union[str, Channel]
+    """
+    Channel address. Use :attr:`Channel.DEFAULT` to use the default channel of the widget
+                     or :attr:`Channel.NOT_IMPORTANT` if the rule body is responsible for collecting the channel
+                     information, e.g. in Python expressions. We never set it to None, to not confuse with absent
+                     value because of the bug.
+    """
+
     def __init__(self, name: str, prop: Union['CBaseRule.Property', str], channel: Union[str, Channel]):
         """
         Rule that can be applied to widgets to change their behavior based on incoming value.
@@ -85,17 +114,11 @@ class CBaseRule(CJSONSerializable, metaclass=ABCMeta):
                      information, e.g. in Python expressions. We never set it to None, to not confuse with absent
                      value because of the bug.
         """
-        self._name = name
-        self._prop: str = prop.value if isinstance(prop, CBaseRule.Property) else prop
+        self.name = name
+        self.prop = prop.value if isinstance(prop, CBaseRule.Property) else prop
         self.channel = channel
 
     def validate(self):
-        """
-        Ensure that rule does not violate any common sense.
-
-        Raises:
-            TypeError: If any of the rule properties do not make sense.
-        """
         errors: List[str] = []
 
         if not self.name:
@@ -107,30 +130,6 @@ class CBaseRule(CJSONSerializable, metaclass=ABCMeta):
         if errors:
             raise TypeError(';'.join(errors))
 
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @name.setter
-    def name(self, new_val: str):
-        self._name = new_val
-
-    @property
-    def prop(self) -> str:
-        return self._prop
-
-    @prop.setter
-    def prop(self, new_val: str):
-        self._prop = new_val
-
-    @property
-    def type(self) -> 'CBaseRule.Type':
-        return self._type
-
-    @type.setter
-    def type(self, new_val: 'CBaseRule.Type'):
-        self._type = new_val
-
 
 class CSingleChannelRule(CBaseRule, metaclass=ABCMeta):
     """
@@ -139,6 +138,7 @@ class CSingleChannelRule(CBaseRule, metaclass=ABCMeta):
     pass
 
 
+@dataclass(init=False, repr=False, eq=False)
 class CEnumRule(CSingleChannelRule):
 
     class EnumField(IntEnum):
@@ -153,48 +153,18 @@ class CEnumRule(CSingleChannelRule):
         MEANING = 2
         """The comparison will be performed on CEnumValue.meaning"""
 
-    class EnumConfig(CJSONSerializable):
+    @dataclass(repr=False)
+    class EnumConfig(CJSONSerializable, Validatable):
+        """Describes a single entry in the Enum rules."""
 
-        def __init__(self, field: 'CEnumRule.EnumField', field_val: Union[int, str, CEnumValue.Meaning], prop_val: Optional[AppliedValue] = None):
-            """
-            Describes a single entry in the Enum rules.
+        field: 'CEnumRule.EnumField'
+        """Indicates which PyJapc enum field will be compared for this rule."""
 
-            Args:
-                field: Indicate which PyJapc CEnumValue field will be compared for this rule.
-                field_val: Value to compare against, the type should be compliant with the chosen field.
-                prop_val: Value to be applied to the property if received value and rule value matched.
+        field_val: Union[int, str, CEnumValue.Meaning]
+        """Value to compare against, the type should be compliant with the chosen field."""
 
-            """
-            self._field = field
-            self._field_val = field_val
-            self._prop_val = prop_val
-
-        @property
-        def field(self) -> 'CEnumRule.EnumField':
-            """Indicate which PyJapc enum field will be compared for this rule."""
-            return self._field
-
-        @field.setter
-        def field(self, new_val: 'CEnumRule.EnumField'):
-            self._field = new_val
-
-        @property
-        def field_val(self) -> Union[int, str, CEnumValue.Meaning]:
-            """Value to compare against, the type should be compliant with the chosen enum_rule."""
-            return self._field_val
-
-        @field_val.setter
-        def field_val(self, new_val: Union[int, str, CEnumValue.Meaning]):
-            self._field_val = new_val
-
-        @property
-        def prop_val(self) -> Optional[AppliedValue]:
-            """Value to be applied to the property if received value and rule value matched."""
-            return self._prop_val
-
-        @prop_val.setter
-        def prop_val(self, new_val: AppliedValue):
-            self._prop_val = new_val
+        prop_val: AppliedValue
+        """Value to be applied to the property if received value and rule value match."""
 
         @classmethod
         def from_json(cls, contents):
@@ -226,9 +196,9 @@ class CEnumRule(CSingleChannelRule):
 
         def to_json(self):
             return {
-                'field': self._field,
-                'fv': self._field_val,
-                'value': self._prop_val,
+                'field': self.field,
+                'fv': self.field_val,
+                'value': self.prop_val,
             }
 
         def validate(self):
@@ -243,6 +213,12 @@ class CEnumRule(CSingleChannelRule):
 
         def __repr__(self) -> str:
             return f'<{type(self).__name__} {self.field}=={self.field_val} => {self.prop_val}>'
+
+    config: List['CEnumRule.EnumConfig']
+    """
+    A list of :class:`~CEnumRule.Enum` objects that define which value should be set to the property
+    when an incoming enum from the channel is equal to the compared value.
+    """
 
     def __init__(self,
                  name: str,
@@ -337,7 +313,11 @@ class CEnumRule(CSingleChannelRule):
         return f'<{type(self).__name__} "{self.name}" [{self.prop}]>\n' + '\n'.join(map(repr, self.config))
 
 
+@dataclass(init=False, eq=False)
 class CExpressionRule(CBaseRule):
+
+    expr: str
+    """Python expression."""
 
     def __init__(self,
                  name: str,
@@ -367,49 +347,21 @@ class CExpressionRule(CBaseRule):
         raise NotImplementedError()
 
 
+@dataclass(init=False, repr=False, eq=False)
 class CNumRangeRule(CSingleChannelRule):
 
-    class Range(CJSONSerializable):
+    @dataclass(repr=False)
+    class Range(CJSONSerializable, Validatable):
+        """Describes a single entry in the numeric ranges rules."""
 
-        def __init__(self, min_val: float, max_val: float, prop_val: Optional[AppliedValue] = None):
-            """
-            Describes a single entry in the numeric ranges rules.
+        min_val: float
+        """Lower boundary of the range (included in the range)."""
 
-            Args:
-                min_val: Lower boundary of the range (included in the range).
-                max_val: Upper boundary of the range (excluded from the range).
-                prop_val: Value to be applied to the property in this range.
-            """
-            self._min_val = min_val
-            self._max_val = max_val
-            self._prop_val = prop_val
+        max_val: float
+        """Upper boundary of the range (excluded from the range)."""
 
-        @property
-        def min_val(self) -> float:
-            """Lower boundary of the range (included in the range)."""
-            return self._min_val
-
-        @min_val.setter
-        def min_val(self, new_val: float):
-            self._min_val = new_val
-
-        @property
-        def max_val(self) -> float:
-            """Upper boundary of the range (excluded from the range)."""
-            return self._max_val
-
-        @max_val.setter
-        def max_val(self, new_val: float):
-            self._max_val = new_val
-
-        @property
-        def prop_val(self) -> Optional[AppliedValue]:
-            """Value to be applied to the property in this range."""
-            return self._prop_val
-
-        @prop_val.setter
-        def prop_val(self, new_val: AppliedValue):
-            self._prop_val = new_val
+        prop_val: AppliedValue
+        """Value to be applied to the property in this range."""
 
         @classmethod
         def from_json(cls, contents):
@@ -431,23 +383,23 @@ class CNumRangeRule(CSingleChannelRule):
 
         def to_json(self):
             return {
-                'min': self._min_val,
-                'max': self._max_val,
-                'value': self._prop_val,
+                'min': self.min_val,
+                'max': self.max_val,
+                'value': self.prop_val,
             }
 
         def validate(self):
-            """
-            Ensure that the range does not violate any common sense.
-
-            Raises:
-                TypeError: If any of the range properties do not make sense.
-            """
             if self.min_val is not None and self.max_val is not None and self.min_val > self.max_val:
                 raise TypeError('Some ranges have inverted boundaries (max < min)')
 
         def __repr__(self) -> str:
             return f'<{type(self).__name__} {self.min_val}:{self.max_val} => {self.prop_val}>'
+
+    ranges: List['CNumRangeRule.Range']
+    """
+    A list of numerical ranges that define which value should be set to the property when an incoming
+    number from the channel falls into ranges.
+    """
 
     def __init__(self,
                  name: str,

@@ -422,7 +422,7 @@ class RulesEditor(QDialog):
             try:
                 current_range = range_list[row]
             except IndexError:
-                current_range = CNumRangeRule.Range(min_val=0.0, max_val=1.0)
+                current_range = CNumRangeRule.Range(min_val=0.0, max_val=1.0, prop_val='')
                 range_list.append(current_range)
 
         if type_name == 'bool':
@@ -480,7 +480,7 @@ class RulesEditor(QDialog):
             widget.textChanged.connect(functools.partial(self._edit_value_changed, float))
             return widget
         elif prop_name == 'Color':
-            if current_range.prop_val is None:
+            if not current_range.prop_val:
                 value = '#000000'
                 current_range.prop_val = value
             else:
