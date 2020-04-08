@@ -1,179 +1,40 @@
 import logging
-import pyjapc
 import numpy as np
-import jpype
 import functools
 from pydm.data_plugins import is_read_only
 from pydm.data_plugins.plugin import PyDMPlugin, PyDMConnection
 from qtpy.QtCore import Qt, QObject, Slot, Signal, QVariant
-from typing import Any, Optional, cast, Callable, List, Dict
-from comrad.rbac import CRBACLoginStatus, CRBACStartupLoginPolicy
-from comrad.app.application import CApplication
-from comrad.data.jpype import get_user_message, meaning_from_jpype
+from typing import Any, Optional, Callable, List, Dict
 from comrad.data.channel import CChannel, CChannelData
-from comrad.data.japc_enum import CEnumValue
 from comrad.data.addr import ControlEndpointAddress
+from comrad.data.pyjapc_patch import CPyJapc
 
 
-logger = logging.getLogger('comrad_japc')
+logger = logging.getLogger(__name__)
 
 
-cern = jpype.JPackage('cern')  # type: ignore
+_japc: Optional[CPyJapc] = None
 
 
-class _JapcService(QObject, pyjapc.PyJapc):
-    """Singleton instance to avoid RBAC login for multiple Japc connections."""
-
-    japc_status_changed = Signal(bool)
-    japc_login_error = Signal(tuple)
-    japc_param_error = Signal(str, bool)
-
-    def __init__(self):
-        app = cast(CApplication, CApplication.instance())
-        if not app.use_inca:
-            logger.debug(f'User has opted-out from using InCA')
-
-        # This has to be set before super, as it will be accessed in JVM setup hook
-        self._app = app
-
-        # We don't need to call separate initializers here, because QObject will call PyJapc initializer by default.
-        # It is also reflected in the examples of the PyQt5 documentation:
-        # https://www.riverbankcomputing.com/static/Docs/PyQt5/multiinheritance.html
-
-        # Selector is important to set, otherwise the default PyJapc selector tends to be LHC.USER.ALL
-        # which fails to read data from private virtual devices.
-        # When passing selector, it is important to set incaAcceleratorName, because default 'auto' name
-        # will try to infer the accelerator from the selector and will fail, if we are passing None
-        QObject.__init__(self)
-        pyjapc.PyJapc.__init__(self,
-                               selector='',
-                               incaAcceleratorName='' if app.use_inca else None)
-        self._logged_in: bool = False
-        self._use_inca = app.use_inca
-        self._app.rbac.rbac_logout_user.connect(self.rbacLogout)
-        self._app.rbac.rbac_login_user.connect(self.login_by_credentials)
-        self._app.rbac.rbac_login_by_location.connect(self.login_by_location)
-        self.japc_login_error.connect(self._app.rbac.rbac_on_error)
-        self.japc_param_error.connect(self._app.on_control_error)
-        logger.debug(f'JAPC is set up and ready!')
-
-        if app.rbac.startup_login_policy == CRBACStartupLoginPolicy.LOGIN_BY_LOCATION:
-            logger.debug(f'Attempting login by location on the first connection')
-            try:
-                self.login_by_location()
-            except BaseException:
-                logger.info('Login by location failed. User will have to manually acquire RBAC token.')
-        elif app.rbac.startup_login_policy == CRBACStartupLoginPolicy.LOGIN_BY_CREDENTIALS:
-            # TODO: Implement presenting a dialog here
-            pass
-
-    def login_by_location(self):
-        logger.debug(f'Attempting RBAC login by location')
-        self.rbacLogin(on_exception=self._login_err)
-        if self._logged_in:
-            token = self.rbacGetToken()
-            if token:
-                self._app.rbac.user = token.getUser().getName()  # FIXME: This is Java call. We need to abstract it into PyRBAC
-                self._app.rbac.status = CRBACLoginStatus.LOGGED_IN_BY_LOCATION
-
-    def login_by_credentials(self, username: str, password: str):
-        logger.debug(f'Attempting RBAC login with credentials')
-        self.rbacLogin(username=username, password=password, on_exception=self._login_err)
-        if self._logged_in:
-            token = self.rbacGetToken()
-            if token:
-                self._app.rbac.user = token.getUser().getName()  # FIXME: This is Java call. We need to abstract it into PyRBAC
-                self._app.rbac.status = CRBACLoginStatus.LOGGED_IN_BY_CREDENTIALS
-
-    @property
-    def logged_in(self):
-        return self._logged_in
-
-    def rbacLogin(self,
-                  username: Optional[str] = None,
-                  password: Optional[str] = None,
-                  loginDialog: bool = False,
-                  readEnv: bool = True,
-                  on_exception: Optional[Callable[[str, bool], None]] = None,
-                  ):
-        if self._logged_in:
-            return
-        logger.debug(f'Performing RBAC login')
-        try:
-            super().rbacLogin(username=username,
-                              password=password,
-                              loginDialog=loginDialog,
-                              readEnv=readEnv)
-        except jpype.JException(cern.rbac.client.authentication.AuthenticationException) as e:  # type: ignore
-            if on_exception is not None:
-                message = get_user_message(e)
-                login_by_location = not username and not password
-                on_exception(message, login_by_location)
-            self._set_online(False)
-            return
-        self._set_online(True)
-
-    def rbacLogout(self):
-        if self._logged_in:
-            super().rbacLogout()
-            self._set_online(False)
-
-    def getParam(self, *args, **kwargs):
-        return self._expect_japc_error(super().getParam, *args, **kwargs)
-
-    def setParam(self, *args, **kwargs):
-        if not self._use_inca and 'checkDims' not in kwargs:
-            # Because when InCA is not set up, setter will crash because it will fail to
-            # receive valueDescriptor while trying to verify dimensions.
-            kwargs['checkDims'] = False
-        self._expect_japc_error(super().setParam, *args, display_popup=True, **kwargs)
-
-    def _set_online(self, logged_in: bool):
-        self._logged_in = logged_in
-        self.japc_status_changed.emit(logged_in)
-        if not logged_in:
-            self._app.rbac.status = CRBACLoginStatus.LOGGED_OUT
-
-    def _login_err(self, message: str, login_by_location: bool):
-        self.japc_login_error.emit((message, login_by_location))
-
-    def _expect_japc_error(self, fn: Callable, *args, display_popup: bool = False, **kwargs):
-        try:
-            return fn(*args, **kwargs)
-        except (jpype.JException(cern.japc.core.ParameterException),  # type: ignore  # CMW error, e.g. SET not supported
-                jpype.JException(cern.japc.value.ValueConversionException)) as e:  # type: ignore  # JAPC error, e.g. wrong enum value
-            message = get_user_message(e)
-            self.japc_param_error.emit(message, display_popup)
-
-    def _setup_jvm(self, log_level: int):
-        """Overrides internal PyJapc hook to set any custom JVM flags"""
-        super()._setup_jvm(log_level=log_level)
-        for name, val in self._app.jvm_flags.items():
-            logger.debug(f'Setting extra JVM flag: {name}={val}')
-            jpype.java.lang.System.setProperty(name, str(val))  # type: ignore
-
-    def _convertSimpleValToPy(self, val) -> Any:
-        """Overrides internal PyJapc method to emit different data struct for enums."""
-        typename = val.getValueType().typeString.lower()
-
-        def enum_item_to_obj(enum_item: Any) -> CEnumValue:
-            return CEnumValue(code=enum_item.getCode(),
-                              label=enum_item.getString(),
-                              meaning=meaning_from_jpype(enum_item.getStandardMeaning()),
-                              settable=enum_item.isSettable())
-
-        if typename == 'enum':
-            return enum_item_to_obj(val.getEnumItem())
-        elif typename == 'enumset':
-            return [enum_item_to_obj(v) for v in val.value]
-        else:
-            return super()._convertSimpleValToPy(val)
+SPECIAL_FIELDS = {
+    'acqStamp': 'acqStamp',
+    'setStamp': 'setStamp',
+    'cycleStamp': 'cycleStamp',
+    'cycleName': 'selector',
+    # This is not supported for now,
+    # as this bitmask is separated into several booleans by JAPC.
+    # It is not advised to query this field and I should report anyone
+    # Who decides to do so.
+    # 'updateFlags': ???
+}
+"""
+Special fields defined by FESA which are meta-information and will be packaged in the header of RDA or JAPC message.
+Thus they should be accessed in the header and not main data block. Unfortunately, there's difference between FESA
+names and JAPC, thus we need a map of what to request vs what to retrieve.
+"""
 
 
-_japc: Optional[_JapcService] = None
-
-
-def get_japc() -> _JapcService:
+def get_japc() -> CPyJapc:
     """
     Method to retrieve a singleton of the JAPC service instance.
 
@@ -185,28 +46,11 @@ def get_japc() -> _JapcService:
 
     global _japc
     if _japc is None:
-        _japc = _JapcService()
+        _japc = CPyJapc()
     return _japc
 
 
 class CJapcConnection(PyDMConnection):
-
-    SPECIAL_FIELDS = {
-        'acqStamp': 'acqStamp',
-        'setStamp': 'setStamp',
-        'cycleStamp': 'cycleStamp',
-        'cycleName': 'selector',
-        # This is not supported for now,
-        # as this bitmask is separated into several booleans by JAPC.
-        # It is not advised to query this field and I should report anyone
-        # Who decides to do so.
-        # 'updateFlags': ???
-    }
-    """
-    Special fields defined by FESA which are meta-information and will be packaged in the header of RDA or JAPC message.
-    Thus they should be accessed in the header and not main data block. Unfortunately, there's difference between FESA
-    names and JAPC, thus we need a map of what to request vs what to retrieve.
-    """
 
     new_value_signal = Signal([CChannelData],  # this overload will be default (when emit is used without key)
                               # Needed here to not fail .connect() in PyDMConnection super methods
@@ -260,7 +104,7 @@ class CJapcConnection(PyDMConnection):
             return
 
         self._meta_field = (japc_address.field
-                            if japc_address.field and japc_address.field in self.SPECIAL_FIELDS
+                            if japc_address.field and japc_address.field in SPECIAL_FIELDS
                             else None)
 
         if self._meta_field:
@@ -462,7 +306,7 @@ class CJapcConnection(PyDMConnection):
         if self._meta_field is not None:
             # We are looking inside header instead of the value, because user has requested
             # data from a "special" field, which is a meta-field that is placed in header on the transport level
-            reply_key = self.SPECIAL_FIELDS[self._meta_field]
+            reply_key = SPECIAL_FIELDS[self._meta_field]
             try:
                 value = headerInfo[reply_key]
             except KeyError:
@@ -471,7 +315,7 @@ class CJapcConnection(PyDMConnection):
         elif self._is_property_level and isinstance(value, dict):
             # To not put logic of resolving "special" fields into widgets that work with the whole property,
             # we populate meta fields into the property, like if it was data
-            for request_key, reply_key in self.SPECIAL_FIELDS.items():
+            for request_key, reply_key in SPECIAL_FIELDS.items():
                 try:
                     meta_val = headerInfo[reply_key]
                 except KeyError:

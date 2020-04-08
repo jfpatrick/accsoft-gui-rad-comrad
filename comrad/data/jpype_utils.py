@@ -1,31 +1,19 @@
-from typing import Any
+from typing import Iterator
 from comrad import CEnumValue
+from jpype.types import JException
 
 
-def get_java_exc(jpype_exc: Any) -> Any:
-    """
-    Extracts instance of the Java exception from the wrapper.
-
-    Args:
-        jpype_exc: jPype exception wrapper produced with jpype.JException(cern.java.smth.Exception).
-
-    Returns:
-        Instance of the Java exception
-    """
-    return jpype_exc.__javaobject__
-
-
-def _iter_causes(jpype_exc: Any) -> Any:
+def _iter_causes(jpype_exc: JException) -> Iterator[JException]:
     """
     Iterates through the hierarchy of exceptions in the nested exception.
 
     Args:
-        jpype_exc: jPype exception wrapper produced with jpype.JException(cern.java.smth.Exception).
+        jpype_exc: jPype exception, e.g. cern.java.smth.Exception.
 
     Returns:
         Instance of each Java exception.
     """
-    throwable = get_java_exc(jpype_exc)
+    throwable = jpype_exc
     yield throwable
     while True:
         cause = throwable.getCause()
@@ -35,30 +23,30 @@ def _iter_causes(jpype_exc: Any) -> Any:
         yield throwable
 
 
-def get_root_cause(jpype_exc: Any) -> Any:
+def get_root_cause(jpype_exc: JException) -> JException:
     """
     Extracts instance of the Java exception that caused the problem.
 
     Args:
-        jpype_exc: jPype exception wrapper produced with jpype.JException(cern.java.smth.Exception).
+        jpype_exc: jPype exception, e.g. cern.java.smth.Exception
 
     Returns:
-        Instance of the Java exception
+        Instance of the root Java exception
     """
     *_, last = _iter_causes(jpype_exc)
     return last
 
 
-def get_user_message(jpype_exc: Any) -> str:
+def get_user_message(jpype_exc: JException) -> str:
     """
-    Extracts the last part of the Java exception from the wrapper.
+    Extracts the last part of the Java exception message.
 
-    It seems that Java does not particularly nest the exceptions so that particular message can be extracted.
-    Instead, a composite string is returned without any API to break it into layers. For now, we assume that
-    the last component in the message is the user-facing (least technical) part of it.
+    It seems that Java (CERN CMW libraries) do not particularly nest the exceptions so that particular
+    message can be extracted. Instead, a composite string is returned without any API to break it into layers.
+    For now, we assume that the last component in the message is the user-facing (least technical) part of it.
 
     Args:
-        jpype_exc: jPype exception wrapper produced with jpype.JException(cern.java.smth.Exception).
+        jpype_exc: jPype exception, e.g. cern.java.smth.Exception
 
     Returns:
         String extracted from the message.
@@ -80,7 +68,7 @@ def meaning_from_jpype(orig: object) -> CEnumValue.Meaning:
         ValueError if value is unknown
     """
     import jpype
-    cern = jpype.JPackage('cern')  # type: ignore
+    cern = jpype.JPackage('cern')
     if orig == cern.japc.value.SimpleValueStandardMeaning.ON:
         return CEnumValue.Meaning.ON
     elif orig == cern.japc.value.SimpleValueStandardMeaning.OFF:
