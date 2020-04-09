@@ -337,137 +337,7 @@
          <property name="currentIndex">
           <number>0</number>
          </property>
-         <widget class="QWidget" name="page_ranges">
-          <layout class="QVBoxLayout" name="verticalLayout_6">
-           <property name="leftMargin">
-            <number>0</number>
-           </property>
-           <property name="topMargin">
-            <number>0</number>
-           </property>
-           <property name="rightMargin">
-            <number>0</number>
-           </property>
-           <property name="bottomMargin">
-            <number>0</number>
-           </property>
-           <item>
-            <widget class="QTabWidget" name="range_tabs">
-             <property name="currentIndex">
-              <number>0</number>
-             </property>
-             <widget class="QWidget" name="declarative_ranges_tab">
-              <attribute name="title">
-               <string>Declarative view</string>
-              </attribute>
-              <layout class="QVBoxLayout" name="verticalLayout_5">
-               <item>
-                <layout class="QHBoxLayout" name="horizontalLayout_3">
-                 <item>
-                  <widget class="QLabel" name="label_6">
-                   <property name="text">
-                    <string>States</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <spacer name="horizontalSpacer_2">
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>40</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="range_add_btn">
-                   <property name="text">
-                    <string/>
-                   </property>
-                   <property name="icon">
-                    <iconset theme="list-add">
-                     <normaloff>../../../../.designer/backup</normaloff>../../../../.designer/backup</iconset>
-                   </property>
-                   <property name="autoDefault">
-                    <bool>false</bool>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="range_del_btn">
-                   <property name="text">
-                    <string/>
-                   </property>
-                   <property name="icon">
-                    <iconset theme="list-remove">
-                     <normaloff>../../../../.designer/backup</normaloff>../../../../.designer/backup</iconset>
-                   </property>
-                   <property name="autoDefault">
-                    <bool>false</bool>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </item>
-               <item>
-                <widget class="QTableWidget" name="range_table">
-                 <property name="minimumSize">
-                  <size>
-                   <width>350</width>
-                   <height>0</height>
-                  </size>
-                 </property>
-                 <property name="styleSheet">
-                  <string notr="true">padding: 0px</string>
-                 </property>
-                 <property name="selectionBehavior">
-                  <enum>QAbstractItemView::SelectRows</enum>
-                 </property>
-                 <property name="cornerButtonEnabled">
-                  <bool>false</bool>
-                 </property>
-                 <property name="columnCount">
-                  <number>2</number>
-                 </property>
-                 <column>
-                  <property name="text">
-                   <string>Property value</string>
-                  </property>
-                 </column>
-                 <column>
-                  <property name="text">
-                   <string>Channel value range</string>
-                  </property>
-                 </column>
-                </widget>
-               </item>
-              </layout>
-             </widget>
-             <widget class="QWidget" name="source_ranges_tab">
-              <attribute name="title">
-               <string>Source view</string>
-              </attribute>
-              <layout class="QHBoxLayout" name="horizontalLayout_4">
-               <item>
-                <widget class="QsciScintilla" name="source_ranges_editor">
-                 <property name="toolTip">
-                  <string/>
-                 </property>
-                 <property name="whatsThis">
-                  <string/>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </widget>
-            </widget>
-           </item>
-          </layout>
-         </widget>
+         <widget class="RangeDetailsView" name="page_ranges"/>
          <widget class="QWidget" name="page_python">
           <layout class="QVBoxLayout" name="verticalLayout_7">
            <item>
@@ -482,6 +352,7 @@
            </item>
           </layout>
          </widget>
+         <widget class="EnumDetailsView" name="page_enum"/>
         </widget>
        </item>
       </layout>
@@ -502,9 +373,16 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>QsciScintilla</class>
-   <extends>QFrame</extends>
-   <header>Qsci/qsciscintilla.h</header>
+   <class>RangeDetailsView</class>
+   <extends>QWidget</extends>
+   <header>_comrad_designer/rules_editor.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>EnumDetailsView</class>
+   <extends>QWidget</extends>
+   <header>_comrad_designer/rules_editor.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <tabstops>
@@ -517,8 +395,6 @@
   <tabstop>custom_channel_edit</tabstop>
   <tabstop>custom_channel_search_btn</tabstop>
   <tabstop>eval_type_combobox</tabstop>
-  <tabstop>range_add_btn</tabstop>
-  <tabstop>range_del_btn</tabstop>
  </tabstops>
  <resources/>
  <connections>
