@@ -55,7 +55,6 @@ requirements = {
     ],
     'doc': [
         'Sphinx>=2.3.1,<3',
-        'recommonmark>=0.6.0,<0.7',
         'sphinx-rtd-theme>=0.4.3,<0.5',
         'sphinx-autodoc-typehints>=1.10.3,<2',
         'sphinxcontrib-napoleon2>=1.0,<2',
