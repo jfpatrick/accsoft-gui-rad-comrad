@@ -99,8 +99,8 @@ class CValueAggregator(QWidget, CChannelDataProcessingMixin, CInitializedMixin, 
             self._headers.clear()
             self._obsolete_values = None
         else:
-            self._values = dict.fromkeys(seq=self._channel_ids, value=None)
-            self._headers = dict.fromkeys(seq=self._channel_ids, value=None)
+            self._values = dict.fromkeys(seq=self._channel_ids, value=None)  # type: ignore  # https://github.com/python/mypy/issues/2254
+            self._headers = dict.fromkeys(seq=self._channel_ids, value=None)  # type: ignore  # https://github.com/python/mypy/issues/2254
             self._obsolete_values = set(self._channel_ids)
 
         # Handle the channel reconnection by the base class
