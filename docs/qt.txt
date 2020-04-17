@@ -3,11 +3,11 @@
 # Version: 5
 # The remainder of this file is compressed using zlib.
 PyQt5.QtWidgets.QWidget py:class 1 qwidget.html QWidget
-PyQt5.QtWidgets.QWidget.toolTip py:attr 1 qwidget.html#toolTip-prop QWidget.toolTip
 qtpy.QtWidgets.QWidget py:class 1 qwidget.html QWidget
-qtpy.QtWidgets.QWidget.toolTip py:attr 1 qwidget.html#toolTip-prop QWidget.toolTip
 QWidget py:class 1 qwidget.html -
-QWidget.toolTip py:attr 1 qwidget.html#toolTip-prop -
+PyQt5.QtWidgets.QWidget.toolTip py:attribute 1 qwidget.html#toolTip-prop QWidget.toolTip
+qtpy.QtWidgets.QWidget.toolTip py:attribute 1 qwidget.html#toolTip-prop QWidget.toolTip
+QWidget.toolTip py:attribute 1 qwidget.html#toolTip-prop -
 PyQt5.QtWidgets.QCheckBox py:class 1 qcheckbox.html QCheckBox
 qtpy.QtWidgets.QCheckBox py:class 1 qcheckbox.html QCheckBox
 QCheckBox py:class 1 qcheckbox.html -
@@ -32,3 +32,21 @@ QFrame py:class 1 qframe.html -
 PyQt5.QtWidgets.QLabel py:class 1 qlabel.html QLabel
 qtpy.QtWidgets.QLabel py:class 1 qlabel.html QLabel
 QLabel py:class 1 qlabel.html -
+PyQt5.QtWidgets.QGraphicsView py:class 1 qgraphicsview.html QGraphicsView
+qtpy.QtWidgets.QGraphicsView py:class 1 qgraphicsview.html QGraphicsView
+QGraphicsView py:class 1 qgraphicsview.html -
+PyQt5.QtWidgets.QWidget.styleSheet py:method 1 qwidget.html#styleSheet-prop QWidget.styleSheet
+qtpy.QtWidgets.QWidget.styleSheet py:method 1 qwidget.html#styleSheet-prop QWidget.styleSheet
+QWidget.styleSheet py:method 1 qwidget.html#styleSheet-prop -
+PyQt5.QtWidgets.QWidget.styleSheet py:attribute 1 qwidget.html#styleSheet-prop QWidget.styleSheet
+qtpy.QtWidgets.QWidget.styleSheet py:attribute 1 qwidget.html#styleSheet-prop QWidget.styleSheet
+QWidget.styleSheet py:attribute 1 qwidget.html#styleSheet-prop -
+PyQt5.QtWidgets.QWidget.setStyleSheet py:method 1 qwidget.html#styleSheet-prop QWidget.setStyleSheet
+qtpy.QtWidgets.QWidget.setStyleSheet py:method 1 qwidget.html#styleSheet-prop QWidget.setStyleSheet
+QWidget.setStyleSheet py:method 1 qwidget.html#styleSheet-prop -
+PyQt5.QtWidgets.QWidget.setStyle py:method 1 qwidget.html#setStyle QWidget.setStyle
+qtpy.QtWidgets.QWidget.setStyle py:method 1 qwidget.html#setStyle QWidget.setStyle
+QWidget.setStyle py:method 1 qwidget.html#setStyle -
+PyQt5.QtWidgets.QLabel.setNum py:method 1 qlabel.html#setNum QLabel.setNum
+qtpy.QtWidgets.QLabel.setNum py:method 1 qlabel.html#setNum QLabel.setNum
+QLabel.setNum py:method 1 qlabel.html#setNum -

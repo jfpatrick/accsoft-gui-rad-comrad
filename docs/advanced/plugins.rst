@@ -1,0 +1,4 @@
+Window plugins
+==============
+
+.. todo:: TBD
