@@ -39,7 +39,7 @@
       <string>[{&quot;field&quot;: &quot;Demo&quot;, &quot;type&quot;: 4, &quot;rw&quot;: true, &quot;label&quot;: &quot;Value&quot;}]</string>
      </property>
      <property name="buttons" stdset="0">
-      <enum>PropertyEdit::Get</enum>
+      <enum>PropertyEdit::GetButton</enum>
      </property>
      <property name="channel" stdset="0">
       <string notr="true">DemoDevice/Settings</string>
@@ -58,7 +58,7 @@
       <string>[{&quot;field&quot;: &quot;Demo&quot;, &quot;type&quot;: 4, &quot;rw&quot;: true, &quot;label&quot;: &quot;Value&quot;}]</string>
      </property>
      <property name="buttons" stdset="0">
-      <enum>PropertyEdit::Set</enum>
+      <enum>PropertyEdit::SetButton</enum>
      </property>
      <property name="channel" stdset="0">
       <string notr="true">DemoDevice/Settings</string>
