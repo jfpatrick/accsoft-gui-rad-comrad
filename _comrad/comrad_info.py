@@ -3,7 +3,7 @@ from ._version import get_versions as get_comrad_versions
 
 
 COMRAD_DESCRIPTION = \
-    f"""  ComRAD (CO Multi-purpose Rapid Application Development environment)
+    """  ComRAD (CO Multi-purpose Rapid Application Development environment)
 
   ComRAD framework seeks to streamline development of operational
   applications for operators of CERN accelerators and machine design

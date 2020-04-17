@@ -229,7 +229,7 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
         elif system == 'Darwin':
             subprocess.call(('open', filename))
         else:
-            logger.warning(f"You are using unsupported operating system. Can't open the file...")
+            logger.warning("You are using unsupported operating system. Can't open the file...")
 
     def _load_toolbar_plugins(self,
                               cmd_line_paths: Optional[str],
@@ -346,7 +346,7 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
                 stayed_empty = False
 
             if stayed_empty:
-                logger.info(f'No items are placed in nav bar, it will be hidden by default')
+                logger.info('No items are placed in nav bar, it will be hidden by default')
                 self.toggle_nav_bar(False)  # FIXME: There is a bug in PyDMMainWindow. When navbar is hidden by default, its menu action is marked as checked
         else:
             self.ui.navbar.addSeparator()

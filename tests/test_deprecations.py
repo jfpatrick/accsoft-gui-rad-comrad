@@ -82,8 +82,8 @@ def test_prop_deprecation_no_mixin(qtbot, superclasses):
     (False, False, False),
 ])
 @pytest.mark.parametrize('obj_name,expected_warning', [
-    ('objName', f'test_prop property is disabled in ComRAD (found in objName)'),
-    (None, f'test_prop property is disabled in ComRAD (found in unidentified MyWidget)'),
+    ('objName', 'test_prop property is disabled in ComRAD (found in objName)'),
+    (None, 'test_prop property is disabled in ComRAD (found in unidentified MyWidget)'),
 ])
 def test_prop_deprecation_displays_warning(qtbot, caplog: LogCaptureFixture, obj_name, in_designer, initialized, should_issue, expected_warning):
     _ = qtbot

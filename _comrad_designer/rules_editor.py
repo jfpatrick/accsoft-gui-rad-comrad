@@ -163,7 +163,7 @@ class RulesEditor(QDialog):
         if len(items) > 1:
             reply = QMessageBox().question(self,
                                            'Message',
-                                           f'Delete the selected ranges?',
+                                           'Delete the selected ranges?',
                                            QMessageBox.Yes,
                                            QMessageBox.No)
 

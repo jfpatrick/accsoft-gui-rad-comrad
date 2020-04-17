@@ -81,7 +81,7 @@ class CPyJapc(QObject, PyJapc):
     def __init__(self):
         app = cast(CApplication, CApplication.instance())
         if not app.use_inca:
-            logger.debug(f'User has opted-out from using InCA')
+            logger.debug('User has opted-out from using InCA')
 
         # This has to be set before super, as it will be accessed in JVM setup hook
         self._app = app
@@ -105,10 +105,10 @@ class CPyJapc(QObject, PyJapc):
         self._app.rbac.rbac_login_by_location.connect(self.login_by_location)
         self.japc_login_error.connect(self._app.rbac.rbac_on_error)
         self.japc_param_error.connect(self._app.on_control_error)
-        logger.debug(f'JAPC is set up and ready!')
+        logger.debug('JAPC is set up and ready!')
 
         if app.rbac.startup_login_policy == CRBACStartupLoginPolicy.LOGIN_BY_LOCATION:
-            logger.debug(f'Attempting login by location on the first connection')
+            logger.debug('Attempting login by location on the first connection')
             try:
                 self.login_by_location()
             except BaseException:
@@ -118,7 +118,7 @@ class CPyJapc(QObject, PyJapc):
             pass
 
     def login_by_location(self):
-        logger.debug(f'Attempting RBAC login by location')
+        logger.debug('Attempting RBAC login by location')
         self.rbacLogin(on_exception=self._login_err)
         if self._logged_in:
             token = self.rbacGetToken()
@@ -127,7 +127,7 @@ class CPyJapc(QObject, PyJapc):
                 self._app.rbac.status = CRBACLoginStatus.LOGGED_IN_BY_LOCATION
 
     def login_by_credentials(self, username: str, password: str):
-        logger.debug(f'Attempting RBAC login with credentials')
+        logger.debug('Attempting RBAC login with credentials')
         self.rbacLogin(username=username, password=password, on_exception=self._login_err)
         if self._logged_in:
             token = self.rbacGetToken()
@@ -148,7 +148,7 @@ class CPyJapc(QObject, PyJapc):
                   ):
         if self._logged_in:
             return
-        logger.debug(f'Performing RBAC login')
+        logger.debug('Performing RBAC login')
         try:
             super().rbacLogin(username=username,
                               password=password,

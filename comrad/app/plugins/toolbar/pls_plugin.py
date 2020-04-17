@@ -78,7 +78,7 @@ class PLSSelectorDialog(QDialog):
         self._data = list(self.ccda.SelectorDomain.search())
 
         if not self._data:
-            logger.debug(f'Empty data received from CCDA. Cannot populate PLS dialog.')
+            logger.debug('Empty data received from CCDA. Cannot populate PLS dialog.')
             return
 
         cast(QStringListModel, self.machine_combo.model()).setStringList([x.name for x in self._data])

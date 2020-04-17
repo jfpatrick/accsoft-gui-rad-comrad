@@ -132,7 +132,7 @@ def test_checkbox_toggles_all_comboboxes(CCDA, qtbot):
     assert dialog.line_combo.model().stringList() == ['ALL']
 
 
-@pytest.mark.parametrize(f'window_selector,expected_machine,expected_group,expected_line,expected_enabled', [
+@pytest.mark.parametrize('window_selector,expected_machine,expected_group,expected_line,expected_enabled', [
     (None, 'TEST', 'USER', 'ALL', False),
     ('', 'TEST', 'USER', 'ALL', False),
     ('TEST.USER.ALL', 'TEST', 'USER', 'ALL', True),
@@ -162,7 +162,7 @@ def test_preselects_comboboxes_based_on_window_context(CCDA, app, qtbot, window_
     assert dialog.line_combo.currentText() == expected_line
 
 
-@pytest.mark.parametrize(f'machine,group,line,use_selector,expected_selector', [
+@pytest.mark.parametrize('machine,group,line,use_selector,expected_selector', [
     ('TEST', 'USER', 'ALL', False, None),
     ('TEST', 'USER2', 'ALL', False, None),
     ('TEST', 'USER', 'ALL', True, 'TEST.USER.ALL'),
@@ -191,7 +191,7 @@ def test_plugin_saves_context(CCDA, app, qtbot, expected_selector, machine, grou
     assert app.return_value.main_window.window_context.selector == expected_selector
 
 
-@pytest.mark.parametrize(f'tgm_var,window_selector,expected_machine,expected_group,expected_line,expected_enabled', [
+@pytest.mark.parametrize('tgm_var,window_selector,expected_machine,expected_group,expected_line,expected_enabled', [
     (None, None, 'TEST', 'USER', 'ALL', False),
     (None, '', 'TEST', 'USER', 'ALL', False),
     (None, 'TEST.USER2.ALL', 'TEST', 'USER2', 'ALL', True),

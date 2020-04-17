@@ -296,7 +296,7 @@ class CWidgetRulesMixin:
         try:
             RulesDispatcher().register(widget=self, rules=new_rules)
         except CChannelError:
-            logger.debug(f'Rules setting failed. We do not have the channel yet, will have to be repeated')
+            logger.debug('Rules setting failed. We do not have the channel yet, will have to be repeated')
             # Set internal data structure without activating property setter behavior
             cast(PyDMWidget, self)._rules = new_rules
 

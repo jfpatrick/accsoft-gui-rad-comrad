@@ -140,7 +140,7 @@ class CJapcConnection(PyDMConnection):
             channel: A new listener.
         """
         if not self._pyjapc_param_name:
-            logger.error(f'Connection is not initialized. Will not add a listener.')
+            logger.error('Connection is not initialized. Will not add a listener.')
             return
 
         logger.debug(f'Adding a listener for {self}')

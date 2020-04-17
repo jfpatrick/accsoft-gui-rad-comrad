@@ -95,7 +95,7 @@ class CBaseRule(CJSONSerializable, metaclass=ABCMeta):
         errors: List[str] = []
 
         if not self.name:
-            errors.append(f'Not every rule has a name')
+            errors.append('Not every rule has a name')
         if not self.prop:
             errors.append('{rule_name} is missing property definition'.format(
                 rule_name=f'Rule "{self.name}"' if self.name else 'Some rule',
@@ -368,7 +368,7 @@ def unpack_rules(contents: str) -> List[CBaseRule]:
             else:
                 raise CJSONDeserializeError(f'Unknown rule type {rule_type} for JSON {json_rule}')
     elif parsed_contents is not None:
-        raise CJSONDeserializeError(f'Rules does not appear to be a list')
+        raise CJSONDeserializeError('Rules does not appear to be a list')
     return res
 
 
@@ -385,13 +385,13 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
         RulesEngine inherits from :class:`PyQt5.QtCore.QThread` and is responsible evaluating the rules
         for all the widgets in the application.
         """
-        logger.debug(f'Instantiating custom rules engine')
+        logger.debug('Instantiating custom rules engine')
         self._overridden_members['__init__'](self)
 
     def register(self, widget: QWidget, rules: List[CBaseRule]):
 
         if is_qt_designer() and not config.DESIGNER_ONLINE:
-            logger.debug(f"Not registering rules because channels won't be connected in the offline designer")
+            logger.debug("Not registering rules because channels won't be connected in the offline designer")
             return
 
         widget_name = widget.objectName()
@@ -417,14 +417,14 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
                     from comrad.widgets.mixins import CWidgetRulesMixin
                     default_channel = cast(CWidgetRulesMixin, widget_ref()).default_rule_channel()
                     if default_channel is None:
-                        raise CChannelError(f"Default channel on the widget is not defined yet. We won't register it for now...")
+                        raise CChannelError("Default channel on the widget is not defined yet. We won't register it for now...")
                     channels_list = [{
                         'channel': default_channel,
                         'trigger': True,
                     }]
                 elif rule.channel == CBaseRule.Channel.NOT_IMPORTANT:
                     # TODO: This is probably Python expression. Handle it differently from the body
-                    logger.warning(f'Rules without explicit channel cannot be handled yet')
+                    logger.warning('Rules without explicit channel cannot be handled yet')
                     continue
                 else:
                     channels_list = [{
@@ -474,7 +474,7 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
             obj.rule_signal.emit(payload)
 
         if isinstance(rule_obj, CExpressionRule):
-            logger.warning(f'Python expressions are not supported for evaluation yet')
+            logger.warning('Python expressions are not supported for evaluation yet')
             # TODO: Handle Python expression here
             # eval_env = {
             #     'np': np,

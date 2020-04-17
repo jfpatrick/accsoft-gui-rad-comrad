@@ -270,7 +270,7 @@ class ExamplesWindow(QMainWindow):
     def _run_example(self):
         """Opens runtime application for the example."""
         if not self._selected_example_entrypoint or not self._selected_example_path:
-            logger.warning(f"Won't run example. Entrypoint is undefined.")
+            logger.warning("Won't run example. Entrypoint is undefined.")
             return
 
         cmd_args, cmd_env = eg.make_cmd(entrypoint=self._selected_example_entrypoint,

@@ -32,7 +32,7 @@ def test_japc_singleton():
     (None, {'key': 'val', 'key2': 'val2'}, None),
     ('CERN.TEST.SELECTOR', {'key': 'val', 'key2': 'val2'}, None),
 ])
-@pytest.mark.parametrize(f'param_name, expected_meta_field, expected_param_name', [
+@pytest.mark.parametrize('param_name, expected_meta_field, expected_param_name', [
     ('mydevice/myprop#myfield', None, 'mydevice/myprop#myfield'),
     ('mydevice/myprop', None, 'mydevice/myprop'),
     ('mydevice/myprop#cycleName', 'cycleName', 'mydevice/myprop'),
@@ -48,7 +48,7 @@ def test_connection_address(param_name, selector, filter, expected_meta_field, e
     ctx = channel.CContext(selector=selector, data_filters=filter)
     cast(channel.CChannel, ch).context = ctx
     input_addr = ch.address.split('://')[-1]
-    with mock.patch(f'comrad.data.japc_plugin.CJapcConnection.add_listener') as add_listener:
+    with mock.patch('comrad.data.japc_plugin.CJapcConnection.add_listener') as add_listener:
         connection = japc_plugin.CJapcConnection(channel=ch, protocol='rda', address=input_addr)
         add_listener.assert_called_once()
     assert connection._pyjapc_param_name == expected_param_name
@@ -70,7 +70,7 @@ def test_connection_address(param_name, selector, filter, expected_meta_field, e
 ])
 def test_connection_fails_with_wrong_parameter_name(channel_address, caplog: LogCaptureFixture):
     ch = channel.PyDMChannel(address=channel_address)
-    with mock.patch(f'comrad.data.japc_plugin.CJapcConnection.add_listener') as add_listener:
+    with mock.patch('comrad.data.japc_plugin.CJapcConnection.add_listener') as add_listener:
         _ = japc_plugin.CJapcConnection(channel=ch, protocol='rda', address=ch.address)
         add_listener.assert_not_called()
     actual_warnings = [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.ERROR]
@@ -84,8 +84,8 @@ def test_connection_fails_with_wrong_parameter_name(channel_address, caplog: Log
 def test_connection_fails_with_wrong_context(selector, caplog: LogCaptureFixture):
     ch = channel.PyDMChannel(address='device/property')
     cast(channel.CChannel, ch).context = channel.CContext(selector=selector)
-    with mock.patch(f'comrad.data.japc_plugin.CJapcConnection.add_listener') as add_listener:
-        _ = japc_plugin.CJapcConnection(channel=ch, protocol='rda', address=f'/device/property')
+    with mock.patch('comrad.data.japc_plugin.CJapcConnection.add_listener') as add_listener:
+        _ = japc_plugin.CJapcConnection(channel=ch, protocol='rda', address='/device/property')
         add_listener.assert_not_called()
     actual_warnings = [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.ERROR]
     assert actual_warnings == [f'Cannot create connection for address "device/property@{selector}"!']
@@ -175,7 +175,7 @@ def test_meta_field_resolved_on_field_level(meta_field, header_field):
 
 def test_meta_field_missing_from_incoming_header(caplog: LogCaptureFixture):
     ch = channel.PyDMChannel(address='device/property#acqStamp')
-    connection = japc_plugin.CJapcConnection(channel=ch, protocol='rda', address=f'/device/property#acqStamp')
+    connection = japc_plugin.CJapcConnection(channel=ch, protocol='rda', address='/device/property#acqStamp')
     callback = mock.Mock()
     sig = mock.MagicMock()
     header = {
@@ -183,7 +183,7 @@ def test_meta_field_missing_from_incoming_header(caplog: LogCaptureFixture):
         'cycleStamp': mock.MagicMock(),
         'selector': 'test-cycle-name',
     }
-    connection._notify_listeners(f'device/property#acqStamp', 42, header, signal_handle=callback, callback_signals=[sig])
+    connection._notify_listeners('device/property#acqStamp', 42, header, signal_handle=callback, callback_signals=[sig])
     # We have to protect from warnings leaking from dependencies, e.g. cmmnbuild_dep_manager, regarding JVM :(
     warning_records = [r for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.WARNING and r.module == 'japc_plugin']
     assert len(warning_records) == 1
@@ -214,10 +214,10 @@ def test_meta_field_missing_from_incoming_header(caplog: LogCaptureFixture):
 def test_meta_fields_are_injected_into_full_property(val, considered_header, disregarded_header, combined_val):
     full_header = {**disregarded_header, **considered_header}
     ch = channel.PyDMChannel(address='device/property')
-    connection = japc_plugin.CJapcConnection(channel=ch, protocol='japc', address=f'/device/property')
+    connection = japc_plugin.CJapcConnection(channel=ch, protocol='japc', address='/device/property')
     callback = mock.Mock()
     sig = mock.MagicMock()
-    connection._notify_listeners(f'device/property', val, full_header, signal_handle=callback, callback_signals=[sig])
+    connection._notify_listeners('device/property', val, full_header, signal_handle=callback, callback_signals=[sig])
     callback.assert_called_once_with(sig, channel.CChannelData(value=combined_val, meta_info=full_header))
 
 
@@ -269,7 +269,7 @@ def test_japc_plugin_is_used_on_no_protocol():
     # been imported and resolved the environment. So we mock the environment getter for the force re-initialization
     with mock.patch('os.getenv', side_effect=custom_env):
         initialize_plugins_if_needed()
-    plugin: PyDMPlugin = plugin_for_address(f'device/property')
+    plugin: PyDMPlugin = plugin_for_address('device/property')
     assert plugin.protocol == COMRAD_DEFAULT_PROTOCOL
     # Direct comparison does not work because loaded plugin has mangled class path
     assert plugin.connection_class.__name__ == japc_plugin.CJapcConnection.__name__

@@ -8,7 +8,7 @@ def patch_app_singleton(monkeypatch):
     class FakeApp:
 
         def __init__(self):
-            print(f'Instantiating fake app instance')
+            print('Instantiating fake app instance')
             from comrad.rbac import CRBACState, CRBACStartupLoginPolicy
             self.rbac = CRBACState()
             self.rbac.startup_login_policy = CRBACStartupLoginPolicy.NO_LOGIN
