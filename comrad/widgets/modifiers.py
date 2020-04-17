@@ -1,5 +1,6 @@
 import logging
 import numpy as np
+from enum import IntEnum
 from typing import List, Dict, Optional, Set, Any
 from pydm.widgets.base import PyDMWidget
 from pydm.widgets.channel import PyDMChannel
@@ -15,24 +16,27 @@ from .value_transform import CValueTransformationBase
 logger = logging.getLogger(__name__)
 
 
-# This class cannot inherit from Enum or derivatives because it will cause Qt Designer to complain about
-# metaclass incompatibility when this class will be inherited by the widget class
-class GeneratorTrigger:
-    """Enum defining when generator sequence must be triggered."""
-
+class _QtDesignerGeneratorTrigger:
     Any = 0
-    """Any of the incoming values arriving."""
-
     AggregatedLast = 1
-    """All values have been updated since the last trigger."""
-
     AggregatedFirst = 2
-    """First new value arriving since the last trigger."""
 
 
-class CValueAggregator(QWidget, CChannelDataProcessingMixin, CInitializedMixin, CHideUnusedFeaturesMixin, PyDMWidget, CValueTransformationBase, GeneratorTrigger):
-    Q_ENUM(GeneratorTrigger)
-    GeneratorTrigger = GeneratorTrigger
+class CValueAggregator(QWidget, CChannelDataProcessingMixin, CInitializedMixin, CHideUnusedFeaturesMixin, PyDMWidget, CValueTransformationBase, _QtDesignerGeneratorTrigger):
+
+    Q_ENUM(_QtDesignerGeneratorTrigger)
+
+    class GeneratorTrigger(IntEnum):
+        """Enum defining when generator sequence must be triggered."""
+
+        ANY = _QtDesignerGeneratorTrigger.Any
+        """Any of the incoming values arriving."""
+
+        AGGREGATED_LAST = _QtDesignerGeneratorTrigger.AggregatedLast
+        """All values have been updated since the last trigger."""
+
+        AGGREGATED_FIRST = _QtDesignerGeneratorTrigger.AggregatedFirst
+        """First new value arriving since the last trigger."""
 
     updateTriggered = Signal([int], [float], [str], [bool], [np.ndarray])
     """Emitted when the user changes the value."""
@@ -56,7 +60,7 @@ class CValueAggregator(QWidget, CChannelDataProcessingMixin, CInitializedMixin, 
         self._widget_initialized = True
         self._active: bool = True
         # This type defines how often an update is fired and when cached values get overwritten
-        self._trigger_type = self.GeneratorTrigger.Any
+        self._trigger_type = CValueAggregator.GeneratorTrigger.ANY
 
         # This table contains cached values of the channels that can be accessed from the generator logic.
         # Keys are channel addresses and values are cached values
@@ -94,7 +98,7 @@ class CValueAggregator(QWidget, CChannelDataProcessingMixin, CInitializedMixin, 
             new_context: New context assisting the connection.
         """
         # Update trigger table
-        if self._trigger_type == self.GeneratorTrigger.Any:
+        if self._trigger_type == CValueAggregator.GeneratorTrigger.ANY:
             self._values.clear()
             self._headers.clear()
             self._obsolete_values = None
@@ -127,14 +131,14 @@ class CValueAggregator(QWidget, CChannelDataProcessingMixin, CInitializedMixin, 
 
         super().value_changed(packet)
 
-        if self._trigger_type == self.GeneratorTrigger.Any:
+        if self._trigger_type == CValueAggregator.GeneratorTrigger.ANY:
             self._values[channel_id] = packet.value
             self._headers[channel_id] = packet.meta_info
             self._trigger_update()
             return
 
-        if self._trigger_type == self.GeneratorTrigger.AggregatedFirst and (not self._obsolete_values
-                                                                            or channel_id not in self._obsolete_values):
+        if self._trigger_type == CValueAggregator.GeneratorTrigger.AGGREGATED_FIRST and (not self._obsolete_values
+                                                                                         or channel_id not in self._obsolete_values):
             return
 
         # Common logic for AggregatedFirst and AggregatedLast from here on
@@ -164,10 +168,10 @@ class CValueAggregator(QWidget, CChannelDataProcessingMixin, CInitializedMixin, 
                 else:
                     ch.disconnect()
 
-    def _get_generator_trigger(self):
+    def _get_generator_trigger(self) -> 'CValueAggregator.GeneratorTrigger':
         return self._trigger_type
 
-    def _set_generator_trigger(self, new_type: int):
+    def _set_generator_trigger(self, new_type: 'CValueAggregator.GeneratorTrigger'):
         """
         Update for the generator trigger type.
 
@@ -177,14 +181,14 @@ class CValueAggregator(QWidget, CChannelDataProcessingMixin, CInitializedMixin, 
             new_type: New triggering type.
         """
         if self._trigger_type != new_type:
-            if new_type == self.GeneratorTrigger.Any:
+            if new_type == CValueAggregator.GeneratorTrigger.ANY:
                 self._obsolete_values = None
             elif self._channel_ids:
                 # AggregatedFirst and AggregatedLast logic here
                 self._obsolete_values = set(self._channel_ids)
             self._trigger_type = new_type
 
-    generatorTrigger = Property(GeneratorTrigger, _get_generator_trigger, _set_generator_trigger)
+    generatorTrigger: 'CValueAggregator.GeneratorTrigger' = Property(_QtDesignerGeneratorTrigger, _get_generator_trigger, _set_generator_trigger)
     """
     Trigger defines when the output is fired.
 
