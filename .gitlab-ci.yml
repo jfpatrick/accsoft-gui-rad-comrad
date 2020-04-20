@@ -49,9 +49,6 @@ pytest:
     expire_in: 1 month
     reports:
       junit: report.xml
-  only:
-    refs:
-      - develop
 
 twine:
   image: $ACCPY_PYQT_DOCKER_IMAGE
