@@ -41,15 +41,16 @@ highlight_language = 'py'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'recommonmark',  # Enable Markdown source files along with reStructuredText
     'sphinx_rtd_theme',  # Read-the-docs theme
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
+    'sphinx.ext.autosectionlabel',  # To allow cross-referencing sections between documents
     'sphinx.ext.intersphinx',  # To connect external docs, e.g. PyQt5
-    'sphinxcontrib.napoleon',  # This needs to be before typehints
+    'sphinx.ext.napoleon',  # This needs to be before typehints
     'sphinx_autodoc_typehints',
     'sphinx.ext.inheritance_diagram',  # Draw inheritance diagrams
     'sphinx.ext.graphviz',  # Needed to draw diagrams produced by plugin above
+    'sphinx.ext.todo',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -71,13 +72,17 @@ html_theme = 'sphinx_rtd_theme'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-# html_static_path = ['_static']
+html_static_path = ['_static']
 
 html_short_title = f'{project} v{__version__}'
 html_title = f'{html_short_title} docs'
 
 html_logo = '../comrad/icons/app.ico'
 html_favicon = html_logo
+html_css_files = [
+    'fix_tables.css',
+    'fix_bullets.css',
+]
 
 # Both the class’ and the __init__ method’s docstring are concatenated and inserted.
 autoclass_content = 'both'
@@ -589,3 +594,16 @@ inheritance_graph_attrs = {
     'fontsize': 14,
     'size': '"60, 30"',
 }
+
+
+todo_include_todos = True
+
+
+autosectionlabel_prefix_document = True
+
+
+# Support for text colors, proposed here: https://stackoverflow.com/a/60991308
+rst_epilog = """
+.. include:: <s5defs.txt>
+"""
+html_css_files.append('s5defs-roles.css')

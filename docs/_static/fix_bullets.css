@@ -1,0 +1,4 @@
+div:not(.toctree-wrapper) > ul li:first-child,
+div:not(.toctree-wrapper) > ol li:first-child {
+    margin-top: -10px !important;
+}
