@@ -235,6 +235,9 @@ class CValueTransformerMixin(CChannelDataProcessingMixin, CValueTransformationBa
             super().value_changed(packet)
 
 
+CWidgetRuleMap = Dict[str, Tuple[str, Callable[[Any], Any]]]
+
+
 class CWidgetRulesMixin:
     """
     Common rules mixin for all ComRAD widgets that limits the amount of properties for our widgets
@@ -244,7 +247,7 @@ class CWidgetRulesMixin:
     DEFAULT_RULE_PROPERTY = 'Visibility'
     """Default rule property visible in the dialog."""
 
-    RULE_PROPERTIES: Dict[str, Tuple[str, Callable[[Any], Any]]] = {
+    RULE_PROPERTIES: CWidgetRuleMap = {
         CBaseRule.Property.ENABLED.value: ('setEnabled', bool),
         CBaseRule.Property.VISIBILITY.value: ('setVisible', bool),
         CBaseRule.Property.OPACITY.value: ('set_opacity', float),

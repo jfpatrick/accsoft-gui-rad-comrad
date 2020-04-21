@@ -74,6 +74,15 @@ class CBaseRule(CJSONSerializable, Validatable, metaclass=ABCMeta):
         ENUM = 2
         """Enum based rules which are able to compare against either meaning, label or code value"""
 
+        @classmethod
+        def rule_map(cls) -> Dict['CBaseRule.Type', Type['CBaseRule']]:
+            """Returns a mapping between enum values and rule classes."""
+            return {
+                CBaseRule.Type.NUM_RANGE: CNumRangeRule,
+                CBaseRule.Type.ENUM: CEnumRule,
+                CBaseRule.Type.PY_EXPR: CExpressionRule,
+            }
+
     class Property(Enum):
         """Predefined properties that can be controlled by rules."""
 

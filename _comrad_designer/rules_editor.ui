@@ -99,7 +99,7 @@
         </layout>
        </item>
        <item>
-        <widget class="QListWidget" name="rules_list_widget">
+        <widget class="QListView" name="sidebar_list">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
            <horstretch>0</horstretch>
@@ -386,7 +386,7 @@
   </customwidget>
  </customwidgets>
  <tabstops>
-  <tabstop>rules_list_widget</tabstop>
+  <tabstop>sidebar_list</tabstop>
   <tabstop>rules_add_btn</tabstop>
   <tabstop>rules_del_btn</tabstop>
   <tabstop>rule_name_edit</tabstop>
