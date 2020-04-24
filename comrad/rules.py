@@ -9,11 +9,12 @@ import logging
 import json
 from weakref import ReferenceType
 from dataclasses import dataclass
-from typing import List, Dict, Any, Optional, cast, Union, Iterator, Iterable, Type
+from typing import List, Dict, Any, Optional, cast, Union, Iterable, Type
 from enum import IntEnum, Enum
 from abc import ABCMeta, abstractmethod
 from qtpy.QtWidgets import QWidget
 from qtpy.QtCore import QMutexLocker
+from qtpy.QtGui import QColor
 from pydm.widgets.rules import RulesEngine as PyDMRulesEngine
 from pydm.widgets.channel import PyDMChannel
 from pydm.data_plugins import plugin_for_address
@@ -72,6 +73,15 @@ class CBaseRule(CJSONSerializable, Validatable, metaclass=ABCMeta):
 
         ENUM = 2
         """Enum based rules which are able to compare against either meaning, label or code value"""
+
+        @classmethod
+        def rule_map(cls) -> Dict['CBaseRule.Type', Type['CBaseRule']]:
+            """Returns a mapping between enum values and rule classes."""
+            return {
+                CBaseRule.Type.NUM_RANGE: CNumRangeRule,
+                CBaseRule.Type.ENUM: CEnumRule,
+                CBaseRule.Type.PY_EXPR: CExpressionRule,
+            }
 
     class Property(Enum):
         """Predefined properties that can be controlled by rules."""
@@ -262,7 +272,11 @@ class CEnumRule(CBaseRule):
         if not isinstance(json_config, list):
             raise CJSONDeserializeError(f'Can\'t parse rule JSON: "config" is not a list, "{type(json_config).__name__}" given.', None, 0)
 
-        config: Iterator['CEnumRule.EnumConfig'] = map(CEnumRule.EnumConfig.from_json, json_config)
+        # Need list right away, since map will be drained after the first iteration attempt
+        config: List['CEnumRule.EnumConfig'] = list(map(CEnumRule.EnumConfig.from_json, json_config))
+        if prop == CBaseRule.Property.COLOR.value:
+            if any(not is_valid_color(entry) for entry in config):
+                raise CJSONDeserializeError('Can\'t parse rule JSON: "config" contains invalid color definitions.', None, 0)
 
         # If a string corresponds to enum, try to extract it
         try:
@@ -296,6 +310,8 @@ class CEnumRule(CBaseRule):
 
             # TODO: This could be better optimized
             for row, enum_value in enumerate(self.config):
+                if self.prop == CBaseRule.Property.COLOR.value and not is_valid_color(enum_value):
+                    errors.append(f'Rule "{self.name}" has an entry with invalid color ({enum_value.prop_val})')
                 try:
                     enum_value.validate()
                 except TypeError as e:
@@ -450,7 +466,12 @@ class CNumRangeRule(CBaseRule):
         if not isinstance(json_ranges, list):
             raise CJSONDeserializeError(f'Can\'t parse range JSON: "ranges" is not a list, "{type(json_ranges).__name__}" given.', None, 0)
 
-        ranges: Iterator['CNumRangeRule.Range'] = map(CNumRangeRule.Range.from_json, json_ranges)
+        # Need list right away, since map will be drained after the first iteration attempt
+        ranges: List['CNumRangeRule.Range'] = list(map(CNumRangeRule.Range.from_json, json_ranges))
+
+        if prop == CBaseRule.Property.COLOR.value:
+            if any(not is_valid_color(entry) for entry in ranges):
+                raise CJSONDeserializeError('Can\'t parse rule JSON: "ranges" contains invalid color definitions.', None, 0)
 
         # If a string corresponds to enum, try to extract it
         try:
@@ -493,6 +514,9 @@ class CNumRangeRule(CBaseRule):
 
             # TODO: This could be better optimized
             for row, range in enumerate(self.ranges):
+                if self.prop == CBaseRule.Property.COLOR.value and not is_valid_color(range):
+                    errors.append(f'Rule "{self.name}" has a range ({range.min_val}-{range.max_val}) that defines '
+                                  f'invalid color ({range.prop_val})')
                 try:
                     range.validate()
                 except TypeError as e:
@@ -506,6 +530,7 @@ class CNumRangeRule(CBaseRule):
                                       max2=another_range.max_val):
                         errors.append(f'Rule "{self.name}" has overlapping ranges ({range.min_val}-{range.max_val} '
                                       f'and {another_range.min_val}-{another_range.max_val})')
+
         if errors:
             raise TypeError(';'.join(errors))
 
@@ -706,3 +731,17 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
         job_unit = self.widget_map[widget_ref][index]
         rule_obj: CBaseRule = job_unit['rule']
         logger.warning(f'Rule "{rule_obj.name}": Not all channels are connected, skipping execution.')
+
+
+def is_valid_color(entry: Any) -> bool:
+    """
+    Validates that color format is correct.
+
+    Args:
+        entry: Entry possessing the value.
+
+    Returns:
+        ``True`` if the color is valid.
+    """
+    val = getattr(entry, 'prop_val', '')
+    return isinstance(val, str) and QColor.isValidColor(val)

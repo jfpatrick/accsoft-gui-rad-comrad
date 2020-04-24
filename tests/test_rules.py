@@ -20,16 +20,19 @@ from comrad import CEnumValue
     (1.0, 0.0),
     (-1.5, 10.5),
 ])
-@pytest.mark.parametrize('range_val', [
-    0.5,
-    'val',
-    True,
-    False,
+@pytest.mark.parametrize('prop_type,range_val', [
+    ('Opacity', 0.5),
+    ('Some-future-string', 'val'),
+    ('Color', '#000'),
+    ('Color', '#00FF00'),
+    ('Color', 'red'),
+    ('Enabled', True),
+    ('Enabled', False),
 ])
-def test_num_range_rule_deserialize_succeeds(channel, resulting_channel, range_min, range_max, range_val):
+def test_num_range_rule_deserialize_succeeds(channel, resulting_channel, range_min, range_max, range_val, prop_type):
     rule = CNumRangeRule.from_json({
         'name': 'test_name',
-        'prop': 'opacity',
+        'prop': prop_type,
         'channel': channel,
         'ranges': [{
             'min': range_min,
@@ -39,7 +42,7 @@ def test_num_range_rule_deserialize_succeeds(channel, resulting_channel, range_m
     })
     assert isinstance(rule, CNumRangeRule)
     assert rule.name == 'test_name'
-    assert rule.prop == 'opacity'
+    assert rule.prop == prop_type
     assert rule.channel == resulting_channel
     assert len(rule.ranges) == 1
     range = rule.ranges[0]
@@ -49,20 +52,21 @@ def test_num_range_rule_deserialize_succeeds(channel, resulting_channel, range_m
 
 
 @pytest.mark.parametrize('json_obj,error_msg', [
-    ({'prop': 'opacity', 'channel': '__auto__'}, r'Can\\\'t parse range JSON: "name" is not a string*'),
-    ({'name': 2, 'prop': 'opacity', 'channel': '__auto__'}, r'Can\\\'t parse range JSON: "name" is not a string*'),
+    ({'prop': 'Opacity', 'channel': '__auto__'}, r'Can\\\'t parse range JSON: "name" is not a string*'),
+    ({'name': 2, 'prop': 'Opacity', 'channel': '__auto__'}, r'Can\\\'t parse range JSON: "name" is not a string*'),
     ({'name': 'test_name', 'channel': '__auto__'}, r'Can\\\'t parse range JSON: "prop" is not a string*'),
     ({'name': 'test_name', 'prop': (), 'channel': '__auto__'}, r'Can\\\'t parse range JSON: "prop" is not a string*'),
-    ({'name': 'test_name', 'prop': 'opacity'}, r'Can\\\'t parse range JSON: "channel" is not a string*'),
-    ({'name': 'test_name', 'prop': 'opacity', 'channel': 53}, r'Can\\\'t parse range JSON: "channel" is not a string*'),
-    ({'name': 'test_name', 'prop': 'opacity', 'channel': '__auto__'}, r'Can\\\'t parse range JSON: "ranges" is not a list*'),
-    ({'name': 'test_name', 'prop': 'opacity', 'channel': '__auto__', 'ranges': [{'min': 0, 'max': 0.5, 'value': 0.1}]}, r'Can\\\'t parse range JSON: "min" is not float, "int" given*'),
-    ({'name': 'test_name', 'prop': 'opacity', 'channel': '__auto__', 'ranges': [{'min': 0.0, 'max': 5, 'value': 0.1}]}, r'Can\\\'t parse range JSON: "max" is not float, "int" given*'),
-    ({'name': 'test_name', 'prop': 'opacity', 'channel': '__auto__', 'ranges': [{'min': 0.0, 'max': 0.5}]}, r'Can\\\'t parse range JSON: "value" has unsupported type "NoneType"*'),
-    ({'name': 'test_name', 'prop': 'opacity', 'channel': '__auto__', 'ranges': [{'min': 0.0, 'max': 0.5, 'value': ()}]}, r'Can\\\'t parse range JSON: "value" has unsupported type "tuple"*'),
-    ({'name': 'test_name', 'prop': 'opacity', 'channel': '__auto__', 'ranges': [{'min': 0.0, 'max': 0.5, 'value': 4}]}, r'Can\\\'t parse range JSON: "value" has unsupported type "int"*'),
-    ({'name': 'test_name', 'prop': 'opacity', 'channel': '__auto__', 'ranges': [{'max': 0.5, 'value': 0.5}]}, r'Can\\\'t parse range JSON: "min" is not float, "NoneType" given*'),
-    ({'name': 'test_name', 'prop': 'opacity', 'channel': '__auto__', 'ranges': [{'min': 0.5, 'value': 0.5}]}, r'Can\\\'t parse range JSON: "max" is not float, "NoneType" given*'),
+    ({'name': 'test_name', 'prop': 'Opacity'}, r'Can\\\'t parse range JSON: "channel" is not a string*'),
+    ({'name': 'test_name', 'prop': 'Opacity', 'channel': 53}, r'Can\\\'t parse range JSON: "channel" is not a string*'),
+    ({'name': 'test_name', 'prop': 'Opacity', 'channel': '__auto__'}, r'Can\\\'t parse range JSON: "ranges" is not a list*'),
+    ({'name': 'test_name', 'prop': 'Opacity', 'channel': '__auto__', 'ranges': [{'min': 0, 'max': 0.5, 'value': 0.1}]}, r'Can\\\'t parse range JSON: "min" is not float, "int" given*'),
+    ({'name': 'test_name', 'prop': 'Opacity', 'channel': '__auto__', 'ranges': [{'min': 0.0, 'max': 5, 'value': 0.1}]}, r'Can\\\'t parse range JSON: "max" is not float, "int" given*'),
+    ({'name': 'test_name', 'prop': 'Opacity', 'channel': '__auto__', 'ranges': [{'min': 0.0, 'max': 0.5}]}, r'Can\\\'t parse range JSON: "value" has unsupported type "NoneType"*'),
+    ({'name': 'test_name', 'prop': 'Opacity', 'channel': '__auto__', 'ranges': [{'min': 0.0, 'max': 0.5, 'value': ()}]}, r'Can\\\'t parse range JSON: "value" has unsupported type "tuple"*'),
+    ({'name': 'test_name', 'prop': 'Opacity', 'channel': '__auto__', 'ranges': [{'min': 0.0, 'max': 0.5, 'value': 4}]}, r'Can\\\'t parse range JSON: "value" has unsupported type "int"*'),
+    ({'name': 'test_name', 'prop': 'Opacity', 'channel': '__auto__', 'ranges': [{'max': 0.5, 'value': 0.5}]}, r'Can\\\'t parse range JSON: "min" is not float, "NoneType" given*'),
+    ({'name': 'test_name', 'prop': 'Opacity', 'channel': '__auto__', 'ranges': [{'min': 0.5, 'value': 0.5}]}, r'Can\\\'t parse range JSON: "max" is not float, "NoneType" given*'),
+    ({'name': 'test_name', 'prop': 'Color', 'channel': '__auto__', 'ranges': [{'min': 0.5, 'max': 0.7, 'value': 'not-rgb'}]}, r'Can\\\'t parse rule JSON: "ranges" contains invalid color definitions.*'),
 ])
 def test_num_range_rule_deserialize_fails(json_obj, error_msg):
     with pytest.raises(CJSONDeserializeError, match=error_msg):
@@ -70,7 +74,7 @@ def test_num_range_rule_deserialize_fails(json_obj, error_msg):
 
 
 @pytest.mark.parametrize('prop', [
-    'opacity',
+    'Opacity',
     'color',
     None,
 ])
@@ -123,29 +127,39 @@ def test_num_range_rule_serialize_succeeds(name, prop, channel, ranges):
     }
 
 
-@pytest.mark.parametrize('prop', [
-    'opacity',
-    'color',
-])
 @pytest.mark.parametrize('channel', [
     'dev/prop#field',
     '__auto__',
 ])
-@pytest.mark.parametrize('ranges', [
-    [CNumRangeRule.Range(min_val=0.0, max_val=1.0, prop_val=0.5)],
-    [
+@pytest.mark.parametrize('prop,ranges', [
+    ('Opacity', [CNumRangeRule.Range(min_val=0.0, max_val=1.0, prop_val=0.5)]),
+    ('Opacity', [
         CNumRangeRule.Range(min_val=0.0, max_val=1.0, prop_val=0.5),
         CNumRangeRule.Range(min_val=1.0, max_val=2.0, prop_val=0.75),
-    ],
-    [
+    ]),
+    ('Opacity', [
         CNumRangeRule.Range(min_val=0.0, max_val=0.0, prop_val=0.5),
-    ],
-    [
+    ]),
+    ('Opacity', [
+        CNumRangeRule.Range(min_val=0.0, max_val=1.0, prop_val=0.5),
+        CNumRangeRule.Range(min_val=1.0, max_val=2.0, prop_val=0.75),
+        CNumRangeRule.Range(min_val=2.0, max_val=3.0, prop_val=1.05),
+        CNumRangeRule.Range(min_val=3.0, max_val=4.0, prop_val=1.25),
+    ]),
+    ('Color', [CNumRangeRule.Range(min_val=0.0, max_val=1.0, prop_val='#FFDB1F')]),
+    ('Color', [
+        CNumRangeRule.Range(min_val=0.0, max_val=1.0, prop_val='#FFDB1F'),
+        CNumRangeRule.Range(min_val=1.0, max_val=2.0, prop_val='#00F'),
+    ]),
+    ('Color', [
+        CNumRangeRule.Range(min_val=0.0, max_val=0.0, prop_val='red'),
+    ]),
+    ('Color', [
         CNumRangeRule.Range(min_val=0.0, max_val=1.0, prop_val='#FF0000'),
         CNumRangeRule.Range(min_val=1.0, max_val=2.0, prop_val='#00FF00'),
         CNumRangeRule.Range(min_val=2.0, max_val=3.0, prop_val='#0000FF'),
         CNumRangeRule.Range(min_val=3.0, max_val=4.0, prop_val='#000000'),
-    ],
+    ]),
 ])
 def test_num_range_rule_validate_succeeds(prop, channel, ranges):
     rule = CNumRangeRule(name='test_name',
@@ -155,50 +169,53 @@ def test_num_range_rule_validate_succeeds(prop, channel, ranges):
     rule.validate()  # If fails, will throw
 
 
-@pytest.mark.parametrize('attr,val,err', [
-    ('name', '', 'Not every rule has a name*'),
-    ('name', False, 'Not every rule has a name*'),
-    ('name', None, 'Not every rule has a name*'),
-    ('name', [], 'Not every rule has a name*'),
-    ('name', (), 'Not every rule has a name*'),
-    ('prop', '', 'Rule "test_name" is missing property definition*'),
-    ('prop', False, 'Rule "test_name" is missing property definition*'),
-    ('prop', None, 'Rule "test_name" is missing property definition*'),
-    ('prop', [], 'Rule "test_name" is missing property definition*'),
-    ('prop', (), 'Rule "test_name" is missing property definition*'),
-    ('ranges', [], 'Rule "test_name" must have at least one range defined*'),
-    ('ranges', (), 'Rule "test_name" must have at least one range defined*'),
+@pytest.mark.parametrize('attr,val,err,prop_name', [
+    ('name', '', r'Not every rule has a name', 'Opacity'),
+    ('name', False, r'Not every rule has a name', 'Opacity'),
+    ('name', None, r'Not every rule has a name', 'Opacity'),
+    ('name', [], r'Not every rule has a name', 'Opacity'),
+    ('name', (), r'Not every rule has a name', 'Opacity'),
+    ('prop', '', r'Rule "test_name" is missing property definition', 'Opacity'),
+    ('prop', False, r'Rule "test_name" is missing property definition', 'Opacity'),
+    ('prop', None, r'Rule "test_name" is missing property definition', 'Opacity'),
+    ('prop', [], r'Rule "test_name" is missing property definition', 'Opacity'),
+    ('prop', (), r'Rule "test_name" is missing property definition', 'Opacity'),
+    ('ranges', [], r'Rule "test_name" must have at least one range defined', 'Opacity'),
+    ('ranges', (), r'Rule "test_name" must have at least one range defined', 'Opacity'),
     ('ranges', [
         CNumRangeRule.Range(min_val=0.0, max_val=1.0, prop_val=0.5),
         CNumRangeRule.Range(min_val=0.5, max_val=1.5, prop_val=0.5),
-    ], 'Rule "test_name" has overlapping ranges*'),
+    ], r'Rule "test_name" has overlapping ranges', 'Opacity'),
     ('ranges', [
         CNumRangeRule.Range(min_val=0.5, max_val=1.5, prop_val=0.5),
         CNumRangeRule.Range(min_val=0.0, max_val=1.0, prop_val=0.5),
-    ], 'Rule "test_name" has overlapping ranges*'),
+    ], r'Rule "test_name" has overlapping ranges', 'Opacity'),
     ('ranges', [
         CNumRangeRule.Range(min_val=0.0, max_val=1.0, prop_val=0.5),
         CNumRangeRule.Range(min_val=0.0, max_val=1.0, prop_val=0.5),
-    ], 'Rule "test_name" has overlapping ranges*'),
+    ], r'Rule "test_name" has overlapping ranges', 'Opacity'),
     ('ranges', [
         CNumRangeRule.Range(min_val=-1.0, max_val=1.0, prop_val=0.5),
         CNumRangeRule.Range(min_val=0.5, max_val=0.75, prop_val=0.5),
-    ], 'Rule "test_name" has overlapping ranges*'),
+    ], r'Rule "test_name" has overlapping ranges', 'Opacity'),
     ('ranges', [
         CNumRangeRule.Range(min_val=0.5, max_val=0.75, prop_val=0.5),
         CNumRangeRule.Range(min_val=-1.0, max_val=1.0, prop_val=0.5),
-    ], 'Rule "test_name" has overlapping ranges*'),
+    ], r'Rule "test_name" has overlapping ranges', 'Opacity'),
     ('ranges', [
         CNumRangeRule.Range(min_val=1.0, max_val=0.0, prop_val=0.5),
-    ], 'Range 1.0-0.0 has inverted boundaries (max < min)*'),
+    ], r'Range 1.0-0.0 has inverted boundaries \(max < min\)', 'Opacity'),
+    ('ranges', [
+        CNumRangeRule.Range(min_val=0.0, max_val=1.0, prop_val='not-rgb'),
+    ], r'Rule "test_name" has a range \(0.0-1.0\) that defines invalid color \(not-rgb\)', 'Color'),
 ])
-def test_num_range_rule_validate_fails(attr, val, err):
+def test_num_range_rule_validate_fails(attr, val, err, prop_name):
     rule = CNumRangeRule(name='test_name',
-                         prop='test_prop',
+                         prop=prop_name,
                          channel='dev/prop#field',
                          ranges=[CNumRangeRule.Range(min_val=0.0, max_val=0.0, prop_val=0.5)])
     setattr(rule, attr, val)
-    with pytest.raises(TypeError, match=fr'{err}'):
+    with pytest.raises(TypeError, match=err):
         rule.validate()
 
 
@@ -226,7 +243,7 @@ def test_num_range_rule_validate_fails(attr, val, err):
 def test_enum_rule_deserialize_succeeds(channel, resulting_channel, enum_field, expected_field, field_val, expected_val, applied_val):
     rule = CEnumRule.from_json({
         'name': 'test_name',
-        'prop': 'opacity',
+        'prop': 'Opacity',
         'channel': channel,
         'config': [{
             'field': enum_field,
@@ -236,7 +253,7 @@ def test_enum_rule_deserialize_succeeds(channel, resulting_channel, enum_field, 
     })
     assert isinstance(rule, CEnumRule)
     assert rule.name == 'test_name'
-    assert rule.prop == 'opacity'
+    assert rule.prop == 'Opacity'
     assert rule.channel == resulting_channel
     assert len(rule.config) == 1
     setting = rule.config[0]
@@ -246,22 +263,23 @@ def test_enum_rule_deserialize_succeeds(channel, resulting_channel, enum_field, 
 
 
 @pytest.mark.parametrize('json_obj,error_msg', [
-    ({'prop': 'opacity', 'channel': '__auto__'}, r'Can\\\'t parse rule JSON: "name" is not a string*'),
-    ({'name': 2, 'prop': 'opacity', 'channel': '__auto__'}, r'Can\\\'t parse rule JSON: "name" is not a string*'),
-    ({'name': 'test_name', 'channel': '__auto__'}, r'Can\\\'t parse rule JSON: "prop" is not a string*'),
-    ({'name': 'test_name', 'prop': (), 'channel': '__auto__'}, r'Can\\\'t parse rule JSON: "prop" is not a string*'),
-    ({'name': 'test_name', 'prop': 'opacity'}, r'Can\\\'t parse rule JSON: "channel" is not a string*'),
-    ({'name': 'test_name', 'prop': 'opacity', 'channel': 53}, r'Can\\\'t parse rule JSON: "channel" is not a string*'),
-    ({'name': 'test_name', 'prop': 'opacity', 'channel': '__auto__', 'config': [{'field': 0.5, 'fv': 0, 'value': 0.1}]}, r'Can\\\'t parse enum JSON: "field" is not int, "float" given*'),
-    ({'name': 'test_name', 'prop': 'opacity', 'channel': '__auto__', 'config': [{'fv': 0, 'value': 0.1}]}, r'Can\\\'t parse enum JSON: "field" is not int, "NoneType" given*'),
-    ({'name': 'test_name', 'prop': 'opacity', 'channel': '__auto__', 'config': [{'field': 0, 'fv': 'test', 'value': 0.1}]}, r'Can\\\'t parse enum JSON: "fv" is not int, as required by field type "CODE", "str" given*'),
-    ({'name': 'test_name', 'prop': 'opacity', 'channel': '__auto__', 'config': [{'field': 1, 'fv': 3, 'value': 0.1}]}, r'Can\\\'t parse enum JSON: "fv" is not str, as required by field type "LABEL", "int" given'),
-    ({'name': 'test_name', 'prop': 'opacity', 'channel': '__auto__', 'config': [{'field': 2, 'fv': 'test', 'value': 0.1}]}, r'Can\\\'t parse enum JSON: "fv" is not int, as required by field type "MEANING", "str" given'),
-    ({'name': 'test_name', 'prop': 'opacity', 'channel': '__auto__', 'config': [{'field': 0, 'value': 0.1}]}, r'Can\\\'t parse enum JSON: "fv" is not int, as required by field type "CODE", "NoneType" given'),
-    ({'name': 'test_name', 'prop': 'opacity', 'channel': '__auto__', 'config': [{'field': 2, 'fv': 99, 'value': 0.1}]}, r'Can\\\'t parse enum JSON: "fv" value "99" does not correspond to the known possible options of meaning*'),
-    ({'name': 'test_name', 'prop': 'opacity', 'channel': '__auto__', 'config': [{'field': 99, 'fv': 'test', 'value': 0.1}]}, r'Can\\\'t parse enum JSON: "field" value "99" does not correspond to the known possible options*'),
-    ({'name': 'test_name', 'prop': 'opacity', 'channel': '__auto__', 'config': [{'field': 0, 'fv': 1, 'value': ()}]}, r'Can\\\'t parse enum JSON: "value" has unsupported type "tuple"*'),
-    ({'name': 'test_name', 'prop': 'opacity', 'channel': '__auto__', 'config': [{'field': 0, 'fv': 1, 'value': 4}]}, r'Can\\\'t parse enum JSON: "value" has unsupported type "int"*'),
+    ({'prop': 'Opacity', 'channel': '__auto__'}, r'Can\\\'t parse rule JSON: "name" is not a string'),
+    ({'name': 2, 'prop': 'Opacity', 'channel': '__auto__'}, r'Can\\\'t parse rule JSON: "name" is not a string'),
+    ({'name': 'test_name', 'channel': '__auto__'}, r'Can\\\'t parse rule JSON: "prop" is not a string'),
+    ({'name': 'test_name', 'prop': (), 'channel': '__auto__'}, r'Can\\\'t parse rule JSON: "prop" is not a string'),
+    ({'name': 'test_name', 'prop': 'Opacity'}, r'Can\\\'t parse rule JSON: "channel" is not a string'),
+    ({'name': 'test_name', 'prop': 'Opacity', 'channel': 53}, r'Can\\\'t parse rule JSON: "channel" is not a string'),
+    ({'name': 'test_name', 'prop': 'Opacity', 'channel': '__auto__', 'config': [{'field': 0.5, 'fv': 0, 'value': 0.1}]}, r'Can\\\'t parse enum JSON: "field" is not int, "float" given'),
+    ({'name': 'test_name', 'prop': 'Opacity', 'channel': '__auto__', 'config': [{'fv': 0, 'value': 0.1}]}, r'Can\\\'t parse enum JSON: "field" is not int, "NoneType" given'),
+    ({'name': 'test_name', 'prop': 'Opacity', 'channel': '__auto__', 'config': [{'field': 0, 'fv': 'test', 'value': 0.1}]}, r'Can\\\'t parse enum JSON: "fv" is not int, as required by field type "CODE", "str" given'),
+    ({'name': 'test_name', 'prop': 'Opacity', 'channel': '__auto__', 'config': [{'field': 1, 'fv': 3, 'value': 0.1}]}, r'Can\\\'t parse enum JSON: "fv" is not str, as required by field type "LABEL", "int" given'),
+    ({'name': 'test_name', 'prop': 'Opacity', 'channel': '__auto__', 'config': [{'field': 2, 'fv': 'test', 'value': 0.1}]}, r'Can\\\'t parse enum JSON: "fv" is not int, as required by field type "MEANING", "str" given'),
+    ({'name': 'test_name', 'prop': 'Opacity', 'channel': '__auto__', 'config': [{'field': 0, 'value': 0.1}]}, r'Can\\\'t parse enum JSON: "fv" is not int, as required by field type "CODE", "NoneType" given'),
+    ({'name': 'test_name', 'prop': 'Opacity', 'channel': '__auto__', 'config': [{'field': 2, 'fv': 99, 'value': 0.1}]}, r'Can\\\'t parse enum JSON: "fv" value "99" does not correspond to the known possible options of meaning'),
+    ({'name': 'test_name', 'prop': 'Opacity', 'channel': '__auto__', 'config': [{'field': 99, 'fv': 'test', 'value': 0.1}]}, r'Can\\\'t parse enum JSON: "field" value "99" does not correspond to the known possible options'),
+    ({'name': 'test_name', 'prop': 'Opacity', 'channel': '__auto__', 'config': [{'field': 0, 'fv': 1, 'value': ()}]}, r'Can\\\'t parse enum JSON: "value" has unsupported type "tuple"'),
+    ({'name': 'test_name', 'prop': 'Opacity', 'channel': '__auto__', 'config': [{'field': 0, 'fv': 1, 'value': 4}]}, r'Can\\\'t parse enum JSON: "value" has unsupported type "int"'),
+    ({'name': 'test_name', 'prop': 'Color', 'channel': '__auto__', 'config': [{'field': 0, 'fv': 1, 'value': 'not-rgb'}]}, r'Can\\\'t parse rule JSON: "config" contains invalid color definitions.'),
 ])
 def test_enum_rule_deserialize_fails(json_obj, error_msg):
     with pytest.raises(CJSONDeserializeError, match=error_msg):
@@ -269,7 +287,7 @@ def test_enum_rule_deserialize_fails(json_obj, error_msg):
 
 
 @pytest.mark.parametrize('prop', [
-    'opacity',
+    'Opacity',
     'color',
     None,
 ])
@@ -338,43 +356,67 @@ def test_enum_rule_serialize_succeeds(name, prop, channel, config):
     }
 
 
-@pytest.mark.parametrize('prop', [
-    'opacity',
-    'color',
-])
 @pytest.mark.parametrize('channel', [
     'dev/prop#field',
     '__auto__',
 ])
-@pytest.mark.parametrize('config', [
-    [CEnumRule.EnumConfig(field=CEnumRule.EnumField.CODE, field_val=31, prop_val=0.5)],
-    [CEnumRule.EnumConfig(field=CEnumRule.EnumField.LABEL, field_val='test-label', prop_val=0.5)],
-    [CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.ON, prop_val=0.5)],
-    [CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.OFF, prop_val=0.5)],
-    [CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.WARNING, prop_val=0.5)],
-    [CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.ERROR, prop_val=0.5)],
-    [CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.NONE, prop_val=0.5)],
-    [
+@pytest.mark.parametrize('prop,config', [
+    ('Opacity', [CEnumRule.EnumConfig(field=CEnumRule.EnumField.CODE, field_val=31, prop_val=0.5)]),
+    ('Opacity', [CEnumRule.EnumConfig(field=CEnumRule.EnumField.LABEL, field_val='test-label', prop_val=0.5)]),
+    ('Opacity', [CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.ON, prop_val=0.5)]),
+    ('Opacity', [CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.OFF, prop_val=0.5)]),
+    ('Opacity', [CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.WARNING, prop_val=0.5)]),
+    ('Opacity', [CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.ERROR, prop_val=0.5)]),
+    ('Opacity', [CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.NONE, prop_val=0.5)]),
+    ('Opacity', [
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.CODE, field_val=31, prop_val=0.5),
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.LABEL, field_val='test-label', prop_val=0.5),
-    ],
-    [
+    ]),
+    ('Opacity', [
+        CEnumRule.EnumConfig(field=CEnumRule.EnumField.CODE, field_val=0, prop_val=0.5),
+        CEnumRule.EnumConfig(field=CEnumRule.EnumField.CODE, field_val=1, prop_val=0.75),
+        CEnumRule.EnumConfig(field=CEnumRule.EnumField.CODE, field_val=2, prop_val=1.05),
+        CEnumRule.EnumConfig(field=CEnumRule.EnumField.CODE, field_val=3, prop_val=1.25),
+    ]),
+    ('Opacity', [
+        CEnumRule.EnumConfig(field=CEnumRule.EnumField.LABEL, field_val='ON', prop_val=0.5),
+        CEnumRule.EnumConfig(field=CEnumRule.EnumField.LABEL, field_val='OFF', prop_val=0.75),
+        CEnumRule.EnumConfig(field=CEnumRule.EnumField.LABEL, field_val='UNKNOWN', prop_val=1.0),
+    ]),
+    ('Opacity', [
+        CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.WARNING, prop_val=0.5),
+        CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.ON, prop_val=0.75),
+        CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.OFF, prop_val=1.05),
+        CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.ERROR, prop_val=1.25),
+    ]),
+    ('Color', [CEnumRule.EnumConfig(field=CEnumRule.EnumField.CODE, field_val=31, prop_val='#FF0000')]),
+    ('Color', [CEnumRule.EnumConfig(field=CEnumRule.EnumField.LABEL, field_val='test-label', prop_val='#FF0000')]),
+    ('Color', [CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.ON, prop_val='#FF0000')]),
+    ('Color', [CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.OFF, prop_val='#FF0000')]),
+    ('Color', [CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.WARNING, prop_val='#FF0000')]),
+    ('Color', [CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.ERROR, prop_val='#FF0000')]),
+    ('Color', [CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.NONE, prop_val='#FF0000')]),
+    ('Color', [
+        CEnumRule.EnumConfig(field=CEnumRule.EnumField.CODE, field_val=31, prop_val='#000'),
+        CEnumRule.EnumConfig(field=CEnumRule.EnumField.LABEL, field_val='test-label', prop_val='red'),
+    ]),
+    ('Color', [
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.CODE, field_val=0, prop_val='#FF0000'),
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.CODE, field_val=1, prop_val='#00FF00'),
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.CODE, field_val=2, prop_val='#0000FF'),
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.CODE, field_val=3, prop_val='#000000'),
-    ],
-    [
+    ]),
+    ('Color', [
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.LABEL, field_val='ON', prop_val='#FF0000'),
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.LABEL, field_val='OFF', prop_val='#00FF00'),
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.LABEL, field_val='UNKNOWN', prop_val='#0000FF'),
-    ],
-    [
+    ]),
+    ('Color', [
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.WARNING, prop_val='#FF0000'),
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.ON, prop_val='#00FF00'),
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.OFF, prop_val='#0000FF'),
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.ERROR, prop_val='#000000'),
-    ],
+    ]),
 ])
 def test_enum_rule_validate_succeeds(prop, channel, config):
     rule = CEnumRule(name='test_name',
@@ -384,57 +426,60 @@ def test_enum_rule_validate_succeeds(prop, channel, config):
     rule.validate()  # If fails, will throw
 
 
-@pytest.mark.parametrize('attr,val,err', [
-    ('name', '', 'Not every rule has a name*'),
-    ('name', False, 'Not every rule has a name*'),
-    ('name', None, 'Not every rule has a name*'),
-    ('name', [], 'Not every rule has a name*'),
-    ('name', (), 'Not every rule has a name*'),
-    ('prop', '', 'Rule "test_name" is missing property definition*'),
-    ('prop', False, 'Rule "test_name" is missing property definition*'),
-    ('prop', None, 'Rule "test_name" is missing property definition*'),
-    ('prop', [], 'Rule "test_name" is missing property definition*'),
-    ('prop', (), 'Rule "test_name" is missing property definition*'),
-    ('config', [], 'Rule "test_name" must have at least one enum option defined*'),
-    ('config', (), 'Rule "test_name" must have at least one enum option defined*'),
+@pytest.mark.parametrize('attr,val,err,prop_name', [
+    ('name', '', r'Not every rule has a name', 'Opacity'),
+    ('name', False, r'Not every rule has a name', 'Opacity'),
+    ('name', None, r'Not every rule has a name', 'Opacity'),
+    ('name', [], r'Not every rule has a name', 'Opacity'),
+    ('name', (), r'Not every rule has a name', 'Opacity'),
+    ('prop', '', r'Rule "test_name" is missing property definition', 'Opacity'),
+    ('prop', False, r'Rule "test_name" is missing property definition', 'Opacity'),
+    ('prop', None, r'Rule "test_name" is missing property definition', 'Opacity'),
+    ('prop', [], r'Rule "test_name" is missing property definition', 'Opacity'),
+    ('prop', (), r'Rule "test_name" is missing property definition', 'Opacity'),
+    ('config', [], r'Rule "test_name" must have at least one enum option defined', 'Opacity'),
+    ('config', (), r'Rule "test_name" must have at least one enum option defined', 'Opacity'),
     ('config', [
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.CODE, field_val=11, prop_val=0.5),
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.CODE, field_val=11, prop_val=0.75),
-    ], 'Rule "test_name" has redundant configuration*'),
+    ], r'Rule "test_name" has redundant configuration', 'Opacity'),
     ('config', [
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.LABEL, field_val='ON', prop_val=0.5),
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.LABEL, field_val='ON', prop_val=0.75),
-    ], 'Rule "test_name" has redundant configuration*'),
+    ], r'Rule "test_name" has redundant configuration', 'Opacity'),
     ('config', [
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.ERROR, prop_val=0.5),
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=CEnumValue.Meaning.ERROR, prop_val=0.75),
-    ], 'Rule "test_name" has redundant configuration*'),
+    ], r'Rule "test_name" has redundant configuration', 'Opacity'),
     ('config', [
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.CODE, field_val='ON', prop_val=0.5),
-    ], 'Value of type "str" is not compatible with enum field "Code"*'),
+    ], r'Value of type "str" is not compatible with enum field "Code"', 'Opacity'),
     ('config', [
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.CODE, field_val=CEnumValue.Meaning.ERROR, prop_val=0.5),
-    ], 'Value of type "Meaning" is not compatible with enum field "Code"*'),
+    ], r'Value of type "Meaning" is not compatible with enum field "Code"', 'Opacity'),
     ('config', [
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.LABEL, field_val=12, prop_val=0.5),
-    ], 'Value of type "int" is not compatible with enum field "Label"*'),
+    ], r'Value of type "int" is not compatible with enum field "Label"', 'Opacity'),
     ('config', [
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.LABEL, field_val=CEnumValue.Meaning.ERROR, prop_val=0.5),
-    ], 'Value of type "Meaning" is not compatible with enum field "Label"*'),
+    ], r'Value of type "Meaning" is not compatible with enum field "Label"', 'Opacity'),
     ('config', [
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val=12, prop_val=0.5),
-    ], 'Value of type "int" is not compatible with enum field "Meaning"*'),
+    ], r'Value of type "int" is not compatible with enum field "Meaning"', 'Opacity'),
     ('config', [
         CEnumRule.EnumConfig(field=CEnumRule.EnumField.MEANING, field_val='ON', prop_val=0.5),
-    ], 'Value of type "str" is not compatible with enum field "Meaning"*'),
+    ], r'Value of type "str" is not compatible with enum field "Meaning"', 'Opacity'),
+    ('config', [
+        CEnumRule.EnumConfig(field=CEnumRule.EnumField.CODE, field_val=2, prop_val='not-rgb'),
+    ], r'Rule "test_name" has an entry with invalid color \(not-rgb\)', 'Color'),
 ])
-def test_enum_rule_validate_fails(attr, val, err):
+def test_enum_rule_validate_fails(attr, val, err, prop_name):
     rule = CEnumRule(name='test_name',
-                     prop='test_prop',
+                     prop=prop_name,
                      channel='dev/prop#field',
                      config=[CEnumRule.EnumConfig(field=CEnumRule.EnumField.CODE, field_val=31, prop_val=0.5)])
     setattr(rule, attr, val)
-    with pytest.raises(TypeError, match=fr'{err}'):
+    with pytest.raises(TypeError, match=err):
         rule.validate()
 
 
@@ -446,18 +491,18 @@ def test_enum_rule_validate_fails(attr, val, err):
      '[{"type":2,"name":"rule1","prop":"color","channel":"__auto__","config":[{"field":0,"fv":21,"value":"#FF0000"}]}]'),
     # (1, [CExpressionRule], ['rule1'], ['color'], ['__auto__'], ["expr1"],
     #  '[{"type":1,"name":"rule1","prop":"color","channel":"__auto__","expr":"expr1"}]'),
-    (1, [CNumRangeRule], ['rule2'], ['opacity'], ['dev/prop#field'], [2],
-     '[{"type":0,"name":"rule2","prop":"opacity","channel":"dev/prop#field","ranges":[{"min":0.0,"max":0.1,"value":0.9}, {"min":0.1,"max":0.2,"value":0.5}]}]'),
-    (1, [CNumRangeRule], ['rule2'], ['opacity'], ['dev/prop#field'], [0],
-     '[{"type":0,"name":"rule2","prop":"opacity","channel":"dev/prop#field","ranges":[]}]'),
-    (2, [CNumRangeRule, CNumRangeRule], ['rule1', 'rule2'], ['color', 'opacity'], ['__auto__', '__auto__'], [0, 0],
-     '[{"type":0,"name":"rule1","prop":"color","channel":"__auto__","ranges":[]},{"type":0,"name":"rule2","prop":"opacity","channel":"__auto__","ranges":[]}]'),
-    (2, [CEnumRule, CEnumRule], ['rule1', 'rule2'], ['color', 'opacity'], ['__auto__', '__auto__'], [0, 0],
-     '[{"type":2,"name":"rule1","prop":"color","channel":"__auto__","config":[]},{"type":2,"name":"rule2","prop":"opacity","channel":"__auto__","config":[]}]'),
-    (2, [CNumRangeRule, CEnumRule], ['rule1', 'rule2'], ['color', 'opacity'], ['__auto__', '__auto__'], [0, 0],
-     '[{"type":0,"name":"rule1","prop":"color","channel":"__auto__","ranges":[]},{"type":2,"name":"rule2","prop":"opacity","channel":"__auto__","config":[]}]'),
-    # (2, [CExpressionRule, CExpressionRule], ['rule1', 'rule2'], ['color', 'opacity'], ['__auto__', '__auto__'], ['expr1', 'expr2'],
-    #  '[{"type":1,"name":"rule1","prop":"color","channel":"__auto__","expr":"expr1"},{"type":1,"name":"rule2","prop":"opacity","channel":"__auto__","expr":"expr2"}]'),
+    (1, [CNumRangeRule], ['rule2'], ['Opacity'], ['dev/prop#field'], [2],
+     '[{"type":0,"name":"rule2","prop":"Opacity","channel":"dev/prop#field","ranges":[{"min":0.0,"max":0.1,"value":0.9}, {"min":0.1,"max":0.2,"value":0.5}]}]'),
+    (1, [CNumRangeRule], ['rule2'], ['Opacity'], ['dev/prop#field'], [0],
+     '[{"type":0,"name":"rule2","prop":"Opacity","channel":"dev/prop#field","ranges":[]}]'),
+    (2, [CNumRangeRule, CNumRangeRule], ['rule1', 'rule2'], ['color', 'Opacity'], ['__auto__', '__auto__'], [0, 0],
+     '[{"type":0,"name":"rule1","prop":"color","channel":"__auto__","ranges":[]},{"type":0,"name":"rule2","prop":"Opacity","channel":"__auto__","ranges":[]}]'),
+    (2, [CEnumRule, CEnumRule], ['rule1', 'rule2'], ['color', 'Opacity'], ['__auto__', '__auto__'], [0, 0],
+     '[{"type":2,"name":"rule1","prop":"color","channel":"__auto__","config":[]},{"type":2,"name":"rule2","prop":"Opacity","channel":"__auto__","config":[]}]'),
+    (2, [CNumRangeRule, CEnumRule], ['rule1', 'rule2'], ['color', 'Opacity'], ['__auto__', '__auto__'], [0, 0],
+     '[{"type":0,"name":"rule1","prop":"color","channel":"__auto__","ranges":[]},{"type":2,"name":"rule2","prop":"Opacity","channel":"__auto__","config":[]}]'),
+    # (2, [CExpressionRule, CExpressionRule], ['rule1', 'rule2'], ['color', 'Opacity'], ['__auto__', '__auto__'], ['expr1', 'expr2'],
+    #  '[{"type":1,"name":"rule1","prop":"color","channel":"__auto__","expr":"expr1"},{"type":1,"name":"rule2","prop":"Opacity","channel":"__auto__","expr":"expr2"}]'),
 ])
 def test_unpack_rules_succeeds(rule_cnt, rule_types, names, props, channels, payloads, json_str):
     res = unpack_rules(json_str)  # If fails, will throw
@@ -476,17 +521,17 @@ def test_unpack_rules_succeeds(rule_cnt, rule_types, names, props, channels, pay
 
 
 @pytest.mark.parametrize('err,err_type,json_str', [
-    (r'type', KeyError, '[{"name":"rule2","prop":"opacity","channel":"dev/prop#field","ranges":null}]'),
-    (r'Can\\\'t parse range JSON: "name" is not a string', CJSONDeserializeError, '[{"type":0,"prop":"opacity","channel":"dev/prop#field","ranges":null}]'),
+    (r'type', KeyError, '[{"name":"rule2","prop":"Opacity","channel":"dev/prop#field","ranges":null}]'),
+    (r'Can\\\'t parse range JSON: "name" is not a string', CJSONDeserializeError, '[{"type":0,"prop":"Opacity","channel":"dev/prop#field","ranges":null}]'),
     (r'Can\\\'t parse range JSON: "prop" is not a string', CJSONDeserializeError, '[{"name":"rule2","type":0,"channel":"dev/prop#field","ranges":null}]'),
-    (r'Can\\\'t parse range JSON: "channel" is not a string', CJSONDeserializeError, '[{"name":"rule2","prop":"opacity","type":0,"ranges":null}]'),
-    (r'Can\\\'t parse range JSON: "ranges" is not a list', CJSONDeserializeError, '[{"name":"rule2","prop":"opacity","type":0,"channel":"__auto__"}]'),
-    (r'Can\\\'t parse range JSON: "ranges" is not a list, "NoneType" given*', CJSONDeserializeError, '[{"type":0,"name":"rule2","prop":"opacity","channel":"dev/prop#field","ranges":null}]'),
-    (r'must have integer type, given str', CJSONDeserializeError, '[{"type":"test","name":"rule1","prop":"opacity","channel":"dev/prop#field","ranges":[]}]'),
-    (r'Can\\\'t parse enum JSON: "field" is not int, "NoneType" given*', CJSONDeserializeError, '[{"type":2,"name":"rule1","prop":"opacity","channel":"dev/prop#field","config":[{}]}]'),
-    (r'Rules does not appear to be a list', CJSONDeserializeError, '{"type":0,"name":"rule2","prop":"opacity","channel":"dev/prop#field","ranges":[]}'),
-    (r'Unknown rule type 3 for JSON', CJSONDeserializeError, '[{"type":3,"name":"rule2","prop":"opacity","channel":"dev/prop#field","ranges":[]}]'),
-    (r'', NotImplementedError, '[{"type":1,"name":"rule2","prop":"opacity","channel":"dev/prop#field","expr":""}]'),  # TODO: Remove when expression rules are implemented
+    (r'Can\\\'t parse range JSON: "channel" is not a string', CJSONDeserializeError, '[{"name":"rule2","prop":"Opacity","type":0,"ranges":null}]'),
+    (r'Can\\\'t parse range JSON: "ranges" is not a list', CJSONDeserializeError, '[{"name":"rule2","prop":"Opacity","type":0,"channel":"__auto__"}]'),
+    (r'Can\\\'t parse range JSON: "ranges" is not a list, "NoneType" given*', CJSONDeserializeError, '[{"type":0,"name":"rule2","prop":"Opacity","channel":"dev/prop#field","ranges":null}]'),
+    (r'must have integer type, given str', CJSONDeserializeError, '[{"type":"test","name":"rule1","prop":"Opacity","channel":"dev/prop#field","ranges":[]}]'),
+    (r'Can\\\'t parse enum JSON: "field" is not int, "NoneType" given*', CJSONDeserializeError, '[{"type":2,"name":"rule1","prop":"Opacity","channel":"dev/prop#field","config":[{}]}]'),
+    (r'Rules does not appear to be a list', CJSONDeserializeError, '{"type":0,"name":"rule2","prop":"Opacity","channel":"dev/prop#field","ranges":[]}'),
+    (r'Unknown rule type 3 for JSON', CJSONDeserializeError, '[{"type":3,"name":"rule2","prop":"Opacity","channel":"dev/prop#field","ranges":[]}]'),
+    (r'', NotImplementedError, '[{"type":1,"name":"rule2","prop":"Opacity","channel":"dev/prop#field","expr":""}]'),  # TODO: Remove when expression rules are implemented
 ])
 def test_unpack_rules_fails(err, err_type, json_str):
     with pytest.raises(err_type, match=err):
