@@ -8,9 +8,10 @@ import weakref
 import logging
 import json
 from weakref import ReferenceType
-from typing import List, Dict, Any, Optional, cast, Union, Iterator, Iterable
+from dataclasses import dataclass
+from typing import List, Dict, Any, Optional, cast, Union, Iterator, Iterable, Type
 from enum import IntEnum, Enum
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 from qtpy.QtWidgets import QWidget
 from qtpy.QtCore import QMutexLocker
 from pydm.widgets.rules import RulesEngine as PyDMRulesEngine
@@ -21,16 +22,31 @@ from pydm.utilities import is_qt_designer
 from pydm import config
 from comrad.json import CJSONSerializable, CJSONDeserializeError
 from comrad.data.channel import CChannelData
+from comrad.data.japc_enum import CEnumValue
 from .monkey import modify_in_place, MonkeyPatchedClass
 
 
 logger = logging.getLogger(__name__)
 
 
-RangeValue = Union[str, bool, float]
+AppliedValue = Union[str, bool, float]
 
 
-class CBaseRule(CJSONSerializable, metaclass=ABCMeta):
+class Validatable(metaclass=ABCMeta):
+
+    @abstractmethod
+    def validate(self):
+        """
+        Ensure that the object does not violate any common sense.
+
+        Raises:
+            TypeError: If any misuse is detected. The error message may contain multiple errors delimited by ';'.
+        """
+        pass
+
+
+# @dataclass(init=False, repr=False, eq=False)
+class CBaseRule(CJSONSerializable, Validatable, metaclass=ABCMeta):
 
     class Channel(Enum):
         """Predefined channel values."""
@@ -54,6 +70,9 @@ class CBaseRule(CJSONSerializable, metaclass=ABCMeta):
         PY_EXPR = 1
         """User defines Python expression that can read multiple channels and produce a desired property value."""
 
+        ENUM = 2
+        """Enum based rules which are able to compare against either meaning, label or code value"""
+
     class Property(Enum):
         """Predefined properties that can be controlled by rules."""
 
@@ -69,6 +88,20 @@ class CBaseRule(CJSONSerializable, metaclass=ABCMeta):
         COLOR = 'Color'
         """String value with HEX code of the RGB color to be applied on the widget."""
 
+    name: str
+    """Name of the rule as it's visible in the rules list."""
+
+    prop: str
+    """Name corresponding to the key in :attr:`~CWidgetRulesMixin.RULE_PROPERTIES`."""
+
+    channel: Union[str, Channel]
+    """
+    Channel address. Use :attr:`Channel.DEFAULT` to use the default channel of the widget
+                     or :attr:`Channel.NOT_IMPORTANT` if the rule body is responsible for collecting the channel
+                     information, e.g. in Python expressions. We never set it to None, to not confuse with absent
+                     value because of the bug.
+    """
+
     def __init__(self, name: str, prop: Union['CBaseRule.Property', str], channel: Union[str, Channel]):
         """
         Rule that can be applied to widgets to change their behavior based on incoming value.
@@ -81,17 +114,11 @@ class CBaseRule(CJSONSerializable, metaclass=ABCMeta):
                      information, e.g. in Python expressions. We never set it to None, to not confuse with absent
                      value because of the bug.
         """
-        self._name = name
-        self._prop: str = prop.value if isinstance(prop, CBaseRule.Property) else prop
+        self.name = name
+        self.prop = prop.value if isinstance(prop, CBaseRule.Property) else prop
         self.channel = channel
 
     def validate(self):
-        """
-        Ensure that rule does not violate any common sense.
-
-        Raises:
-            TypeError: If any of the rule properties do not make sense.
-        """
         errors: List[str] = []
 
         if not self.name:
@@ -103,32 +130,197 @@ class CBaseRule(CJSONSerializable, metaclass=ABCMeta):
         if errors:
             raise TypeError(';'.join(errors))
 
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @name.setter
-    def name(self, new_val: str):
-        self._name = new_val
-
-    @property
-    def prop(self) -> str:
-        return self._prop
-
-    @prop.setter
-    def prop(self, new_val: str):
-        self._prop = new_val
-
-    @property
-    def type(self) -> 'CBaseRule.Type':
-        return self._type
-
-    @type.setter
-    def type(self, new_val: 'CBaseRule.Type'):
-        self._type = new_val
+    @classmethod
+    @abstractmethod
+    def type(cls) -> 'CBaseRule.Type':
+        """Defines to which type the given rule belongs."""
+        pass
 
 
+@dataclass(init=False, repr=False, eq=False)
+class CEnumRule(CBaseRule):
+
+    class EnumField(IntEnum):
+        """Defines which PyJapc CEnumValue field will be used for the comparison"""
+
+        CODE = 0
+        """The comparison will be performed on CEnumValue.code"""
+
+        LABEL = 1
+        """The comparison will be performed on CEnumValue.label"""
+
+        MEANING = 2
+        """The comparison will be performed on CEnumValue.meaning"""
+
+    @dataclass(repr=False)
+    class EnumConfig(CJSONSerializable, Validatable):
+        """Describes a single entry in the Enum rules."""
+
+        field: 'CEnumRule.EnumField'
+        """Indicates which PyJapc enum field will be compared for this rule."""
+
+        field_val: Union[int, str, CEnumValue.Meaning]
+        """Value to compare against, the type should be compliant with the chosen field."""
+
+        prop_val: AppliedValue
+        """Value to be applied to the property if received value and rule value match."""
+
+        @classmethod
+        def from_json(cls, contents):
+            logger.debug(f'Unpacking JSON enum setting: {contents}')
+            field: Union[int, CEnumRule.EnumField] = contents.get('field', None)
+            field_val: Union[int, str, CEnumValue.Meaning] = contents.get('fv', None)
+            value: AppliedValue = contents.get('value', None)
+
+            if not isinstance(field, int):
+                raise CJSONDeserializeError(f'Can\'t parse enum JSON: "field" is not int, "{type(field).__name__}" given.', None, 0)
+            try:
+                field = CEnumRule.EnumField(field)
+            except ValueError:
+                raise CJSONDeserializeError(f'Can\'t parse enum JSON: "field" value "{field}" does not correspond to the known possible options.', None, 0)
+            if field == CEnumRule.EnumField.CODE and not isinstance(field_val, int):
+                raise CJSONDeserializeError(f'Can\'t parse enum JSON: "fv" is not int, as required by field type "CODE", "{type(field_val).__name__}" given.', None, 0)
+            elif field == CEnumRule.EnumField.LABEL and not isinstance(field_val, str):
+                raise CJSONDeserializeError(f'Can\'t parse enum JSON: "fv" is not str, as required by field type "LABEL", "{type(field_val).__name__}" given.', None, 0)
+            elif field == CEnumRule.EnumField.MEANING and not isinstance(field_val, int):
+                raise CJSONDeserializeError(f'Can\'t parse enum JSON: "fv" is not int, as required by field type "MEANING", "{type(field_val).__name__}" given.', None, 0)
+            if field == CEnumRule.EnumField.MEANING:
+                try:
+                    field_val = CEnumValue.Meaning(field_val)
+                except ValueError:
+                    raise CJSONDeserializeError(f'Can\'t parse enum JSON: "fv" value "{field_val}" does not correspond to the known possible options of meaning.', None, 0)
+            if not isinstance(value, float) and not isinstance(value, str) and not isinstance(value, bool):
+                raise CJSONDeserializeError(f'Can\'t parse enum JSON: "value" has unsupported type "{type(value).__name__}".', None, 0)
+            return cls(field=field, field_val=field_val, prop_val=value)
+
+        def to_json(self):
+            return {
+                'field': self.field,
+                'fv': self.field_val,
+                'value': self.prop_val,
+            }
+
+        def validate(self):
+            if isinstance(self.field_val, CEnumValue.Meaning):  # Need to check this first, to avoid false positive on a simple int
+                if self.field == CEnumRule.EnumField.MEANING:
+                    return
+            elif self.field == CEnumRule.EnumField.CODE and isinstance(self.field_val, int):
+                return
+            elif self.field == CEnumRule.EnumField.LABEL and isinstance(self.field_val, str):
+                return
+            raise TypeError(f'Value of type "{type(self.field_val).__name__}" is not compatible with enum field "{str(self.field).split(".")[-1].title()}"')
+
+        def __repr__(self) -> str:
+            return f'<{type(self).__name__} {self.field}=={self.field_val} => {self.prop_val}>'
+
+    config: List['CEnumRule.EnumConfig']
+    """
+    A list of :class:`~CEnumRule.Enum` objects that define which value should be set to the property
+    when an incoming enum from the channel is equal to the compared value.
+    """
+
+    def __init__(self,
+                 name: str,
+                 prop: str,
+                 channel: Union[str, CBaseRule.Channel] = CBaseRule.Channel.DEFAULT,
+                 config: Optional[Iterable['CEnumRule.EnumConfig']] = None):
+        """
+        Rule that evaluates property based on a enum [code / meaning / label], given that connected channel produces an
+        enum.
+
+        Args:
+            name: Name of the rule as it's visible in the rules list.
+            prop: Name corresponding to the key in :attr:`CWidgetRulesMixin.RULE_PROPERTIES`.
+            channel: Channel address. Use :attr:`CBaseRule.Channel.DEFAULT` to use the default channel of the widget
+                     or :attr:`CBaseRule.Channel.NOT_IMPORTANT` if the rule body is responsible for collecting the
+                     channel information, e.g. in Python expressions. We never set it to None, to not confuse with
+                     absent value because of the bug.
+            config: A list of :class:`~CEnumRule.Enum` objects that define which value should be set to the property
+                    when an incoming enum from the channel is equal to the compared value.
+        """
+        super().__init__(name=name, prop=prop, channel=channel)
+        if config is None:
+            config = []
+        self.config: List['CEnumRule.EnumConfig'] = config if isinstance(config, list) else list(config)
+
+    @classmethod
+    def from_json(cls, contents):
+        logger.debug(f'Unpacking JSON rule: {contents}')
+        name: str = contents.get('name', None)
+        prop: str = contents.get('prop', None)
+        channel: Union[str, CBaseRule.Channel] = contents.get('channel', None)
+
+        if not isinstance(name, str):
+            raise CJSONDeserializeError(f'Can\'t parse rule JSON: "name" is not a string, "{type(name).__name__}" given.', None, 0)
+        if not isinstance(prop, str):
+            raise CJSONDeserializeError(f'Can\'t parse rule JSON: "prop" is not a string, "{type(prop).__name__}" given.', None, 0)
+        if not (isinstance(channel, str)):
+            raise CJSONDeserializeError(f'Can\'t parse rule JSON: "channel" is not a string, "{type(channel).__name__}" given.', None, 0)
+
+        json_config: List[Any] = contents.get('config', [])
+
+        if not isinstance(json_config, list):
+            raise CJSONDeserializeError(f'Can\'t parse rule JSON: "config" is not a list, "{type(json_config).__name__}" given.', None, 0)
+
+        config: Iterator['CEnumRule.EnumConfig'] = map(CEnumRule.EnumConfig.from_json, json_config)
+
+        # If a string corresponds to enum, try to extract it
+        try:
+            channel = CBaseRule.Channel(channel)
+        except ValueError:
+            pass
+
+        return cls(name=name, prop=prop, channel=channel, config=config)
+
+    def to_json(self):
+        return {
+            'name': self.name,
+            'prop': self.prop,
+            'type': self.type(),
+            'channel': self.channel,
+            'config': self.config,
+        }
+
+    def validate(self):
+        errors: List[str] = []
+        try:
+            super().validate()
+        except TypeError as e:
+            errors.append(str(e))
+
+        if len(self.config) == 0:
+            errors.append(f'Rule "{self.name}" must have at least one enum option defined.')
+        else:
+            def is_overlapping(enum_value1: CEnumRule.EnumConfig, enum_value2: CEnumRule.EnumConfig) -> bool:
+                return enum_value1.field == enum_value2.field and enum_value1.field_val == enum_value2.field_val
+
+            # TODO: This could be better optimized
+            for row, enum_value in enumerate(self.config):
+                try:
+                    enum_value.validate()
+                except TypeError as e:
+                    errors.append(str(e))
+                    continue
+
+                for another_enum_value in self.config[row + 1:]:
+                    if is_overlapping(enum_value, another_enum_value):
+                        errors.append(f'Rule "{self.name}" has redundant configuration ({enum_value.field}=={enum_value.field_val})')
+        if errors:
+            raise TypeError(';'.join(errors))
+
+    @classmethod
+    def type(cls) -> 'CBaseRule.Type':
+        return CBaseRule.Type.ENUM
+
+    def __repr__(self):
+        return f'<{type(self).__name__} "{self.name}" [{self.prop}]>\n' + '\n'.join(map(repr, self.config))
+
+
+@dataclass(init=False, eq=False)
 class CExpressionRule(CBaseRule):
+
+    expr: str
+    """Python expression."""
 
     def __init__(self,
                  name: str,
@@ -157,57 +349,33 @@ class CExpressionRule(CBaseRule):
     def to_json(self):
         raise NotImplementedError()
 
+    @classmethod
+    def type(cls) -> 'CBaseRule.Type':
+        return CBaseRule.Type.PY_EXPR
 
+
+@dataclass(init=False, repr=False, eq=False)
 class CNumRangeRule(CBaseRule):
 
-    class Range(CJSONSerializable):
+    @dataclass(repr=False)
+    class Range(CJSONSerializable, Validatable):
+        """Describes a single entry in the numeric ranges rules."""
 
-        def __init__(self, min_val: float, max_val: float, prop_val: Optional[RangeValue] = None):
-            """
-            Describes a single entry in the numeric ranges rules.
+        min_val: float
+        """Lower boundary of the range (included in the range)."""
 
-            Args:
-                min_val: Lower boundary of the range (included in the range).
-                max_val: Upper boundary of the range (excluded from the range).
-                prop_val: Value to be applied to the property in this range.
-            """
-            self._min_val = min_val
-            self._max_val = max_val
-            self._prop_val = prop_val
+        max_val: float
+        """Upper boundary of the range (excluded from the range)."""
 
-        @property
-        def min_val(self) -> float:
-            """Lower boundary of the range (included in the range)."""
-            return self._min_val
-
-        @min_val.setter
-        def min_val(self, new_val: float):
-            self._min_val = new_val
-
-        @property
-        def max_val(self) -> float:
-            """Upper boundary of the range (excluded from the range)."""
-            return self._max_val
-
-        @max_val.setter
-        def max_val(self, new_val: float):
-            self._max_val = new_val
-
-        @property
-        def prop_val(self) -> Optional[RangeValue]:
-            """Value to be applied to the property in this range."""
-            return self._prop_val
-
-        @prop_val.setter
-        def prop_val(self, new_val: RangeValue):
-            self._prop_val = new_val
+        prop_val: AppliedValue
+        """Value to be applied to the property in this range."""
 
         @classmethod
         def from_json(cls, contents):
             logger.debug(f'Unpacking JSON range: {contents}')
             min_val: float = contents.get('min', None)
             max_val: float = contents.get('max', None)
-            value: RangeValue = contents.get('value', None)
+            value: AppliedValue = contents.get('value', None)
 
             if not isinstance(min_val, float):
                 raise CJSONDeserializeError(
@@ -222,23 +390,23 @@ class CNumRangeRule(CBaseRule):
 
         def to_json(self):
             return {
-                'min': self._min_val,
-                'max': self._max_val,
-                'value': self._prop_val,
+                'min': self.min_val,
+                'max': self.max_val,
+                'value': self.prop_val,
             }
 
         def validate(self):
-            """
-            Ensure that the range does not violate any common sense.
-
-            Raises:
-                TypeError: If any of the range properties do not make sense.
-            """
             if self.min_val is not None and self.max_val is not None and self.min_val > self.max_val:
-                raise TypeError('Some ranges have inverted boundaries (max < min)')
+                raise TypeError(f'Range {self.min_val}-{self.max_val} has inverted boundaries (max < min)')
 
         def __repr__(self) -> str:
             return f'<{type(self).__name__} {self.min_val}:{self.max_val} => {self.prop_val}>'
+
+    ranges: List['CNumRangeRule.Range']
+    """
+    A list of numerical ranges that define which value should be set to the property when an incoming
+    number from the channel falls into ranges.
+    """
 
     def __init__(self,
                  name: str,
@@ -296,7 +464,7 @@ class CNumRangeRule(CBaseRule):
         return {
             'name': self.name,
             'prop': self.prop,
-            'type': CBaseRule.Type.NUM_RANGE,
+            'type': self.type(),
             'channel': self.channel,
             'ranges': self.ranges,
         }
@@ -336,9 +504,14 @@ class CNumRangeRule(CBaseRule):
                                       max1=range.max_val,
                                       min2=another_range.min_val,
                                       max2=another_range.max_val):
-                        errors.append(f'Rule "{self.name}" has overlapping ranges')
+                        errors.append(f'Rule "{self.name}" has overlapping ranges ({range.min_val}-{range.max_val} '
+                                      f'and {another_range.min_val}-{another_range.max_val})')
         if errors:
             raise TypeError(';'.join(errors))
+
+    @classmethod
+    def type(cls) -> 'CBaseRule.Type':
+        return CBaseRule.Type.NUM_RANGE
 
     def __repr__(self):
         return f'<{type(self).__name__} "{self.name}" [{self.prop}]>\n' + '\n'.join(map(repr, self.ranges))
@@ -356,17 +529,21 @@ def unpack_rules(contents: str) -> List[CBaseRule]:
     logger.debug(f'Unpacking JSON rules into the object: {contents}')
     parsed_contents: List[Dict[str, Any]] = json.loads(contents)
     res: List[CBaseRule] = []
+
+    rule_map: Dict[int, Type] = {}
+    for sub in CBaseRule.__subclasses__():
+        rule_map[sub.type()] = sub
+
     if isinstance(parsed_contents, list):
         for json_rule in parsed_contents:
             rule_type: int = json_rule['type']
             if not isinstance(rule_type, int):
                 raise CJSONDeserializeError(f'Rule {json_rule} must have integer type, given {type(rule_type).__name__}.')
-            if rule_type == CBaseRule.Type.NUM_RANGE:
-                res.append(CNumRangeRule.from_json(json_rule))
-            elif rule_type == CBaseRule.Type.PY_EXPR:
-                res.append(CExpressionRule.from_json(json_rule))
-            else:
+            try:
+                sub = rule_map[rule_type]
+            except KeyError:
                 raise CJSONDeserializeError(f'Unknown rule type {rule_type} for JSON {json_rule}')
+            res.append(sub.from_json(json_rule))
     elif parsed_contents is not None:
         raise CJSONDeserializeError('Rules does not appear to be a list')
     return res
@@ -486,24 +663,40 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
             #     notify_value(val)
             # except Exception as e:
             #     logger.exception(f'Error while evaluating Rule: {e}')
-        elif isinstance(rule_obj, CNumRangeRule):
+            return
+        elif isinstance(rule_obj, (CEnumRule, CNumRangeRule)):
             from comrad.widgets.mixins import CWidgetRulesMixin
             _, base_type = cast(CWidgetRulesMixin, widget_ref()).RULE_PROPERTIES[rule_obj.prop]
             packet = cast(CChannelData[Any], job_unit['values'][0])
             if not isinstance(packet, CChannelData):
                 notify_value(None)
-            else:
-                val = float(packet.value)
+                return
+
+            if isinstance(rule_obj, CNumRangeRule):
+                range_val = float(packet.value)
                 for range in rule_obj.ranges:
-                    if range.min_val <= val < range.max_val:
+                    if range.min_val <= range_val < range.max_val:
                         notify_value(base_type(range.prop_val))
                         break
                 else:
                     notify_value(None)
-            return
-        else:
-            logger.exception(f'Unsupported rule type: {type(rule_obj).__name__}')
-            return
+                return
+            elif isinstance(rule_obj, CEnumRule):
+                enum_val: CEnumValue = packet.value
+                if not isinstance(enum_val, CEnumValue):
+                    notify_value(None)
+                else:
+                    for setting in rule_obj.config:
+                        if ((setting.field == CEnumRule.EnumField.CODE and enum_val.code == setting.field_val)
+                                or (setting.field == CEnumRule.EnumField.MEANING and enum_val.meaning == setting.field_val)
+                                or (setting.field == CEnumRule.EnumField.LABEL and enum_val.label == setting.field_val)):
+                            notify_value(base_type(setting.prop_val))
+                            break
+                    else:
+                        notify_value(None)
+                return
+
+        logger.exception(f'Unsupported rule type: {type(rule_obj).__name__}')
 
     def warn_unconnected_channels(self, widget_ref: ReferenceType, index: int):
         """
