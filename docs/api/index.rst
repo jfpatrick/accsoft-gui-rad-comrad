@@ -8,6 +8,7 @@ API Reference
     rules/module
     transformations/index
     rbac/module
+    data/module
     json/module
     plugins/module
     icons/module

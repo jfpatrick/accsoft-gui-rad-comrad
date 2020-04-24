@@ -5,4 +5,4 @@ CNumRangeRule
     :parts: 1
 
 .. autoclass:: comrad.rules.CNumRangeRule
-   :members: Channel, Property, Range, Type, from_json, to_json, validate
+   :members: Range, from_json, to_json, validate

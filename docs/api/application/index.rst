@@ -5,3 +5,4 @@ Application
 
     capplication
     cmainwindow
+    cmainwindowsignalhelper

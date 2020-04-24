@@ -41,7 +41,7 @@ class Validatable(metaclass=ABCMeta):
         Ensure that the object does not violate any common sense.
 
         Raises:
-            TypeError: If any misuse is detected. The error message may contain multiple errors delimited by ';'.
+            TypeError: If any misuse is detected. The error message may contain multiple errors delimited by ``;``.
         """
         pass
 
@@ -55,7 +55,7 @@ class CBaseRule(CJSONSerializable, Validatable, metaclass=ABCMeta):
         DEFAULT = '__auto__'
         """
         Take value from the default channel specified by the widget via
-        :meth:`~CWidgetRulesMixin.default_rule_channel` method.
+        :meth:`~comrad.widgets.mixins.CWidgetRulesMixin.default_rule_channel` method.
         """
 
         NOT_IMPORTANT = '__skip__'
@@ -102,7 +102,7 @@ class CBaseRule(CJSONSerializable, Validatable, metaclass=ABCMeta):
     """Name of the rule as it's visible in the rules list."""
 
     prop: str
-    """Name corresponding to the key in :attr:`~CWidgetRulesMixin.RULE_PROPERTIES`."""
+    """Name corresponding to the key in :attr:`~comrad.widgets.mixins.CWidgetRulesMixin.RULE_PROPERTIES`."""
 
     channel: Union[str, Channel]
     """
@@ -118,7 +118,7 @@ class CBaseRule(CJSONSerializable, Validatable, metaclass=ABCMeta):
 
         Args:
             name: Name of the rule as it's visible in the rules list.
-            prop: Name corresponding to the key in :attr:`~CWidgetRulesMixin.RULE_PROPERTIES`.
+            prop: Name corresponding to the key in :attr:`~comrad.widgets.mixins.CWidgetRulesMixin.RULE_PROPERTIES`.
             channel: Channel address. Use :attr:`Channel.DEFAULT` to use the default channel of the widget
                      or :attr:`Channel.NOT_IMPORTANT` if the rule body is responsible for collecting the channel
                      information, e.g. in Python expressions. We never set it to None, to not confuse with absent
@@ -151,16 +151,16 @@ class CBaseRule(CJSONSerializable, Validatable, metaclass=ABCMeta):
 class CEnumRule(CBaseRule):
 
     class EnumField(IntEnum):
-        """Defines which PyJapc CEnumValue field will be used for the comparison"""
+        """Defines which PyJapc :class:`CEnumValue` field will be used for the comparison"""
 
         CODE = 0
-        """The comparison will be performed on CEnumValue.code"""
+        """The comparison will be performed on :attr:`~comrad.data.japc_enum.CEnumValue.code` field."""
 
         LABEL = 1
-        """The comparison will be performed on CEnumValue.label"""
+        """The comparison will be performed on :attr:`~comrad.data.japc_enum.CEnumValue.label` field."""
 
         MEANING = 2
-        """The comparison will be performed on CEnumValue.meaning"""
+        """The comparison will be performed on :attr:`~comrad.data.japc_enum.CEnumValue.meaning` field."""
 
     @dataclass(repr=False)
     class EnumConfig(CJSONSerializable, Validatable):
@@ -225,7 +225,7 @@ class CEnumRule(CBaseRule):
 
     config: List['CEnumRule.EnumConfig']
     """
-    A list of :class:`~CEnumRule.Enum` objects that define which value should be set to the property
+    A list of :class:`~CEnumRule.EnumConfig` objects that define which value should be set to the property
     when an incoming enum from the channel is equal to the compared value.
     """
 
@@ -240,12 +240,12 @@ class CEnumRule(CBaseRule):
 
         Args:
             name: Name of the rule as it's visible in the rules list.
-            prop: Name corresponding to the key in :attr:`CWidgetRulesMixin.RULE_PROPERTIES`.
+            prop: Name corresponding to the key in :attr:`~comrad.widgets.mixins.CWidgetRulesMixin.RULE_PROPERTIES`.
             channel: Channel address. Use :attr:`CBaseRule.Channel.DEFAULT` to use the default channel of the widget
                      or :attr:`CBaseRule.Channel.NOT_IMPORTANT` if the rule body is responsible for collecting the
                      channel information, e.g. in Python expressions. We never set it to None, to not confuse with
                      absent value because of the bug.
-            config: A list of :class:`~CEnumRule.Enum` objects that define which value should be set to the property
+            config: A list of :class:`~CEnumRule.EnumConfig` objects that define which value should be set to the property
                     when an incoming enum from the channel is equal to the compared value.
         """
         super().__init__(name=name, prop=prop, channel=channel)
@@ -344,7 +344,7 @@ class CExpressionRule(CBaseRule):
 
         Args:
             name: Name of the rule as it's visible in the rules list.
-            prop: Name corresponding to the key in :attr:`CWidgetRulesMixin.RULE_PROPERTIES`.
+            prop: Name corresponding to the key in :attr:`~comrad.widgets.mixins.CWidgetRulesMixin.RULE_PROPERTIES`.
             channel: Channel address. Use :attr:`CBaseRule.Channel.DEFAULT` to use the default channel of the widget
                      or :attr:`CBaseRule.Channel.NOT_IMPORTANT` if the rule body is responsible for collecting the channel
                      information, e.g. in Python expressions. We never set it to None, to not confuse with absent
@@ -426,7 +426,7 @@ class CNumRangeRule(CBaseRule):
 
         Args:
             name: Name of the rule as it's visible in the rules list.
-            prop: Name corresponding to the key in :attr:`CWidgetRulesMixin.RULE_PROPERTIES`.
+            prop: Name corresponding to the key in :attr:`~comrad.widgets.mixins.CWidgetRulesMixin.RULE_PROPERTIES`.
             channel: Channel address. Use :attr:`CBaseRule.Channel.DEFAULT` to use the default channel of the widget
                      or :attr:`CBaseRule.Channel.NOT_IMPORTANT` if the rule body is responsible for collecting the channel
                      information, e.g. in Python expressions. We never set it to None, to not confuse with absent

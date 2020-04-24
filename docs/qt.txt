@@ -2,9 +2,15 @@
 # Project: qt
 # Version: 5
 # The remainder of this file is compressed using zlib.
+PyQt5.QtCore.QObject py:class 1 qobject.html QObject
+qtpy.QtCore.QObject py:class 1 qobject.html QObject
+QObject py:class 1 qobject.html -
 PyQt5.QtWidgets.QWidget py:class 1 qwidget.html QWidget
 qtpy.QtWidgets.QWidget py:class 1 qwidget.html QWidget
 QWidget py:class 1 qwidget.html -
+PyQt5.QtWidgets.QTableView py:class 1 qtableview.html QTableView
+qtpy.QtWidgets.QTableView py:class 1 qtableview.html QTableView
+QTableView py:class 1 qtableview.html -
 PyQt5.QtWidgets.QWidget.toolTip py:attribute 1 qwidget.html#toolTip-prop QWidget.toolTip
 qtpy.QtWidgets.QWidget.toolTip py:attribute 1 qwidget.html#toolTip-prop QWidget.toolTip
 QWidget.toolTip py:attribute 1 qwidget.html#toolTip-prop -
@@ -47,6 +53,9 @@ QWidget.setStyleSheet py:method 1 qwidget.html#styleSheet-prop -
 PyQt5.QtWidgets.QWidget.setStyle py:method 1 qwidget.html#setStyle QWidget.setStyle
 qtpy.QtWidgets.QWidget.setStyle py:method 1 qwidget.html#setStyle QWidget.setStyle
 QWidget.setStyle py:method 1 qwidget.html#setStyle -
+PyQt5.QtWidgets.QWidget.setParent py:method 1 qwidget.html#setParent QWidget.setParent
+qtpy.QtWidgets.QWidget.setParent py:method 1 qwidget.html#setParent QWidget.setParent
+QWidget.setParent py:method 1 qwidget.html#setParent -
 PyQt5.QtWidgets.QLabel.setNum py:method 1 qlabel.html#setNum QLabel.setNum
 qtpy.QtWidgets.QLabel.setNum py:method 1 qlabel.html#setNum QLabel.setNum
 QLabel.setNum py:method 1 qlabel.html#setNum -

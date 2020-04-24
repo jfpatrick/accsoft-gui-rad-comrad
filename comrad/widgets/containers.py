@@ -80,8 +80,8 @@ class CContextFrame(QFrame, CContextProvider):
          * Dynamic selection of the cycle / timing user.
          * Dynamic selection of the data filter.
 
-        Note! This widget does not support dynamic movement between different parents. That is, if you add it to view
-        hierarchy, display it, and then decide to move via :meth:`setParent`, the logic will break.
+        **Note!** This widget does not support dynamic movement between different parents. That is, if you add
+        it to view hierarchy, display it, and then decide to move via :meth:`~QWidget.setParent`, the logic will break.
         """
         QFrame.__init__(self, parent)
         CContextProvider.__init__(self)
@@ -169,10 +169,10 @@ class CContextFrame(QFrame, CContextProvider):
     def context_changed(self):
         """
         Slot that receives a new context from the context provider, (e.g. when widgets are grouped inside a container).
-        This slot helps propagating the event from several levels of the CContextFrame that change their properties
-        into widgets down the hierarchy.
+        This slot helps propagating the event from several levels of the :class:`CContextFrame` that change their
+        properties into widgets down the hierarchy.
 
-        This slot will automatically get connected by the parent CContextFrame
+        This slot will automatically get connected by the parent :class:`CContextFrame`.
         """
         logger.debug(f'{self} propagating the parent context change event to children')
         self.contextUpdated.emit()

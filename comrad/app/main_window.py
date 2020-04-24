@@ -55,7 +55,7 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
                  hide_menu_bar: bool = False,
                  hide_status_bar: bool = False,
                  **kwargs):
-        """Main window of ComRAD application.
+        """Main window of ComRAD application. This is a monkey-patched version of :class:`PyDMMainWindow`.
 
         Args:
             parent: Parent widget of the window.

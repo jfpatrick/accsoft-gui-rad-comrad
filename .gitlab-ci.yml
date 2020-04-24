@@ -70,7 +70,7 @@ twine:
       - *init_sequence
       - yum install -y -q graphviz  # Required to generate inheritance diagrams
       - pip install .[doc]  # Need to install it here, as sphobjinv should be available
-      - python -c "import sphobjinv as soi; [soi.fileops.writebytes(path=f'docs/{f}.inv', contents=soi.zlib.compress(soi.Inventory(plaintext=soi.fileops.readbytes(f'docs/{f}.txt')).data_file())) for f in ['qt', 'pydm', 'qsci']]" # Prepare custom intersphinx inventory files
+      - python -c "import sphobjinv as soi; [soi.fileops.writebytes(path=f'docs/{f}.inv', contents=soi.zlib.compress(soi.Inventory(plaintext=soi.fileops.readbytes(f'docs/{f}.txt')).data_file())) for f in ['qt', 'pydm', 'qsci', 'pyqt']]" # Prepare custom intersphinx inventory files
 
 sphinx:
   extends:

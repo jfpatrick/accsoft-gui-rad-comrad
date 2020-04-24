@@ -21,12 +21,14 @@ class CChannel(PyDMChannel, MonkeyPatchedClass):
                  context: Optional[CContext] = None,
                  **kwargs):
         """
-        Monkey-patched verion of PyDMChannel that allows proactive request for data from the control system.
-        It adds requested_slot and requested_signal properties.
+        Monkey-patched verion of :class:`PyDMChannel` that allows proactive request for data from the control system.
+        It adds requested_slot and requested_signal properties and also allows to transmit context information
+        by attaching :class:`CContext` objects.
 
         Args:
             request_slot: Slot that widget provide in order to receive requested data
             request_signal: Signal from the channel instance to the connection to really request data from the control system.
+            context: Initial context attached to the channel.
         """
         self.request_slot = request_slot
         """Slot that receives value requested via :attr:`request_signal`.."""

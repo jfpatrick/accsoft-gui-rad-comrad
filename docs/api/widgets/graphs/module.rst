@@ -10,6 +10,11 @@ Graphs
     cscrollinginjectionbargraph
     cscrollingplot
     cscrollingtimestampmarker
+    cstaticbargraph
+    cstaticcurve
+    cstaticinjectionbargraph
+    cstaticplot
+    cstatictimestampmarker
 
 .. automodule:: comrad.widgets.graphs
     :members: ColumnNames, PlottingItemTypes

@@ -8,6 +8,7 @@ Widgets
     cbyteindicator
     ccheckbox
     ccommandbutton
+    ccontextframe
     cdisplay
     cembeddeddisplay
     cenumbutton

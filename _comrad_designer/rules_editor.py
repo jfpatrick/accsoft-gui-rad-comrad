@@ -1104,7 +1104,7 @@ class RulesEditorModel(AbstractListModel[CBaseRule], QAbstractListModel):
         """
         Validate the rules.
 
-        Throws:
+        Raises:
             ValueError: Produced when internal validation of the rule fails. Rules should not be saved into the widget
                         until they are fully validated.
         """

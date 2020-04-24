@@ -580,7 +580,7 @@ source_suffix = {
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3.6', None),
     'Qt': ('https://doc.qt.io/qt-5/', './qt.inv'),
-    'PyQt5': ('https://www.riverbankcomputing.com/static/Docs/PyQt5/', None),
+    'PyQt5': ('https://www.riverbankcomputing.com/static/Docs/PyQt5/', './pyqt.inv'),
     'QScintilla': ('https://www.riverbankcomputing.com/static/Docs/QScintilla/', './qsci.inv'),
     'pydm': ('http://slaclab.github.io/pydm/', './pydm.inv'),
     'numpy': ('http://docs.scipy.org/doc/numpy/', None),

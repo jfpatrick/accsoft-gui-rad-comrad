@@ -152,7 +152,7 @@ class CChannelDataProcessingMixin:
     def __init__(self):
         """
         Mixing that allows PyDM-derived widgets to work with updated
-        channels that use :class:`~comrad.data.channel.CChannelData`.
+        channels that use :class:`~comrad.CChannelData`.
         """
         self.header: Optional[Dict[str, Any]] = None
 

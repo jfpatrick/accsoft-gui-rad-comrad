@@ -13,3 +13,4 @@ Mix-ins
     cnopvtextformattermixin
     ccustomizedtooltipmixin
     crequestingmixin
+    cchanneldataprocessingmixin

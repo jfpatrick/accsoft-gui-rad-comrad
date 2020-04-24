@@ -1,0 +1,10 @@
+# Sphinx inventory version 2
+# Project: qt
+# Version: 5
+# The remainder of this file is compressed using zlib.
+PyQt5.QtCore.pyqtSignal py:class 1 signals_slots.html#PyQt5.QtCore.pyqtSignal pyqtSignal
+qtpy.QtCore.pyqtSignal py:class 1 signals_slots.html#PyQt5.QtCore.pyqtSignal pyqtSignal
+pyqtSignal py:class 1 signals_slots.html#PyQt5.QtCore.pyqtSignal -
+PyQt5.QtCore.pyqtSlot py:class 1 signals_slots.html#the-pyqtslot-decorator pyqtSlot
+qtpy.QtCore.pyqtSlot py:class 1 signals_slots.html#the-pyqtslot-decorator pyqtSlot
+pyqtSlot py:class 1 signals_slots.html#the-pyqtslot-decorator -
