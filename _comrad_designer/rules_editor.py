@@ -68,8 +68,6 @@ class AbstractListModel(Generic[LI], metaclass=GenericQObjectMeta):
         self.beginInsertRows(QModelIndex(), new_row, new_row)  # type: ignore   # presuming QAbstractItemView super
         self._data.append(self.create_row())
         self.endInsertRows()  # type: ignore   # presuming QAbstractItemView super
-        new_index = self.createIndex(new_row, 0)  # type: ignore   # presuming QAbstractItemView super
-        self.dataChanged.emit(new_index, new_index)  # type: ignore   # presuming QAbstractItemView super
 
     def remove_row_at_index(self, index: QModelIndex):
         """
@@ -194,6 +192,12 @@ class AbstractTableModel(AbstractListModel[S], QAbstractTableModel, Generic[S], 
             if caster != str:
                 new_obj.prop_val = caster(0)  # 0, 0.0 or False, based on the caster
         return new_obj
+
+    def append_row(self):
+        """Append a new empty row to the model."""
+        super().append_row()
+        new_row = len(self._data) - 1
+        self.dataChanged.emit(self.createIndex(new_row, 0), self.createIndex(new_row, self.columnCount() - 1))
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: Qt.ItemDataRole = Qt.DisplayRole) -> str:
         """
@@ -477,7 +481,6 @@ class JSONEditorWrapper(QObject):
             model.dataChanged.connect(self._model_updated)
             self.json_changed.connect(model.json_contents_updated)
             self._set_editor(model)
-            self._set_editor(model)
 
     def clear(self):
         """Clears editor."""
@@ -492,8 +495,9 @@ class JSONEditorWrapper(QObject):
 
     def _set_editor(self, model: AbstractTableModel):
         self._src_valid = True
-        QSignalBlocker(self._editor)  # Will reset in the destructor == when going out of scope
+        blocker = QSignalBlocker(self._editor)  # Will reset in the destructor == when going out of scope
         self._editor.setText(model.to_json(indent=QSCI_INDENTATION))
+        blocker.unblock()
 
     def _text_changed(self):
         if not self._model:
@@ -1090,6 +1094,12 @@ class RulesEditorModel(AbstractListModel[CBaseRule], QAbstractListModel):
                              prop=self._default_prop,
                              channel=CBaseRule.Channel.DEFAULT)
 
+    def append_row(self):
+        super().append_row()
+        new_row = len(self._data) - 1
+        new_index = self.createIndex(new_row, 0)
+        self.dataChanged.emit(new_index, new_index)
+
     def validate(self):
         """
         Validate the rules.
@@ -1395,10 +1405,13 @@ class RulesEditor(QDialog):
             rule_prop = rule.prop
             self.prop_combobox.setCurrentText(rule_prop)
             rule_type = rule.type()
-            eval_idx = self.eval_type_combobox.findData(rule_type)
+            eval_idx = self.eval_type_combobox.findData(rule_type.value)
             if eval_idx != -1:
-                QSignalBlocker(self.eval_type_combobox)  # We don't use "activated" and instead "currentIndexChanged" to not fire on the same option
+                # We don't use "activated" and instead "currentIndexChanged" to not fire on the same option
+                # but for that we need to block the signals to avoid a loop
+                blocker = QSignalBlocker(self.eval_type_combobox)
                 self.eval_type_combobox.setCurrentIndex(eval_idx)
+                blocker.unblock()
             self.eval_stack_widget.setCurrentIndex(rule_type)
             is_default_channel = rule.channel == CBaseRule.Channel.DEFAULT
             self.default_channel_checkbox.setChecked(is_default_channel)
@@ -1411,10 +1424,6 @@ class RulesEditor(QDialog):
             self.base_type_frame.setHidden(False)
             _, base_type = self._widget.RULE_PROPERTIES[rule.prop]
             self.base_type_lbl.setText(base_type.__name__)
-
-            combo_idx = self.eval_type_combobox.findData(rule_type.value)
-            if combo_idx > -1:
-                self.eval_type_combobox.setCurrentIndex(combo_idx)
 
             self.rule_updated.emit(rule, rule_type.value)
         else:
