@@ -141,10 +141,10 @@ class CBaseRule(CJSONSerializable, Validatable, metaclass=ABCMeta):
             raise TypeError(';'.join(errors))
 
     @classmethod
-    @abstractmethod
     def type(cls) -> 'CBaseRule.Type':
         """Defines to which type the given rule belongs."""
-        pass
+        return next((enum_val for enum_val, rule_class in CBaseRule.Type.rule_map().items()
+                     if issubclass(cls, rule_class)))
 
 
 @dataclass(init=False, repr=False, eq=False)
@@ -324,10 +324,6 @@ class CEnumRule(CBaseRule):
         if errors:
             raise TypeError(';'.join(errors))
 
-    @classmethod
-    def type(cls) -> 'CBaseRule.Type':
-        return CBaseRule.Type.ENUM
-
     def __repr__(self):
         return f'<{type(self).__name__} "{self.name}" [{self.prop}]>\n' + '\n'.join(map(repr, self.config))
 
@@ -364,10 +360,6 @@ class CExpressionRule(CBaseRule):
 
     def to_json(self):
         raise NotImplementedError()
-
-    @classmethod
-    def type(cls) -> 'CBaseRule.Type':
-        return CBaseRule.Type.PY_EXPR
 
 
 @dataclass(init=False, repr=False, eq=False)
@@ -533,10 +525,6 @@ class CNumRangeRule(CBaseRule):
 
         if errors:
             raise TypeError(';'.join(errors))
-
-    @classmethod
-    def type(cls) -> 'CBaseRule.Type':
-        return CBaseRule.Type.NUM_RANGE
 
     def __repr__(self):
         return f'<{type(self).__name__} "{self.name}" [{self.prop}]>\n' + '\n'.join(map(repr, self.ranges))

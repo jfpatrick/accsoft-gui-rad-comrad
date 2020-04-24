@@ -1412,9 +1412,6 @@ class RulesEditor(QDialog):
             _, base_type = self._widget.RULE_PROPERTIES[rule.prop]
             self.base_type_lbl.setText(base_type.__name__)
 
-            rule_type = next((enum_val for enum_val, rule_class in CBaseRule.Type.rule_map().items()
-                              if issubclass(type(rule), rule_class)))
-
             combo_idx = self.eval_type_combobox.findData(rule_type.value)
             if combo_idx > -1:
                 self.eval_type_combobox.setCurrentIndex(combo_idx)
