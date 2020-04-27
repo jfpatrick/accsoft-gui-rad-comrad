@@ -81,6 +81,20 @@ Index of widgets
 
                         Scale Indicator is a read-only slider that displays the numeric
                         value in perspective with pre-configured range.
+   CLed
+   ---------------------------------------------------------------------------------------
+   |cled|               .. _cled:
+
+                        Basic LED that displays a circle with certain fill color. It can
+                        display a color based on incoming boolean value, but altering
+                        between :attr:`~comrad.CLed.onColor` and
+                        :attr:`~comrad.CLed.offColor`, or the Enum value, by comparing its
+                        "meaning" field with the predefined status options:
+                        :obj:`~comrad.data.japc_enum.CEnumValue.Meaning.ON`,
+                        :obj:`~comrad.data.japc_enum.CEnumValue.Meaning.OFF`,
+                        :obj:`~comrad.data.japc_enum.CEnumValue.Meaning.WARNING`,
+                        :obj:`~comrad.data.japc_enum.CEnumValue.Meaning.ERROR` or
+                        :obj:`~comrad.data.japc_enum.CEnumValue.Meaning.NONE`.
    ===================  ==================================================================
 
 
@@ -161,6 +175,21 @@ Index of widgets
                         Spinbox allows altering a numeric value with a certain step
                         between adjacent values. The changes are submitted when the user
                         presses "Enter".
+   CPropertyEdit
+   ---------------------------------------------------------------------------------------
+   |cpropertyedit|      .. _cpropertyedit:
+
+                        Property edit allows interacting with multiple fields of the same
+                        property. Its main advantage, is that it allows writing (or
+                        getting) fields in an atomic way with a single button click. By
+                        default it will layout widgets in a form, picking the best
+                        matching widget for each of the field types. However, it is
+                        possible to customize both layout and rendered widgets via the
+                        delegate system. **Note! CPropertyEdit is not and should not be
+                        treated as a convenience that removes the need placing several
+                        widgets (one per field). It will not support all the features that
+                        individual widgets offer (e.g.** :doc:`widget rules <rules>` **for
+                        individual fields).**
    ===================  ==================================================================
 
 
@@ -187,6 +216,16 @@ Index of widgets
                         customizing each of them via the :doc:`macros <macros>` system.
                         For instance, you can display information about multiple devices
                         side by side without duplicating UI during development.
+   CContextFrame
+   ---------------------------------------------------------------------------------------
+   |ccontextframe|      .. _ccontextframe:
+
+                        This container allows to update its child widgets with a new
+                        control-system context by redefining context-related properties,
+                        such as cycle selector or data filters. This allows a group of
+                        widgets to connect in a different way than the rest of the
+                        application (application-level cycle selector is chosen via
+                        PLS toolbar button, and data filters are undefined by default).
    ===================  ==================================================================
 
 
@@ -214,6 +253,14 @@ Index of widgets
                         previous display, similar to how heart monitors do it. It is
                         useful for displaying data in the context of a cycle of the
                         injector / accelerator.
+   CStaticPlot
+   ---------------------------------------------------------------------------------------
+   |cstaticplot|        .. _cstaticplot:
+
+                        Static plot is not moving with time and allows replacing the
+                        entire contents of the graph, rather than appending points to the
+                        existing data set. This makes it perfect for displaying waveforms,
+                        frequencies, or simply graphs that are recalculated on every tick.
    ===================  ==================================================================
 
 
@@ -238,6 +285,7 @@ Index of widgets
 .. |clogdisplay| image:: ../img/widget_clogdisplay.png
 .. |cscaleindicator| image:: ../img/widget_cscaleindicator.png
 .. |ccheckbox| image:: ../img/widget_ccheckbox.png
+.. |cled| image:: ../img/widget_cled.png
 .. |cenumbutton| image:: ../img/widget_cenumbutton.png
 .. |ccommandbutton| image:: ../img/widget_ccommandbutton.png
 .. |crelateddisplay| image:: ../img/widget_crelateddisplay.png
@@ -246,8 +294,11 @@ Index of widgets
 .. |clineedit| image:: ../img/widget_clineedit.png
 .. |cslider| image:: ../img/widget_cslider.png
 .. |cspinbox| image:: ../img/widget_cspinbox.png
+.. |cpropertyedit| image:: ../img/widget_cpropertyedit.png
 .. |cembeddeddisplay| image:: ../img/widget_cembeddeddisplay.png
 .. |ctemplaterepeater| image:: ../img/widget_ctemplaterepeater.png
+.. |ccontextframe| image:: ../img/widget_ccontextframe.png
 .. |cscrollingplot| image:: ../img/widget_cscrollingplot.png
 .. |ccyclicplot| image:: ../img/widget_ccyclicplot.png
+.. |cstaticplot| image:: ../img/widget_cstaticplot.png
 .. |cvalueaggregator| image:: ../img/widget_cvalueaggregator.png

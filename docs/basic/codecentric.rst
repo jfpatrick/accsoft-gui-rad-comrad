@@ -7,7 +7,7 @@ similarly to \*.ui files:
 
 .. code-block:: bash
 
-   comrad run my_file.py
+   comrad run /path/to/my/app.py
 
 - `Subclass CDisplay`_
 - `Add widgets manually`_
@@ -64,7 +64,7 @@ initialization:
            self.setLayout(layout)
 
            label = CLabel()
-           label.channel = 'japc:///myDevice/myProperty#myField'
+           label.channel = 'myDevice/myProperty#myField'
 
            self.layout().addWidget(label)
            layout.addWidget(label)

@@ -1,6 +1,10 @@
 CPropertyEdit
 =====================
 
+.. autoclass:: comrad.CPropertyEditField
+    :members:
+    :inherited-members:
+
 .. inheritance-diagram:: comrad.CPropertyEdit
     :parts: 1
     :top-classes: PyQt5.QtWidgets.QWidget

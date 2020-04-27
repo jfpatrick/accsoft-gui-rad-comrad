@@ -44,7 +44,10 @@ minor details:
 #. ``output`` is a reserved name of a function that you should call in order to propagate the value to the widget.
    Hence, ``output(10)`` will propagate value "10" to the widget, as if it was coming directly from the control system.
 #. Incoming values are propagated inside ``values`` dictionary for :ref:`CValueAggregator <cvalueaggregator>` widget,
-   or as ``new_val`` variable for all other widgets. All other widgets also receive ``widget`` variable that is the
+   or as ``new_val`` variable for all other widgets.
+#. Incoming meta-information is propagated inside ``headers`` dictionary for :ref:`CValueAggregator <cvalueaggregator>`
+   widget, or as ``header`` variable for all other widgets.
+#. All regular widgets (except :ref:`CValueAggregator <cvalueaggregator>`) receive ``widget`` variable that is the
    reference to the widget object (if you want to modify widget properties as a side effect, which is not encouraged).
 #. :obj:`__file__` variable will be preset to the path of the file, where the code comes from. If
    :attr:`~comrad.widgets.value_transform.CValueTransformationBase.valueTransformation` property is defined inside the
@@ -52,7 +55,7 @@ minor details:
    ``/absolute/path/to/my/designer/file.ui``. If used from the external Python file, or the file imported into the
    snippet, path to that Python file will be set, i.e. setting
    :attr:`~comrad.widgets.value_transform.CValueTransformationBase.snippetFilename` inside
-   ``/absolute/path/to/my/designer/file.ui`` to ``external.py`` will result in ``__file__`` being equal to
+   ``/absolute/path/to/my/designer/file.ui`` to ``external.py`` will result in :obj:`__file__` being equal to
    ``/absolute/path/to/my/designer/external.py``.
 
 
@@ -175,15 +178,16 @@ transformation for data on one or more property fields.
 
 User configures channels to which this widget connects and attaches Python transformation. Inside that Python code,
 incoming values are accessed via ``values`` dictionary, where keys are addresses of the respective property fields.
+Similarly, ``headers`` dictionary will contain the very same keys, but with meta-information stored in there.
 It allows you to produce a single output value from multiple input values. For instance, consider a device property
 "device/property" that has fields "voltage" and "current". If we want to display the power in a label, we can make a
-:class:`~comrad.CValueAggregator` widget and connect it to 2 channels: ``japc://device/property#votlage``,
-``japc:://device/property#current``. Now, we create a transformation with the code below:
+:class:`~comrad.CValueAggregator` widget and connect it to 2 channels: ``device/property#votlage``,
+``device/property#current``. Now, we create a transformation with the code below:
 
 .. code-block:: python
 
-   V = values['japc://device/property#votlage']
-   I = values['japc://device/property#current']
+   V = values['device/property#votlage']
+   I = values['device/property#current']
    output(V * I)
 
 and connect :meth:`CValueAggregator.updateTriggered(double) <comrad.CValueAggregator.updateTriggered>` signal to

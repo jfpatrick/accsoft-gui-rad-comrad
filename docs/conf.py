@@ -49,7 +49,7 @@ extensions = [
     'sphinx.ext.napoleon',  # This needs to be before typehints
     'sphinx_autodoc_typehints',
     'sphinx.ext.inheritance_diagram',  # Draw inheritance diagrams
-    'sphinx.ext.graphviz',  # Needed to draw diagrams produced by plugin above
+    'sphinx.ext.graphviz',  # Needed to draw diagrams produced by plugin above (and also by hand)
     'sphinx.ext.todo',
 ]
 
@@ -82,6 +82,7 @@ html_favicon = html_logo
 html_css_files = [
     'fix_tables.css',
     'fix_bullets.css',
+    'fix_logo.css',
 ]
 
 # Both the class’ and the __init__ method’s docstring are concatenated and inserted.
