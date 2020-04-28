@@ -2,7 +2,7 @@ import logging
 from typing import Optional, Dict, Any, Union, cast
 from qtpy.QtWidgets import QWidget, QLabel, QComboBox
 from qtpy.QtCore import Property, QVariant, Signal
-from qtpy.QtGui import QFocusEvent
+from qtpy.QtGui import QFocusEvent, QGuiApplication, QPalette, QColor
 from pydm.widgets.base import PyDMWritableWidget
 from pydm.widgets.line_edit import PyDMLineEdit
 from pydm.widgets.slider import PyDMSlider
@@ -133,9 +133,30 @@ class CLineEdit(CColorRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixi
 
         Args:
             val: The new value of the color."""
+        if val == self.rule_color():
+            return
         super().set_color(val)
-        self.setStyleSheet(f'background-color: {val}' if val else None)
-        # TODO: Calculate color and choose appropriate text color by the contrast ratio
+        app_palette = QGuiApplication.palette()
+        bkg_color = app_palette.color(QPalette.Base) if val is None else QColor(val)
+        palette = self.palette()
+        palette.setColor(QPalette.Base, bkg_color)
+
+        if val is not None:
+            # Invert text color using HSV model to make it readable on the background:
+            # https://doc.qt.io/qt-5/qcolor.html#the-hsv-color-model
+            brightness = bkg_color.value()
+            new_val = 0 if brightness >= 127 else 255
+            new_color = QColor.fromHsv(0, 0, new_val)
+            palette.setColor(QPalette.Text, new_color)
+        else:
+            palette.setColor(QPalette.Text, app_palette.color(QPalette.Text))
+
+        # We need custom property for rule_override.qss to detect it,
+        # otherwise custom QSS will always override the color
+        self.setProperty('rule-override', val is not None)
+        self.style().unpolish(self)
+        self.style().polish(self)
+        self.setPalette(palette)
 
 
 class CSlider(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixin, CInitializedMixin, CHideUnusedFeaturesMixin, CNoPVTextFormatterMixin, PyDMSlider):

@@ -232,3 +232,13 @@ class CApplication(PyDMApplication):
         logger.warning(f'Control system warning received: {message}')
         if display_popup:
             QMessageBox.warning(None, 'Control system problem', message)
+
+    def make_main_window(self, stylesheet_path: Optional[str] = None):
+        super().make_main_window(stylesheet_path)
+        main_window = self.main_window
+        stylesheet = main_window.styleSheet()
+        patch_stylesheet = Path(__file__).parent.absolute() / 'rule_override.qss'
+        with patch_stylesheet.open() as f:
+            stylesheet += f.read()
+            main_window.setStyleSheet(stylesheet)
+            logger.debug('Augmented application stylesheet with color rule overrides')
