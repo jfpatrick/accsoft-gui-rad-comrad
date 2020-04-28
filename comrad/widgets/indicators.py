@@ -4,7 +4,7 @@ import numpy as np
 from typing import List, Union, Optional, cast
 from qtpy.QtWidgets import QWidget
 from qtpy.QtCore import Property
-from qtpy.QtGui import QColor
+from qtpy.QtGui import QColor, QPalette, QGuiApplication
 from pydm.widgets.scale import PyDMScaleIndicator
 from pydm.widgets.label import PyDMLabel
 from pydm.widgets.byte import PyDMByteIndicator
@@ -64,14 +64,18 @@ class CLabel(CColorRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixin, 
 
         Args:
             val: The new value of the color."""
+        if val == self.rule_color():
+            return
         super().set_color(val)
-        # color = self._default_color if val is None else QColor(val)
-        # palette = self.palette()
-        # palette.setColor(self.foregroundRole(), color)
-        # self.setPalette(palette)
-        # We can't use palettes here because custom stylesheet passed via CLI will override it...
-        # TODO: Also check QSS dynamic properties and polish/unpolish. But that means we need to parse rules and preset stylesheet before
-        self.setStyleSheet(f'color: {val}' if val else None)
+        color = QGuiApplication.palette().color(QPalette.WindowText) if val is None else QColor(val)
+        palette = self.palette()
+        palette.setColor(QPalette.WindowText, color)
+        # We need custom property for rule_override.qss to detect it,
+        # otherwise custom QSS will always override the color
+        self.setProperty('rule-override', val is not None)
+        self.style().unpolish(self)
+        self.style().polish(self)
+        self.setPalette(palette)
 
 
 # TODO: Expose frame? What is it used for?

@@ -1,0 +1,12 @@
+/* These additions ensure that custom style sheet does not override palettes set by the rules.
+ By default, QPalette seems to be less prioritized than QStyleSheet, and setting a custom
+ stylesheet, e.g. dark mode, prevents custom rule colors from appearing.
+*/
+QLabel[rule-override=true] {
+    color: none;
+}
+
+QLineEdit[rule-override=true] {
+    background-color: none;
+    color: none;
+}
