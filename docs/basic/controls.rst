@@ -88,14 +88,14 @@ pieces of information:
 - `Data filters`_
 
 There's at least one context that exists in the running application. It is controlled by the main window. Thus, when
-you change a `PLS selector in the main window <Altering application-wide cycle selector>`_, it will update all
-connections in that window. During the connection, widgets request context information. Updating a property of their
-context will result in termination of the previous connection and creation of the new one.
+you change a :ref:`PLS selector in the main window <basic/controls:Altering application-wide cycle selector>`, it will
+update all connections in that window. During the connection, widgets request context information. Updating a property
+of their context will result in termination of the previous connection and creation of the new one.
 
-You can also `add an additional context <Specializing connection using contexts and CContextFrame>`_, in which case it
-may override a certain property, or may choose to inherit it. Multiple contexts are arranged in the parent-child
-relationship tree, with window context always being the root, where children can choose to inherit or override
-the individual properties of the parent context.
+You can also :ref:`add an additional context <basic/controls:Specializing connection using contexts and CContextFrame>`,
+in which case it may override a certain property, or may choose to inherit it. Multiple contexts are arranged in the
+parent-child relationship tree, with window context always being the root, where children can choose to inherit or
+override the individual properties of the parent context.
 
 .. graphviz::
    :align: center
