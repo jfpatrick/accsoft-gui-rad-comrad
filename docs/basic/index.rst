@@ -7,8 +7,8 @@ simple application. If you have never used it, consider reviewing :doc:`Getting 
 .. toctree::
    :maxdepth: 1
 
-   channels
    widgets
+   controls
    macros
    mix
    codecentric

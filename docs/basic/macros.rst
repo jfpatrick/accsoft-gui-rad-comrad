@@ -40,7 +40,9 @@ line interface:
 
 .. code-block:: bash
 
-   comrad run -m 'variable1=value, variable2=another_value' my_file.ui
+   comrad run \
+     -m 'variable1=value, variable2=another_value' \
+     /path/to/my/app.ui
 
 
 Macros in Python-based displays

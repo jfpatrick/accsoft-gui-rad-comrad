@@ -28,3 +28,4 @@ Widgets
     cvalueaggregator
     graphs/module
     mixins/module
+    delegates/module

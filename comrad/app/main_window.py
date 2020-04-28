@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class CMainWindowSignalHelper(QObject, CContextProvider):
 
     contextUpdated = Signal()
-    """Signal to communicate to children that context need to be updated and possibly connections need to be re-established."""
+    """Signal to communicate to children that context needs to be updated and possibly connections need to be re-established."""
 
     def __init__(self, parent: Optional[QObject] = None):
         """

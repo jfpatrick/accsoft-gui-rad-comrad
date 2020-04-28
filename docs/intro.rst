@@ -3,9 +3,7 @@ Getting started
 
 Now that you have installed ComRAD as explained in the :doc:`install`, we can start using it.
 
-.. topic:: Remember
-
-   You must always start using PyQt applications with
+.. note:: You must always start using PyQt applications with
    `activating PyQt distribution <https://wikis.cern.ch/display/ACCPY/PyQt+distribution#PyQtdistribution-activation>`__.
 
 
@@ -153,15 +151,8 @@ Connect to the control system
 
 Have a look at the property editor and locate property called ``channel``. This is the address, which tells
 ComRAD to connect to a device in the control system. Address almost follows the standard CERN
-device-property notation, with two small caveats:
-
-#. You must specify the protocol. It tells ComRAD which control system adapter to use. The default protocol
-   is ``japc://``. Use it unless you have reasons not to.
-#. Cycle selector information is embedded in the address, using a ``@`` delimiter. For example:
-   ``japc:///mydevice/myproperty#myfield@LHC.USER.ALL``.
-
-On the right-hand side of the ``channel`` field, you will see a ``...`` button. Click it to open a device
-selector dialog.
+device-property notation. On the right-hand side of the ``channel`` field, you will see a ``...`` button. Click it to
+open a device selector dialog.
 
 .. figure:: img/device_selector.png
    :align: center

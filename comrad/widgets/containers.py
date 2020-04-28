@@ -67,7 +67,7 @@ be integrated inside another display using CEmbeddedDisplay.
 class CContextFrame(QFrame, CContextProvider):
 
     contextUpdated = Signal()
-    """Signal to communicate to children that context need to be updated and possibly connections need to be re-established."""
+    """Signal to communicate to children that context needs to be updated and possibly connections need to be re-established."""
 
     def __init__(self, parent: Optional[QWidget] = None, context: Optional[CContext] = None):
         """

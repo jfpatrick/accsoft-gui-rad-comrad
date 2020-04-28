@@ -190,7 +190,7 @@ class CContextProvider(metaclass=GenericQObjectMeta):
 
     contextUpdated: Signal = None
     """
-    Signal to communicate to children that context need to be updated and possibly connections need
+    Signal to communicate to children that context needs to be updated and possibly connections need
     to be re-established. This is just a placeholder. Subclasses must implement the actual signal.
     """
 

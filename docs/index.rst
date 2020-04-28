@@ -25,8 +25,10 @@ Quick links
   * |mattermost| Mattermost: `acc-py`_
 
 
+Wiki contents
+-------------
+
 .. toctree::
-   :caption: Wiki contents:
    :maxdepth: 2
 
    install
@@ -34,14 +36,14 @@ Quick links
    basic/index
    advanced/index
    api/index
-   contrib
    deploy
+   Changelog <https://gitlab.cern.ch/acc-co/accsoft/gui/rad/accsoft-gui-rad-comrad/-/releases>
 
 
-Contents of this page:
+Contents of this page
 ----------------------
 
-- `Description`_
+- Description_
 - `Design time`_
 - `Run time`_
 

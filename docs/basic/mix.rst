@@ -6,7 +6,7 @@ ComRAD Designer. This file can be launched using the following command:
 
 .. code-block:: bash
 
-   comrad run my_file.ui
+   comrad run /path/to/my/app.ui
 
 However, if you want to go beyond basic capabilities of Designer, you can do so by mixing some logic
 written in Python and modifying your UIs from code.
@@ -79,7 +79,7 @@ Let's go ahead and assign a channel to this label during initialization:
            super().__init__(*args, **kwargs)
 
            # Assign custom channel
-           self.my_label.channel = 'japc:///myDevice/myProperty#myField'
+           self.my_label.channel = 'myDevice/myProperty#myField'
 
        ...
 
@@ -88,7 +88,7 @@ below to see the label displaying real values.
 
 .. code-block:: bash
 
-   comrad run app.py
+   comrad run /path/to/my/app.py
 
 .. topic:: Remember
 
@@ -169,7 +169,7 @@ objects.
           self.setupUi(self)  # Actually create widgets
 
           # Assign custom channel
-          self.my_label.channel = 'japc:///myDevice/myProperty#myField'
+          self.my_label.channel = 'myDevice/myProperty#myField'
 
 You notice that we are using multiple inheritance now, where ``MyDisplay`` is a subclass of both
 :class:`~comrad.CDisplay` and ``Ui_Form``. While, making our code look nice (with direct access to ``self.my_label``)
@@ -193,6 +193,6 @@ choose the path of composition, where your UI objects are scoped inside another 
           self.ui.setupUi(self)
 
           # Assign custom channel
-          self.ui.my_label.channel = 'japc:///myDevice/myProperty#myField'
+          self.ui.my_label.channel = 'myDevice/myProperty#myField'
 
 Notice, that now we have to access ``self.ui.my_label`` instead of ``self.my_label``.

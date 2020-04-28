@@ -2,10 +2,14 @@ Installation
 ============
 
 - `Prerequisites`_
-- `Install using "pip" from CO package index`_
-- `Install using "pip" from Gitlab repository`_
-- `Install using "pip" from source`_
-- `Installing outside of "Accelerating Python" environment`_
+- `Install`_
+
+  * `Using "pip" from CO package index`_
+  * `Using "pip" from Gitlab repository`_
+  * `Using "pip" from source`_
+  * `Installing outside of "Accelerating Python" environment`_
+
+- `Setup auto-completion (optional)`_
 
 
 Prerequisites
@@ -16,25 +20,34 @@ Make sure that you have
 so you have a proper "pip" version and access to our package index.
 
 
+Install
+-------
 
-Install using "pip" from CO package index
------------------------------------------
+
+Using "pip" from CO package index
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: bash
 
    pip install comrad
 
 
-Install using "pip" from Gitlab repository
-------------------------------------------
+Using "pip" from Gitlab repository
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: bash
 
    pip install git+https://gitlab.cern.ch/acc-co/accsoft/gui/rad/accsoft-gui-rad-comrad.git
 
+Or if you need specific branch
 
-Install using "pip" from source
--------------------------------
+.. code-block:: bash
+
+   pip install git+https://gitlab.cern.ch/acc-co/accsoft/gui/rad/accsoft-gui-rad-comrad.git@branch-name
+
+
+Using "pip" from source
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: bash
 
@@ -44,7 +57,7 @@ Install using "pip" from source
 
 
 Installing outside of "Accelerating Python" environment
--------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 All of the above commands are true without "Accelerating Python" environment, however you need to make
 sure that packages can be installed correctly.
@@ -75,3 +88,28 @@ sure that packages can be installed correctly.
 
 .. note:: When using ComRAD outside of "Accelerating Python" environment, you will not have
           "ComRAD Designer" mode, and will only be able to work with standard Qt Designer.
+
+
+Setup auto-completion (optional)
+--------------------------------
+
+ComRAD takes advantage of `argcomplete <https://github.com/kislyuk/argcomplete>`__ - an auto-completion assistant.
+To have auto-completion enabled for ``comrad`` commands, you need to activate it.
+
+#. If you are using virtual environments, `argcomplete <https://github.com/kislyuk/argcomplete>`__ will be installed
+   as part of ComRAD dependencies. Now you need to enable auto-completion that is specific to your virtual environment.
+   One of the ways to achieve it is by augmenting virtual environment's ``activate`` script:
+
+   .. code-block:: bash
+
+      echo 'eval "$(register-python-argcomplete comrad)"' >> /path/to/venv/bin/activate
+
+#. If you are **not** using virtual environments and have installed ComRAD globally (not advised), you can use global
+   activation - in this case the auto-completion will be available in every terminal session
+   (`More info <https://github.com/kislyuk/argcomplete#activating-global-completion>`__):
+
+   .. code-block:: bash
+
+      activate-global-python-argcomplete
+
+   Such activation can be added to your ``~/.bashrc`` script to be executed for every terminal session.

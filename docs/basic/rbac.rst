@@ -54,7 +54,9 @@ e.g.
 
 .. code-block:: bash
 
-   comrad run --disable-plugins comrad.rbac my_app.ui
+   comrad run \
+     --disable-plugins comrad.rbac \
+     /path/to/my/app.ui
 
 .. note:: In the future, we may consider embedding this information into the application file, so that certain
           applications will hide the bar item by default.

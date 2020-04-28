@@ -1,0 +1,10 @@
+Delegates
+=========
+
+.. toctree::
+
+    cabstractpropertyeditlayoutdelegate
+    cabstractpropertyeditwidgetdelegate
+
+
+
