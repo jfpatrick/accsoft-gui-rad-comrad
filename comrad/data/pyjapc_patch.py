@@ -64,11 +64,73 @@ def _original_fixed_get_param(self,
         p.getValue(s, listener)
 
 
+def _fixed_papc_get_param(self, parameterName, getHeader=False, noPyConversion=False,
+                          unixtime=False, onValueReceived=None, onException=None, **kwargs):
+    # The main difference here is that papc never passes the header to onValueReceived event
+    # when getHeader is set to True. The rest is almost identical to v0.4 (except for fixing code style
+    # to keep linters happy)
+
+    # We mimic the (ugly) interface exposed by PyJapc to support timingSelectorOverride.
+    selector = kwargs.pop('timingSelectorOverride', self.selector)
+    if kwargs:
+        self._raise_error(NotImplementedError('getParam with arbitrary kwargs not supported in simulation mode'))
+    if unixtime or noPyConversion:
+        self._raise_error(NotImplementedError('unixtime and/or noPyConversion not supported in simulation mode'))
+    if onException:
+        self._raise_error(NotImplementedError('onException not supported in simulation mode'))
+
+    # TODO: we are not mimicking the exceptions raised just yet.
+    from papc.reference import PropertyReference
+    from papc.reference import FieldReference
+
+    # Py36 workaround :(
+    from papc.system import _parameter_ref_from_string, ParameterReferenceType
+    PR_from_string = getattr(ParameterReferenceType, 'from_string', _parameter_ref_from_string)
+
+    param_ref = PR_from_string(parameterName)
+    result = self.system.get(param_ref, selector)
+
+    # We have different behaviour for properties vs fields (for getHeader).
+    # For props: we have a dictionary of ``{prop_name: values}, {prop_headers}``
+    # For fields: we have ``value, {prop_headers}``
+
+    if isinstance(param_ref, PropertyReference):
+        # Pull out just the field name.
+        f_name = lambda name: FieldReference(name).field
+        value = {f_name(field): data['value'] for field, data in result.items()}
+    else:
+        # Get the only item out of the result dictionary.
+        [field_result] = result.values()
+        value = field_result['value']
+
+    if onValueReceived:
+        if getHeader:
+            header = self._get_header_base(selector)
+            onValueReceived(parameterName, value, header)
+        else:
+            onValueReceived(value)
+    else:
+        if getHeader:
+            header = self._get_header_base(selector)
+            return value, header
+        else:
+            return value
+
+
 # This is a hack, and should be abstracted away, but with current status of both,
 # and the need to override getParam, it's impossible.
 # TODO: Eliminate this when PyJapc and PAPC are improved
 if not PyJapc.__module__.startswith('papc.'):
     PyJapc.getParam = _original_fixed_get_param
+else:
+    # This is another hack, because papc has to have the same interface as PyJapc,
+    # And we are fixing PyJapc interface, papc change needs to be done, but it cant
+    # be submitted to the official papc, until official PyJapc is done. Until recently,
+    # solution was to use forked papc, but it's not friendly for comrad release, as
+    # might fail to download on machines that do not have ssh keys for gitlab, or if
+    # we switched to https, would require users to always enter credentials.
+    # The original forked fix is here: git+ssh://git@gitlab.cern.ch:7999/isinkare/papc.git@fix/async-get-interface
+    PyJapc.getParam = _fixed_papc_get_param
 
 
 class CPyJapc(QObject, PyJapc):
