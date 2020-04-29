@@ -11,8 +11,6 @@ API Reference
     data/module
     json/module
     plugins/module
-    icons/module
-    qsci/module
 
 
 
