@@ -26,7 +26,7 @@ requirements = {
         'QtPy>=1.7,<2',
         'pyjapc==2.1.2',  # We must keep it pinned to this version, because comrad is obliged to override getParam, which makes it very fragile to changes
         'accwidgets>=0.3,<0.4',
-        'papc @ git+ssh://git@gitlab.cern.ch:7999/isinkare/papc.git@fix/async-get-interface',  # 'papc>=0.4.0&&<1',
+        'papc>=0.4,<0.5',
         'pydm==1.8.0.post0',
         'JPype1>=0.7,<0.7.2',  # 0.7.2 seems incompatible with pyjapc as of now
         'dataclasses~=0.7;python_version<"3.7"',
