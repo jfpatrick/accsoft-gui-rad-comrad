@@ -165,13 +165,13 @@ def test_modify_in_place_property_combinations(obj_cls, getter_overridden, sette
     class Sub2(Medium2, MonkeyPatchedClass):
         """Class that defines properties incorrectly, so only setter is usable."""
 
-        @Medium2.prop.getter
+        @Medium2.prop.getter  # noqa: F811   flake8 actually catches this mistake
         def prop(self):
             self.sub_getter_called = True
             return self._overridden_members['prop'].fget(self)
 
         @Medium2.prop.setter  # noqa: F811   flake8 actually catches this mistake
-        def prop(self, new_val: str):
+        def prop(self, new_val: str):  # noqa: F811   flake8 actually catches this mistake
             self.sub_setter_called = True
             self._overridden_members['prop'].fset(self, new_val)
 
@@ -179,13 +179,13 @@ def test_modify_in_place_property_combinations(obj_cls, getter_overridden, sette
     class Sub3(Medium3, MonkeyPatchedClass):
         """Class that defines properties incorrectly, so only getter is usable."""
 
-        @Medium3.prop.setter
+        @Medium3.prop.setter  # noqa: F811   flake8 actually catches this mistake
         def prop(self, new_val: str):
             self.sub_setter_called = True
             self._overridden_members['prop'].fset(self, new_val)
 
         @Medium3.prop.getter  # noqa: F811   flake8 actually catches this mistake
-        def prop(self):
+        def prop(self):  # noqa: F811   flake8 actually catches this mistake
             self.sub_getter_called = True
             return self._overridden_members['prop'].fget(self)
 
