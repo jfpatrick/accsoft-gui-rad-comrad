@@ -66,6 +66,7 @@ ComRAD is integrated with several linting utilities:
 
 - [flake8](https://pypi.org/project/flake8/)
 - [mypy](https://pypi.org/project/mypy/)
+- [qsslint](https://github.com/KDAB/qsslint)
 
 (we intentionally do not use [pylint](https://pypi.org/project/pylint/) because it creates too
 much overhead)
@@ -86,6 +87,17 @@ For mypy (it does not handle PEP420 packages, so you'd need to specify them as a
 ```bash
 mypy . tests docs comrad/app comrad/app/plugins/toolbar comrad/data _comrad
 ```
+
+For qsslint:
+```bash
+find . -name "*.qss" | xargs qsslint 
+```
+
+>
+**Note!** qsslint needs to have access to the graphics stack, therefore running in Docker needs
+more attention. Also, it's a custom tool, and we rely on it being the part of the PyQt
+distribution.
+>
 
 ## Building documentation
 
