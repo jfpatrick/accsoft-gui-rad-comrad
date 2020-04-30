@@ -2,7 +2,7 @@ import logging
 import os
 from typing import Optional, List, cast
 from pathlib import Path
-from qtpy.QtWidgets import QDialog, QWidget, QComboBox, QFrame, QCheckBox
+from qtpy.QtWidgets import QDialog, QWidget, QComboBox, QFrame, QCheckBox, QStackedWidget, QLabel
 from qtpy.QtGui import QShowEvent
 from qtpy.QtCore import QStringListModel, Qt
 from qtpy.uic import loadUi
@@ -15,6 +15,10 @@ logger = logging.getLogger(__name__)
 
 
 class PLSSelectorDialog(QDialog):
+
+    STACK_COMPLETE = 0
+    STACK_LOADING = 1
+    STACK_ERROR = 2
 
     def __init__(self, parent: Optional[QWidget] = None):
         """
@@ -30,6 +34,8 @@ class PLSSelectorDialog(QDialog):
         self.line_combo: QComboBox = None
         self.chooser_frame: QFrame = None
         self.no_selector: QCheckBox = None
+        self.stack: QStackedWidget = None
+        self.error: QLabel = None
 
         loadUi(Path(__file__).parent / 'pls_dialog.ui', self)
 
@@ -75,11 +81,25 @@ class PLSSelectorDialog(QDialog):
             return
 
         # Only execute this once after being shown for the first time
-        self._data = list(self.ccda.SelectorDomain.search())
+        self.stack.setCurrentIndex(self.STACK_LOADING)
+        try:
+            self._data = list(self.ccda.SelectorDomain.search())
+        except Exception as e:
+            err_msg = 'Failed to contact CCDB'
+            logger.error(f'{err_msg}: {e}')
+            self.stack.setCurrentIndex(self.STACK_ERROR)
+            self.error.setText(err_msg)
+            # FIXME: When PyCCDA fixes its exception to abstract it away from urllib3 implementation, we should catch it instead of general one
+            return
 
         if not self._data:
-            logger.debug('Empty data received from CCDA. Cannot populate PLS dialog.')
+            err_msg = 'Empty data received from CCDA. Cannot populate PLS dialog.'
+            logger.debug(err_msg)
+            self.stack.setCurrentIndex(self.STACK_ERROR)
+            self.error.setText(err_msg)
             return
+
+        self.stack.setCurrentIndex(self.STACK_COMPLETE)
 
         cast(QStringListModel, self.machine_combo.model()).setStringList([x.name for x in self._data])
         if self._original_machine is None:
