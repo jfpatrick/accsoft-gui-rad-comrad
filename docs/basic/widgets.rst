@@ -69,6 +69,8 @@ Index of widgets
 
                         | **Note! This component is not related to the logs**
                           **control system, such as Timber / CALS / NXCALS.**
+                        |
+
                         Log display simply captures conventional Python
                         :class:`logging.Logger` output to display messages in the UI, when
                         console output cannot be seen, e.g. when launched form CCM. These

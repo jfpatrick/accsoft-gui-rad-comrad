@@ -38,6 +38,9 @@ QFrame py:class 1 qframe.html -
 PyQt5.QtWidgets.QLabel py:class 1 qlabel.html QLabel
 qtpy.QtWidgets.QLabel py:class 1 qlabel.html QLabel
 QLabel py:class 1 qlabel.html -
+PyQt5.QtGui.QPen py:class 1 qpen.html QPen
+qtpy.QtGui.QPen py:class 1 qpen.html QPen
+QPen py:class 1 qpen.html -
 PyQt5.QtWidgets.QGraphicsView py:class 1 qgraphicsview.html QGraphicsView
 qtpy.QtWidgets.QGraphicsView py:class 1 qgraphicsview.html QGraphicsView
 QGraphicsView py:class 1 qgraphicsview.html -
@@ -59,3 +62,9 @@ QWidget.setParent py:method 1 qwidget.html#setParent -
 PyQt5.QtWidgets.QLabel.setNum py:method 1 qlabel.html#setNum QLabel.setNum
 qtpy.QtWidgets.QLabel.setNum py:method 1 qlabel.html#setNum QLabel.setNum
 QLabel.setNum py:method 1 qlabel.html#setNum -
+PyQt5.QtWidgets.QGraphicsItem.GraphicsItemFlags py:class 1 qgraphicsitem.html#GraphicsItemFlag-enum QGraphicsItem.GraphicsItemFlags
+qtpy.QtWidgets.QGraphicsItem.GraphicsItemFlags py:class 1 qgraphicsitem.html#GraphicsItemFlag-enum QGraphicsItem.GraphicsItemFlags
+QGraphicsItem.GraphicsItemFlags py:class 1 qgraphicsitem.html#GraphicsItemFlag-enum -
+PyQt5.QtCore.Qt.PenStyle py:class 1 qt.html#PenStyle-enum Qt.PenStyle
+qtpy.QtCore.Qt.PenStyle py:class 1 qt.html#PenStyle-enum Qt.PenStyle
+Qt.PenStyle py:class 1 qt.html#PenStyle-enum -

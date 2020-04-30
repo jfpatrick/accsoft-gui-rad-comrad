@@ -1,5 +1,7 @@
 from typing import List
 from datetime import datetime
+from sys import version_info as py_version
+from qtpy.QtCore import qVersion, PYQT_VERSION_STR
 from comrad import __version__, __author__
 
 # Configuration file for the Sphinx documentation builder.
@@ -46,7 +48,7 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.autosectionlabel',  # To allow cross-referencing sections between documents
     'sphinx.ext.intersphinx',  # To connect external docs, e.g. PyQt5
-    'sphinx.ext.napoleon',  # This needs to be before typehints
+    'sphinx.ext.napoleon',  # Support for Google-style docstrings. This needs to be before typehints
     'sphinx_autodoc_typehints',
     'sphinx.ext.inheritance_diagram',  # Draw inheritance diagrams
     'sphinx.ext.graphviz',  # Needed to draw diagrams produced by plugin above (and also by hand)
@@ -115,7 +117,22 @@ autodoc_default_options = {
                        '__eq__,'
                        '__dir__,'
                        '__delattr__,'
+                       'DrwaChildren,'
+                       'DrawWindowBackground,'
+                       'IgnoreMask,'
                        'PaintDeviceMetric,'
+                       'PdmDepth,'
+                       'PdmDevicePixelRatio,'
+                       'PdmDevicePixelRatioScaled,'
+                       'PdmDpiX,'
+                       'PdmDpiY,'
+                       'PdmHeight,'
+                       'PdmHeightMM,'
+                       'PdmNumColors,'
+                       'PdmPhysicalDpiX,'
+                       'PdmPhysicalDpiY,'
+                       'PdmWidth,'
+                       'PdmWidthMM,'
                        'RenderFlag,'
                        'RenderFlags,'
                        'Shadow,'
@@ -135,12 +152,19 @@ autodoc_default_options = {
                        'alarmSeverityChanged,'
                        'alarm_severity_changed,'
                        'alignment,'
+                       'animateClick,'
+                       'autoDefault,'
+                       'autoExclusive,'
                        'autoFillBackground,'
+                       'autoRepeat,'
+                       'autoRepeatDelay,'
+                       'autoRepeatInterval,'
                        'baseSize,'
                        'backgroundRole,'
                        'blockSignals,'
                        'buddy,'
                        'changeEvent,'
+                       'checkStateSet,'
                        'childAt,'
                        'childEvent,'
                        'children,'
@@ -442,6 +466,7 @@ autodoc_default_options = {
                        'sizeIncrement,'
                        'sizePolicy,'
                        'stackUnder,'
+                       'staticMetaObject,'
                        'startTimer,'
                        'statusTip,'
                        'style,'
@@ -578,16 +603,21 @@ source_suffix = {
     '.md': 'markdown',
 }
 
+
+qt_major = qVersion().split('.')[0]
+pyqt_major = PYQT_VERSION_STR.split('.')[0]
+
+
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3.6', None),
-    'Qt': ('https://doc.qt.io/qt-5/', './qt.inv'),
-    'PyQt5': ('https://www.riverbankcomputing.com/static/Docs/PyQt5/', './pyqt.inv'),
+    'python': (f'https://docs.python.org/{py_version.major}.{py_version.minor}', None),
+    'Qt': (f'https://doc.qt.io/qt-{qt_major}/', './qt.inv'),
+    f'PyQt{pyqt_major}': (f'https://www.riverbankcomputing.com/static/Docs/PyQt{pyqt_major}/', './pyqt.inv'),
     'QScintilla': ('https://www.riverbankcomputing.com/static/Docs/QScintilla/', './qsci.inv'),
     'pydm': ('http://slaclab.github.io/pydm/', './pydm.inv'),
     'numpy': ('http://docs.scipy.org/doc/numpy/', None),
     'pyqtgraph': ('http://www.pyqtgraph.org/documentation/', None),
     'pyjapc': ('http://bewww.cern.ch/~bdisoft/pyjapc/', None),
-    # 'accwidgets': ('https://acc-py.web.cern.ch/gitlab/acc-co/accsoft/gui/pyqt/accsoft-gui-pyqt-widgets/docs/master/', None),
+    'accwidgets': ('https://acc-py.web.cern.ch/gitlab/acc-co/accsoft/gui/accsoft-gui-pyqt-widgets/docs/stable/', None),
 }
 
 
@@ -608,3 +638,9 @@ rst_epilog = """
 .. include:: <s5defs.txt>
 """
 html_css_files.append('s5defs-roles.css')
+
+
+# Prevent autodoc form making "alias of" end quitting to document anything
+from comrad import CDisplay
+CDisplay.__module__ = 'comrad.widgets.containers'
+CDisplay.__name__ = 'CDisplay'

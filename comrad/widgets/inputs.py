@@ -222,7 +222,7 @@ class CPropertyEdit(CChannelDataProcessingMixin, CRequestingMixin, CWidgetRulesM
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None, title: Optional[str] = None):
         """
-        A :class:`accwidgets.property_edit.PropertyEdit` with support for channels and more from the control system.
+        A :class:`~accwidgets.property_edit.propedit.PropertyEdit` with support for channels and more from the control system.
 
         Args:
             parent: The parent widget for the spinbox.

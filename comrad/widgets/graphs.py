@@ -844,20 +844,18 @@ class CItemPropertiesBase(metaclass=abc.ABCMeta):
         self._name = new_name
 
     @property
-    def line_style(self) -> int:
+    def line_style(self) -> int:  # TODO: Change to Qt.PenStyle
         """
         Return the style of lines used in the item (if supported).
-        Must be a value from the :class:`~PyQt5.QtCore.Qt.PenStyle` enum
-        (see http://doc.qt.io/qt-5/qt.html#PenStyle-enum).
+        Must be a value from the :class:`qtpy.QtCore.Qt.PenStyle` enum.
         """
         return getattr(self, '_line_style', list(self.lines.values())[0])
 
     @line_style.setter
-    def line_style(self, new_style: int) -> None:
+    def line_style(self, new_style: int) -> None:  # TODO: Change to Qt.PenStyle
         """
         Set the style of lines used in the item (if supported).
-        Must be a value from the :class:`~PyQt5.QtCore.Qt.PenStyle` enum
-        (see http://doc.qt.io/qt-5/qt.html#PenStyle-enum).
+        Must be a value from the :class:`qtpy.QtCore.Qt.PenStyle` enum.
         """
         if new_style in self.lines.values():
             self._line_style = new_style
@@ -877,7 +875,7 @@ class CItemPropertiesBase(metaclass=abc.ABCMeta):
     def symbol(self) -> Optional[str]:
         """
         The single-character code for the symbol drawn at each data point.
-        See the documentation for pyqtgraph.PlotDataItem for possible values.
+        See the documentation for :class:`~pyqtgraph.PlotDataItem` for possible values.
         """
         return getattr(self, '_symbol', list(self.symbols.values())[0])
 
@@ -885,7 +883,7 @@ class CItemPropertiesBase(metaclass=abc.ABCMeta):
     def symbol(self, new_symbol: Optional[str]) -> None:
         """
         The single-character code for the symbol drawn at each data point.
-        See the documentation for :class:`pyqtgraph.PlotDataItem` for possible values.
+        See the documentation for :class:`~pyqtgraph.PlotDataItem` for possible values.
         """
         if new_symbol in self.symbols.values():
             self._symbol = new_symbol
@@ -906,8 +904,8 @@ class CCurvePropertiesBase(CItemPropertiesBase):
 
     """
     Base class for different curve properties. This classes uses
-    attributes of the :class:`accwidgets.graph.LivePlotCurve` and should only be used as a
-    base class in classes derived from :class:`accwidgets.graph.LivePlotCurve`.
+    attributes of the :class:`~accwidgets.graph.LivePlotCurve` and should only be used as a
+    base class in classes derived from :class:`~accwidgets.graph.LivePlotCurve`.
     """
 
     plotting_item_editor_supported_columns: List[str] = [e.value for e in ColumnNames]
@@ -927,7 +925,7 @@ class CCurvePropertiesBase(CItemPropertiesBase):
         """Returns string representation of the items style"""
         return PlottingItemTypes.LINE_GRAPH.value
 
-    # Properties for convenient access to PlotDataItem.opts
+    # Properties for convenient access to :attr:`~pyqtgraph.PlotDataItem.opts`
 
     @property
     def pen(self) -> QPen:
@@ -947,7 +945,7 @@ class CCurvePropertiesBase(CItemPropertiesBase):
         :class:`pyqtgraph.PlotDataItem`'s :attr:`~pyqtgraph.PlotDataItem.pen` and
         :attr:`pyqtgraph.PlotDataItem.symbolPen` are initialized with (R,G,B) tuples instead of
         :class:`PyQt5.QtGui.QPen`'s. This functions tries to transform all pens of the :class:`pyqtgraph,PlotDataItem`
-        to :class:`PyQt5.QtGui.QPen`s to have consistent types and access to :class:`PyQt5.QtGui.QPen` functionality.
+        to :class:`QPen`s to have consistent types and access to :class:`PyQt5.QtGui.QPen` functionality.
         """
         potential_pen = self.opts.get('pen')
         potential_symbol_pen = self.opts.get('symbolPen')
@@ -1055,7 +1053,7 @@ class CBarGraphPropertiesBase(CItemPropertiesBase):
     def style_string(self) -> str:
         return PlottingItemTypes.BAR_GRAPH.value
 
-    # Properties for convenient access to PlotDataItem.opts
+    # Properties for convenient access to :attr:`~pyqtgraph.PlotDataItem.opts`
 
     @property
     def brush(self) -> QBrush:
@@ -1149,7 +1147,7 @@ class CInjectionBarGraphPropertiesBase(CItemPropertiesBase):
     def style_string(self) -> str:
         return PlottingItemTypes.INJECTION_BAR_GRAPH.value
 
-    # Properties for convenient access to PlotDataItem.opts
+    # Properties for convenient access to :attr:`~pyqtgraph.PlotDataItem.opts`
 
     @property
     def pen(self) -> QPen:
@@ -1159,10 +1157,11 @@ class CInjectionBarGraphPropertiesBase(CItemPropertiesBase):
 
     def _prepare_pens_in_opts(self) -> None:
         """
-        Despite having access to mkPen() which returns QPens, ErrorBarItem's
-        pen and symbolPen are initialized with (R,G,B) tuples instead of
-        QPen's. This functions tries to transform all pens of the ErrorBarItem
-        to QPens to have consistent types and access to QPen functionality.
+        Despite having access to :func:`pyqgraph.mkPen` which returns :class:`QPen`s,
+        :class:`pyqtgraph.ErrorBarItem`'s ``pen`` and ``symbolPen`` are initialized
+        with (R,G,B) tuples instead of :class:`QPen`'s. This functions tries to transform
+        all pens of the :class:`pyqtgraph.ErrorBarItem` to :class:`QPen`s to have consistent
+        types and access to :class:`QPen` functionality.
         """
         potential_pen = self.opts.get('pen')
         potential_symbol_pen = self.opts.get('symbolPen')

@@ -8,3 +8,4 @@ CDisplay
 .. autoclass:: comrad.CDisplay
     :members:
     :inherited-members:
+    :undoc-members:
