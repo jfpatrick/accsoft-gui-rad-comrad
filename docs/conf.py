@@ -616,7 +616,7 @@ intersphinx_mapping = {
     'pydm': ('http://slaclab.github.io/pydm/', './pydm.inv'),
     'numpy': ('http://docs.scipy.org/doc/numpy/', None),
     'pyqtgraph': ('http://www.pyqtgraph.org/documentation/', None),
-    'pyjapc': ('http://bewww.cern.ch/~bdisoft/pyjapc/', None),
+    'pyjapc': ('https://acc-py.web.cern.ch/gitlab/scripting-tools/pyjapc/docs/stable/', None),
     'accwidgets': ('https://acc-py.web.cern.ch/gitlab/acc-co/accsoft/gui/accsoft-gui-pyqt-widgets/docs/stable/', None),
 }
 
