@@ -70,7 +70,10 @@ def get_versions_info() -> Versions:
         from PyQt5.QtCore import PYQT_VERSION_STR as pyqt_ver, QT_VERSION_STR as qt_ver
     except ImportError:
         import qtpy.QtCore
-        qt_ver = qtpy.QtCore.__version__
+        try:
+            qt_ver = qtpy.QtCore.__version__
+        except ImportError:
+            qt_ver = '???'
         pyqt_ver = '???'
 
     python_ver = '.'.join([str(v) for v in sys.version_info[0:3]])
