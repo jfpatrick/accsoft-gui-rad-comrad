@@ -41,7 +41,7 @@ requirements = {
     ],
     'lint': [
         'mypy==0.761',
-        'flake8>=3.7.8,<4',
+        'flake8>=3.7.8,<3.8',
         'flake8-quotes>=2.1.0,<3',
         'flake8-commas>=2,<3',
         'flake8-colors>=0.1.6,<2',
