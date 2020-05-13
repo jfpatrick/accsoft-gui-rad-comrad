@@ -291,6 +291,6 @@ class CPyJapc(QObject, PyJapc):
         if typename == 'enum':
             return enum_item_to_obj(val.getEnumItem())
         elif typename == 'enumset':
-            return [enum_item_to_obj(v) for v in val.value]
+            return [enum_item_to_obj(v) for v in val.getEnumItemSet()]
         else:
             return super()._convertSimpleValToPy(val)
