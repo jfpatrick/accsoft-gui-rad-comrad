@@ -314,6 +314,47 @@ class CWidgetRulesMixin:
     cannot understand custom object format.
     """
 
+    @Slot(dict)
+    def rule_evaluated(self, payload: Dict[str, Any]):
+        """
+        Overridden :class:`~pydm.widgets.base.PyDMPrimitiveWidget`'s handler to allow ``None`` being passed from
+        the rules engine. While it works out of the box for some types, e.g. color, it creates type incompatibility
+        for others, e.g. boolean properties.
+        We have also changed the format of RULE_PROPERTIES, so we need custom handling for it here.
+        """
+        name = payload.get('name', '')
+        prop = payload.get('property', '')
+        value = payload.get('value', None)
+
+        if prop not in self.RULE_PROPERTIES:
+            logger.error(f'Error at Rule: {name}. {prop} is not part of this widget properties.')
+            return
+
+        getter_name, setter_name, data_type = self.RULE_PROPERTIES[prop]
+
+        # First time, assume current value of the property "the default"
+        if setter_name not in self.__default_prop_values:
+            getter_method = getattr(self, getter_name, None)
+            if getter_method is None:
+                logger.error(f'Error at Rule: {name}. Getter {getter_name} does not exist on this widget.')
+            else:
+                self.__default_prop_values[setter_name] = getter_method()
+
+        setter_method = getattr(self, setter_name, None)
+        if setter_method is None:
+            logger.error(f'Error at Rule: {name}. Setter {setter_name} does not exist on this widget.')
+            return
+
+        if value is None:
+            try:
+                new_val = self.__default_prop_values[setter_name]
+            except KeyError:
+                logger.error(f"Error at Rule: {name}. Cannot reset property to its initial value, as it's not recorded")
+                return
+            setter_method(new_val)
+        else:
+            setter_method(value)
+
 
 class CColorRulesMixin(CWidgetRulesMixin):
 
