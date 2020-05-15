@@ -235,24 +235,27 @@ class CValueTransformerMixin(CChannelDataProcessingMixin, CValueTransformationBa
             super().value_changed(packet)
 
 
-CWidgetRuleMap = Dict[str, Tuple[str, Callable[[Any], Any]]]
+CWidgetRuleMap = Dict[str, Tuple[str, str, Callable[[Any], Any]]]
 
 
 class CWidgetRulesMixin:
-    """
-    Common rules mixin for all ComRAD widgets that limits the amount of properties for our widgets
-    and ensures the synchronization between channel setter and rules setter regardless of the order.
-    """
 
     DEFAULT_RULE_PROPERTY = 'Visibility'
     """Default rule property visible in the dialog."""
 
     RULE_PROPERTIES: CWidgetRuleMap = {
-        CBaseRule.Property.ENABLED.value: ('setEnabled', bool),
-        CBaseRule.Property.VISIBILITY.value: ('setVisible', bool),
-        CBaseRule.Property.OPACITY.value: ('set_opacity', float),
+        CBaseRule.Property.ENABLED.value: ('isEnabled', 'setEnabled', bool),
+        CBaseRule.Property.VISIBILITY.value: ('isVisible', 'setVisible', bool),
+        CBaseRule.Property.OPACITY.value: ('opacity', 'set_opacity', float),
     }
     """All available rule properties with associated callbacks and data types."""
+
+    def __init__(self):
+        """
+        Common rules mixin for all ComRAD widgets that limits the amount of properties for our widgets
+        and ensures the synchronization between channel setter and rules setter regardless of the order.
+        """
+        self.__default_prop_values: Dict[str, Any] = {}
 
     def default_rule_channel(self) -> str:
         """
@@ -314,11 +317,12 @@ class CWidgetRulesMixin:
 
 class CColorRulesMixin(CWidgetRulesMixin):
 
-    RULE_PROPERTIES = dict(**{CBaseRule.Property.COLOR.value: ('set_color', str)},
+    RULE_PROPERTIES = dict(**{CBaseRule.Property.COLOR.value: ('rule_color', 'set_color', str)},
                            **CWidgetRulesMixin.RULE_PROPERTIES)
 
     def __init__(self):
         """Mixing that introduces color rule on top of the standard rules."""
+        super().__init__()
         self.__color = None
 
     def rule_color(self) -> str:

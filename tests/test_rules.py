@@ -709,7 +709,7 @@ def test_rules_engine_calculates_range_value(qtbot: QtBot, incoming_val, range_m
 
     class CustomWidget(QWidget):
         RULE_PROPERTIES = {
-            'test_prop': (None, str),
+            'test_prop': (None, None, str),
         }
 
     widget = CustomWidget()
@@ -757,7 +757,7 @@ def test_rules_engine_calculates_enum_value(qtbot: QtBot, incoming_val, field, f
 
     class CustomWidget(QWidget):
         RULE_PROPERTIES = {
-            'test_prop': (None, str),
+            'test_prop': (None, None, str),
         }
 
     widget = CustomWidget()
