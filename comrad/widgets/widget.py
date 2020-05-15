@@ -11,6 +11,24 @@ from comrad.data.context import CContext, find_context_provider, CContextTrackin
 logger = logging.getLogger(__name__)
 
 
+def common_widget_repr(self: QWidget) -> str:
+    """
+    Common implementation of :meth:`object.__repr__` for :class:`QWidget`-derived objects that may have a
+    :meth:`QWidget.objectName`.
+
+    Args:
+        self: object reference.
+
+    Returns:
+        Formatted string.
+    """
+    prefix = f'<{type(self).__name__} at {hex(id(self))}'
+    obj_name = self.objectName()
+    if not obj_name:
+        return prefix + '>'
+    return f'{prefix} ({obj_name})>'
+
+
 @modify_in_place
 class CWidget(PyDMWidget, MonkeyPatchedClass):
 
@@ -131,12 +149,7 @@ class CWidget(PyDMWidget, MonkeyPatchedClass):
         else:
             self.context = None
 
-    def __repr__(self):
-        orig = super(PyDMWidget, self).__repr__()  # We need explicit type for super to work here and can't use _overridden_members
-        obj_name = self.objectName()
-        if not obj_name:
-            return orig
-        return f'{orig[:-1]} ({obj_name})>'
+    __repr__ = common_widget_repr
 
 
 def _factory_channel_setter(self: CWidget, new_val: Optional[str]):

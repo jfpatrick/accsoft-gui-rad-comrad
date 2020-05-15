@@ -271,8 +271,8 @@ def test_context_changed_calls_context_setter(context, qtbot, dummy_widget):
 
 
 @pytest.mark.parametrize('set_object_name,regex', [
-    (True, r'<[\w\.<>]*Dummy object at 0x[\d\w]+ \(test-widget\)>'),
-    (False, r'<[\w\.<>]*Dummy object at 0x[\d\w]+>'),
+    (True, r'<[\w\.<>]*Dummy at 0x[\d\w]+ \(test-widget\)>'),
+    (False, r'<[\w\.<>]*Dummy at 0x[\d\w]+>'),
 ])
 def test_repr_injects_object_name(qtbot, dummy_widget, set_object_name, regex):
     widget = dummy_widget()

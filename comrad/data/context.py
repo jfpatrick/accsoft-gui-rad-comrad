@@ -178,7 +178,7 @@ class CContext(QObject):
                 and self._wildcards == other_ctx._wildcards
                 and self._data_filters == other_ctx._data_filters)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         orig = super().__repr__()
         return (f'{orig[:-1]} selector={self.selector}; data_filters={self.data_filters}; wildcards={self.wildcards} '
                 f'| inherits: data_filters={str(self.inherit_parent_data_filters)};'
