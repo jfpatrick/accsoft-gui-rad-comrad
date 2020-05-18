@@ -324,7 +324,7 @@ class CEnumRule(CBaseRule):
         if errors:
             raise TypeError(';'.join(errors))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<{type(self).__name__} "{self.name}" [{self.prop}]>\n' + '\n'.join(map(repr, self.config))
 
 
@@ -526,7 +526,7 @@ class CNumRangeRule(CBaseRule):
         if errors:
             raise TypeError(';'.join(errors))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<{type(self).__name__} "{self.name}" [{self.prop}]>\n' + '\n'.join(map(repr, self.ranges))
 
 

@@ -8,10 +8,12 @@ from qtpy.QtWidgets import QWidget, QFrame
 from qtpy.QtCore import Signal, Slot, Property
 from pydm.widgets.template_repeater import PyDMTemplateRepeater
 from pydm.widgets.embedded_display import PyDMEmbeddedDisplay
-from pydm import Display as PyDMDisplay
+from pydm.utilities import is_qt_designer
+from pydm import Display as PyDMDisplay, config
 # from pydm import data_plugins
 # from pydm.widgets.tab_bar import PyDMTabWidget
 from comrad.data.context import CContext, CContextProvider, find_context_provider, CContextTrackingDelegate
+from comrad.widgets.widget import common_widget_repr
 
 
 logger = logging.getLogger(__name__)
@@ -91,8 +93,9 @@ class CContextFrame(QFrame, CContextProvider):
         self._local_context.dataFiltersChanged.connect(self.contextUpdated.emit)
         self._local_context.inheritanceChanged.connect(self.contextUpdated.emit)
         self._context_tracker = CContextTrackingDelegate(self)
-        logger.debug(f'{self}: Installing new context tracking event handler: {self._context_tracker}')
-        self.installEventFilter(self._context_tracker)
+        if not is_qt_designer() or config.DESIGNER_ONLINE:
+            logger.debug(f'{self}: Installing new context tracking event handler: {self._context_tracker}')
+            self.installEventFilter(self._context_tracker)
 
     def _get_inherit_selector(self) -> bool:
         return self._local_context.inherit_parent_selector
@@ -191,12 +194,7 @@ class CContextFrame(QFrame, CContextProvider):
     def context_ready(self) -> bool:
         return self._context_tracker.context_ready
 
-    def __repr__(self):
-        orig = super().__repr__()  # We need explicit type for super to work here and can't use _overridden_members
-        obj_name = self.objectName()
-        if not obj_name:
-            return orig
-        return f'{orig[:-1]} ({obj_name})>'
+    __repr__ = common_widget_repr
 
 
 # TODO: Do we need this widget?

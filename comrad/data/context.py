@@ -3,7 +3,7 @@ import weakref
 import os
 from abc import abstractmethod
 from typing import Optional, Dict, Any, TypeVar, cast, Union
-from qtpy.QtCore import QObject, Signal, QEvent
+from qtpy.QtCore import QObject, Signal, QEvent, QTimer, Qt
 from qtpy.QtWidgets import QWidget
 from qtpy.QtDesigner import QDesignerFormWindowInterface
 from pydm.utilities import is_qt_designer
@@ -178,7 +178,7 @@ class CContext(QObject):
                 and self._wildcards == other_ctx._wildcards
                 and self._data_filters == other_ctx._data_filters)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         orig = super().__repr__()
         return (f'{orig[:-1]} selector={self.selector}; data_filters={self.data_filters}; wildcards={self.wildcards} '
                 f'| inherits: data_filters={str(self.inherit_parent_data_filters)};'
@@ -279,6 +279,7 @@ class CContextTrackingDelegate(QObject):
         """
         super().__init__(parent)
         self._prev_context_provider: Optional[weakref.ReferenceType] = None
+        self._deferred_resolution_target: Optional[weakref.ReferenceType] = None
 
     @property
     def context_ready(self) -> bool:
@@ -291,43 +292,16 @@ class CContextTrackingDelegate(QObject):
         return context_provider.context_ready
 
     def eventFilter(self, obj: QWidget, event: QEvent) -> bool:
+        # This method always returns False, because we don't want to stop any event from propagating, just eavesdrop on them.
         # Note! ParentChange does not fire when widgets are instantiated from the UI file
-        if event.type() in (QEvent.ParentChange,
-                            QEvent.ShowToParent,
-                            QEvent.WindowActivate,
-                            QEvent.Polish,
-                            QEvent.PolishRequest,  # The only sensible type for CValueAggregator, as it's hidden in runtime
-                            ):
-            if not callable(getattr(obj, self.CONTEXT_CHANGED_SLOT, None)):
-                logger.exception(f'Cannot use CContextTrackingDelegate on an unsupported widget {obj}')
-                return False
+        if event.type() in (
+                QEvent.ShowToParent,
+                QEvent.ParentChange,   # This is needed to also detect and disconnect on removal from parent
+                QEvent.PolishRequest,  # The only sensible type for CValueAggregator, as it's hidden in runtime
+        ):
+            self._detect_context_provider(obj)
 
-            if self._prev_context_provider is None:
-                # Only in certain cases we can be sure that it's a new parent
-                # Because on ShowToParent, which can happen after ParentChange, this will be
-                # a repetition.
-                logger.debug(f'Detected new parent for {obj}: {obj.parent()}')
-
-            next_context_provider = find_context_provider(obj)
-            prev_context_provider = self._prev_context_provider() if self._prev_context_provider is not None else None
-            if prev_context_provider != next_context_provider:
-                logger.debug(f'{obj}: changed context provider from {prev_context_provider} to {next_context_provider}')
-
-                # import traceback
-                # import sys
-                # traceback.print_stack(file=sys.stdout)
-
-                self._disconnect_previous_context_provider(obj)
-
-                if next_context_provider is not None:
-                    self._prev_context_provider = weakref.ref(next_context_provider)
-                    logger.debug(f'{obj}: subscribing to context provider {next_context_provider}')
-                    next_context_provider.contextUpdated.connect(getattr(obj, self.CONTEXT_CHANGED_SLOT))
-                else:
-                    self._prev_context_provider = None
-                    logger.debug(f"{obj}: not subscribing to context provider, since it's not found")
-                obj.context_changed()
-        return super().eventFilter(obj, event)
+        return False
 
     def _disconnect_previous_context_provider(self, obj: QWidget):
         if not self._prev_context_provider:
@@ -344,3 +318,53 @@ class CContextTrackingDelegate(QObject):
             logger.debug(f"{obj}: not unsubscribing from context provider, since it's not found")
 
         self._prev_context_provider = None
+
+    def _detect_context_provider(self, obj: QWidget):
+
+        if not callable(getattr(obj, self.CONTEXT_CHANGED_SLOT, None)):
+            logger.exception(f'Cannot use CContextTrackingDelegate on an unsupported widget {obj}')
+            return
+
+        if self._prev_context_provider is None:
+            # Only in certain cases we can be sure that it's a new parent
+            # Because on ShowToParent, which can happen after ParentChange, this will be
+            # a repetition.
+            logger.debug(f'Detected new parent for {obj}: {obj.parent()}')
+
+        next_context_provider = find_context_provider(obj)
+
+        prev_context_provider = self._prev_context_provider() if self._prev_context_provider is not None else None
+        if prev_context_provider != next_context_provider:
+            logger.debug(f'{obj}: changed context provider from {prev_context_provider} to {next_context_provider}')
+
+            self._disconnect_previous_context_provider(obj)
+
+            if next_context_provider is not None:
+                self._prev_context_provider = weakref.ref(next_context_provider)
+                logger.debug(f'{obj}: subscribing to context provider {next_context_provider}')
+                next_context_provider.contextUpdated.connect(getattr(obj, self.CONTEXT_CHANGED_SLOT))
+            else:
+                self._prev_context_provider = None
+                logger.debug(f"{obj}: not subscribing to context provider, since it's not found")
+            obj.context_changed()
+        elif next_context_provider is None:
+            # This is the only reliable way I found to track when the widget can read context provider.
+            # Qt does not provider notification mechanism for view hierarchy change, and we can't reliably
+            # detect through parent-child hierarchy, because with custom setParent we'd need to make sure that
+            # all widgets have it overridden, while we can have pure Qt widgets inbetween.
+            # TODO: Try monkey-patching QWidget.setParent?
+            if self._deferred_resolution_target is None:
+                self._deferred_resolution_target = weakref.ref(obj)
+                logging.debug(f'{obj}: deferring parent context resolution')
+                QTimer.singleShot(200, Qt.CoarseTimer, self._on_timer)
+
+    def _on_timer(self):
+        if self._deferred_resolution_target is None:
+            return
+        logging.debug(f'{self}: Re-trying parent context resolution')
+        obj = self._deferred_resolution_target()
+        self._deferred_resolution_target = None
+        if obj:
+            self._detect_context_provider(obj)
+        else:
+            logging.debug(f'{self}: Context resolution consumer has been destroyed')

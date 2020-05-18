@@ -412,7 +412,7 @@ class CJapcConnection(PyDMConnection):
             get_japc().stopSubscriptions(parameterName=self._pyjapc_param_name, selector=self._selector)
             self._start_subscriptions()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<{type(self).__name__}[{self._repr_name}] at {hex(id(self))}>'
 
 

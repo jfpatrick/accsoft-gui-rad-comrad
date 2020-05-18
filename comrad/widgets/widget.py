@@ -2,13 +2,33 @@ import logging
 from typing import Optional, cast, List, Iterable
 from qtpy.QtCore import Property
 from qtpy.QtWidgets import QWidget
+from pydm import config
 from pydm.widgets.base import PyDMWidget
+from pydm.utilities import is_qt_designer
 from comrad.monkey import modify_in_place, MonkeyPatchedClass
 from comrad.data.channel import PyDMChannel, CChannel, format_address
 from comrad.data.context import CContext, find_context_provider, CContextTrackingDelegate
 
 
 logger = logging.getLogger(__name__)
+
+
+def common_widget_repr(self: QWidget) -> str:
+    """
+    Common implementation of :meth:`object.__repr__` for :class:`QWidget`-derived objects that may have a
+    :meth:`QWidget.objectName`.
+
+    Args:
+        self: object reference.
+
+    Returns:
+        Formatted string.
+    """
+    prefix = f'<{type(self).__name__} at {hex(id(self))}'
+    obj_name = self.objectName()
+    if not obj_name:
+        return prefix + '>'
+    return f'{prefix} ({obj_name})>'
 
 
 @modify_in_place
@@ -19,8 +39,9 @@ class CWidget(PyDMWidget, MonkeyPatchedClass):
         self._channel_ids: List[str] = []
         self._overridden_members['__init__'](self)  # Do not pass init_channel here, we'll set it in showEvent
         self._context_tracker = CContextTrackingDelegate(self)
-        logger.debug(f'{self}: Installing new context tracking event handler: {self._context_tracker}')
-        cast(QWidget, self).installEventFilter(self._context_tracker)
+        if not is_qt_designer() or config.DESIGNER_ONLINE:
+            logger.debug(f'{self}: Installing new context tracking event handler: {self._context_tracker}')
+            cast(QWidget, self).installEventFilter(self._context_tracker)
         if init_channel:
             self._channel_ids.append(init_channel)
 
@@ -131,12 +152,7 @@ class CWidget(PyDMWidget, MonkeyPatchedClass):
         else:
             self.context = None
 
-    def __repr__(self):
-        orig = super(PyDMWidget, self).__repr__()  # We need explicit type for super to work here and can't use _overridden_members
-        obj_name = self.objectName()
-        if not obj_name:
-            return orig
-        return f'{orig[:-1]} ({obj_name})>'
+    __repr__ = common_widget_repr
 
 
 def _factory_channel_setter(self: CWidget, new_val: Optional[str]):
