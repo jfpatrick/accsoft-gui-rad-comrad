@@ -77,6 +77,27 @@ class CLabel(CColorRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixin, 
         self.style().polish(self)
         self.setPalette(palette)
 
+    def value_changed(self, packet: CChannelData[Union[bool, int, str, float, CEnumValue]]):
+        """
+        Slot that accepts types, not natively supported by PyDM
+        CEnumValue: This will display either code or label of the enum, based on the display format.
+
+        Args:
+            packet: Incoming value.
+        """
+        if not isinstance(packet, CChannelData):
+            return
+
+        if isinstance(packet.value, CEnumValue) and self.displayFormat != self.DisplayFormat.Default:
+            new_packet = copy.copy(packet)
+            if self.displayFormat == self.DisplayFormat.String:
+                new_packet.value = packet.value.label
+            else:
+                new_packet.value = packet.value.code
+            super().value_changed(new_packet)
+        else:
+            super().value_changed(packet)
+
 
 # TODO: Expose frame? What is it used for?
 # class CFrame(PyDMFrame):
@@ -106,7 +127,7 @@ class CByteIndicator(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedToolt
     def value_changed(self, packet: CChannelData[Union[bool, int, List[CEnumValue]]]):
         """
         Slot that accepts types, not natively supported by PyDM
-        list: Currently, :mod:`pyjapc` is expected to convert EnumItemSet into ``List[Tuple[code, name]]``.
+        list: Currently, :mod:`comrad.data.pyjapc_patch` is expected to convert EnumItemSet into ``List[CEnumValue]``.
         bool: Indicator fails to display a single bool value
 
         :class:`~pydm.widgets.byte.PyDMByteIndicator` expects int value.
