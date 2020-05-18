@@ -188,7 +188,7 @@ class AbstractTableModel(AbstractListModel[S], QAbstractTableModel, Generic[S], 
         if self.prop_enum_type == CBaseRule.Property.COLOR:
             new_obj.prop_val = '#000000'
         else:
-            _, caster = self._prop_map[self.prop_enum_type.value]
+            _, __, caster = self._prop_map[self.prop_enum_type.value]
             if caster != str:
                 new_obj.prop_val = caster(0)  # 0, 0.0 or False, based on the caster
         return new_obj
@@ -246,7 +246,7 @@ class AbstractTableModel(AbstractListModel[S], QAbstractTableModel, Generic[S], 
         # Because prop_val can be string when unpacked, we must convert it to the actual type,
         # otherwise the usage of standard QStyledItemDelegates is not possible, as they will
         # present line edits always, instead of spin boxes for ints/floats.
-        _, caster = self._prop_map[self.prop_enum_type.value]
+        _, __, caster = self._prop_map[self.prop_enum_type.value]
         try:
             return caster(row.prop_val)
         except ValueError:
@@ -607,7 +607,7 @@ class AbstractTableDetailsView(QWidget, Generic[R, S], metaclass=GenericQObjectM
         if rule_prop == CBaseRule.Property.COLOR:
             self.decl_table.setItemDelegateForColumn(0, ColorPropertyColumnDelegate())
         else:
-            _, new_type = self.property_map[rule_prop.value]
+            _, __, new_type = self.property_map[rule_prop.value]
             if new_type == bool:
                 self.decl_table.setItemDelegateForColumn(0, BooleanPropertyColumnDelegate())
             else:
@@ -1187,8 +1187,8 @@ class CurrentRuleSelectionModel(QItemSelectionModel):
         curr_rule = self.current_rule
         if not curr_rule:
             return
-        _, new_base_type = self._prop_map[prop]
-        _, prev_base_type = self._prop_map[curr_rule.prop]
+        _, __, new_base_type = self._prop_map[prop]
+        _, __, prev_base_type = self._prop_map[curr_rule.prop]
 
         curr_rule.prop = prop
 
@@ -1422,7 +1422,7 @@ class RulesEditor(QDialog):
                 self.custom_channel_edit.setText(rule.channel)
 
             self.base_type_frame.setHidden(False)
-            _, base_type = self._widget.RULE_PROPERTIES[rule.prop]
+            _, __, base_type = self._widget.RULE_PROPERTIES[rule.prop]
             self.base_type_lbl.setText(base_type.__name__)
 
             self.rule_updated.emit(rule, rule_type.value)

@@ -679,7 +679,7 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
             return
         elif isinstance(rule_obj, (CEnumRule, CNumRangeRule)):
             from comrad.widgets.mixins import CWidgetRulesMixin
-            _, base_type = cast(CWidgetRulesMixin, widget_ref()).RULE_PROPERTIES[rule_obj.prop]
+            _, __, base_type = cast(CWidgetRulesMixin, widget_ref()).RULE_PROPERTIES[rule_obj.prop]
             packet = cast(CChannelData[Any], job_unit['values'][0])
             if not isinstance(packet, CChannelData):
                 notify_value(None)
