@@ -2,7 +2,9 @@ import logging
 from typing import Optional, cast, List, Iterable
 from qtpy.QtCore import Property
 from qtpy.QtWidgets import QWidget
+from pydm import config
 from pydm.widgets.base import PyDMWidget
+from pydm.utilities import is_qt_designer
 from comrad.monkey import modify_in_place, MonkeyPatchedClass
 from comrad.data.channel import PyDMChannel, CChannel, format_address
 from comrad.data.context import CContext, find_context_provider, CContextTrackingDelegate
@@ -37,8 +39,9 @@ class CWidget(PyDMWidget, MonkeyPatchedClass):
         self._channel_ids: List[str] = []
         self._overridden_members['__init__'](self)  # Do not pass init_channel here, we'll set it in showEvent
         self._context_tracker = CContextTrackingDelegate(self)
-        logger.debug(f'{self}: Installing new context tracking event handler: {self._context_tracker}')
-        cast(QWidget, self).installEventFilter(self._context_tracker)
+        if not is_qt_designer() or config.DESIGNER_ONLINE:
+            logger.debug(f'{self}: Installing new context tracking event handler: {self._context_tracker}')
+            cast(QWidget, self).installEventFilter(self._context_tracker)
         if init_channel:
             self._channel_ids.append(init_channel)
 
