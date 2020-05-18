@@ -72,7 +72,7 @@ def test_connects_context_signal_to_new_children(qtbot, compliant_child, show):
     assert widget.receivers(widget.contextUpdated) == 0
     layout.addWidget(child)
 
-    # Connection happens on "polish" event, so it needs to be shown
+    # Connection happens on "ShowToParent" or "ParentChange" event, so it needs to be shown
     assert widget.receivers(widget.contextUpdated) == 1
     if show:
         widget.show()
