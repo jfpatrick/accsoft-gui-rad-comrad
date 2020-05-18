@@ -14,7 +14,7 @@ from qtpy.QtWidgets import (QDialog, QWidget, QHBoxLayout, QFrame, QColorDialog,
 from qtpy.QtCore import (Qt, QAbstractTableModel, QObject, QModelIndex, QVariant, Signal, QLocale, QSignalBlocker,
                          QAbstractListModel, QIdentityProxyModel, QAbstractProxyModel, QItemSelectionModel,
                          QPersistentModelIndex)
-from qtpy.QtGui import QColor, QFont, QFocusEvent
+from qtpy.QtGui import QColor, QFont, QFocusEvent, QShowEvent
 from qtpy.QtDesigner import QDesignerFormWindowInterface
 from qtpy.uic import loadUi
 from comrad.rules import CBaseRule, CNumRangeRule, CEnumRule, unpack_rules, is_valid_color
@@ -1225,6 +1225,12 @@ class CurrentRuleSelectionModel(QItemSelectionModel):
             return
         self._orig_model.remove_row_at_index(self._orig_model.index(curr_idx.row()))
 
+    def select_first(self):
+        """Select the first row if possible."""
+        if self._orig_model.rowCount() > 0:
+            index = self._orig_model.createIndex(0, 0)
+            self.select(index, self.Select)
+
     @property
     def _orig_model(self) -> RulesEditorModel:
         return cast(QAbstractProxyModel, self.model()).sourceModel()
@@ -1342,6 +1348,13 @@ class RulesEditor(QDialog):
                 self.rule_closed.connect(eval_widget.clear)
             except AttributeError:
                 pass
+
+    def showEvent(self, event: QShowEvent):
+        super().showEvent(event)
+
+        # Pre-select the first rule by default
+        if not self._selection_model.hasSelection():
+            self._selection_model.select_first()
 
     def _search_channel(self):
         QMessageBox().information(self,
