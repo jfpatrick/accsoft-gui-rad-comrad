@@ -1,4 +1,5 @@
 import logging
+import copy
 from typing import Optional, Dict, Any, Union, cast
 from qtpy.QtWidgets import QWidget, QLabel, QComboBox
 from qtpy.QtCore import Property, QVariant, Signal
@@ -86,6 +87,7 @@ class CEnumComboBox(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedToolti
         if not isinstance(packet, CChannelData):
             return
 
+        new_packet = packet
         if isinstance(packet.value, CEnumValue):
             if not packet.value.settable and self.findText(packet.value.label) == -1:
                 # Jump over PyDMEnumComboBox to not emit error,
@@ -94,10 +96,11 @@ class CEnumComboBox(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedToolti
                 self.setEditText(packet.value.label)
                 return
             else:
-                packet.value = packet.value.label
+                new_packet = copy.copy(packet)
+                new_packet.value = packet.value.label
 
         self.setEditable(False)
-        super().value_changed(packet)
+        super().value_changed(new_packet)
 
     def focusInEvent(self, e: QFocusEvent) -> None:
         if self.isEditable():
