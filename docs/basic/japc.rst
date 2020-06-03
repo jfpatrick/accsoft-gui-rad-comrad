@@ -1,4 +1,0 @@
-JAPC integration
-================
-
-.. todo:: TBD

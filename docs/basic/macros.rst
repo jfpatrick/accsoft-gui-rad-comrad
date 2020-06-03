@@ -4,9 +4,9 @@ Macros
 Macros allows creating variables for nested UIs, which are substituted with real values at runtime. It works for
 both \*.ui files and Python files.
 
-Macro system is available for things like :ref:`CEmbeddedDisplay <cembeddeddisplay>`,
-:ref:`CTemplateRepeater <ctemplaterepeater>`, :ref:`CRelatedDisplayButton <crelateddisplay>`,
-:ref:`CValueAggregator <cvalueaggregator>` and :doc:`transform`.
+Macro system is available for things like :ref:`cembeddeddisplay`,
+:ref:`ctemplaterepeater`, :ref:`crelateddisplaybutton`,
+:ref:`cvalueaggregator` and :doc:`transform`.
 
 **Page contents:**
 
@@ -50,9 +50,9 @@ Macros in Python-based displays
 
 If you open a python file and specify macros (via the command line, related display button, or embedded display widget),
 the macros will be passed as a dictionary to the :meth:`~comrad.CDisplay.__init__` method of the
-:class:`~comrad.CDisplay` subclass, where they can be accessed and used to generate the display.
+:ref:`cdisplay` subclass, where they can be accessed and used to generate the display.
 
-In addition, if the :class:`~comrad.CDisplay` subclass specifies a \*.ui file to generate its user interface from
+In addition, if the :ref:`cdisplay` subclass specifies a \*.ui file to generate its user interface from
 (see :doc:`mix`), macro substitution will occur inside the \*.ui file.
 
 

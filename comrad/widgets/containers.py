@@ -36,7 +36,7 @@ class CTemplateRepeater(PyDMTemplateRepeater):
 
     def __init__(self, parent: Optional[QWidget] = None, **kwargs):
         """
-        Takes takes a template display with macro variables, and a JSON
+        Takes a template display with macro variables, and a JSON
         file (or a list of dictionaries) with a list of values to use to fill in
         the macro variables, then creates a layout with one instance of the
         template for each item in the list.
@@ -74,7 +74,7 @@ class CContextFrame(QFrame, CContextProvider):
     def __init__(self, parent: Optional[QWidget] = None, context: Optional[CContext] = None):
         """
         This widget allows to update its child widgets with a new context by redefining macro variables, or
-        cycle selector or data filters on the fly..
+        cycle selector or data filters on the fly.
 
         Use-cases could be:
 

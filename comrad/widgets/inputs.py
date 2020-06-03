@@ -1,4 +1,5 @@
 import logging
+import copy
 from typing import Optional, Dict, Any, Union, cast
 from qtpy.QtWidgets import QWidget, QLabel, QComboBox
 from qtpy.QtCore import Property, QVariant, Signal
@@ -86,6 +87,7 @@ class CEnumComboBox(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedToolti
         if not isinstance(packet, CChannelData):
             return
 
+        new_packet = packet
         if isinstance(packet.value, CEnumValue):
             if not packet.value.settable and self.findText(packet.value.label) == -1:
                 # Jump over PyDMEnumComboBox to not emit error,
@@ -94,10 +96,11 @@ class CEnumComboBox(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedToolti
                 self.setEditText(packet.value.label)
                 return
             else:
-                packet.value = packet.value.label
+                new_packet = copy.copy(packet)
+                new_packet.value = packet.value.label
 
         self.setEditable(False)
-        super().value_changed(packet)
+        super().value_changed(new_packet)
 
     def focusInEvent(self, e: QFocusEvent) -> None:
         if self.isEditable():
@@ -211,8 +214,20 @@ class CSpinBox(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixi
 
 
 CPropertyEditField = _PropertyEditField
+"""
+Data structure for the field configuration of :class:`~comrad.CPropertyEdit`.
+"""
+
 CAbstractPropertyEditLayoutDelegate = _AbstractPropertyEditLayoutDelegate
+"""
+Class for defining delegates that handle the layout inside the :class:`~comrad.CPropertyEdit` widget.
+"""
+
 CAbstractPropertyEditWidgetDelegate = _AbstractPropertyEditWidgetDelegate
+"""
+Class for defining delegates that can handle the creation and data marshalling
+to inner widgets of the :class:`~comrad.CPropertyEdit`.
+"""
 
 
 class CPropertyEdit(CChannelDataProcessingMixin, CRequestingMixin, CWidgetRulesMixin, CInitializedMixin, CHideUnusedFeaturesMixin, PropertyEdit, PyDMWritableWidget):

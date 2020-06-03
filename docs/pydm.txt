@@ -16,8 +16,8 @@ PyDMImageView py:class 1 widgets/image.html#pydm.widgets.image.PyDMImageView -
 pydm.widgets.image.PyDMImageView py:class 1 widgets/image.html#pydm.widgets.image.PyDMImageView PyDMImageView
 PyDMLabel py:class 1 widgets/label.html#pydm.widgets.label.PyDMLabel -
 pydm.widgets.label.PyDMLabel py:class 1 widgets/label.html#pydm.widgets.label.PyDMLabel PyDMLabel
-PyDMLogDisplay py:class 1 widgets/log.html#pydm.widgets.log.PyDMLogDisplay -
-pydm.widgets.log.PyDMLogDisplay py:class 1 widgets/log.html#pydm.widgets.log.PyDMLogDisplay PyDMLogDisplay
+PyDMLogDisplay py:class 1 widgets/log.html#pydm.widgets.logdisplay.PyDMLogDisplay -
+pydm.widgets.log.PyDMLogDisplay py:class 1 widgets/log.html#pydm.widgets.logdisplay.PyDMLogDisplay PyDMLogDisplay
 PyDMScaleIndicator py:class 1 widgets/scale.html#pydm.widgets.scale.PyDMScaleIndicator -
 pydm.widgets.scale.PyDMScaleIndicator py:class 1 widgets/scale.html#pydm.widgets.scale.PyDMScaleIndicator PyDMScaleIndicator
 PyDMSymbol py:class 1 widgets/symbol.html#pydm.widgets.symbol.PyDMSymbol -

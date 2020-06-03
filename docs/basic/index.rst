@@ -1,5 +1,5 @@
-Basic usage
-===========
+Basics
+======
 
 This section covers topics that let you understand ComRAD ecosystem better in order to deliver a relatively
 simple application. If you have never used it, consider reviewing :doc:`Getting started <../intro>`.
@@ -13,7 +13,5 @@ simple application. If you have never used it, consider reviewing :doc:`Getting 
    mix
    codecentric
    rbac
-   japc
    rules
    transform
-   live

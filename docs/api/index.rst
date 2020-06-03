@@ -2,6 +2,7 @@ API Reference
 =============
 
 .. toctree::
+    :titlesonly:
 
     widgets/module
     application/index

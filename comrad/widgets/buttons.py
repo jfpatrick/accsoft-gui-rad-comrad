@@ -1,4 +1,5 @@
 import logging
+import copy
 from typing import Optional, Union
 from pydm.widgets.base import PyDMWritableWidget
 from pydm.widgets.pushbutton import PyDMPushButton
@@ -161,13 +162,21 @@ class CEnumButton(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTooltipM
         if not isinstance(packet, CChannelData):
             return
 
+        new_packet = packet
         if isinstance(packet.value, CEnumValue):
+            new_packet = copy.copy(packet)
             try:
-                packet.value = self.enum_strings.index(packet.value.label)
+                new_packet.value = self.enum_strings.index(packet.value.label)
+            except ValueError:
+                return
+        elif isinstance(packet.value, str):
+            new_packet = copy.copy(packet)
+            try:
+                new_packet.value = self.enum_strings.index(packet.value)
             except ValueError:
                 return
 
-        super().value_changed(packet)
+        super().value_changed(new_packet)
 
 
 class CCommandButton(CCustomizedTooltipMixin, QPushButton, CInitializedMixin, CHideUnusedFeaturesMixin, PyDMWritableWidget):

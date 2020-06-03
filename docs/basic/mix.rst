@@ -22,7 +22,7 @@ Subclass CDisplay
 -----------------
 
 To start with introducing code to your ComRAD application, you have to create a Python file with a
-:class:`~comrad.CDisplay` subclass. :class:`~comrad.CDisplay` is a :class:`QWidget` that will accommodate all
+:ref:`cdisplay` subclass. :class:`~comrad.CDisplay` is a :class:`QWidget` that will accommodate all
 of your application UI. Let's call this file ``app.py``:
 
 .. topic:: Example of ComRAD Python file, app.py
@@ -95,7 +95,7 @@ below to see the label displaying real values.
    .. note:: You will have to run it in TN, or otherwise opt out from using InCA
              (pass ``--no-inca`` command line argument).
 
-You can learn more about developing :class:`~comrad.CDisplay` subclasses in :doc:`codecentric`.
+You can learn more about developing :ref:`cdisplay` subclasses in :doc:`codecentric`.
 
 
 

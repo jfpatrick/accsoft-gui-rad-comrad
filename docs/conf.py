@@ -85,6 +85,7 @@ html_css_files = [
     'fix_tables.css',
     'fix_bullets.css',
     'fix_logo.css',
+    'custom_style.css',
 ]
 
 # Both the class’ and the __init__ method’s docstring are concatenated and inserted.
@@ -640,7 +641,17 @@ rst_epilog = """
 html_css_files.append('s5defs-roles.css')
 
 
-# Prevent autodoc form making "alias of" end quitting to document anything
-from comrad import CDisplay
+# Prevent autodoc from making "alias of" end quitting to document anything
+from comrad import (CDisplay, CPropertyEditField, CAbstractPropertyEditLayoutDelegate,
+                    CAbstractPropertyEditWidgetDelegate)
 CDisplay.__module__ = 'comrad.widgets.containers'
 CDisplay.__name__ = 'CDisplay'
+
+CPropertyEditField.__module__ = 'comrad.widgets.inputs'
+CPropertyEditField.__name__ = 'CPropertyEditField'
+
+CAbstractPropertyEditWidgetDelegate.__module__ = 'comrad.widgets.inputs'
+CAbstractPropertyEditWidgetDelegate.__name__ = 'CAbstractPropertyEditWidgetDelegate'
+
+CAbstractPropertyEditLayoutDelegate.__module__ = 'comrad.widgets.inputs'
+CAbstractPropertyEditLayoutDelegate.__name__ = 'CAbstractPropertyEditLayoutDelegate'
