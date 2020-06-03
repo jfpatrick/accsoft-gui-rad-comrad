@@ -2,7 +2,7 @@ Code-centric development
 ========================
 
 This section explains how to develop ComRAD applications using only Python, without any \*.ui files.
-Here you will also find more details about :class:`~comrad.CDisplay` capabilities. Python files can be launched
+Here you will also find more details about :ref:`cdisplay` capabilities. Python files can be launched
 similarly to \*.ui files:
 
 .. code-block:: bash
@@ -20,8 +20,8 @@ similarly to \*.ui files:
 Subclass CDisplay
 -----------------
 
-Your Python application must define a single :class:`~comrad.CDisplay` sublcass. This is the panel that gets embedded
-by ComRAD window and displayed to the user. :class:`~comrad.CDisplay` instances are PyQt widgets with a few extra
+Your Python application must define a single :ref:`cdisplay` sublcass. This is the panel that gets embedded
+by ComRAD window and displayed to the user. :ref:`cdisplay` instances are PyQt widgets with a few extra
 features on top. You can layout both ComRAD widgets as well as regular PyQt widgets in them. To get familiar with PyQt
 widgets API, it is suggested to refer to official
 `Qt Documentation <https://doc.qt.io/qt-5/qtwidgets-index.html>`__. While it is designed for C++, Python APIs
@@ -69,7 +69,7 @@ initialization:
            self.layout().addWidget(label)
            layout.addWidget(label)
 
-Here, we add a :class:`~comrad.CLabel` and connect it to the control system by providing the channel address.
+Here, we add a :ref:`clabel` and connect it to the control system by providing the channel address.
 
 
 
@@ -77,40 +77,12 @@ Here, we add a :class:`~comrad.CLabel` and connect it to the control system by p
 Handing command line arguments
 ------------------------------
 
-Displays can accept command line arguments supplied at launch. Your display’s initializer has a
-named argument called ``args``:
-
-.. code-block:: python
-
-   def __init__(self, parent: Optional[QWidget] = None, args: Optional[List[str]] = None, macros: Optional[Dict[str, str]] = None):
-
-It is recommended to use Python’s :mod:`argparse` module to parse your arguments. For example, you could
-write a method like this in your display:
-
-.. code-block:: python
-   :linenos:
-
-   import argparse
-
-   ...
-
-   def parse_args(self, args: Optional[List[str]]):
-       parser = argparse.ArgumentParser()
-       parser.add_argument('--list', dest='magnet_list', help='File containing a list of magnet names to use.')
-       parsed_args, _ = parser.parse_known_args(args)
-       return parsed_args
-
-Command line arguments can be a good way to make displays that generate themselves dynamically: you could
-accept a filename argument, and read the contents of that file to add widgets to your display.
-
-
+.. include:: ../shared/cdisplay_args.rst
 
 Handling macros
 ---------------
 
-You can also use macros system as a way to get user data into your display. All macros are available as
-a dictionary in the initializer via ``macros`` argument. In addition, macro substitution will always be
-performed on the \*.ui file for your display.
+.. include:: ../shared/cdisplay_macros.rst
 
 
 

@@ -26,6 +26,12 @@ QSlider py:class 1 qslider.html -
 PyQt5.QtWidgets.QDoubleSpinBox py:class 1 qdoublespinbox.html QDoubleSpinBox
 qtpy.QtWidgets.QDoubleSpinBox py:class 1 qdoublespinbox.html QDoubleSpinBox
 QDoubleSpinBox py:class 1 qdoublespinbox.html -
+PyQt5.QtWidgets.QSpinBox py:class 1 qspinbox.html QSpinBox
+qtpy.QtWidgets.QSpinBox py:class 1 qspinbox.html QSpinBox
+QSpinBox py:class 1 qspinbox.html -
+PyQt5.QtWidgets.QPlainTextEdit py:class 1 qplaintextedit.html QPlainTextEdit
+qtpy.QtWidgets.QPlainTextEdit py:class 1 qplaintextedit.html QPlainTextEdit
+QPlainTextEdit py:class 1 qplaintextedit.html -
 PyQt5.QtWidgets.QPushButton py:class 1 qpushbutton.html QPushButton
 qtpy.QtWidgets.QPushButton py:class 1 qpushbutton.html QPushButton
 QPushButton py:class 1 qpushbutton.html -

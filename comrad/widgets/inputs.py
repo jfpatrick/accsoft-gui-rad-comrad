@@ -214,8 +214,20 @@ class CSpinBox(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixi
 
 
 CPropertyEditField = _PropertyEditField
+"""
+Data structure for the field configuration of :class:`~comrad.CPropertyEdit`.
+"""
+
 CAbstractPropertyEditLayoutDelegate = _AbstractPropertyEditLayoutDelegate
+"""
+Class for defining delegates that handle the layout inside the :class:`~comrad.CPropertyEdit` widget.
+"""
+
 CAbstractPropertyEditWidgetDelegate = _AbstractPropertyEditWidgetDelegate
+"""
+Class for defining delegates that can handle the creation and data marshalling
+to inner widgets of the :class:`~comrad.CPropertyEdit`.
+"""
 
 
 class CPropertyEdit(CChannelDataProcessingMixin, CRequestingMixin, CWidgetRulesMixin, CInitializedMixin, CHideUnusedFeaturesMixin, PropertyEdit, PyDMWritableWidget):

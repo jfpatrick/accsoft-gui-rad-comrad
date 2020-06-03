@@ -127,8 +127,8 @@ With the new form created, it's time to get familiar with the user interface of 
 
 - **Your form** will be positioned in the central area of the Designer.
 - **Widget box** provides a list of available widgets that you can drag onto the form. These widgets
-  are combined from standard PyQt widgets and ComRAD widgets (prefixed with C-, e.g. :class:`~comrad.CLabel` or
-  :class:`~comrad.CSlider`)
+  are combined from standard PyQt widgets and ComRAD widgets (prefixed with C-, e.g. :ref:`clabel` or
+  :ref:`cslider`)
 - **Object inspector** will display your view hierarchy as you keep adding new widgets and layouts to the form.
 - **Property editor** allows you to customize selected widgets. Here, you will specify control system addresses
   to connect to, among other things.
@@ -140,7 +140,7 @@ With the new form created, it's time to get familiar with the user interface of 
 Now you can start dragging widgets from the Widget Box onto your form.
 
 For example, you can locate a widget called "Clabel". This is a ComRAD version of Qt label (:class:`QLabel`,
-which is also present in the widget box under the name "Label"). :class:`~comrad.CLabel` does everything
+which is also present in the widget box under the name "Label"). :ref:`clabel` does everything
 :class:`QLabel` does but can also connect to the control system. After you've dragged it on the form, select a
 desired layout for the form. You can now edit properties of the label.
 

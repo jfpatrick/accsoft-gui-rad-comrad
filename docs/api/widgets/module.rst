@@ -4,6 +4,7 @@ Widgets
 .. automodule:: comrad.widgets
 
 .. toctree::
+    :titlesonly:
 
     cbyteindicator
     ccheckbox
@@ -26,6 +27,6 @@ Widgets
     cspinbox
     ctemplaterepeater
     cvalueaggregator
+    delegates/module
     graphs/module
     mixins/module
-    delegates/module

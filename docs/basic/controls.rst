@@ -209,10 +209,10 @@ Specializing connection using contexts and CContextFrame
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In order to establish context chain, as explained in `Contexts`_, widget could be organized in groups
-by placing them inside :ref:`CContextFrame <ccontextframe>` widget. In code, you'll be able to manipulate
+by placing them inside :ref:`ccontextframe` widget. In code, you'll be able to manipulate
 all context properties by assigning them to the widget and also establish inheritance flags. In Designer,
 you can specify the modified cycle selector directly via "Property Editor". To showcase
-:ref:`CContextFrame <ccontextframe>` in action, we invite you to see ComRAD Example "Nested context frames".
+:ref:`ccontextframe` in action, we invite you to see ComRAD Example "Nested context frames".
 
 
 .. figure:: ../img/nested_context_frames.png
@@ -221,7 +221,7 @@ you can specify the modified cycle selector directly via "Property Editor". To s
 
    Screenshot of "Nested context frames" example
 
-In adition to ability define context properties upfront, :ref:`CContextFrame <ccontextframe>` exposes slots
+In adition to ability define context properties upfront, :ref:`ccontextframe` exposes slots
 that can be connected in order to dynamically change the properties. For example, you can create a combobox,
 that allows choosing one of the selectors, and use it to drive the frame context parameters.
 

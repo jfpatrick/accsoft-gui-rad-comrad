@@ -23,8 +23,8 @@ Contents:
 - `Using CValueAggregator widget`_
 
 
-This feature is attached to selected widgets that are displaying incoming data, e.g. :ref:`CLabel <clabel>`,
-:ref:`CScaleIndicator <cscaleindicator>`, :ref:`CLineEdit <clineedit>` and similar.
+This feature is attached to selected widgets that are displaying incoming data, e.g. :ref:`clabel`,
+:ref:`cscaleindicator`, :ref:`clineedit` and similar.
 
 Each of the widget has the following properties:
 
@@ -43,11 +43,11 @@ minor details:
 
 #. ``output`` is a reserved name of a function that you should call in order to propagate the value to the widget.
    Hence, ``output(10)`` will propagate value "10" to the widget, as if it was coming directly from the control system.
-#. Incoming values are propagated inside ``values`` dictionary for :ref:`CValueAggregator <cvalueaggregator>` widget,
+#. Incoming values are propagated inside ``values`` dictionary for :ref:`cvalueaggregator` widget,
    or as ``new_val`` variable for all other widgets.
-#. Incoming meta-information is propagated inside ``headers`` dictionary for :ref:`CValueAggregator <cvalueaggregator>`
+#. Incoming meta-information is propagated inside ``headers`` dictionary for :ref:`cvalueaggregator`
    widget, or as ``header`` variable for all other widgets.
-#. All regular widgets (except :ref:`CValueAggregator <cvalueaggregator>`) receive ``widget`` variable that is the
+#. All regular widgets (except :ref:`cvalueaggregator`) receive ``widget`` variable that is the
    reference to the widget object (if you want to modify widget properties as a side effect, which is not encouraged).
 #. :obj:`__file__` variable will be preset to the path of the file, where the code comes from. If
    :attr:`~comrad.widgets.value_transform.CValueTransformationBase.valueTransformation` property is defined inside the
@@ -115,7 +115,7 @@ approach, setting
 
    widget.snippetFilename = 'relative/external.py'
 
-inside ``/absolute/path/to/my/python/file.py`` containing a :class:`~comrad.CDisplay` subclass, will result in the
+inside ``/absolute/path/to/my/python/file.py`` containing a :ref:`cdisplay` subclass, will result in the
 snippet being loaded from ``/absolute/path/to/my/python/relative/external.py``.
 
 
@@ -172,34 +172,11 @@ The above file can be imported by another snippet file, e.g.:
 Using CValueAggregator widget
 -----------------------------
 
-:ref:`CValueAggregator <cvalueaggregator>` is a special kind of widget that can be added to the dashboard
+:ref:`cvalueaggregator` is a special kind of widget that can be added to the dashboard
 (programmatically or via ComRAD Designer) but is not visible at runtime. Its purpose is to provide client-side data
-transformation for data on one or more property fields.
+transformation for data on one or more property fields. User configures channels to which this widget connects and
+attaches Python transformation.
 
-User configures channels to which this widget connects and attaches Python transformation. Inside that Python code,
-incoming values are accessed via ``values`` dictionary, where keys are addresses of the respective property fields.
-Similarly, ``headers`` dictionary will contain the very same keys, but with meta-information stored in there.
-It allows you to produce a single output value from multiple input values. For instance, consider a device property
-"device/property" that has fields "voltage" and "current". If we want to display the power in a label, we can make a
-:class:`~comrad.CValueAggregator` widget and connect it to 2 channels: ``device/property#votlage``,
-``device/property#current``. Now, we create a transformation with the code below:
+.. include:: ../shared/cvalueaggregator_example.rst
 
-.. code-block:: python
-
-   V = values['device/property#votlage']
-   I = values['device/property#current']
-   output(V * I)
-
-and connect :meth:`CValueAggregator.updateTriggered(double) <comrad.CValueAggregator.updateTriggered>` signal to
-:meth:`QLabel.setNum` slot.
-
-In case when you have only one channel connected to the :ref:`CValueAggregator <cvalueaggregator>` and you don't
-want to be bound to its name, the easy way to extract the value from the dictionary is using iterators:
-
-.. code-block:: python
-
-   try:
-       val = next(iter(values.values()))
-   except StopIteration:
-       val = None  # Handle the case on startup, when no value has arrived from the control system yet.
-   output(val)
+.. seealso:: :doc:`Read more about applications of CValueAggregator <../api/widgets/cvalueaggregator>`

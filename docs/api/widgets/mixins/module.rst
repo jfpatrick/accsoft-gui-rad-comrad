@@ -1,8 +1,6 @@
 Mix-ins
 =====================
 
-.. automodule:: comrad.widgets.mixins
-
 .. toctree::
 
     cvaluetransformermixin
@@ -14,3 +12,5 @@ Mix-ins
     ccustomizedtooltipmixin
     crequestingmixin
     cchanneldataprocessingmixin
+
+.. automodule:: comrad.widgets.mixins

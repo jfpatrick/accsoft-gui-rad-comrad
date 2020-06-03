@@ -32,13 +32,13 @@ Numeric Range Rules
 This kind of rules compare whether the incoming channel value falls into a defined numeric range and can set the
 property to a predefined value, corresponding to the range.
 
-For instance, you can define a rule that works with the :ref:`CLabel <clabel>` receiving a `float`, to adjust its
+For instance, you can define a rule that works with the :ref:`clabel` receiving a `float`, to adjust its
 color:
 
 - Values 0.5-1.0 → :green:`Green`
 - Values 0.0-0.5 → :red:`Red`
 
-All the values outside of these ranges will fallback to the default text color of the :ref:`CLabel <clabel>`, which
+All the values outside of these ranges will fallback to the default text color of the :ref:`clabel`, which
 can also be altered via custom :ref:`stylesheets <intro:Using alternative color schemes>`.
 
 The result will be visible at runtime:
@@ -73,7 +73,7 @@ For instance, if you have a device property field of type "enum" in CCDB with th
 3         UNDEF      NONE
 ========  =========  ===========
 
-You can define, say, a color rule that you would attach to a :ref:`CLabel <clabel>` or a :ref:`CLed <cled>`. In this
+You can define, say, a color rule that you would attach to a :ref:`clabel` or a :ref:`cled`. In this
 case, you could configure the rule to have 3 entries:
 
 - "ON" states → :green:`Green`
@@ -101,7 +101,7 @@ To edit rules of a widget, right click on the widget in ComRAD Designer to bring
    Numeric range rule in Rules editor
 
 If you leave "Use default channel" checkbox marked, it will use the standard channel of the widget to evaluate the
-rules (e.g. the one defined through channel property of :ref:`CLabel <clabel>`). Alternatively, you can unmark the
+rules (e.g. the one defined through channel property of :ref:`clabel`). Alternatively, you can unmark the
 checkbox and enter any arbitrary channel address.
 
 For `Numeric Range Rules`_ and `Enum Rules`_, the evaluation UI consists of
