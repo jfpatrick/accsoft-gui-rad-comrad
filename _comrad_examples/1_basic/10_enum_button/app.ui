@@ -11,14 +11,11 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Basic CEnumButton example</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="CEnumButton" name="CEnumButton">
-     <property name="channel" stdset="0">
-      <string notr="true">DemoDevice/Settings#IntVal</string>
-     </property>
      <property name="items" stdset="0">
       <stringlist>
        <string>Alpha (index 0)</string>
@@ -27,6 +24,9 @@
        <string>Delta (index 3)</string>
        <string>Echo (index 4)</string>
       </stringlist>
+     </property>
+     <property name="channel" stdset="0">
+      <string notr="true">DemoDevice/Settings#IntVal</string>
      </property>
     </widget>
    </item>
@@ -41,11 +41,11 @@
      </item>
      <item row="0" column="1">
       <widget class="CLabel" name="CLabel">
-       <property name="channel" stdset="0">
-        <string notr="true">DemoDevice/Settings#IntVal</string>
-       </property>
        <property name="displayFormat" stdset="0">
         <enum>PyDMLabel::Decimal</enum>
+       </property>
+       <property name="channel" stdset="0">
+        <string notr="true">DemoDevice/Settings#IntVal</string>
        </property>
       </widget>
      </item>

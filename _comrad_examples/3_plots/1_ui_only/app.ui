@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Graphs displaying different plotting items built with Qt Designer</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
@@ -26,7 +26,7 @@
       </stringlist>
      </property>
      <property name="axisLabels" stdset="0">
-      <string>{&quot;bottom&quot;: &quot;&quot;, &quot;right&quot;: &quot;Bar Graph&quot;, &quot;left&quot;: &quot;Bar Graph&quot;, &quot;top&quot;: &quot;&quot;, &quot;y_0&quot;: &quot;Curve&quot;, &quot;y_1&quot;: &quot;Injection Bars&quot;}</string>
+      <string>{&quot;right&quot;: &quot;Bar Graph&quot;, &quot;bottom&quot;: &quot;&quot;, &quot;left&quot;: &quot;Bar Graph&quot;, &quot;top&quot;: &quot;&quot;, &quot;y_0&quot;: &quot;Curve&quot;, &quot;y_1&quot;: &quot;Injection Bars&quot;}</string>
      </property>
      <property name="axisRanges" stdset="0">
       <string>{&quot;x&quot;: [-0.5, 0.5], &quot;y&quot;: [0.0, 3.0], &quot;y_0&quot;: [-1.0, 2.0], &quot;y_1&quot;: [-5.0, 2.0]}</string>
@@ -49,7 +49,7 @@
       </stringlist>
      </property>
      <property name="axisLabels" stdset="0">
-      <string>{&quot;bottom&quot;: &quot;&quot;, &quot;right&quot;: &quot;Dotted Curve&quot;, &quot;left&quot;: &quot;Dotted Curve&quot;, &quot;top&quot;: &quot;&quot;, &quot;y_0&quot;: &quot;Triangle Scatter&quot;}</string>
+      <string>{&quot;right&quot;: &quot;Dotted Curve&quot;, &quot;bottom&quot;: &quot;&quot;, &quot;left&quot;: &quot;Dotted Curve&quot;, &quot;top&quot;: &quot;&quot;, &quot;y_0&quot;: &quot;Triangle Scatter&quot;}</string>
      </property>
      <property name="axisRanges" stdset="0">
       <string>{&quot;x&quot;: [0.0, 10.0], &quot;y&quot;: &quot;auto&quot;, &quot;y_0&quot;: &quot;auto&quot;}</string>

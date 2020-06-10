@@ -13,6 +13,7 @@ class PlotDisplay(CDisplay):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.setWindowTitle('Code only display with graphs displaying different plotting items')
         # Prepare window and layout
         main_layout = QGridLayout()
         self.setLayout(main_layout)

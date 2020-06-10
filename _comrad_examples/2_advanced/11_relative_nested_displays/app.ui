@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Example of nesting displays from files located in different directories</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>

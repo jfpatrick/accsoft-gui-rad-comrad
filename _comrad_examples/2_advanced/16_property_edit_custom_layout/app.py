@@ -21,6 +21,7 @@ class DemoDisplay(CDisplay):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.setWindowTitle('Custom layout in CPropertyEdit')
 
         layout = QVBoxLayout()
         self.setLayout(layout)

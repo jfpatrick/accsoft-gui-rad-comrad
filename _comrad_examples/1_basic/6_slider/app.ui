@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Basic CSlider example</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -23,20 +23,20 @@
    </item>
    <item>
     <widget class="CSlider" name="CSlider">
-     <property name="channel" stdset="0">
-      <string notr="true">DemoDevice/Settings#FloatVal</string>
-     </property>
      <property name="showValueLabel" stdset="0">
       <bool>false</bool>
-     </property>
-     <property name="userDefinedLimits" stdset="0">
-      <bool>true</bool>
      </property>
      <property name="userMinimum" stdset="0">
       <double>0.000000000000000</double>
      </property>
      <property name="userMaximum" stdset="0">
       <double>1.000000000000000</double>
+     </property>
+     <property name="channel" stdset="0">
+      <string notr="true">DemoDevice/Settings#FloatVal</string>
+     </property>
+     <property name="userDefinedLimits" stdset="0">
+      <bool>true</bool>
      </property>
     </widget>
    </item>
@@ -54,11 +54,11 @@
        <property name="precision" stdset="0">
         <number>2</number>
        </property>
-       <property name="channel" stdset="0">
-        <string notr="true">DemoDevice/Settings#FloatVal</string>
-       </property>
        <property name="displayFormat" stdset="0">
         <enum>PyDMLabel::Decimal</enum>
+       </property>
+       <property name="channel" stdset="0">
+        <string notr="true">DemoDevice/Settings#FloatVal</string>
        </property>
       </widget>
      </item>

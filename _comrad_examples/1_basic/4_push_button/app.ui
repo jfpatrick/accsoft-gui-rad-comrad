@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Basic CPushButton example</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -21,11 +21,11 @@
        <property name="text">
         <string>Tick</string>
        </property>
-       <property name="channel" stdset="0">
-        <string notr="true">DemoDevice/Settings#Demo</string>
-       </property>
        <property name="pressValue" stdset="0">
         <string>Tick</string>
+       </property>
+       <property name="channel" stdset="0">
+        <string notr="true">DemoDevice/Settings#Demo</string>
        </property>
       </widget>
      </item>
@@ -34,11 +34,11 @@
        <property name="text">
         <string>Tock</string>
        </property>
-       <property name="channel" stdset="0">
-        <string notr="true">DemoDevice/Settings#Demo</string>
-       </property>
        <property name="pressValue" stdset="0">
         <string>Tock</string>
+       </property>
+       <property name="channel" stdset="0">
+        <string notr="true">DemoDevice/Settings#Demo</string>
        </property>
       </widget>
      </item>

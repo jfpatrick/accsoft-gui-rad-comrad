@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Plot Widget displaying a waveform curve built with Qt Designer</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
@@ -26,7 +26,7 @@
       <stringlist/>
      </property>
      <property name="axisLabels" stdset="0">
-      <string>{&quot;right&quot;: &quot;&quot;, &quot;bottom&quot;: &quot;&quot;, &quot;top&quot;: &quot;&quot;, &quot;left&quot;: &quot;&quot;}</string>
+      <string>{&quot;bottom&quot;: &quot;&quot;, &quot;top&quot;: &quot;&quot;, &quot;right&quot;: &quot;&quot;, &quot;left&quot;: &quot;&quot;}</string>
      </property>
      <property name="axisRanges" stdset="0">
       <string>{&quot;x&quot;: &quot;auto&quot;, &quot;y&quot;: [-1.0, 1.0]}</string>

@@ -7,6 +7,7 @@ class DemoDisplay(CDisplay):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.setWindowTitle('Rules example implemented fully in code')
 
         layout = QHBoxLayout()
         self.setLayout(layout)

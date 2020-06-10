@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>CPropertyEdit used for a single field</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -39,7 +39,7 @@
       <string>[{&quot;field&quot;: &quot;Demo&quot;, &quot;type&quot;: 4, &quot;rw&quot;: true, &quot;label&quot;: &quot;Value&quot;}]</string>
      </property>
      <property name="buttons" stdset="0">
-      <enum>PropertyEdit::GetButton</enum>
+      <set>PropertyEdit::GetButton</set>
      </property>
      <property name="channel" stdset="0">
       <string notr="true">DemoDevice/Settings</string>
@@ -58,7 +58,7 @@
       <string>[{&quot;field&quot;: &quot;Demo&quot;, &quot;type&quot;: 4, &quot;rw&quot;: true, &quot;label&quot;: &quot;Value&quot;}]</string>
      </property>
      <property name="buttons" stdset="0">
-      <enum>PropertyEdit::SetButton</enum>
+      <set>PropertyEdit::SetButton</set>
      </property>
      <property name="channel" stdset="0">
       <string notr="true">DemoDevice/Settings</string>

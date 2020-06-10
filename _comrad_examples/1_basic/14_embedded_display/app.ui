@@ -7,11 +7,11 @@
     <x>0</x>
     <y>0</y>
     <width>229</width>
-    <height>126</height>
+    <height>158</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Basic CEmbeddedDisplay example</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>

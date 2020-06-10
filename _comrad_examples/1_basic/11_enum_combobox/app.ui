@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Basic CEnumComboBox example</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -57,11 +57,11 @@
      </item>
      <item row="0" column="1">
       <widget class="CLabel" name="CLabel">
-       <property name="channel" stdset="0">
-        <string notr="true">DemoDevice/Settings#IntVal</string>
-       </property>
        <property name="displayFormat" stdset="0">
         <enum>PyDMLabel::Decimal</enum>
+       </property>
+       <property name="channel" stdset="0">
+        <string notr="true">DemoDevice/Settings#IntVal</string>
        </property>
       </widget>
      </item>

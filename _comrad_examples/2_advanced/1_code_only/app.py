@@ -6,6 +6,7 @@ class DemoDisplay(CDisplay):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.setWindowTitle('CLabel example implemented fully in code')
 
         layout = QVBoxLayout()
         self.setLayout(layout)

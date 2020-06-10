@@ -7,11 +7,11 @@
     <x>0</x>
     <y>0</y>
     <width>229</width>
-    <height>119</height>
+    <height>124</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Basic CShellCommand example</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>

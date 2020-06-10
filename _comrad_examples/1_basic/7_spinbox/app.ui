@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Basic CSpinBox example</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -44,11 +44,11 @@
      <property name="precision" stdset="0">
       <number>2</number>
      </property>
-     <property name="channel" stdset="0">
-      <string notr="true">DemoDevice/Settings#FloatVal</string>
-     </property>
      <property name="showStepExponent" stdset="0">
       <bool>false</bool>
+     </property>
+     <property name="channel" stdset="0">
+      <string notr="true">DemoDevice/Settings#FloatVal</string>
      </property>
     </widget>
    </item>
@@ -66,11 +66,11 @@
        <property name="precision" stdset="0">
         <number>2</number>
        </property>
-       <property name="channel" stdset="0">
-        <string notr="true">DemoDevice/Settings#FloatVal</string>
-       </property>
        <property name="displayFormat" stdset="0">
         <enum>PyDMLabel::Decimal</enum>
+       </property>
+       <property name="channel" stdset="0">
+        <string notr="true">DemoDevice/Settings#FloatVal</string>
        </property>
       </widget>
      </item>
