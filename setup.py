@@ -38,6 +38,7 @@ requirements = {
         'pytest-mock>=2.0,<2.1',
         'pytest-random-order>=1.0.4,<1.1',
         'pytest-qt>=3.2.2,<4',
+        'freezegun>=0.3.15,<0.4',
     ],
     'lint': [
         'mypy==0.761',

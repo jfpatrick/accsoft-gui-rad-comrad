@@ -8,7 +8,7 @@ import json
 import logging
 from collections import OrderedDict
 from enum import Enum
-from typing import cast, Type, Optional, Union, List, Dict, Iterable, Any
+from typing import cast, Type, Optional, Union, List, Dict, Iterable, Any, Tuple
 
 import numpy as np
 import pyqtgraph as pg
@@ -28,12 +28,13 @@ from accwidgets.graph import (PlottingItemDataFactory, UpdateSource, PointData, 
 # from pydm.widgets.image import PyDMImageView
 from pydm.widgets.baseplot import BasePlotCurveItem, PyDMPrimitiveWidget
 from pydm.widgets.channel import PyDMChannel
-from qtpy.QtCore import Property, QObject
+from qtpy.QtCore import Property, QObject, Signal, Qt
 from qtpy.QtGui import QColor, QPen, QBrush
 from qtpy.QtWidgets import QWidget
 
-from comrad.data.channel import CChannelData
+from comrad.data.channel import CChannelData, CContext, CChannel
 from comrad.generics import GenericQObjectMeta
+from comrad.widgets.widget import common_widget_repr, CContextEnabledObject, _factory_channel_setter, _channel_getter
 
 logger = logging.getLogger(__name__)
 
@@ -61,9 +62,9 @@ class PlottingItemTypes(Enum):
     TIMESTAMP_MARKERS = 'Timestamp Marker'
 
 
-class PyDMChannelDataSource(UpdateSource):
+class PyDMChannelDataSource(UpdateSource, CContextEnabledObject):
 
-    def __init__(self, channel_address: str, data_type_to_emit: Type):
+    def __init__(self, channel_address: str, data_type_to_emit: Type, parent: Optional[QWidget] = None):
         """
         Class for receiving data from a PyDM Channel and emit it through
         the update signal AccPyQtGraph plotting items are connected to.
@@ -72,46 +73,61 @@ class PyDMChannelDataSource(UpdateSource):
             channel_address: address the channel is getting data from
             data_type_to_emit: type in which the received data should
                                be converted to
+            parent: Owning object
         """
-        super().__init__()
+        UpdateSource.__init__(self, parent)
+        if isinstance(parent, CPlotWidgetBase):
+            # This ensures that CPlotWidget that gets notified by the context provider about the change
+            # will forward it to us. (context provider will talk to the widget and not dataSource because
+            # of the modified event filter).
+            parent.sig_context_changed.connect(self.context_changed)
+        CContextEnabledObject.__init__(self)
         self._data_type_to_emit = data_type_to_emit
-        self._channel: Optional[PyDMChannel] = None
+
         # Save last state to check if new value contains any changes
         self._last_value: Union[List[int], List[float], None] = None
         self._transform = PlottingItemDataFactory.get_transformation(self._data_type_to_emit)
         self.address = channel_address
 
-    @property
-    def address(self) -> str:
-        """Get the PyDMChannel the update source is based on."""
-        return '' if self._channel is None else self._channel.address
-
-    @address.setter
-    def address(self, new_address: str):
+    def parentWidget(self) -> Optional[QWidget]:
         """
-        Replace the :class:`pydm.widgets.channel.PyDMChannel` with one created from the passed channel address.
+        For compatibility with walking the widget hierarchy
+        using :func:`~comrad.data.context.find_context_provider`.
+        This can't be :meth:`QObject.parent`, but has to be parent's parent. The reason is that our parent is
+        :mod:`pyqtgraph`-derivative. ``pyqtgraph``'s overridden :meth:`~pyqtgraph.PlotWidget.__getattr__` will
+        intervene into hasattr logic and will issue an error on this check, inside
+        :func:`~comrad.data.context.find_context_provider`.
+        """
+        return self.parent().parentWidget()
+
+    def installEventFilter(self, filter: QObject):
+        """
+        We must install event filter on the parent widget, not the data source, as it will never trigger
+        "Show" events and similar.
 
         Args:
-            new_address: new address that will be used to create a channel for
-                         data updates
+            filter: Installed filter
         """
-        if new_address is not None and len(new_address.strip()) > 0:
-            self._channel = PyDMChannel(address=new_address.strip(),
-                                        connection_slot=self._connection_state_changes,
-                                        value_slot=self.value_updated)
-            self._channel.connect()
+        if filter == self._context_tracker:
+            parent = self.parent()
+            if parent is not None:
+                parent.installEventFilter(filter)
+        else:
+            super().installEventFilter(filter)
 
-    @property
-    def channel(self) -> Optional[PyDMChannel]:
-        """Get the current :class:`pydm.widgets.channel.PyDMChannel` the update source is based on."""
-        return self._channel
+    _channel = property(fget=_channel_getter)
 
-    def _connection_state_changes(self) -> None:
-        """
-        Slot to handle connection state changes from the channel.
-        Currently we do not react in a special way to connection state changes.
-        """
-        pass
+    address = property(fget=_channel_getter, fset=_factory_channel_setter)
+    """PyDMChannel the update source is based on."""
+
+    def create_channel(self, channel_address: str, context: Optional[CContext]) -> CChannel:
+        ch = cast(CChannel, PyDMChannel(address=channel_address,
+                                        connection_slot=None,
+                                        value_slot=self.value_updated,
+                                        value_signal=None,
+                                        write_access_slot=None))
+        ch.context = context
+        return ch
 
     def value_updated(self, packet: CChannelData[Union[float, int, Iterable[float], Iterable[int], None]]):
         """
@@ -177,6 +193,8 @@ class CPlotWidgetBase(PyDMPrimitiveWidget, metaclass=GenericQObjectMeta):
         PlottingItemTypes.TIMESTAMP_MARKERS.value: TimestampMarkerData,
     }
 
+    sig_context_changed = Signal()
+
     def __init__(self):
         """
         Base class providing functions used by the plotting item editor dialog
@@ -198,13 +216,17 @@ class CPlotWidgetBase(PyDMPrimitiveWidget, metaclass=GenericQObjectMeta):
         type of plotting items they can display for which style. If the
         value is set to ``None``, the style is interpreted as not supported.
         """
-        super().__init__()
+        PyDMPrimitiveWidget.__init__(self)
         if not isinstance(self, ExPlotWidget):
-            logger.warning(f'{CPlotWidgetBase.__name__} implementation relies on attributes'
+            logger.warning(f'{CPlotWidgetBase.__name__} implementation relies on attributes '
                            f'provided by {ExPlotWidget.__name__}. '
-                           f'Use {CPlotWidgetBase.__name__} only as base class of classes'
+                           f'Use {CPlotWidgetBase.__name__} only as base class of classes '
                            f'derived from {ExPlotWidget.__name__}.')
         self._items: List[CItemPropertiesBase] = []
+
+    def context_changed(self):
+        # Pass the notification further to the interested data sources
+        self.sig_context_changed.emit()
 
     @property
     def _curves(self):
@@ -258,8 +280,8 @@ class CPlotWidgetBase(PyDMPrimitiveWidget, metaclass=GenericQObjectMeta):
                  name: Optional[str] = None,
                  symbol: Optional[str] = None,
                  symbol_size: Optional[int] = None,
-                 line_style: Optional[int] = None,
-                 line_width: Optional[int] = None) -> Union['CItemPropertiesBase', pg.PlotDataItem]:
+                 line_style: Optional[Qt.PenStyle] = None,
+                 line_width: Union[float, int, None] = None) -> Union['CItemPropertiesBase', pg.PlotDataItem]:
         """
         This function overrides the :class:`~accwidgets.graph.ExPlotItem`'s
         :meth:`~accwidgets.graph.ExPlotItem.addCurve` function and extends it
@@ -378,7 +400,7 @@ class CPlotWidgetBase(PyDMPrimitiveWidget, metaclass=GenericQObjectMeta):
     def addTimestampMarker(self,
                            data_source: Union[str, UpdateSource],
                            buffer_size: int = DEFAULT_BUFFER_SIZE,
-                           line_width: Optional[int] = None) -> Union['CItemPropertiesBase', pg.BarGraphItem]:
+                           line_width: Union[float, int, None] = None) -> Union['CItemPropertiesBase', pg.BarGraphItem]:
         """
         This function overrides the :class:`~accwdigets.graph.ExPlotItem`'s
         :meth:`~accwidgets.graph.ExPlotItem.addTimestampMarker` function and extends it
@@ -411,8 +433,8 @@ class CPlotWidgetBase(PyDMPrimitiveWidget, metaclass=GenericQObjectMeta):
                                   index: Optional[int] = None,
                                   name: Optional[str] = None,
                                   color: Union[str, QColor, None] = None,
-                                  line_style: Optional[int] = None,
-                                  line_width: Optional[int] = None,
+                                  line_style: Optional[Qt.PenStyle] = None,
+                                  line_width: Union[float, int, None] = None,
                                   symbol: Optional[str] = None,
                                   symbol_size: Optional[int] = None) -> 'CItemPropertiesBase':
         """
@@ -437,8 +459,13 @@ class CPlotWidgetBase(PyDMPrimitiveWidget, metaclass=GenericQObjectMeta):
         Returns:
             The newly created curve.
         """
-        data_source = PyDMChannelDataSource(channel_address=channel_address,
-                                            data_type_to_emit=self._SOURCE_EMIT_TYPE[style])
+        try:
+            data_type_to_emit = self._SOURCE_EMIT_TYPE[style]
+        except KeyError:
+            raise ValueError(f"{type(self).__name__} does not support style '{style}'")
+        data_source = PyDMChannelDataSource(parent=self,
+                                            channel_address=channel_address,
+                                            data_type_to_emit=data_type_to_emit)
         new_item: CItemPropertiesBase = self._create_fitting_item(data_source=data_source,
                                                                   style=style)
         if color is None:
@@ -468,7 +495,7 @@ class CPlotWidgetBase(PyDMPrimitiveWidget, metaclass=GenericQObjectMeta):
         ]
 
     @staticmethod
-    def _default_line_style() -> int:
+    def _default_line_style() -> Qt.PenStyle:
         return CItemPropertiesBase.lines.get('Solid')
 
     @staticmethod
@@ -477,8 +504,8 @@ class CPlotWidgetBase(PyDMPrimitiveWidget, metaclass=GenericQObjectMeta):
                                      name: Optional[str] = None,
                                      symbol: Optional[str] = None,
                                      symbol_size: Optional[int] = None,
-                                     line_style: Optional[int] = None,
-                                     line_width: Optional[int] = None) -> None:
+                                     line_style: Optional[Qt.PenStyle] = None,
+                                     line_width: Union[float, int, None] = None):
         """Set the items styling properties according to the passed values."""
         if color is not None:
             item.color = color
@@ -611,6 +638,8 @@ class CPlotWidgetBase(PyDMPrimitiveWidget, metaclass=GenericQObjectMeta):
             plot_item.curves.clear()
         self._items.clear()
 
+    __repr__ = common_widget_repr
+
 
 class CItemPropertiesBase(abc.ABC):
 
@@ -647,8 +676,8 @@ class CItemPropertiesBase(abc.ABC):
 
     def initialize_style_properties(self,
                                     color: Optional[str],
-                                    line_style: Optional[int] = None,
-                                    line_width: Optional[int] = None):
+                                    line_style: Optional[Qt.PenStyle] = None,
+                                    line_width: Union[float, int, None] = None):
         """
         Initialize styling parameters for the item.
 
@@ -678,7 +707,7 @@ class CItemPropertiesBase(abc.ABC):
         Returns an OrderedDict representation with values for all properties
         needed to recreate this item.
         """
-        return OrderedDict([
+        kv_pairs: List[Tuple[str, Any]] = [
             ('channel', self.address),
             ('style', self.style_string),
             ('layer', self.layer),
@@ -688,7 +717,8 @@ class CItemPropertiesBase(abc.ABC):
             ('line_width', self.line_width),
             ('symbol', self.symbol),
             ('symbol_size', self.symbol_size),
-        ])
+        ]
+        return OrderedDict(kv_pairs)
 
     # Properties with implementation shareable through all subclasses
 
@@ -774,7 +804,7 @@ class CItemPropertiesBase(abc.ABC):
         self._name = new_name
 
     @property
-    def line_style(self) -> int:  # TODO: Change to Qt.PenStyle
+    def line_style(self) -> Qt.PenStyle:
         """
         Return the style of lines used in the item (if supported).
         Must be a value from the :class:`qtpy.QtCore.Qt.PenStyle` enum.
@@ -782,7 +812,7 @@ class CItemPropertiesBase(abc.ABC):
         return getattr(self, '_line_style', list(self.lines.values())[0])
 
     @line_style.setter
-    def line_style(self, new_style: int):  # TODO: Change to Qt.PenStyle
+    def line_style(self, new_style: Qt.PenStyle):
         """
         Set the style of lines used in the item (if supported).
         Must be a value from the :class:`qtpy.QtCore.Qt.PenStyle` enum.
@@ -906,11 +936,11 @@ class CCurvePropertiesBase(CItemPropertiesBase):
             self.opts['name'] = new_name
 
     @property
-    def line_style(self) -> int:
+    def line_style(self) -> Qt.PenStyle:
         return self.pen.style()
 
     @line_style.setter
-    def line_style(self, line_style: int):
+    def line_style(self, line_style: Qt.PenStyle):
         if line_style in self.lines.values():
             self.pen.setStyle(line_style)
 
@@ -1149,8 +1179,8 @@ class CScrollingCurve(ScrollingPlotCurve, CCurvePropertiesBase):
                  data_model: Union[LiveCurveDataModel, UpdateSource],
                  buffer_size: int = DEFAULT_BUFFER_SIZE,
                  color: Optional[str] = None,
-                 line_width: Optional[int] = None,
-                 line_style: Optional[int] = None,
+                 line_width: Union[float, int, None] = None,
+                 line_style: Optional[Qt.PenStyle] = None,
                  **kwargs):
         """
         Scrolling curve for a scrolling plot widget that
@@ -1190,8 +1220,8 @@ class CScrollingBarGraph(ScrollingBarGraphItem, CBarGraphPropertiesBase):
                  data_model: Union[LiveBarGraphItem, UpdateSource],
                  buffer_size: int = DEFAULT_BUFFER_SIZE,
                  color: Optional[str] = None,
-                 line_width: Optional[int] = None,
-                 line_style: Optional[int] = None,
+                 line_width: Union[float, int, None] = None,
+                 line_style: Optional[Qt.PenStyle] = None,
                  **kwargs):
         """
         Scrolling bar graph item for a scrolling plot widget that
@@ -1232,8 +1262,8 @@ class CScrollingInjectionBarGraph(ScrollingInjectionBarGraphItem, CInjectionBarG
                  data_model: Union[LiveInjectionBarDataModel, UpdateSource],
                  buffer_size: int = DEFAULT_BUFFER_SIZE,
                  color: Optional[str] = None,
-                 line_width: Optional[int] = None,
-                 line_style: Optional[int] = None,
+                 line_width: Union[float, int, None] = None,
+                 line_style: Optional[Qt.PenStyle] = None,
                  **kwargs):
         """
         Scrolling injection bar graph for a scrolling plot widget
@@ -1272,8 +1302,8 @@ class CScrollingTimestampMarker(ScrollingTimestampMarker, CTimestampMarkerProper
                  data_model: Union[LiveTimestampMarkerDataModel, UpdateSource],
                  buffer_size: int = DEFAULT_BUFFER_SIZE,
                  color: Optional[str] = None,
-                 line_width: Optional[int] = None,
-                 line_style: Optional[int] = None,
+                 line_width: Union[float, int, None] = None,
+                 line_style: Optional[Qt.PenStyle] = None,
                  **kwargs):
         """
         Scrolling timestamp markers for a scrolling plot widget that
@@ -1352,8 +1382,8 @@ class CCyclicCurve(CyclicPlotCurve, CCurvePropertiesBase):
                  data_model: Union[LiveCurveDataModel, UpdateSource],
                  buffer_size: int = DEFAULT_BUFFER_SIZE,
                  color: Optional[str] = None,
-                 line_width: Optional[int] = None,
-                 line_style: Optional[int] = None,
+                 line_width: Union[float, int, None] = None,
+                 line_style: Optional[Qt.PenStyle] = None,
                  **kwargs):
         """
         Cyclic curve for a cyclic plot widget that
@@ -1421,8 +1451,8 @@ class CStaticCurve(StaticPlotCurve, CCurvePropertiesBase):
                  plot_item: ExPlotItem,
                  data_model: Union[LiveCurveDataModel, UpdateSource],
                  color: Optional[str] = None,
-                 line_width: Optional[int] = None,
-                 line_style: Optional[int] = None,
+                 line_width: Union[float, int, None] = None,
+                 line_style: Optional[Qt.PenStyle] = None,
                  **kwargs):
         """
         Static Curve for a static plot widget that
@@ -1457,8 +1487,8 @@ class CStaticBarGraph(StaticBarGraphItem, CBarGraphPropertiesBase):
                  plot_item: ExPlotItem,
                  data_model: Union[LiveBarGraphItem, UpdateSource],
                  color: Optional[str] = None,
-                 line_width: Optional[int] = None,
-                 line_style: Optional[int] = None,
+                 line_width: Union[float, int, None] = None,
+                 line_style: Optional[Qt.PenStyle] = None,
                  **kwargs):
         """
         Static bar graph item for a static plot widget that
@@ -1491,8 +1521,8 @@ class CStaticInjectionBarGraph(StaticInjectionBarGraphItem, CInjectionBarGraphPr
                  plot_item: ExPlotItem,
                  data_model: Union[LiveInjectionBarDataModel, UpdateSource],
                  color: Optional[str] = None,
-                 line_width: Optional[int] = None,
-                 line_style: Optional[int] = None,
+                 line_width: Union[float, int, None] = None,
+                 line_style: Optional[Qt.PenStyle] = None,
                  **kwargs):
         """
         Static injection bar graph for a static plot widget
@@ -1523,8 +1553,8 @@ class CStaticTimestampMarker(StaticTimestampMarker, CTimestampMarkerPropertiesBa
                  plot_item: ExPlotItem,
                  data_model: Union[LiveTimestampMarkerDataModel, UpdateSource],
                  color: Optional[str] = None,
-                 line_width: Optional[int] = None,
-                 line_style: Optional[int] = None,
+                 line_width: Union[float, int, None] = None,
+                 line_style: Optional[Qt.PenStyle] = None,
                  **kwargs):
         """
         Static timestamp markers for a static plot widget that
