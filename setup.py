@@ -86,7 +86,7 @@ setup(
     author='Ivan Sinkarenko',
     author_email='ivan.sinkarenko@cern.ch',
     url='https://wikis.cern.ch/display/ACCPY/Rapid+Application+Development',
-    packages=find_packages(exclude=('build*', 'dist*', 'docs*', 'tests', '*.egg-info', '_comrad.debug')),
+    packages=find_packages(exclude=('build*', 'dist*', 'docs*', 'tests*', '*.egg-info', '_comrad.debug')),
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: X11 Applications :: Qt',
