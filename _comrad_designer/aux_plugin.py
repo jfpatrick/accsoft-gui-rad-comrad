@@ -50,7 +50,7 @@ from pydm.widgets import (PyDMLabel, PyDMCheckbox, PyDMPushButton,
                           PyDMScaleIndicator)
 from pydm.widgets.logdisplay import PyDMLogDisplay
 from pydm.widgets.enum_button import PyDMEnumButton
-from accwidgets.graph import ScrollingPlotWidget, CyclicPlotWidget
+from accwidgets.graph import ScrollingPlotWidget, CyclicPlotWidget, StaticPlotWidget
 from accwidgets.property_edit import PropertyEdit
 from _comrad_designer.utils import qtplugin_factory
 
@@ -85,4 +85,5 @@ _PyDMScaleIndicator = qtplugin_factory(PyDMScaleIndicator, group=_COMRAD_GROUP_H
 
 _AccScrollingPlot = qtplugin_factory(ScrollingPlotWidget, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 _AccCyclicPlot = qtplugin_factory(CyclicPlotWidget, group=_COMRAD_GROUP_HIDDEN_ITEMS)
+_AccStaticPlot = qtplugin_factory(StaticPlotWidget, group=_COMRAD_GROUP_HIDDEN_ITEMS)
 _PropertyEdit = qtplugin_factory(PropertyEdit, group=_COMRAD_GROUP_HIDDEN_ITEMS)
