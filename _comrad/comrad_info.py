@@ -29,7 +29,7 @@ COMRAD_AUTHOR = f'{COMRAD_AUTHOR_NAME} <{COMRAD_AUTHOR_EMAIL}>'
 """Combined support contact information to be presented in help messages and about dialogs."""
 
 
-COMRAD_WIKI = 'https://wikis.cern.ch/display/ACCPY/Rapid+Application+Development'
+COMRAD_WIKI = 'https://acc-py.web.cern.ch/gitlab/acc-co/accsoft/gui/rad/accsoft-gui-rad-comrad/docs/stable/'
 
 
 COMRAD_VERSION = get_comrad_versions()['version']

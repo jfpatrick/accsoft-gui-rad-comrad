@@ -418,7 +418,7 @@
        <item>
         <widget class="QLabel" name="support">
          <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;For support, please contact {author}&lt;/p&gt;&lt;p&gt;Project page: &lt;a href=&quot;https://wikis.cern.ch/display/ACCPY/Rapid+Application+Development&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;https://wikis.cern.ch/display/ACCPY/Rapid+Application+Development&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;For support, please contact {author}&lt;/p&gt;&lt;p&gt;Project page: {wiki}&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>

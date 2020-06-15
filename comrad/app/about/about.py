@@ -53,7 +53,8 @@ class AboutDialog(QWidget):
         if icon is not None:
             self.icon_lbl.setPixmap(icon.pixmap(self.icon_lbl.maximumSize()))
 
-        from _comrad.comrad_info import COMRAD_DESCRIPTION, get_versions_info
+        from _comrad.comrad_info import COMRAD_DESCRIPTION, COMRAD_AUTHOR_EMAIL, COMRAD_AUTHOR_NAME, COMRAD_WIKI, \
+            get_versions_info
         versions = get_versions_info()
 
         self.version.setText(str(self.version.text()).format(version=versions.comrad))
@@ -79,12 +80,10 @@ class AboutDialog(QWidget):
             layout.addRow('Python', QLabel(versions.python))
 
         self.description.setText(COMRAD_DESCRIPTION)
-        import comrad
-        import re
-        author = re.sub(pattern=r'(.*)<([^>]*)>',
-                        repl='\g<1>&lt;<a href="mailto:\g<2>">\g<2></a>&gt;',  # noqa: W605
-                        string=comrad.__author__)
-        self.support.setText(str(self.support.text()).format(author=author))
+        formatted_author = f'{COMRAD_AUTHOR_NAME}&nbsp;&lt;<a href="mailto:' \
+                           f'{COMRAD_AUTHOR_EMAIL}">{COMRAD_AUTHOR_EMAIL}</a>&gt;'
+        formatted_wiki = f'<a href="{COMRAD_WIKI}">{COMRAD_WIKI}</a>'
+        self.support.setText(str(self.support.text()).format(author=formatted_author, wiki=formatted_wiki))
 
         from ..application import CApplication
         self.app = cast(CApplication, CApplication.instance())
