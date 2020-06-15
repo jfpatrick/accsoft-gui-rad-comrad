@@ -128,10 +128,20 @@ class AboutDialog(QWidget):
             self.plugins_table.setItem(new_row, 1, file_item)
 
     def _populate_credits(self):
+        self.contrib_list.addItem('ComRAD Contributors:')
+        self.contrib_list.addItem('--------------------')
+        import _comrad.comrad_info
+        contrib_file = Path(_comrad.comrad_info.__file__).parent / 'contributors.txt'
+        with contrib_file.open() as f:
+            for line in f:
+                self.contrib_list.addItem(str(line).strip())
+        self.contrib_list.addItem('')
+        self.contrib_list.addItem('')
+
         self.contrib_list.addItem('PyDM Contributors:')
         self.contrib_list.addItem('------------------')
         import pydm.about_pydm.about
-        contrib_file: Path = Path(pydm.about_pydm.about.__file__).parent / 'contributors.txt'
+        contrib_file = Path(pydm.about_pydm.about.__file__).parent / 'contributors.txt'
         with contrib_file.open() as f:
             for line in f:
                 self.contrib_list.addItem(str(line)

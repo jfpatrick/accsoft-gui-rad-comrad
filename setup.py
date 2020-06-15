@@ -119,7 +119,7 @@ setup(
         'Typing :: Typed',
     ],
     package_data={
-        '': ['*.ui', '*.ico', '*.png', '*.qss', '*.json'],
+        '': ['*.ui', '*.ico', '*.png', '*.qss', '*.json', '*.txt'],
     },
     install_requires=requires,
     entry_points={
