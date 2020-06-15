@@ -79,8 +79,8 @@ html_static_path = ['_static']
 html_short_title = f'{project} v{__version__}'
 html_title = f'{html_short_title} docs'
 
-html_logo = '../comrad/icons/app.ico'
-html_favicon = html_logo
+html_logo = './img/logo.png'  # Must be png here, as ico won't be rendered by Chrome (and is not advised by MDN)
+html_favicon = '../comrad/icons/app.ico'
 html_css_files = [
     'fix_tables.css',
     'fix_bullets.css',
