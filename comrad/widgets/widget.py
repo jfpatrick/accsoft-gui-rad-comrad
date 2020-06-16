@@ -1,4 +1,5 @@
 import logging
+from abc import abstractmethod
 from typing import Optional, cast, List, Iterable
 from qtpy.QtCore import Property
 from qtpy.QtWidgets import QWidget
@@ -6,6 +7,7 @@ from pydm import config
 from pydm.widgets.base import PyDMWidget
 from pydm.utilities import is_qt_designer
 from comrad.monkey import modify_in_place, MonkeyPatchedClass
+from comrad.generics import GenericQObjectMeta
 from comrad.data.channel import PyDMChannel, CChannel, format_address
 from comrad.data.context import CContext, find_context_provider, CContextTrackingDelegate
 
@@ -31,13 +33,20 @@ def common_widget_repr(self: QWidget) -> str:
     return f'{prefix} ({obj_name})>'
 
 
-@modify_in_place
-class CWidget(PyDMWidget, MonkeyPatchedClass):
+class CContextEnabledObject(metaclass=GenericQObjectMeta):
 
     def __init__(self, init_channel: Optional[str] = None):
+        """
+        This class provides shared functionality of working with contexts for :class:`~pydm.widgets.base.PyDMWidget`
+        derivatives, as well others (e.g. graphs, that derive from lower level
+        :class:`~pydm.widgets.base.PyDMPrimitiveWidget`, but still need the ability to track contexts.
+
+        Args:
+            init_channel: Initial channel to attach the widget to right away.
+        """
         self._local_context: Optional[CContext] = None  # Keep a copy so we can locate old channel addresses when updating
+        self._channels: List[PyDMChannel] = []  # Duplicating PyDMWidget's here, but we need it before PyDMWidget.__init__ gets called
         self._channel_ids: List[str] = []
-        self._overridden_members['__init__'](self)  # Do not pass init_channel here, we'll set it in showEvent
         self._context_tracker = CContextTrackingDelegate(self)
         if not is_qt_designer() or config.DESIGNER_ONLINE:
             logger.debug(f'{self}: Installing new context tracking event handler: {self._context_tracker}')
@@ -45,6 +54,7 @@ class CWidget(PyDMWidget, MonkeyPatchedClass):
         if init_channel:
             self._channel_ids.append(init_channel)
 
+    @abstractmethod
     def create_channel(self, channel_address: str, context: Optional[CContext]) -> CChannel:
         """
         Factory to create channels. This can be overridden in case there is a need to connect channels differently.
@@ -56,17 +66,7 @@ class CWidget(PyDMWidget, MonkeyPatchedClass):
         Returns:
             Newly created channel.
         """
-        ch = cast(CChannel, PyDMChannel(address=channel_address,
-                                        connection_slot=self.connectionStateChanged,
-                                        value_slot=self.channelValueChanged,
-                                        value_signal=None,
-                                        write_access_slot=None))
-        if hasattr(self, 'writeAccessChanged'):
-            ch.write_access_slot = self.writeAccessChanged
-        if hasattr(self, 'send_value_signal'):
-            ch.value_signal = self.send_value_signal
-        ch.context = context
-        return ch
+        pass
 
     def reconnect(self, new_ch_addresses: List[str], new_context: Optional[CContext]):
         """
@@ -91,8 +91,7 @@ class CWidget(PyDMWidget, MonkeyPatchedClass):
         for channel in list(self._channels):  # Avoid iterator change during the mutation inside loop body
             if channel.address not in channels_to_remove:
                 continue
-            channel.disconnect()
-            self._channels.remove(channel)
+            self._remove_channel(channel)
 
         self._channel_ids = new_ch_addresses
 
@@ -109,9 +108,31 @@ class CWidget(PyDMWidget, MonkeyPatchedClass):
             return
 
         for ch in channels_to_add:
-            channel = self.create_channel(ch, new_context)
-            channel.connect()
-            self._channels.append(channel)
+            self._add_channel(ch, new_context)
+
+    def _add_channel(self, address: str, context: Optional[CContext]):
+        """
+        Add channel to the tracked list. This can be different from ``self._channels`` depending on implementation,
+        e.g. when ``self._channels`` is just a view into another collection.
+
+        Args:
+            address: Channel address.
+            context: Accompanying context.
+        """
+        channel = self.create_channel(address, context)
+        channel.connect()
+        self._channels.append(channel)
+
+    def _remove_channel(self, channel: PyDMChannel):
+        """
+        Remove channel from the tracked list. This can be different from ``self._channels`` depending on implementation,
+        e.g. when ``self._channels`` is just a view into another collection.
+
+        Args:
+            channel: Channel to remove.
+        """
+        channel.disconnect()
+        self._channels.remove(channel)
 
     def _set_context(self, new_val: Optional[CContext]):
         if new_val != self._local_context:
@@ -142,9 +163,6 @@ class CWidget(PyDMWidget, MonkeyPatchedClass):
     def context_changed(self):
         """
         Slot that receives a new context from the context provider, (e.g. when widgets are grouped inside a container).
-
-        Args:
-            new_val: New context
         """
         context_provider = find_context_provider(self)
         if context_provider:
@@ -152,16 +170,14 @@ class CWidget(PyDMWidget, MonkeyPatchedClass):
         else:
             self.context = None
 
-    __repr__ = common_widget_repr
 
-
-def _factory_channel_setter(self: CWidget, new_val: Optional[str]):
+def _factory_channel_setter(self: 'CWidget', new_val: Optional[str]):
     if (new_val or None) != (self._channel or None):  # Equalize '' and None
         set_val = [new_val] if new_val else []
         self.reconnect(set_val, self._local_context)
 
 
-def _channel_getter(self: CWidget) -> Optional[str]:
+def _channel_getter(self: 'CWidget') -> Optional[str]:
     # For compatibility with PyDM, as it expects the instance attribute there
     try:
         return self._channel_ids[0]
@@ -169,5 +185,35 @@ def _channel_getter(self: CWidget) -> Optional[str]:
         return None
 
 
-PyDMWidget.channel = Property(str, fget=PyDMWidget.channel.fget, fset=_factory_channel_setter)
-PyDMWidget._channel = property(fget=_channel_getter, fset=lambda *_: None)
+@modify_in_place
+class CWidget(PyDMWidget, MonkeyPatchedClass, CContextEnabledObject):
+
+    def __init__(self, init_channel: Optional[str] = None):
+        CContextEnabledObject.__init__(self, init_channel=init_channel)
+        # Avoid setter triggering inside PyDM's init, so pass the same one, that our setter will ignore it
+        self._overridden_members['__init__'](self, init_channel=self._channel)
+
+    def create_channel(self, channel_address: str, context: Optional[CContext]) -> CChannel:
+        ch = cast(CChannel, PyDMChannel(address=channel_address,
+                                        connection_slot=self.connectionStateChanged,
+                                        value_slot=self.channelValueChanged,
+                                        value_signal=None,
+                                        write_access_slot=None))
+        if hasattr(self, 'writeAccessChanged'):
+            ch.write_access_slot = self.writeAccessChanged
+        if hasattr(self, 'send_value_signal'):
+            ch.value_signal = self.send_value_signal
+        ch.context = context
+        return ch
+
+    reconnect = CContextEnabledObject.reconnect
+
+    context = CContextEnabledObject.context
+
+    context_changed = CContextEnabledObject.context_changed
+
+    _channel = property(fget=_channel_getter, fset=lambda *_: None)
+
+    channel = Property(str, fget=PyDMWidget.channel.fget, fset=_factory_channel_setter)
+
+    __repr__ = common_widget_repr
