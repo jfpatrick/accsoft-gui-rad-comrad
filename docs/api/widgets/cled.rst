@@ -34,7 +34,7 @@ of two colors, corresponding to its :attr:`~comrad.CLed.onColor` and :attr:`~com
 converted to :class:`Led.Status <accwidgets.led.led.Led.Status>`. When fed an enum, it will convert its
 "meaning" field, into corresponding :class:`Led.Status <accwidgets.led.led.Led.Status>` value.
 
-:class:`~comrad.CLed` when reflecting a :class:`Led.Status <accwidgets.led.led.Led.Status>`, the widget will
+When reflecting a :class:`Led.Status <accwidgets.led.led.Led.Status>`, the widget will
 receive a predefined color. However, it is capable of representing an arbitrary color (such as those defined in
 :attr:`~comrad.CLed.onColor` and :attr:`~comrad.CLed.offColor` or returned from :attr:`~comrad.CLed.valueTransformation`
 or rules).
