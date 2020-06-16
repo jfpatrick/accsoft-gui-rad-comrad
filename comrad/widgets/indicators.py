@@ -253,6 +253,8 @@ class CLed(CColorRulesMixin, CValueTransformerMixin, CInitializedMixin, CHideUnu
                 status = CLed.meaning_to_status(packet.value.meaning)
             except ValueError:
                 pass
+        elif isinstance(packet.value, QColor):
+            color = packet.value
 
         if color is None and status is None:
             return
