@@ -14,10 +14,6 @@ find_packages = PEP420PackageFinder.find
 curr_dir: Path = Path(__file__).parent.absolute()
 
 
-with curr_dir.joinpath('README.md').open() as f:
-    long_description = f.read()
-
-
 requirements = {
     'prod': [
         'numpy>=1.16.4,<2',
@@ -75,6 +71,30 @@ requires = requirements['prod']
 del requirements['prod']
 extra_requires = requirements
 
+
+# Extracting author information, based on the approach of versioneer, similar how it shares version between runtime and
+# packaging time.
+def get_comrad_info(arg_name: str):
+    import sys
+    import re
+    if 'versioneer' in sys.modules:
+        # see the discussion in versioneer.py:get_cmdclass()
+        del sys.modules['versioneer']
+    root = versioneer.get_root()
+    src_file = Path(root) / '_comrad/comrad_info.py'
+    try:
+        with src_file.open() as f:
+            contents = f.read()
+    except EnvironmentError:
+        raise versioneer.NotThisMethod('unable to read comrad_info.py')
+    mo = re.search(rf"{arg_name} = f?'([^']+)'", contents)
+    if mo is None or mo.lastindex is None:
+        mo = re.search(rf'{arg_name} = f?"""([^(""")]+)"""', contents)
+    if mo is None:
+        raise ValueError(f'unable to locate {arg_name} in comrad_info.py')
+    return mo.group(1)
+
+
 # Note include_package_data must be set to False, otherwise setuptools
 # will consider only CVS/Svn tracked non-code files
 # More info: https://stackoverflow.com/a/23936405
@@ -82,14 +102,15 @@ setup(
     name='comrad',
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
-    description='CO Multi-purpose Rapid Application Development framework',
-    long_description=long_description,
-    author='Ivan Sinkarenko',
-    author_email='ivan.sinkarenko@cern.ch',
-    url='https://wikis.cern.ch/display/ACCPY/Rapid+Application+Development',
+    description=get_comrad_info('COMRAD_DESCRIPTION_SHORT'),
+    long_description=get_comrad_info('COMRAD_DESCRIPTION_LONG'),
+    author=get_comrad_info('COMRAD_AUTHOR_NAME'),
+    author_email=get_comrad_info('COMRAD_AUTHOR_EMAIL'),
+    url=get_comrad_info('COMRAD_WIKI'),
+    license='None (internal package)',
     packages=find_packages(exclude=('build*', 'dist*', 'docs*', 'tests*', '*.egg-info', '_comrad.debug')),
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Environment :: X11 Applications :: Qt',
         'Intended Audience :: Developers',
         'Operating System :: POSIX :: Linux',
@@ -98,7 +119,7 @@ setup(
         'Typing :: Typed',
     ],
     package_data={
-        '': ['*.ui', '*.ico', '*.png', '*.qss', '*.json'],
+        '': ['*.ui', '*.ico', '*.png', '*.qss', '*.json', '*.txt'],
     },
     install_requires=requires,
     entry_points={

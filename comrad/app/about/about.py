@@ -53,7 +53,8 @@ class AboutDialog(QWidget):
         if icon is not None:
             self.icon_lbl.setPixmap(icon.pixmap(self.icon_lbl.maximumSize()))
 
-        from _comrad.comrad_info import COMRAD_DESCRIPTION, get_versions_info
+        from _comrad.comrad_info import COMRAD_DESCRIPTION, COMRAD_AUTHOR_EMAIL, COMRAD_AUTHOR_NAME, COMRAD_WIKI, \
+            get_versions_info
         versions = get_versions_info()
 
         self.version.setText(str(self.version.text()).format(version=versions.comrad))
@@ -79,12 +80,10 @@ class AboutDialog(QWidget):
             layout.addRow('Python', QLabel(versions.python))
 
         self.description.setText(COMRAD_DESCRIPTION)
-        import comrad
-        import re
-        author = re.sub(pattern=r'(.*)<([^>]*)>',
-                        repl='\g<1>&lt;<a href="mailto:\g<2>">\g<2></a>&gt;',  # noqa: W605
-                        string=comrad.__author__)
-        self.support.setText(str(self.support.text()).format(author=author))
+        formatted_author = f'{COMRAD_AUTHOR_NAME}&nbsp;&lt;<a href="mailto:' \
+                           f'{COMRAD_AUTHOR_EMAIL}">{COMRAD_AUTHOR_EMAIL}</a>&gt;'
+        formatted_wiki = f'<a href="{COMRAD_WIKI}">{COMRAD_WIKI}</a>'
+        self.support.setText(str(self.support.text()).format(author=formatted_author, wiki=formatted_wiki))
 
         from ..application import CApplication
         self.app = cast(CApplication, CApplication.instance())
@@ -129,10 +128,20 @@ class AboutDialog(QWidget):
             self.plugins_table.setItem(new_row, 1, file_item)
 
     def _populate_credits(self):
+        self.contrib_list.addItem('ComRAD Contributors:')
+        self.contrib_list.addItem('--------------------')
+        import _comrad.comrad_info
+        contrib_file = Path(_comrad.comrad_info.__file__).parent / 'contributors.txt'
+        with contrib_file.open() as f:
+            for line in f:
+                self.contrib_list.addItem(str(line).strip())
+        self.contrib_list.addItem('')
+        self.contrib_list.addItem('')
+
         self.contrib_list.addItem('PyDM Contributors:')
         self.contrib_list.addItem('------------------')
         import pydm.about_pydm.about
-        contrib_file: Path = Path(pydm.about_pydm.about.__file__).parent / 'contributors.txt'
+        contrib_file = Path(pydm.about_pydm.about.__file__).parent / 'contributors.txt'
         with contrib_file.open() as f:
             for line in f:
                 self.contrib_list.addItem(str(line)

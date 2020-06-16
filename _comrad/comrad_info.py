@@ -1,19 +1,35 @@
 from typing import NamedTuple, Optional, Dict
+from textwrap import indent
 from ._version import get_versions as get_comrad_versions
 
 
-COMRAD_DESCRIPTION = \
-    """  ComRAD (CO Multi-purpose Rapid Application Development environment)
+COMRAD_DESCRIPTION_SHORT = 'CO Multi-purpose Rapid Application Development environment'
 
-  ComRAD framework seeks to streamline development of operational
-  applications for operators of CERN accelerators and machine design
-  experts. It offers a set of tools to develop and run applications
-  without the need to be an expert in software engineering domain."""
+
+COMRAD_DESCRIPTION_LONG = """ComRAD framework seeks to streamline development of operational
+applications for operators of CERN accelerators and machine design
+experts. It offers a set of tools to develop and run applications
+without the need to be an expert in software engineering domain.
+"""
+
+
+COMRAD_DESCRIPTION = indent(f'ComRAD ({COMRAD_DESCRIPTION_SHORT})\n\n{COMRAD_DESCRIPTION_LONG}', '  ')
 """Description of ComRAD framework to be presented in help messages and about dialogs."""
 
 
-COMRAD_AUTHOR = 'Ivan Sinkarenko <ivan.sinkarenko@cern.ch>'
-"""Support contact information to be presented in help messages and about dialogs."""
+COMRAD_AUTHOR_NAME = 'Ivan Sinkarenko'
+"""Support contact information to be presented in help messages and about dialogs + package meta info."""
+
+
+COMRAD_AUTHOR_EMAIL = 'ivan.sinkarenko@cern.ch'
+"""Support contact information to be presented in help messages and about dialogs + package meta info."""
+
+
+COMRAD_AUTHOR = f'{COMRAD_AUTHOR_NAME} <{COMRAD_AUTHOR_EMAIL}>'
+"""Combined support contact information to be presented in help messages and about dialogs."""
+
+
+COMRAD_WIKI = 'https://acc-py.web.cern.ch/gitlab/acc-co/accsoft/gui/rad/accsoft-gui-rad-comrad/docs/stable/'
 
 
 COMRAD_VERSION = get_comrad_versions()['version']
