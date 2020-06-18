@@ -139,7 +139,7 @@
   <customwidget>
    <class>PersistentEditorTableView</class>
    <extends>QTableView</extends>
-   <header>comrad/qtbase.h</header>
+   <header>accwidgets.qt</header>
   </customwidget>
  </customwidgets>
  <resources/>
