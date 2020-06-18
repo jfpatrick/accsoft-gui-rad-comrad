@@ -1035,7 +1035,10 @@ class EnumTableModel(AbstractTableModel[CEnumRule.EnumConfig]):
                 if new_type == CEnumRule.EnumField.MEANING:
                     if not isinstance(row.field_val, CEnumValue.Meaning):
                         new_field_val = CEnumValue.Meaning.NONE
-                elif new_type == CEnumRule.EnumField.CODE and not isinstance(row.field_val, int):
+                elif new_type == CEnumRule.EnumField.CODE and (not isinstance(row.field_val, int)
+                                                               or isinstance(row.field_val, CEnumValue.Meaning)):
+                    # Additional check for CEnumValue.Meaning battles indifference when switching from Meaning
+                    # to Code, which does not update the field value cell
                     new_field_val = 0
                 elif new_type == CEnumRule.EnumField.LABEL and not isinstance(row.field_val, str):
                     new_field_val = ''
