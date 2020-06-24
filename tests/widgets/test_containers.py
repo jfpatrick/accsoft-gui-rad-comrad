@@ -41,7 +41,7 @@ def real_window() -> QMainWindow:
 ])
 def test_context_frame_properties_update_inner_context(qtbot, attr, ctx_attr, val, expected_val):
     widget = CContextFrame()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
     assert getattr(widget, attr) == getattr(widget._local_context, ctx_attr)
     setattr(widget, attr, val)
     assert getattr(widget._local_context, ctx_attr) == expected_val
@@ -54,7 +54,7 @@ def test_context_frame_properties_update_inner_context(qtbot, attr, ctx_attr, va
 ])
 def test_update_context_attrs_fires_signal(qtbot, attr, slot, val):
     widget = CContextFrame()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
     assert getattr(widget._local_context, attr) is None
     with qtbot.wait_signal(widget.contextUpdated) as blocker:
         getattr(widget, slot)(val)
@@ -65,7 +65,7 @@ def test_update_context_attrs_fires_signal(qtbot, attr, slot, val):
 @pytest.mark.parametrize('show', [True, False])
 def test_connects_context_signal_to_new_children(qtbot, compliant_child, show):
     widget = CContextFrame()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
     child = compliant_child()
     layout = QVBoxLayout()
     widget.setLayout(layout)
@@ -85,7 +85,7 @@ def test_connects_context_signal_to_new_children(qtbot, compliant_child, show):
 
 def test_does_not_connect_context_signal_to_unsupported_children(qtbot):
     widget = CContextFrame()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
     child = QWidget()
     widget.setLayout(QVBoxLayout())
     assert widget.receivers(widget.contextUpdated) == 0
@@ -104,7 +104,7 @@ def test_does_not_connect_context_signal_to_unsupported_children(qtbot):
 def test_connects_to_window_context_when_not_nested_inside_another_frame(is_qt_designer, is_designer, real_window, qtbot):
     is_qt_designer.return_value = is_designer
     widget = CContextFrame(real_window)
-    qtbot.addWidget(real_window)
+    qtbot.add_widget(real_window)
     real_window.setCentralWidget(widget)
     assert real_window.receivers(real_window.contextUpdated) == 0
     real_window.show()
@@ -116,7 +116,7 @@ def test_connects_to_window_context_when_not_nested_inside_another_frame(is_qt_d
 def test_does_not_connect_to_window_context_when_nested_inside_another_frame(is_qt_designer, is_designer, real_window, qtbot):
     is_qt_designer.return_value = is_designer
     intermediate_frame = CContextFrame(real_window)
-    qtbot.addWidget(real_window)
+    qtbot.add_widget(real_window)
     real_window.setCentralWidget(intermediate_frame)
     leaf_frame = CContextFrame(intermediate_frame)
     intermediate_frame.setLayout(QVBoxLayout())
@@ -130,7 +130,7 @@ def test_does_not_connect_to_window_context_when_nested_inside_another_frame(is_
 
 def test_nested_context_propagation_inside_parent_frame(qtbot):
     intermediate_frame = CContextFrame(context=CContext(selector='INT', wildcards={'INT': 'INT'}))
-    qtbot.addWidget(intermediate_frame)
+    qtbot.add_widget(intermediate_frame)
     leaf_frame = CContextFrame(intermediate_frame, context=CContext(wildcards={'LEAF': 'LEAF'}))
     intermediate_frame.setLayout(QVBoxLayout())
     intermediate_frame.layout().addWidget(leaf_frame)
@@ -155,7 +155,7 @@ def test_nested_context_propagation_inside_parent_frame(qtbot):
 def test_nested_context_propagation_inside_main_window(_, qtbot, real_window):
     real_window.window_context.selector = 'WINDOW'
     real_window.window_context.wildcards = {'WINDOW': 'val1'}
-    qtbot.addWidget(real_window)
+    qtbot.add_widget(real_window)
     widget = CContextFrame(real_window, context=CContext(wildcards={'FRAME': 'val2'}))
     real_window.setCentralWidget(widget)
     real_window.show()
@@ -174,7 +174,7 @@ def test_nested_context_propagation_inside_main_window(_, qtbot, real_window):
 
 
 def test_context_view_without_hierarchy(qtbot, real_window):
-    qtbot.addWidget(real_window)
+    qtbot.add_widget(real_window)
     real_window.window_context.selector = 'WINDOW'
     real_window.show()
     ctx = CContext()

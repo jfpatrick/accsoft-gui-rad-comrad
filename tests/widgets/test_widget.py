@@ -262,7 +262,7 @@ def test_context_changed_calls_context_setter(context, qtbot, dummy_widget):
 #     widget.context = initial_ctx
 #     CApplication.instance().main_window.context_ready = True
 #     with mock.patch.object(widget, 'reconnect') as reconnect:
-#         qtbot.addWidget(widget)
+#         qtbot.add_widget(widget)
 #
 #         if use_window_ctx:
 #             reconnect.assert_called_with('rda:///dev/prop', CApplication.instance().main_window.window_context)

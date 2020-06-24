@@ -9,7 +9,7 @@ from comrad.data.channel import CChannelData
 def test_cpropertyedit_get_btn_emits_signal(qtbot: QtBot):
     widget = CPropertyEdit()
     widget.setObjectName('test-widget')
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
     with qtbot.wait_signal(widget.request_signal) as blocker:
         widget._get_btn.click()
     assert blocker.args == [widget.objectName()]
@@ -24,7 +24,7 @@ def test_cpropertyedit_set_btn_emits_signal(qtbot: QtBot):
         CPropertyEditField(field='float', type=CPropertyEdit.ValueType.REAL, editable=False),
     ]
     widget.sendOnlyUpdatedValues = False
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
     val = {
         'str': 'val1',
         'int': 10,
@@ -49,7 +49,7 @@ def test_cpropertyedit_set_btn_emits_signal(qtbot: QtBot):
 ])
 def test_cpropertyedit_value_changed(qtbot: QtBot, val, should_set_value):
     widget = CPropertyEdit()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
     with mock.patch.object(widget, 'setValue') as setValue:
         widget.channelValueChanged(CChannelData(value=val, meta_info={}))
         if should_set_value:
@@ -66,7 +66,7 @@ def test_cpropertyedit_value_changed(qtbot: QtBot, val, should_set_value):
 ])
 def test_cpropertyedit_buttons_affects_value_slot(qtbot: QtBot, buttons, expected_connect_slot):
     widget = CPropertyEdit()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
     assert widget.connect_value_slot is True
     widget.buttons = buttons
     assert widget.connect_value_slot == expected_connect_slot

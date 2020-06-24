@@ -25,7 +25,7 @@ from comrad import CEnumValue, CLabel, CChannelData
 ])
 def test_clabel_formats_displays_enum_field(qtbot: QtBot, input_val, display_format, expected_value):
     widget = CLabel()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
     packet = CChannelData(value=input_val, meta_info={})
     widget.displayFormat = display_format
     widget.channelValueChanged(packet)

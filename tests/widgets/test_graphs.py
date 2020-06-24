@@ -43,7 +43,7 @@ def fake_data_source():
 ])
 def test_pydmchanneldatasource_installs_filter_on_parent_widget(qtbot: QtBot, widget_type, is_context_tracker, should_install_on_parent):
     widget = widget_type()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
     with mock.patch('accwidgets.graph.UpdateSource.installEventFilter') as data_source_call:
         data_source = PyDMChannelDataSource(parent=widget, channel_address='dev/prop#field', data_type_to_emit=PointData)
         filter = data_source._context_tracker if is_context_tracker else QObject()
@@ -79,7 +79,7 @@ def test_pydmchanneldatasource_address(init_ch, new_ch, expected_ch):
 @mock.patch('comrad.CContextFrame.context_ready', return_value=True)
 def test_pydmchanneldatasource_connects_on_show(_, connect, qtbot: QtBot, widget_type):
     ctx_provider = CContextFrame()
-    qtbot.addWidget(ctx_provider)
+    qtbot.add_widget(ctx_provider)
     ctx_provider.setLayout(QVBoxLayout())
     widget = widget_type()
     ctx_provider.layout().addWidget(widget)
@@ -101,7 +101,7 @@ def test_pydmchanneldatasource_connects_on_show(_, connect, qtbot: QtBot, widget
 @mock.patch('comrad.widgets.graphs.PyDMChannelDataSource.installEventFilter')
 def test_pydmchanneldatasource_can_locate_parent_context_provider(_, qtbot: QtBot, widget_type):
     ctx_provider = CContextFrame()
-    qtbot.addWidget(ctx_provider)
+    qtbot.add_widget(ctx_provider)
     ctx_provider.setLayout(QVBoxLayout())
     container = QWidget()
     container.setLayout(QVBoxLayout())
@@ -189,7 +189,7 @@ def test_cplotwidgetbase_forbids_weird_subclasses(caplog: LogCaptureFixture):
 def test_addcurve(addCurve, qtbot, widget_type, data_source, layer, color,
                   name, symbol, symbol_size, line_style, line_width):
     widget = widget_type()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
 
     if layer:
         widget.add_layer(layer)
@@ -238,7 +238,7 @@ def test_addcurve(addCurve, qtbot, widget_type, data_source, layer, color,
 @mock.patch('comrad.ExPlotWidget.addBarGraph', return_value='addBarGraphResult')
 def test_addbargraph(addBarGraph, qtbot, widget_type, data_source, layer, color, bar_width):
     widget = widget_type()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
 
     if layer:
         widget.add_layer(layer)
@@ -277,7 +277,7 @@ def test_addbargraph(addBarGraph, qtbot, widget_type, data_source, layer, color,
 @mock.patch('comrad.ExPlotWidget.addInjectionBar', return_value='addInjectionBarResult')
 def test_addinjectionbar(addInjectionBar, qtbot, widget_type, data_source, layer, color, line_width):
     widget = widget_type()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
 
     if layer:
         widget.add_layer(layer)
@@ -315,7 +315,7 @@ def test_addinjectionbar(addInjectionBar, qtbot, widget_type, data_source, layer
 @mock.patch('comrad.ExPlotWidget.addTimestampMarker', return_value='addTimestampMarkerResult')
 def test_addtimestampmarker(addTimestampMarker, qtbot, widget_type, data_source, buffer_size, line_width):
     widget = widget_type()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
 
     with mock.patch.object(widget, 'add_channel_attached_item', return_value='channelAttachedResult') as add_channel_attached_item:
         item = widget.addTimestampMarker(data_source=data_source,
@@ -373,7 +373,7 @@ def test_add_channel_attached_item(qtbot, widget_type, index, layer, color, name
                                    symbol_size, line_style, line_width, expected_line_style,
                                    expected_line_width, expected_symbol_size, expected_color):
     widget = widget_type()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
     item = widget.add_channel_attached_item(channel_address='dev/prop#field',
                                             layer=layer,
                                             index=index,
@@ -407,7 +407,7 @@ def test_add_channel_attached_item(qtbot, widget_type, index, layer, color, name
 ])
 def test_fitting_items(qtbot, style, widget_type, expected_item_type):
     widget = widget_type()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
     item = widget.add_channel_attached_item(channel_address='dev/prop#field',
                                             style=style.value)
     assert isinstance(item, expected_item_type)
@@ -423,7 +423,7 @@ def test_fitting_items(qtbot, style, widget_type, expected_item_type):
 ])
 def test_fitting_items_fails(qtbot, style, widget_type, err):
     widget = widget_type()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
     with pytest.raises(ValueError, match=err):
         widget.add_channel_attached_item(channel_address='dev/prop#field', style=style)
 
@@ -545,7 +545,7 @@ def test_fitting_items_fails(qtbot, style, widget_type, err):
 ])
 def test_curves_getter(qtbot, widget_type, items, expected_json):
     widget = widget_type()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
     widget.add_layer('secondary')
     for item in items:
         widget.add_channel_attached_item(**item)
@@ -576,7 +576,7 @@ def test_curves_setter(qtbot):
         'symbol_size': 1,
     })]
     widget = CScrollingPlot()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
     widget.add_layer('secondary')
     widget.curves = json_repr
     first_item = [i for i in widget.items() if getattr(i, 'label', '') == 'first'][0]
@@ -607,7 +607,7 @@ def test_curves_setter(qtbot):
 ])
 def test_clear_items(qtbot, widget_type):
     widget = widget_type()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
     item1 = widget.add_channel_attached_item(channel_address='dev/prop#field')
     item2 = widget.add_channel_attached_item(channel_address='dev2/prop#field')
     assert widget._items == [item1, item2]
@@ -647,7 +647,7 @@ def test_citempropertiesbase_forbids_weird_subclasses(caplog: LogCaptureFixture)
 @mock.patch('comrad.CItemPropertiesBase.channels', new_callable=mock.PropertyMock)
 def test_initialize_style_properties_connects_destroyed_signal(_, __, ___, qtbot, style, widget_type):
     ctx_provider = CContextFrame()
-    qtbot.addWidget(ctx_provider)
+    qtbot.add_widget(ctx_provider)
     ctx_provider.setLayout(QVBoxLayout())
     widget = widget_type()
     ctx_provider.show()  # Make connections establish
@@ -668,7 +668,7 @@ def test_initialize_style_properties_connects_destroyed_signal(_, __, ___, qtbot
 ])
 def test_citempropertiesbase_props(qtbot, widget_type, style, default_label):
     widget = widget_type()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
     item = widget.add_channel_attached_item(channel_address='dev/prop#field', style=style.value)
     assert item.address == 'dev/prop#field'
     assert isinstance(item.data_source, PyDMChannelDataSource)
@@ -718,7 +718,7 @@ def test_citempropertiesbase_props(qtbot, widget_type, style, default_label):
 ])
 def test_citempropertiesbase_layer(qtbot, widget_type, style, layer):
     widget = widget_type()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
 
     if layer:
         widget.add_layer(layer)

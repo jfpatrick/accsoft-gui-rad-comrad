@@ -36,7 +36,7 @@ def make_mixin_class(mixin_type: Type) -> Type[QWidget]:
 def test_requesting_mixin_init(qtbot: QtBot, kwargs, expected_value):
     mixin_class = make_mixin_class(CRequestingMixin)
     obj = cast(Union[CRequestingMixin, QWidget], mixin_class(**kwargs))
-    qtbot.addWidget(obj)
+    qtbot.add_widget(obj)
     assert obj.connect_value_slot == expected_value
 
 
@@ -50,7 +50,7 @@ def test_requesting_mixin_init(qtbot: QtBot, kwargs, expected_value):
 def test_requesting_mixin_assigns_request_signal_slot_to_channel(_, qtbot: QtBot, initial_channel, connect_slot, slot_should_be_none):
     mixin_class = make_mixin_class(CRequestingMixin)
     obj = cast(Union[CRequestingMixin, QWidget, PyDMWidget], mixin_class(init_channel=initial_channel))
-    qtbot.addWidget(obj)
+    qtbot.add_widget(obj)
     obj.show()  # type: ignore
     obj.connect_value_slot = connect_slot
     obj._context_tracker = mock.MagicMock()  # type: ignore
@@ -75,7 +75,7 @@ def test_requesting_mixin_assigns_request_signal_slot_to_channel(_, qtbot: QtBot
 def test_requesting_mixin_skips_channel_setter(qtbot: QtBot):
     mixin_class = make_mixin_class(CRequestingMixin)
     obj = cast(Union[CRequestingMixin, QWidget], mixin_class(init_channel='test/channel'))
-    qtbot.addWidget(obj)
+    qtbot.add_widget(obj)
     with mock.patch.object(obj, 'request_signal', new_callable=mock.PropertyMock()) as request_signal:
         obj.channel = 'test/channel'  # type: ignore
         request_signal.assert_not_called()
@@ -84,7 +84,7 @@ def test_requesting_mixin_skips_channel_setter(qtbot: QtBot):
 def test_requesting_mixin_channels_are_reconnected_on_value_slot_config_change(qtbot: QtBot):
     mixin_class = make_mixin_class(CRequestingMixin)
     widget = cast(Union[CRequestingMixin, QWidget, PyDMWidget], mixin_class())
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
     widget.show()  # type: ignore
     widget._context_tracker = mock.MagicMock()  # type: ignore
     widget._context_tracker.context_ready = True  # type: ignore
@@ -116,7 +116,7 @@ def test_requesting_mixin_filters_request_slot_value(qtbot: QtBot, uuid, should_
     mixin_class = make_mixin_class(CRequestingMixin)
     obj = cast(Union[CRequestingMixin, QWidget], mixin_class(init_channel='test/channel'))
     cast(QWidget, obj).setObjectName('my-uuid')
-    qtbot.addWidget(obj)
+    qtbot.add_widget(obj)
     with mock.patch.object(obj, 'channelValueChanged') as channelValueChanged:
         some_data: Tuple[str, Dict[str, Any]] = ('blahblah', {})
         obj._on_request_fulfilled(some_data, uuid)
@@ -183,7 +183,7 @@ def test_requesting_mixin_filters_request_slot_value(qtbot: QtBot, uuid, should_
 def test_rules_mixin_sets_properties(qtbot: QtBot, mixin_type, prop_name, prop_setter, initial_value, rule_value, expected_prop_value):
     mixin_class = make_mixin_class(mixin_type)
     widget = cast(Union[CWidgetRulesMixin, QWidget], mixin_class())
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
     getattr(widget, prop_setter)(initial_value)
 
     with mock.patch.object(widget, prop_setter) as setter_mock:
@@ -198,7 +198,7 @@ def test_rules_mixin_sets_properties(qtbot: QtBot, mixin_type, prop_name, prop_s
 def test_rules_mixin_skips_eval_for_unknown_prop(qtbot, caplog: LogCaptureFixture):
     mixin_class = make_mixin_class(CWidgetRulesMixin)
     widget = mixin_class()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
 
     with mock.patch.object(widget, 'setVisible') as setVisible:
         with mock.patch.object(widget, 'setEnabled') as setEnabled:
@@ -224,7 +224,7 @@ def test_rules_mixin_does_when_getter_invalid(qtbot, caplog: LogCaptureFixture, 
     mixin_class = make_mixin_class(CWidgetRulesMixin)
     mixin_class.RULE_PROPERTIES = {'Visibility': ('getterNonExistent', 'setVisible', bool)}
     widget = mixin_class()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
 
     with mock.patch.object(widget, 'setVisible') as setVisible:
         widget.rule_evaluated({
@@ -244,7 +244,7 @@ def test_rules_mixin_skips_eval_for_unknown_setter(qtbot, caplog: LogCaptureFixt
     mixin_class = make_mixin_class(CWidgetRulesMixin)
     mixin_class.RULE_PROPERTIES = {'Visibility': ('isVisible', 'setNonExistent', bool)}
     widget = mixin_class()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
 
     with mock.patch.object(widget, 'setVisible') as setVisible:
         widget.rule_evaluated({

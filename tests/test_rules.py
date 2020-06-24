@@ -550,7 +550,7 @@ def test_rules_engine_does_not_register_in_designer(config, _, __, ___, qtbot: Q
     config.DESIGNER_ONLINE = designer_online
     engine = CRulesEngine()
     widget = QWidget()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
     rule = CNumRangeRule(name='test_name',
                          prop='test_prop',
                          channel='dev/prop#field',
@@ -579,7 +579,7 @@ def test_rules_engine_does_not_register_in_designer(config, _, __, ___, qtbot: Q
 def test_rules_engine_does_not_register_faulty_rules(_, __, ___, qtbot: QtBot, faulty):
     engine = CRulesEngine()
     widget = QWidget()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
     rule = CNumRangeRule(name='test_name',
                          prop='test_prop',
                          channel='dev/prop#field',
@@ -603,7 +603,7 @@ def test_rules_engine_does_not_register_faulty_rules(_, __, ___, qtbot: QtBot, f
 def test_rules_engine_unregisters_old_rules(_, __, ___, qtbot: QtBot):
     engine = CRulesEngine()
     widget = QWidget()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
 
     rule = CNumRangeRule(name='rule1',
                          prop='test_prop',
@@ -647,7 +647,7 @@ def test_rules_engine_finds_default_channel(_, __, ___, qtbot: QtBot, default_ch
 
     engine = CRulesEngine()
     widget = CustomWidget()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
 
     rule = CNumRangeRule(name='test_name',
                          prop='test_prop',
@@ -679,7 +679,7 @@ def test_rules_engine_finds_default_channel(_, __, ___, qtbot: QtBot, default_ch
 def test_rules_engine_uses_custom_channels(_, __, ___, qtbot: QtBot):
     engine = CRulesEngine()
     widget = QWidget()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
 
     rule = CNumRangeRule(name='test_name',
                          prop='test_prop',
@@ -713,7 +713,7 @@ def test_rules_engine_calculates_range_value(qtbot: QtBot, incoming_val, range_m
         }
 
     widget = CustomWidget()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
 
     rule = CNumRangeRule(name='test_name',
                          prop='test_prop',
@@ -761,7 +761,7 @@ def test_rules_engine_calculates_enum_value(qtbot: QtBot, incoming_val, field, f
         }
 
     widget = CustomWidget()
-    qtbot.addWidget(widget)
+    qtbot.add_widget(widget)
 
     rule = CEnumRule(name='test_name',
                      prop='test_prop',

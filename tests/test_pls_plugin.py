@@ -40,7 +40,7 @@ def clean_env():
 def test_fetches_ccda_on_show(CCDA, qtbot):
     CCDA.return_value.SelectorDomain.search.return_value = []
     dialog = PLSSelectorDialog()
-    qtbot.addWidget(dialog)
+    qtbot.add_widget(dialog)
     CCDA.return_value.SelectorDomain.search.assert_not_called()
     dialog.show()
     CCDA.return_value.SelectorDomain.search.assert_called_once()
@@ -50,7 +50,7 @@ def test_fetches_ccda_on_show(CCDA, qtbot):
 def test_does_not_fetch_ccda_on_show_repeatedly(CCDA, qtbot):
     CCDA.return_value.SelectorDomain.search.return_value = format_test_data(['TEST.USER.ALL'])
     dialog = PLSSelectorDialog()
-    qtbot.addWidget(dialog)
+    qtbot.add_widget(dialog)
     CCDA.return_value.SelectorDomain.search.assert_not_called()
     dialog.show()
     CCDA.return_value.SelectorDomain.search.assert_called_once()
@@ -68,7 +68,7 @@ def test_populates_comboboxes_with_ccda_data(CCDA, qtbot):
                                                                              'TEST.CUSTOM.ALL',
                                                                              'TEST2.USER.ALL'])
     dialog = PLSSelectorDialog()
-    qtbot.addWidget(dialog)
+    qtbot.add_widget(dialog)
     dialog.show()
     assert dialog.machine_combo.model().stringList() == ['TEST', 'TEST2']
     assert dialog.group_combo.model().stringList() == ['USER', 'CUSTOM']
@@ -107,7 +107,7 @@ def test_populates_comboboxes_with_ccda_data(CCDA, qtbot):
 def test_checkbox_toggles_all_comboboxes(CCDA, qtbot):
     CCDA.return_value.SelectorDomain.search.return_value = format_test_data(['TEST.USER.ALL'])
     dialog = PLSSelectorDialog()
-    qtbot.addWidget(dialog)
+    qtbot.add_widget(dialog)
     dialog.show()
     assert dialog.no_selector.isChecked()
     assert not dialog.machine_combo.isEnabled()
@@ -151,7 +151,7 @@ def test_preselects_comboboxes_based_on_window_context(CCDA, app, qtbot, window_
                                                                              'TEST2.USER3.ALL'])
     app.return_value.main_window.window_context.selector = window_selector
     dialog = PLSSelectorDialog()
-    qtbot.addWidget(dialog)
+    qtbot.add_widget(dialog)
     dialog.show()
     assert expected_enabled != dialog.no_selector.isChecked()
     assert expected_enabled == dialog.machine_combo.isEnabled()
@@ -181,7 +181,7 @@ def test_plugin_saves_context(CCDA, app, qtbot, expected_selector, machine, grou
                                                                              'TEST2.USER3.ALL'])
     app.return_value.main_window.window_context.selector = None
     dialog = PLSSelectorDialog()
-    qtbot.addWidget(dialog)
+    qtbot.add_widget(dialog)
     dialog.show()
     dialog.machine_combo.setCurrentText(machine)
     dialog.group_combo.setCurrentText(group)
@@ -214,7 +214,7 @@ def test_preselects_comboboxes_based_on_tgm_environment(CCDA, app, qtbot, tgm_va
     if tgm_var:
         os.environ['PLS_TELEGRAM'] = tgm_var
     dialog = PLSSelectorDialog()
-    qtbot.addWidget(dialog)
+    qtbot.add_widget(dialog)
     dialog.show()
     assert expected_enabled != dialog.no_selector.isChecked()
     assert expected_enabled == dialog.machine_combo.isEnabled()
