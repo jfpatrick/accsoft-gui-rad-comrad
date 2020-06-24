@@ -42,8 +42,13 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>CStaticPlot</class>
+   <class>StaticPlotWidget</class>
    <extends>QGraphicsView</extends>
+   <header>accwidgets.graph.widgets.plotwidget</header>
+  </customwidget>
+  <customwidget>
+   <class>CStaticPlot</class>
+   <extends>StaticPlotWidget</extends>
    <header>comrad.widgets.graphs</header>
   </customwidget>
  </customwidgets>
