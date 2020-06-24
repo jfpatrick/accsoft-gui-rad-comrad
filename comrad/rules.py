@@ -320,7 +320,11 @@ class CEnumRule(CBaseRule):
 
                 for another_enum_value in self.config[row + 1:]:
                     if is_overlapping(enum_value, another_enum_value):
-                        errors.append(f'Rule "{self.name}" has redundant configuration ({enum_value.field}=={enum_value.field_val})')
+                        field_val = (enum_value.field_val if enum_value.field != CEnumRule.EnumField.MEANING
+                                     else str(CEnumValue.Meaning(enum_value.field_val)).split('.')[-1].title())
+                        errors.append(f'Rule "{self.name}" has redundant configuration '
+                                      f'({str(CEnumRule.EnumField(enum_value.field)).split(".")[-1].title()}:'
+                                      f' "{field_val}")')
         if errors:
             raise TypeError(';'.join(errors))
 
