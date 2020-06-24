@@ -195,7 +195,7 @@ Altering application-wide cycle selector
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To alter the window's cycle selector, click "PLS" button in the main toolbar to open the dialog.
-It you cannot locate the button, it could have been hidden by overriding the toolbar's contents: refer to
+If you cannot locate the button, it could have been hidden by overriding the toolbar's contents: refer to
 :doc:`../advanced/plugins`.
 
 .. figure:: ../img/pls_dialog.png

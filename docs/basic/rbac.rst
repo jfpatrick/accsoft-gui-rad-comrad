@@ -22,7 +22,7 @@ Currently we support the following means of authentication:
 - By location
 - With username and password
 
-.. note:: Kerberos authentication is not supported yet. Out current plan is to implement it when PyRBAC library
+.. note:: Kerberos authentication is not supported yet. Our current plan is to implement it when PyRBAC library
           gets released.
 
 Authentication during startup
