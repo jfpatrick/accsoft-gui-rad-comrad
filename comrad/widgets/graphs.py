@@ -229,16 +229,6 @@ class CPlotWidgetBase(PyDMPrimitiveWidget, metaclass=GenericQObjectMeta):
         self.sig_context_changed.emit()
 
     @property
-    def _curves(self):
-        """
-        PyDM's BasePlotCurvesModel accesses the plots "_curve" attribute.
-        We replaced it with "_items" since this list not only holds curves
-        anymore. This property is a compromise to avoid the misleading "_curves"
-        attribute without having to overwrite several BasePlotCurvesModel functions.
-        """
-        return self._items_checked
-
-    @property
     def _items_checked(self):
         """
         Every time we want to access _items, we want to make sure, that the layer
@@ -643,7 +633,6 @@ class CPlotWidgetBase(PyDMPrimitiveWidget, metaclass=GenericQObjectMeta):
 
 class CItemPropertiesBase(abc.ABC):
 
-    plotting_item_editor_supported_columns: List[str] = [e.value for e in ColumnNames]
     symbols = BasePlotCurveItem.symbols
     lines = BasePlotCurveItem.lines
     style: List[str] = [
@@ -974,15 +963,6 @@ class CCurvePropertiesBase(CItemPropertiesBase):
 
 class CBarGraphPropertiesBase(CItemPropertiesBase):
 
-    plotting_item_editor_supported_columns: List[str] = [
-        ColumnNames.CHANNEL.value,
-        ColumnNames.LABEL.value,
-        ColumnNames.COLOR.value,
-        ColumnNames.LINE_WIDTH.value,
-        ColumnNames.LAYER.value,
-        ColumnNames.STYLE.value,
-    ]
-
     def __init__(self):
         """
         Base class for different bar graph properties. This classes uses
@@ -1059,15 +1039,6 @@ class CBarGraphPropertiesBase(CItemPropertiesBase):
 
 class CInjectionBarGraphPropertiesBase(CItemPropertiesBase):
 
-    plotting_item_editor_supported_columns: List[str] = [
-        ColumnNames.CHANNEL.value,
-        ColumnNames.LABEL.value,
-        ColumnNames.COLOR.value,
-        ColumnNames.LINE_WIDTH.value,
-        ColumnNames.LAYER.value,
-        ColumnNames.STYLE.value,
-    ]
-
     def __init__(self):
         """
         Base class for different injection bar properties. This classes
@@ -1136,14 +1107,6 @@ class CInjectionBarGraphPropertiesBase(CItemPropertiesBase):
 
 
 class CTimestampMarkerPropertiesBase(CItemPropertiesBase):
-
-    plotting_item_editor_supported_columns: List[str] = [
-        ColumnNames.CHANNEL.value,
-        ColumnNames.LABEL.value,
-        ColumnNames.LINE_STYLE.value,
-        ColumnNames.LAYER.value,
-        ColumnNames.STYLE.value,
-    ]
 
     def __init__(self):
         """
