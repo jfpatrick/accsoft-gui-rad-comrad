@@ -166,7 +166,6 @@ class CChannelDataProcessingMixin:
         if not isinstance(packet, CChannelData):
             new_val = None
         else:
-            self.header = packet.meta_info
             new_val = packet.value
 
         # Down to PyDM level, where widgets only expect actual data
@@ -182,8 +181,11 @@ class CChannelDataProcessingMixin:
         """
         if not isinstance(packet, CChannelData):
             return
+        else:
+            # Save header here, so that it is available in all value_changed implementations
+            self.header = packet.meta_info
 
-        self.value_changed(packet)
+        super().channelValueChanged(packet)  # type: ignore
 
 
 class CValueTransformerMixin(CChannelDataProcessingMixin, CValueTransformationBase):
@@ -210,7 +212,7 @@ class CValueTransformerMixin(CChannelDataProcessingMixin, CValueTransformationBa
             CValueTransformationBase.setValueTransformation(self, str(new_formatter))
             self.value_changed(self.value)  # type: ignore   # This is coming from PyDMWidget
 
-    def value_changed(self, packet: CChannelData[Any]) -> None:
+    def channelValueChanged(self, packet: CChannelData[Any]):
         """
         Callback transforms the channel value through the
         :attr:`~comrad.widgets.value_transform.CValueTransformationBase.valueTransformation`
@@ -221,7 +223,7 @@ class CValueTransformerMixin(CChannelDataProcessingMixin, CValueTransformationBa
         """
         if is_qt_designer() or not isinstance(packet, CChannelData):
             # Avoid code evaluation in Designer, as it can produce unnecessary errors with broken code
-            super().value_changed(None)  # type: ignore
+            super().channelValueChanged(None)  # type: ignore
             return
 
         transform = self.cached_value_transformation()
@@ -230,9 +232,9 @@ class CValueTransformerMixin(CChannelDataProcessingMixin, CValueTransformationBa
             # Need a copy here, otherwise running transform on the same packet twice can happen
             new_packet = copy.copy(packet)
             new_packet.value = new_val
-            super().value_changed(new_packet)
+            super().channelValueChanged(new_packet)
         else:
-            super().value_changed(packet)
+            super().channelValueChanged(packet)
 
 
 CWidgetRuleMap = Dict[str, Tuple[str, str, Callable[[Any], Any]]]
