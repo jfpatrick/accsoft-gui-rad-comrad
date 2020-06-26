@@ -588,6 +588,12 @@ class CPlotWidgetBase(PyDMPrimitiveWidget, metaclass=GenericQObjectMeta):
             logger.exception(f'Error parsing item json data: {error}')
             return
         self.clear_items()
+        # Make sure legend always exists (could be hidden if not show), but we need it to preserve legend items
+        # in case "showLegend" is set to True later
+        if not self.showLegend:  # type: ignore  # mypy Cannot determine type of 'showLegend'
+            self.showLegend = True  # Will create legend if not existing
+            self.showLegend = False  # Will hide legend but will not remove it and its items
+
         for item in items_loaded:
             layer = item.get('layer')
             # Fish out invalid layers before adding
