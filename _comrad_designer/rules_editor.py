@@ -7,23 +7,26 @@ from pathlib import Path
 from typing import Optional, Union, cast, Type, Callable, List, Generic, TypeVar, Any, Tuple, Dict
 from pydm.utilities.iconfont import IconFont
 from PyQt5.Qsci import QsciScintilla, QsciLexerJSON
-from qtpy.QtWidgets import (QDialog, QWidget, QHBoxLayout, QFrame, QColorDialog, QToolButton, QSpacerItem,
+from qtpy.QtWidgets import (QDialog, QWidget, QHBoxLayout, QFrame,
                             QPushButton, QListView, QSizePolicy, QTabWidget,
                             QLabel, QLineEdit, QComboBox, QStackedWidget, QSpinBox, QStyledItemDelegate,
                             QHeaderView, QCheckBox, QDialogButtonBox, QMessageBox, QStyleOptionViewItem)
 from qtpy.QtCore import (Qt, QAbstractTableModel, QObject, QModelIndex, QVariant, Signal, QLocale, QSignalBlocker,
                          QAbstractListModel, QIdentityProxyModel, QAbstractProxyModel, QItemSelectionModel,
                          QPersistentModelIndex)
-from qtpy.QtGui import QColor, QFont, QFocusEvent, QShowEvent
-from qtpy.QtDesigner import QDesignerFormWindowInterface
+from qtpy.QtGui import QFont, QFocusEvent, QShowEvent
 from qtpy.uic import loadUi
+from accwidgets.qt import (BooleanPropertyColumnDelegate, AbstractComboBoxColumnDelegate, TableViewColumnResizer,
+                           AbstractListModel as BaseListModel, AbstractTableModel as BaseTableModel,
+                           PersistentEditorTableView)
+from accwidgets._designer_base import get_designer_cursor
 from comrad.rules import CBaseRule, CNumRangeRule, CEnumRule, unpack_rules, is_valid_color
 from comrad.qsci import configure_common_qsci, QSCI_INDENTATION
 from comrad.json import CJSONEncoder, CJSONDeserializeError
 from comrad.widgets.mixins import CWidgetRulesMixin, CWidgetRuleMap
 from comrad.data.japc_enum import CEnumValue
-from comrad.generics import GenericQObjectMeta, GenericMeta
-from comrad.qtbase import PersistentEditorTableView
+from comrad.generics import GenericMeta, GenericQObjectMeta
+from _comrad_designer.common import ColorPropertyColumnDelegate, _STYLED_ITEM_DELEGATE_INDEX
 
 
 logger = logging.getLogger(__name__)
@@ -35,52 +38,8 @@ R = TypeVar('R', bound=CBaseRule)
 S = TypeVar('S', CNumRangeRule.Range, CEnumRule.EnumConfig)
 """Generic sub-rule configuration type. It's relevant for those rules that use table models."""
 
-LI = TypeVar('LI')
-"""Generic List Item for the list-based models."""
 
-
-class AbstractListModel(Generic[LI], metaclass=GenericQObjectMeta):
-
-    def __init__(self, data: List[LI]):
-        """
-        Simple model that is based on :class:`List` data structure, called ``self._data``.
-        It implements common scenarios for 1-dimensional list, but does not inherit directly
-        from the Qt base class, since it can be used with both :class:`QAbstractTableModel` and
-        :class:`QAbstractListModel`. As a bonus, this model allows serializing data as JSON.
-
-        Args:
-            data: Initial data.
-        """
-        self._data = data
-
-    @abstractmethod
-    def create_row(self) -> LI:
-        """Create a new empty object when appending a new row to the table."""
-        pass
-
-    def rowCount(self, _: Optional[QModelIndex] = None) -> int:
-        """Returns the number of rows under the given parent."""
-        return len(self._data)
-
-    def append_row(self):
-        """Append a new empty row to the model."""
-        new_row = self.rowCount()
-        self.beginInsertRows(QModelIndex(), new_row, new_row)  # type: ignore   # presuming QAbstractItemView super
-        self._data.append(self.create_row())
-        self.endInsertRows()  # type: ignore   # presuming QAbstractItemView super
-
-    def remove_row_at_index(self, index: QModelIndex):
-        """
-        Remove a row in the data model by a given index.
-
-        Args:
-            index: Index of row, which needs to be removed.
-        """
-        removed_idx = index.row()
-        self.beginRemoveRows(QModelIndex(), removed_idx, removed_idx)  # type: ignore   # presuming QAbstractItemView super
-        del self._data[removed_idx]
-        self.endRemoveRows()  # type: ignore   # presuming QAbstractItemView super
-        self.dataChanged.emit(QModelIndex(), QModelIndex())  # type: ignore   # presuming QAbstractItemView super
+class JsonModelMixin:
 
     def to_json(self, indent: Optional[int] = None) -> str:
         """Dumps contents as JSON-formatter string.
@@ -91,10 +50,10 @@ class AbstractListModel(Generic[LI], metaclass=GenericQObjectMeta):
         Returns:
             JSON-formatter string.
         """
-        return json.dumps(self._data, cls=CJSONEncoder, indent=indent)
+        return json.dumps(cast(BaseListModel, self).raw_data, cls=CJSONEncoder, indent=indent)
 
 
-class AbstractTableModel(AbstractListModel[S], QAbstractTableModel, Generic[S], metaclass=GenericQObjectMeta):
+class AbstractTableModel(BaseTableModel[S], JsonModelMixin, Generic[S], metaclass=GenericMeta):
 
     def __init__(self, data: List[S], rule_prop: CBaseRule.Property, prop_map: CWidgetRuleMap, parent: Optional[QObject] = None):
         """
@@ -106,53 +65,10 @@ class AbstractTableModel(AbstractListModel[S], QAbstractTableModel, Generic[S], 
             prop_map: Mapping between Property names and their base types.
             parent: Owning object.
         """
-        AbstractListModel.__init__(self, data=data)
-        QAbstractTableModel.__init__(self, parent)
+        BaseTableModel.__init__(self, data=data, parent=parent)
+        JsonModelMixin.__init__(self)
         self.prop_enum_type = rule_prop
         self._prop_map = prop_map
-
-    @abstractmethod
-    def column_name(self, section: int) -> str:
-        """Name of the column to be embedded in the header. The indexing always starts from 1, as 0 is reserved.
-
-        Args:
-            section: Column index.
-
-        Returns:
-            Name string.
-        """
-        pass
-
-    @abstractmethod
-    def specific_data(self, index: QModelIndex, row: S) -> Any:
-        """
-        Data at the given row, for any column except the first, which is reserved. Whenever this method is called,
-        all the checks are passed, so index is guaranteed to be valid.
-
-        Args:
-            index: Index to fetch.
-            row: A data entry at that row.
-
-        Returns:
-            The data for the cell.
-        """
-        pass
-
-    @abstractmethod
-    def set_specific_data(self, index: QModelIndex, row: S, value: Any) -> bool:
-        """
-        Update data at the given row, for any column except the first, which is reserved.
-        Whenever this method is called, all the checks are passed, so index is guaranteed to be valid.
-
-        Args:
-            index: Index to fetch.
-            row: A data entry at that row.
-            value: Value to set.
-
-        Returns:
-            ``True`` if data was updated.
-        """
-        pass
 
     @abstractmethod
     def create_row_item(self) -> S:
@@ -181,7 +97,9 @@ class AbstractTableModel(AbstractListModel[S], QAbstractTableModel, Generic[S], 
         rows = self.rowCount()
         cols = self.columnCount()
         if rows > 0 and cols > 0:
-            self.dataChanged.emit(self.createIndex(0, 0), self.createIndex(rows - 1, cols - 1))
+            self.notify_change(start=self.createIndex(0, 0),
+                               end=self.createIndex(rows - 1, cols - 1),
+                               action_type=self.ChangeType.UPDATE_ITEM)
 
     def create_row(self) -> S:
         new_obj = self.create_row_item()
@@ -193,250 +111,38 @@ class AbstractTableModel(AbstractListModel[S], QAbstractTableModel, Generic[S], 
                 new_obj.prop_val = caster(0)  # 0, 0.0 or False, based on the caster
         return new_obj
 
-    def append_row(self):
-        """Append a new empty row to the model."""
-        super().append_row()
-        new_row = len(self._data) - 1
-        self.dataChanged.emit(self.createIndex(new_row, 0), self.createIndex(new_row, self.columnCount() - 1))
-
     def headerData(self, section: int, orientation: Qt.Orientation, role: Qt.ItemDataRole = Qt.DisplayRole) -> str:
-        """
-        Returns the data for the given role and section in the header with the specified orientation.
-
-        For horizontal headers, the section number corresponds to the column number. Similarly,
-        for vertical headers, the section number corresponds to the row number.
-
-        Args:
-            section: column / row of which the header data should be returned
-            orientation: Columns / Row
-            role: Not used by this implementation, if not DisplayRole, super
-                  implementation is called
-
-        Returns:
-            Header Data (f.e. name) for the row / column
-        """
-        if role != Qt.DisplayRole:
-            return super().headerData(section, orientation, role)
-        if orientation == Qt.Horizontal and section < self.columnCount():
-            if section == 0:
-                return 'Property value'
-            return self.column_name(section)
-        elif orientation == Qt.Vertical and section < self.rowCount():
-            return f' {str(section + 1)} '
-        return ''
+        if role == Qt.DisplayRole and orientation == Qt.Horizontal and section < self.columnCount() and section == 0:
+            return 'Property value'
+        return super().headerData(section, orientation, role)
 
     def data(self, index: QModelIndex, role: Qt.ItemDataRole = Qt.DisplayRole) -> Union[str, int, float, bool]:
-        """
-        Get Data from the table's model by a given index.
-
-        Args:
-            index: row & column in the table
-            role: which property is requested
-
-        Returns:
-            Data associated with the passed index
-        """
-        # EditRole is essential for default QStyledDelegate implementations to correctly pick up the type
-        # DisplayRole is essential for custom delegates to display the value
-        if not index.isValid() or role not in [Qt.DisplayRole, Qt.EditRole]:
-            return QVariant()
-        row = self._data[index.row()]
-        if index.column() >= 1:
-            return self.specific_data(index=index, row=row)
-        # Because prop_val can be string when unpacked, we must convert it to the actual type,
-        # otherwise the usage of standard QStyledItemDelegates is not possible, as they will
-        # present line edits always, instead of spin boxes for ints/floats.
-        _, __, caster = self._prop_map[self.prop_enum_type.value]
-        try:
-            return caster(row.prop_val)
-        except ValueError:
-            # Can't convert number from empty string
-            return caster(0)
+        if index.isValid() and role in [Qt.DisplayRole, Qt.EditRole] and index.column() == 0:
+            # Common logic to process shared first column (rule value)
+            row = self._data[index.row()]
+            # Because prop_val can be string when unpacked, we must convert it to the actual type,
+            # otherwise the usage of standard QStyledItemDelegates is not possible, as they will
+            # present line edits always, instead of spin boxes for ints/floats.
+            _, __, caster = self._prop_map[self.prop_enum_type.value]
+            try:
+                return caster(row.prop_val)
+            except ValueError:
+                # Can't convert number from empty string
+                return caster(0)
+        else:
+            return super().data(index, role)
 
     def setData(self, index: QModelIndex, value: Any, role: Qt.ItemDataRole = Qt.EditRole) -> bool:
-        """
-        Set Data to the tables data model at the given index.
-
-        Args:
-            index: Position of the new value
-            value: new value
-            role: which property is requested
-
-        Returns:
-            True if the data could be successfully set.
-        """
-        if not index.isValid() or role != Qt.EditRole:
-            return False
-        row = self._data[index.row()]
-        if index.column() >= 1:
-            changed = self.set_specific_data(index=index, row=row, value=value)
-        else:
+        if index.isValid() and role == Qt.EditRole and index.column() == 0:
+            # Common logic to process shared first column (rule value)
+            row = self._data[index.row()]
             row.prop_val = value
-            changed = True
-        if changed:
-            self.dataChanged.emit(index, index)
-        return changed
-
-
-class BooleanButton(QToolButton):
-
-    value_changed = Signal()
-    """Boolean value has been updated by the user."""
-
-    def __init__(self, parent: Optional[QObject] = None):
-        """
-        Button used to set a boolean flag in a table.
-
-        This is a slicker-looking implementation, as the default behavior sets Combobox (True/False) in the table.
-
-        Args:
-            parent: Owning object.
-        """
-        super().__init__(parent)
-        self.setAutoRaise(True)
-        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        checkbox = QCheckBox(self)
-        checkbox.setAttribute(Qt.WA_TransparentForMouseEvents)
-        self.clicked.connect(self._toggle)
-        layout.addSpacerItem(QSpacerItem(10, 1, QSizePolicy.Expanding, QSizePolicy.Preferred))
-        layout.addWidget(checkbox)
-        layout.addSpacerItem(QSpacerItem(10, 1, QSizePolicy.Expanding, QSizePolicy.Preferred))
-        self.setLayout(layout)
-        self._checkbox = checkbox
-
-    @property
-    def value(self) -> bool:
-        """Boolean value."""
-        return self._checkbox.isChecked()
-
-    @value.setter
-    def value(self, new_val: bool):
-        self._checkbox.setCheckState(Qt.Checked if new_val else Qt.Unchecked)
-
-    def _toggle(self):
-        self._checkbox.toggle()
-        self.value_changed.emit()
-
-
-class BooleanPropertyColumnDelegate(QStyledItemDelegate):
-    """
-    Table delegate that draws :class:`BooleanButton` widget in the cell.
-    """
-
-    def createEditor(self, parent: QWidget, option: QStyleOptionViewItem, index: QModelIndex) -> QWidget:
-        editor = BooleanButton(parent)
-        editor.value_changed.connect(self._val_changed)
-        editor._comrad_rules_index_ = QPersistentModelIndex(index)
-        return editor
-
-    def setEditorData(self, editor: BooleanButton, index: QModelIndex):
-        if not isinstance(editor, BooleanButton):
-            return
-
-        editor.value = bool(index.data())
-        if getattr(editor, '_comrad_rules_index_', None) != index:
-            editor._comrad_rules_index_ = QPersistentModelIndex(index)
-
-    def setModelData(self, editor: BooleanButton, model: QAbstractTableModel, index: QModelIndex):
-        if not isinstance(editor, BooleanButton):
-            return
-        index.model().setData(index, editor.value)
-
-    def displayText(self, value: Any, locale: QLocale) -> str:
-        # Make sure that transparent button does not expose set label underneath
-        return ''
-
-    def _val_changed(self):
-        editor = self.sender()
-        index: Optional[QPersistentModelIndex] = getattr(editor, '_comrad_rules_index_', None)
-        if index and index.isValid():
-            self.setModelData(editor, index.model(), QModelIndex(index))
-
-
-class ColorButton(QToolButton):
-
-    def __init__(self, parent: Optional[QObject] = None):
-        """
-        Button that opens a picker and displays the selected color using the RBG hex, as well as a thumbnail
-        with background color corresponding to the picked color.
-
-        Args:
-            parent: Owning object.
-        """
-        super().__init__(parent)
-        font = QFont('Monospace')
-        font.setStyleHint(QFont.TypeWriter)
-        self.setFont(font)
-        self.setAutoRaise(True)
-        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
-        layout = QHBoxLayout()
-        layout.setContentsMargins(5, 0, 0, 0)
-        icon = QFrame(self)
-        icon.setFrameStyle(QFrame.Box)
-        icon.resize(10, 10)
-        icon.setMinimumSize(10, 10)
-        icon.setMaximumSize(10, 10)
-        layout.addWidget(icon)
-        layout.addSpacerItem(QSpacerItem(10, 1, QSizePolicy.Expanding, QSizePolicy.Preferred))
-        self._color_thumb = icon
-        self.setLayout(layout)
-        self.color = '#000000'
-
-    @property
-    def color(self) -> str:
-        """Currently selected color, in RGB hex notation."""
-        return self.text()
-
-    @color.setter
-    def color(self, new_val: str):
-        self.setText(new_val.upper())
-        self._color_thumb.setStyleSheet(f'background-color: {new_val}')
-
-
-class ColorPropertyColumnDelegate(QStyledItemDelegate):
-    """
-    Table delegate that draws :class:`ColorButton` widget in the cell.
-    """
-
-    def createEditor(self, parent: QWidget, option: QStyleOptionViewItem, index: QModelIndex) -> QWidget:
-        editor = ColorButton(parent)
-        editor.clicked.connect(self._open_color_dialog)
-        editor._comrad_rules_index_ = QPersistentModelIndex(index)
-        return editor
-
-    def setEditorData(self, editor: ColorButton, index: QModelIndex):
-        if not isinstance(editor, ColorButton):
-            return
-        editor.color = str(index.data())
-        if getattr(editor, '_comrad_rules_index_', None) != index:
-            editor._comrad_rules_index_ = QPersistentModelIndex(index)
-
-    def setModelData(self, editor: QWidget, model: QAbstractTableModel, index: QModelIndex):
-        # Needs to be overridden so that underlying implementation does not set garbage data to the model
-        # This delegate is read-only, as we don not propagate value to the model from the editor, but rather
-        # open the dialog ourselves.
-        pass
-
-    def displayText(self, value: Any, locale: QLocale) -> str:
-        # Make sure that transparent button does not expose set label underneath
-        return ''
-
-    def _open_color_dialog(self):
-        # This can't be part of the ColorButton, as sometimes it gets deallocated by the table, while color dialog
-        # is open, resulting in C++ deallocation, while Python logic is in progress. Therefore, we keep it in the
-        # delegate, that exists as long as table model exists.
-        editor: ColorButton = self.sender()
-        index: Optional[QPersistentModelIndex] = getattr(editor, '_comrad_rules_index_', None)
-        if not index or not index.isValid():
-            return
-        new_color = QColorDialog.getColor(QColor(str(index.data())))
-        if not new_color.isValid():
-            # User cancelled the selection
-            return
-        new_name = new_color.name()
-        index.model().setData(QModelIndex(index), new_name)
+            self.notify_change(start=index.siblingAtColumn(0),
+                               end=index.siblingAtColumn(self.columnCount() - 1),
+                               action_type=self.ChangeType.UPDATE_ITEM)
+            return True
+        else:
+            return super().setData(index, value, role)
 
 
 class JSONEditorWrapper(QObject):
@@ -554,6 +260,7 @@ class AbstractTableDetailsView(QWidget, Generic[R, S], metaclass=GenericQObjectM
         self.json_edit = JSONEditorWrapper(editor=self.src_edit, parent=self)
 
         self.decl_table.set_persistent_editor_for_column(0)
+        self.decl_table.set_persistent_editor_for_column(1)
         for col, delegate_type in self.ITEM_DELEGATES.items():
             # Attention! Always pass parent here. Not doing so, will result in crash without any trace log.
             self.decl_table.setItemDelegateForColumn(col, delegate_type(self.decl_table))
@@ -614,11 +321,6 @@ class AbstractTableDetailsView(QWidget, Generic[R, S], metaclass=GenericQObjectM
                 # Fallback to default implementations (QLineEdit for strings and spinboxes for numerical)
                 self.decl_table.setItemDelegateForColumn(0, None)
                 self.decl_table.horizontalHeader().setResizeMode(0, QHeaderView.Fixed)  # Otherwise, it claims too much space
-
-        for col in self.ITEM_DELEGATES:
-            # TODO: Check if this is PersistentTableView problem
-            # Without re-enabling this, editors are not showing up in the non-zero columns
-            self.decl_table.set_persistent_editor_for_column(col)
 
     def _add_row(self):
         if self._model:
@@ -733,7 +435,7 @@ class RangeColumnDelegate(QStyledItemDelegate):
 
     def createEditor(self, parent: QWidget, option: QStyleOptionViewItem, index: QModelIndex) -> QWidget:
         editor = RangeEdit(parent)
-        editor._comrad_rules_index_ = QPersistentModelIndex(index)
+        setattr(editor, _STYLED_ITEM_DELEGATE_INDEX, QPersistentModelIndex(index))
         editor.value_changed.connect(self._range_changed)
         return editor
 
@@ -741,8 +443,8 @@ class RangeColumnDelegate(QStyledItemDelegate):
         if not isinstance(editor, RangeEdit):
             return
         editor.range = index.data()
-        if getattr(editor, '_comrad_rules_index_', None) != index:
-            editor._comrad_rules_index_ = QPersistentModelIndex(index)
+        if getattr(editor, _STYLED_ITEM_DELEGATE_INDEX, None) != index:
+            setattr(editor, _STYLED_ITEM_DELEGATE_INDEX, QPersistentModelIndex(index))
 
     def setModelData(self, editor: RangeEdit, model: QAbstractTableModel, index: QModelIndex):
         if not isinstance(editor, RangeEdit):
@@ -751,7 +453,7 @@ class RangeColumnDelegate(QStyledItemDelegate):
 
     def _range_changed(self):
         editor = self.sender()
-        index: Optional[QPersistentModelIndex] = getattr(editor, '_comrad_rules_index_', None)
+        index: Optional[QPersistentModelIndex] = getattr(editor, _STYLED_ITEM_DELEGATE_INDEX, None)
         if not index or not index.isValid():
             return
         self.setModelData(editor, index.model(), QModelIndex(index))
@@ -771,10 +473,10 @@ class RangeTableModel(AbstractTableModel[CNumRangeRule.Range]):
     def create_row_item(self) -> CNumRangeRule.Range:
         return CNumRangeRule.Range(min_val=0.0, max_val=1.0, prop_val='')
 
-    def specific_data(self, index: QModelIndex, row: CNumRangeRule.Range) -> Any:
+    def get_cell_data(self, index: QModelIndex, row: CNumRangeRule.Range) -> Any:
         return row.min_val, row.max_val
 
-    def set_specific_data(self, index: QModelIndex, row: CNumRangeRule.Range, value: Any) -> bool:
+    def set_cell_data(self, index: QModelIndex, row: CNumRangeRule.Range, value: Any) -> bool:
         row.min_val, row.max_val = value
         return True
 
@@ -791,45 +493,20 @@ class RangeDetailsView(AbstractTableDetailsView[CNumRangeRule, CNumRangeRule.Ran
     RULE_TYPE = CBaseRule.Type.NUM_RANGE
 
 
-class EnumFieldColumnDelegate(QStyledItemDelegate):
+class EnumFieldColumnDelegate(AbstractComboBoxColumnDelegate):
     """
     Delegate to render the combobox in the cell that displays available enum field names.
     """
 
-    def createEditor(self, parent: QWidget, option: QStyleOptionViewItem, index: QModelIndex) -> QWidget:
-        editor = QComboBox(parent)
+    def configure_editor(self, editor: QComboBox, _):
         for field_opt in CEnumRule.EnumField:
             editor.addItem(str(field_opt).split('.')[-1].title(), field_opt.value)
-        editor.activated.connect(self._val_changed)
-        editor._comrad_rules_index_ = QPersistentModelIndex(index)
-        return editor
 
-    def setEditorData(self, editor: QWidget, index: QModelIndex):
-        if not isinstance(editor, QComboBox):
-            return
-        field_opt = index.data()
-        combo = cast(QComboBox, editor)
-        combo_idx = combo.findData(field_opt.value)
-        if combo_idx != -1:
-            combo.setCurrentIndex(combo_idx)
-        if index != getattr(editor, '_comrad_rules_index_', None):
-            editor._comrad_rules_index_ = QPersistentModelIndex(index)
+    def user_data_to_model(self, value: Any) -> Any:
+        return CEnumRule.EnumField(value)  # This may throw ValueError, that's expected outside
 
-    def setModelData(self, editor: QComboBox, model: QAbstractTableModel, index: QModelIndex):
-        if not isinstance(editor, QComboBox):
-            return
-        try:
-            new_val = CEnumRule.EnumField(editor.currentData())
-        except ValueError:
-            return
-        model.setData(index, new_val)
-
-    def _val_changed(self):
-        editor = self.sender()
-        index: Optional[QPersistentModelIndex] = getattr(editor, '_comrad_rules_index_', None)
-        if not index or not index.isValid():
-            return
-        self.setModelData(editor, index.model(), QModelIndex(index))
+    def model_to_user_data(self, value: Any) -> Any:
+        return value.value   # FIXME: What's the type here?
 
 
 SubEdit = TypeVar('SubEdit', bound=QWidget)
@@ -946,14 +623,14 @@ class EnumValueColumnDelegate(QStyledItemDelegate):
         editor = QStackedWidget(parent)
         for idx, factory in self.FACTORIES.items():
             editor.insertWidget(idx, factory.create_subeditor(self._value_changed))
-        editor._comrad_rules_index_ = QPersistentModelIndex(index)
+        setattr(editor, _STYLED_ITEM_DELEGATE_INDEX, QPersistentModelIndex(index))
         return editor
 
     def setEditorData(self, editor: QStackedWidget, index: QModelIndex):
         if not isinstance(editor, QStackedWidget):
             return
-        if index != getattr(editor, '_comrad_rules_index_', None):
-            editor._comrad_rules_index_ = QPersistentModelIndex(index)
+        if index != getattr(editor, _STYLED_ITEM_DELEGATE_INDEX, None):
+            setattr(editor, _STYLED_ITEM_DELEGATE_INDEX, QPersistentModelIndex(index))
         try:
             field_type = self._get_field_type(index)
         except ValueError:
@@ -993,7 +670,7 @@ class EnumValueColumnDelegate(QStyledItemDelegate):
     def _value_changed(self):
         subeditor = self.sender()
         editor = subeditor.parent()
-        index: Optional[QPersistentModelIndex] = getattr(editor, '_comrad_rules_index_', None)
+        index: Optional[QPersistentModelIndex] = getattr(editor, _STYLED_ITEM_DELEGATE_INDEX, None)
         if not index or not index.isValid():
             return
         self.setModelData(editor, index.model(), QModelIndex(index))
@@ -1016,10 +693,10 @@ class EnumTableModel(AbstractTableModel[CEnumRule.EnumConfig]):
     def create_row_item(self) -> CEnumRule.EnumConfig:
         return CEnumRule.EnumConfig(field=CEnumRule.EnumField.CODE, field_val=0, prop_val='')
 
-    def specific_data(self, index: QModelIndex, row: CEnumRule.EnumConfig) -> Any:
+    def get_cell_data(self, index: QModelIndex, row: CEnumRule.EnumConfig) -> Any:
         return row.field if index.column() == 1 else row.field_val
 
-    def set_specific_data(self, index: QModelIndex, row: CEnumRule.EnumConfig, value: Any) -> bool:
+    def set_cell_data(self, index: QModelIndex, row: CEnumRule.EnumConfig, value: Any) -> bool:
         col = index.column()
         if col == 2:
             if row.field == CEnumRule.EnumField.MEANING:
@@ -1035,7 +712,10 @@ class EnumTableModel(AbstractTableModel[CEnumRule.EnumConfig]):
                 if new_type == CEnumRule.EnumField.MEANING:
                     if not isinstance(row.field_val, CEnumValue.Meaning):
                         new_field_val = CEnumValue.Meaning.NONE
-                elif new_type == CEnumRule.EnumField.CODE and not isinstance(row.field_val, int):
+                elif new_type == CEnumRule.EnumField.CODE and (not isinstance(row.field_val, int)
+                                                               or isinstance(row.field_val, CEnumValue.Meaning)):
+                    # Additional check for CEnumValue.Meaning battles indifference when switching from Meaning
+                    # to Code, which does not update the field value cell
                     new_field_val = 0
                 elif new_type == CEnumRule.EnumField.LABEL and not isinstance(row.field_val, str):
                     new_field_val = ''
@@ -1048,9 +728,6 @@ class EnumTableModel(AbstractTableModel[CEnumRule.EnumConfig]):
 
 
 class EnumDetailsView(AbstractTableDetailsView[CEnumRule, CEnumRule.EnumConfig]):
-    """
-    Concrete implementation of the details view that works with :class:`CEnumRule.EnumConfig` tables.
-    """
 
     MODEL_CLASS = EnumTableModel
     ITEM_DELEGATES = {
@@ -1059,8 +736,25 @@ class EnumDetailsView(AbstractTableDetailsView[CEnumRule, CEnumRule.EnumConfig])
     }
     RULE_TYPE = CBaseRule.Type.ENUM
 
+    def __init__(self, parent: Optional[QWidget] = None):
+        """
+        Concrete implementation of the details view that works with :class:`CEnumRule.EnumConfig` tables.
 
-class RulesEditorModel(AbstractListModel[CBaseRule], QAbstractListModel):
+        Args:
+            parent: Parent owner.
+        """
+        super().__init__(parent)
+        self.decl_table.set_persistent_editor_for_column(2)
+
+    def _configure_table(self, rule_prop: CBaseRule.Property):
+        super()._configure_table(rule_prop)
+        self.decl_table.horizontalHeader().setResizeMode(0, QHeaderView.Custom)  # Cancel out parent mode
+        self.decl_table.horizontalHeader().setResizeMode(1, QHeaderView.Custom)
+        if getattr(self, '_table_resizer', None) is None:
+            self._table_resizer = TableViewColumnResizer.install_onto(self.decl_table)
+
+
+class RulesEditorModel(BaseListModel[CBaseRule], QAbstractListModel, JsonModelMixin):
 
     def __init__(self, data: List[CBaseRule], default_prop: str, parent: Optional[QObject] = None):
         """
@@ -1072,42 +766,17 @@ class RulesEditorModel(AbstractListModel[CBaseRule], QAbstractListModel):
                           This setting is defined by the widget.
             parent: Owning object.
         """
-        AbstractListModel.__init__(self, data=data)
+        BaseListModel.__init__(self, data=data)
         QAbstractListModel.__init__(self, parent)
+        JsonModelMixin.__init__(self)
         self._default_prop = default_prop
-
-    def data(self, index: QModelIndex, role: Qt.ItemDataRole = Qt.DisplayRole) -> Any:
-        if not index.isValid() or role not in [Qt.DisplayRole, Qt.EditRole]:
-            return QVariant()
-        rule = self._data[index.row()]
-        return rule
-
-    def setData(self, index: QModelIndex, value: CBaseRule, role: Qt.ItemDataRole = Qt.EditRole) -> bool:
-        if not index.isValid() or role != Qt.EditRole:
-            return False
-        self._data[index.row()] = value
-        self.dataChanged.emit(index, index)
-        return True
 
     def create_row(self) -> CBaseRule:
         return CNumRangeRule(name='New Rule',
                              prop=self._default_prop,
                              channel=CBaseRule.Channel.DEFAULT)
 
-    def append_row(self):
-        super().append_row()
-        new_row = len(self._data) - 1
-        new_index = self.createIndex(new_row, 0)
-        self.dataChanged.emit(new_index, new_index)
-
     def validate(self):
-        """
-        Validate the rules.
-
-        Raises:
-            ValueError: Produced when internal validation of the rule fails. Rules should not be saved into the widget
-                        until they are fully validated.
-        """
         for rule in self._data:
             rule.validate()
 
@@ -1392,10 +1061,9 @@ class RulesEditor(QDialog):
             QMessageBox.critical(self, 'Error Saving', os.linesep.join(str(e).split(';')), QMessageBox.Ok)
             return
 
-        # TODO: Maybe this could be shared for all dialogs that we're about to create for designer?
-        form_window = QDesignerFormWindowInterface.findFormWindow(self._widget)
-        if form_window:
-            form_window.cursor().setProperty('rules', self._model.to_json())
+        cursor = get_designer_cursor(self._widget)
+        if cursor:
+            cursor.setProperty('rules', self._model.to_json())
         self.accept()
 
     def _eval_type_changed(self):
