@@ -171,7 +171,7 @@ class CPlottingItemModel(AbstractTableModel[PlottingItemRow]):
         for item in self._data:
             d = [
                 ('channel', item.channel),
-                ('name', item.label),
+                ('name', item.label or ''),
                 ('color', item.color),
                 ('line_style', item.line_style),
                 ('line_width', item.line_width),
