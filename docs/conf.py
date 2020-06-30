@@ -77,7 +77,7 @@ html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
 html_short_title = f'{project} v{__version__}'
-html_title = f'{html_short_title} docs'
+html_title = f'{html_short_title} wiki'
 
 html_logo = './img/logo.png'  # Must be png here, as ico won't be rendered by Chrome (and is not advised by MDN)
 html_favicon = '../comrad/icons/app.ico'
@@ -596,13 +596,6 @@ autosummary_generate = True
 autosummary_imported_members = True
 # if True, set typing.TYPE_CHECKING to True to enable “expensive” typing imports
 set_type_checking_flag = True
-
-
-# Enable Markdown source files along with reStructuredText
-source_suffix = {
-    '.rst': 'restructuredtext',
-    '.md': 'markdown',
-}
 
 
 qt_major = qVersion().split('.')[0]

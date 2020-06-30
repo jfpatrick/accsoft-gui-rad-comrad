@@ -8,3 +8,9 @@ pyqtSignal py:class 1 signals_slots.html#PyQt5.QtCore.pyqtSignal -
 PyQt5.QtCore.pyqtSlot py:class 1 signals_slots.html#the-pyqtslot-decorator pyqtSlot
 qtpy.QtCore.pyqtSlot py:class 1 signals_slots.html#the-pyqtslot-decorator pyqtSlot
 pyqtSlot py:class 1 signals_slots.html#the-pyqtslot-decorator -
+qtpy.QtDesigner.QPyDesignerCustomWidgetPlugin py:class 1 api/qtdesigner/qpydesignercustomwidgetplugin.html QPyDesignerCustomWidgetPlugin
+PyQt5.QtDesigner.QPyDesignerCustomWidgetPlugin py:class 1 api/qtdesigner/qpydesignercustomwidgetplugin.html QPyDesignerCustomWidgetPlugin
+QPyDesignerCustomWidgetPlugin py:class 1 api/qtdesigner/qpydesignercustomwidgetplugin.html -
+qtpy.QtDesigner.QPyDesignerTaskMenuExtension py:class 1 api/qtdesigner/qdesignertaskmenuextension.html QPyDesignerTaskMenuExtension
+PyQt5.QtDesigner.QPyDesignerTaskMenuExtension py:class 1 api/qtdesigner/qdesignertaskmenuextension.html QPyDesignerTaskMenuExtension
+QPyDesignerTaskMenuExtension py:class 1 api/qtdesigner/qdesignertaskmenuextension.html -

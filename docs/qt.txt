@@ -26,6 +26,9 @@ QSlider py:class 1 qslider.html -
 PyQt5.QtWidgets.QDoubleSpinBox py:class 1 qdoublespinbox.html QDoubleSpinBox
 qtpy.QtWidgets.QDoubleSpinBox py:class 1 qdoublespinbox.html QDoubleSpinBox
 QDoubleSpinBox py:class 1 qdoublespinbox.html -
+PyQt5.QtWidgets.QDialog py:class 1 qdialog.html QDialog
+qtpy.QtWidgets.QDialog py:class 1 qdialog.html QDialog
+QDialog py:class 1 qdialog.html -
 PyQt5.QtWidgets.QSpinBox py:class 1 qspinbox.html QSpinBox
 qtpy.QtWidgets.QSpinBox py:class 1 qspinbox.html QSpinBox
 QSpinBox py:class 1 qspinbox.html -
@@ -47,6 +50,9 @@ QLabel py:class 1 qlabel.html -
 PyQt5.QtGui.QPen py:class 1 qpen.html QPen
 qtpy.QtGui.QPen py:class 1 qpen.html QPen
 QPen py:class 1 qpen.html -
+PyQt5.QtWidgets.QAction py:class 1 qaction.html QAction
+qtpy.QtWidgets.QAction py:class 1 qaction.html QAction
+QAction py:class 1 qaction.html -
 PyQt5.QtWidgets.QGraphicsView py:class 1 qgraphicsview.html QGraphicsView
 qtpy.QtWidgets.QGraphicsView py:class 1 qgraphicsview.html QGraphicsView
 QGraphicsView py:class 1 qgraphicsview.html -
@@ -74,3 +80,6 @@ QGraphicsItem.GraphicsItemFlags py:class 1 qgraphicsitem.html#GraphicsItemFlag-e
 PyQt5.QtCore.Qt.PenStyle py:class 1 qt.html#PenStyle-enum Qt.PenStyle
 qtpy.QtCore.Qt.PenStyle py:class 1 qt.html#PenStyle-enum Qt.PenStyle
 Qt.PenStyle py:class 1 qt.html#PenStyle-enum -
+PyQt5.QtDesigner.QExtensionFactory py:class 1 qextensionfactory.html QExtensionFactory
+qtpy.QtDesigner.QExtensionFactory py:class 1 qextensionfactory.html QExtensionFactory
+QExtensionFactory py:class 1 qextensionfactory.html -

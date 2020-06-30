@@ -123,10 +123,7 @@ handles the connection to the control system and navigation between displays.
 
 .. _acc-py: https://mattermost.web.cern.ch/acc-py
 .. |mailing-list| image:: img/mailing-list.png
-   :width: 16px
-   :height: 16px
+
 .. |mattermost| image:: img/mattermost.png
-   :width: 16px
-   :height: 16px
 
 
