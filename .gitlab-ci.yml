@@ -9,11 +9,11 @@ stages:
   - Release
 
 variables:
-  ACCPY_PYQT_DOCKER_IMAGE: gitlab-registry.cern.ch/acc-co/accsoft/gui/accsoft-gui-pyqt-distro/acc-py-pyqt:ci-v20.04.1
+  ACCPY_PYQT_DOCKER_IMAGE: gitlab-registry.cern.ch/acc-co/devops/python/distribution/ci/pyqt:v2020-11rc2
   project_name: comrad  # Required by acc-py templates
+  PY_VERSION: "3.7"  # Set expectations of the base templates to our assumed Python version
 
 .init_sequence: &init_sequence
-- source /opt/venv/bin/activate
 - git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.cern.ch".insteadOf ssh://git@gitlab.cern.ch:7999
 
 before_script:
