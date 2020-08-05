@@ -1,5 +1,6 @@
 from typing import Iterator
 from comrad import CEnumValue
+from comrad._cwm_utils import parse_cmw_error_message
 from jpype.types import JException
 
 
@@ -52,9 +53,7 @@ def get_user_message(jpype_exc: JException) -> str:
         String extracted from the message.
     """
     throwable = get_root_cause(jpype_exc)
-    parts = throwable.getMessage().split(' : ')
-    parts = parts[-1].split(' --> ')
-    return parts[-1]
+    return parse_cmw_error_message(throwable.getMessage())
 
 
 def meaning_from_jpype(orig: object) -> CEnumValue.Meaning:

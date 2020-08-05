@@ -95,13 +95,11 @@ def pyjapc_subclass():
             yield CPyJapc
 
 
-@pytest.mark.parametrize('succeeds,by_location,expected_status', [
-    (True, True, CRBACLoginStatus.LOGGED_IN_BY_LOCATION),
-    (False, True, CRBACLoginStatus.LOGGED_OUT),
-    (True, False, CRBACLoginStatus.LOGGED_IN_BY_CREDENTIALS),
-    (False, False, CRBACLoginStatus.LOGGED_OUT),
+@pytest.mark.parametrize('succeeds,expected_status', [
+    (True, CRBACLoginStatus.LOGGED_IN_BY_LOCATION),
+    (False, CRBACLoginStatus.LOGGED_OUT),
 ])
-def test_rbac_login(pyjapc_subclass, succeeds: bool, by_location: bool, expected_status: CRBACLoginStatus):
+def test_rbac_login_by_location(pyjapc_subclass, succeeds: bool, expected_status: CRBACLoginStatus):
 
     japc = pyjapc_subclass()
     with mock.patch.object(japc, 'rbacLogin') as rbacLogin:
@@ -118,10 +116,7 @@ def test_rbac_login(pyjapc_subclass, succeeds: bool, by_location: bool, expected
 
         pyjapc_subclass.super_mock.rbacGetToken.return_value.getUser.return_value.getName.return_value = 'TEST_USER'
 
-        if by_location:
-            japc.login_by_location()
-        else:
-            japc.login_by_credentials(username='fakeuser', password='fakepasswd')
+        japc.login_by_location()
         rbacLogin.assert_called_once()
         if succeeds:
             pyjapc_subclass.super_mock.rbacGetToken.assert_called_once()

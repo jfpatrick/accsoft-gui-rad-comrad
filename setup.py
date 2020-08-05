@@ -27,6 +27,7 @@ requirements = {
         'JPype1>=0.7,<0.7.2',  # 0.7.2 seems incompatible with pyjapc as of now
         'dataclasses~=0.7;python_version<"3.7"',
         'pyccda~=0.10.1',
+        'pyrbac==0.0.4',
     ],
     'test': [
         'pytest>=5.0.1,<5.1',
