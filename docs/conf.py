@@ -1,8 +1,8 @@
 from typing import List
 from datetime import datetime
-from sys import version_info as py_version
 from qtpy.QtCore import qVersion, PYQT_VERSION_STR
 from comrad import __version__, __author__
+from _comrad.comrad_info import get_versions_info
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -24,6 +24,7 @@ from comrad import __version__, __author__
 # -- Project information -----------------------------------------------------
 
 author_name = __author__.split('<')[0].strip()
+versions = get_versions_info()
 
 project = 'ComRAD'
 copyright = f'{datetime.now().year}, CERN'
@@ -602,16 +603,21 @@ qt_major = qVersion().split('.')[0]
 pyqt_major = PYQT_VERSION_STR.split('.')[0]
 
 
+def minor_ver(ver: str) -> str:
+    parts = ver.split('.')
+    return '.'.join(parts[0:2])
+
+
 intersphinx_mapping = {
-    'python': (f'https://docs.python.org/{py_version.major}.{py_version.minor}', None),
+    'python': (f'https://docs.python.org/{minor_ver(versions.python)}', None),
     'Qt': (f'https://doc.qt.io/qt-{qt_major}/', './qt.inv'),
     f'PyQt{pyqt_major}': (f'https://www.riverbankcomputing.com/static/Docs/PyQt{pyqt_major}/', './pyqt.inv'),
     'QScintilla': ('https://www.riverbankcomputing.com/static/Docs/QScintilla/', './qsci.inv'),
     'pydm': ('http://slaclab.github.io/pydm/', './pydm.inv'),
-    'numpy': ('http://docs.scipy.org/doc/numpy/', None),
-    'pyqtgraph': ('http://www.pyqtgraph.org/documentation/', None),
-    'pyjapc': ('https://acc-py.web.cern.ch/gitlab/scripting-tools/pyjapc/docs/stable/', None),
-    'accwidgets': ('https://acc-py.web.cern.ch/gitlab/acc-co/accsoft/gui/accsoft-gui-pyqt-widgets/docs/stable/', None),
+    'numpy': (f'https://numpy.org/doc/{minor_ver(versions.np)}/', None),
+    'pyqtgraph': ('https://pyqtgraph.readthedocs.io/en/latest/', None),  # TODO: Change latest to concrete version of pyqtgraph after migrating to 0.11 (cant do right now, as versions there start from 0.11.0
+    'pyjapc': (f'https://acc-py.web.cern.ch/gitlab/scripting-tools/pyjapc/docs/v{versions.pyjapc}/', None),
+    'accwidgets': (f'https://acc-py.web.cern.ch/gitlab/acc-co/accsoft/gui/accsoft-gui-pyqt-widgets/docs/v{versions.widgets}/', None),
 }
 
 
