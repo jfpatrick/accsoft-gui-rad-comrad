@@ -42,9 +42,10 @@ class CRBACState(QObject):
     """Emits when authentication error occurs. First argument is the message string and a boolean
        for request type (``True`` -> by location, ``False`` -> by username)"""
 
-    def __init__(self, parent: Optional[QObject] = None):
+    def __init__(self, rbac_env: Optional[str] = None, parent: Optional[QObject] = None):
         super().__init__(parent)
         self._status = CRBACLoginStatus.LOGGED_OUT
+        self._rbac_env = rbac_env
         self.user: Optional[str] = None
         self.startup_login_policy = CRBACStartupLoginPolicy.LOGIN_BY_LOCATION
         self._auth_client: Optional[AuthenticationClient] = None
@@ -168,7 +169,7 @@ class CRBACState(QObject):
     @property
     def _client(self) -> AuthenticationClient:
         if self._auth_client is None:
-            self._auth_client = _get_auth_client()
+            self._auth_client = _get_auth_client(self._rbac_env)
         return self._auth_client
 
 
@@ -187,17 +188,40 @@ def is_rbac_role_critical(role: str) -> bool:
     return role.startswith('MCS-')
 
 
-def _get_auth_client() -> AuthenticationClient:
+def _get_auth_client(rbac_env: Optional[str] = None) -> AuthenticationClient:
+
+    if rbac_env is None:
+        rbac_env = 'PRO'
+    elif rbac_env.endswith('2'):
+        rbac_env = rbac_env[:-1]
+
+    if rbac_env not in [None, 'PRO']:
+        logger.debug(f'Setting extra pyrbac flag: RBAC_ENV={rbac_env}')
+        os.environ['RBAC_ENV'] = rbac_env
+
     try:
         return AuthenticationClient.create()
     except RuntimeError as e:
         if 'public key' in str(e):
             # pyrbac throws an exception, when it cannot find /user/rbac/pkey/rba-pub.txt, which is available on
             # NFS only. We bundle this key as a fallback to enable applications in environments without NFS
+            try:
+                key_name = _RBAC_KEY_MAP[rbac_env]
+            except KeyError:
+                raise ValueError(f'Unrecognized RBAC environment name: {rbac_env}')
+
             here = Path(__file__).parent.absolute()
-            bundled_key = str(here / 'rba-bundled-pub-key.txt')
+            bundled_key = str(here / key_name)
             logger.warning(f'RBAC failed to locate public key, attempting to use bundled one from {bundled_key}')
             os.environ['RBAC_PKEY'] = bundled_key
             return AuthenticationClient.create()
         else:
             raise
+
+
+_RBAC_KEY_MAP = {
+    'PRO': 'rba-bundled-pub-key.txt',
+    'DEV': 'rba-bundled-int-pub-key.txt',
+    'TEST': 'rba-bundled-test-pub-key.txt',
+    'INT': 'rba-bundled-int-pub-key.txt',
+}
