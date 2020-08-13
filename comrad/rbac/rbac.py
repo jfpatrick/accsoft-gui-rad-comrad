@@ -1,8 +1,9 @@
 import logging
 import os
 import functools
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, List, Dict, Callable
+from typing import Optional, List, Callable, Tuple
 from enum import IntEnum, auto
 from qtpy.QtCore import Signal, QObject
 from pyrbac import AuthenticationClient, AuthenticationError, Token
@@ -22,6 +23,22 @@ class CRBACStartupLoginPolicy(IntEnum):
     LOGIN_BY_LOCATION = auto()
     LOGIN_BY_CREDENTIALS = auto()
     NO_LOGIN = auto()
+
+
+@dataclass(eq=False)
+class CRBACRole:
+    name: str
+    lifetime: int = -1
+
+    @property
+    def is_critical(self) -> bool:
+        """Check if the given role is critical (MCS)"""
+        # As suggested by SRC team, until pyrbac starts delivering Role objects, we have to assume that
+        # critical roles are based on the naming convention.
+        return _is_rbac_role_critical(self.name)
+
+    def __eq__(self, other):
+        return type(other) == type(self) and self.name == other.name
 
 
 class CRBACState(QObject):
@@ -70,16 +87,33 @@ class CRBACState(QObject):
         self.rbac_status_changed.emit(self._status.value)
 
     @property
-    def roles(self) -> Optional[Dict[str, bool]]:
+    def roles(self) -> Optional[List[Tuple[CRBACRole, bool]]]:
         if self._last_pyrbac_token and self._all_roles is not None:
-            active_roles = self._last_pyrbac_token.get_roles()
-            return {role: role in active_roles for role in self._all_roles}
+            active_roles = objectify_roles(self._last_pyrbac_token)
+
+            def get_role_val(name: str) -> Tuple[CRBACRole, bool]:
+                for role in active_roles:
+                    if role.name == name:
+                        return role, True
+                else:
+                    return CRBACRole(name=name), False
+
+            return [get_role_val(role) for role in self._all_roles]
         return None
 
     @property
     def can_show_role_picker(self) -> bool:
-        return (self._all_roles is not None and self._last_pyrbac_token is not None
-                and not self._last_pyrbac_token.empty())
+        return self.has_token and self._all_roles is not None
+
+    @property
+    def has_token(self) -> bool:
+        return self._last_pyrbac_token is not None and not self._last_pyrbac_token.empty()
+
+    @property
+    def token(self) -> Optional[Token]:
+        if not self.has_token:
+            return None
+        return self._last_pyrbac_token
 
     def login_by_credentials(self, user: str, password: str, roles: Optional[List[str]] = None):
         self._generic_login(user,
@@ -162,7 +196,7 @@ class CRBACState(QObject):
         self._all_roles = roles_available
         if roles_selected is None:
             # Default login without explicit roles. Select all non-critical roles.
-            roles_selected = [r for r in roles_available if not is_rbac_role_critical(r)]
+            roles_selected = [r for r in roles_available if not _is_rbac_role_critical(r)]
         logger.debug(f'RBA request roles: {roles_selected}')
         return roles_selected
 
@@ -173,7 +207,27 @@ class CRBACState(QObject):
         return self._auth_client
 
 
-def is_rbac_role_critical(role: str) -> bool:
+def objectify_roles(token: Token) -> List[CRBACRole]:
+    """
+    Turns stringy roles from RBAC Token into dataclasses, also embedding additional information.
+
+    Args:
+        token: Original token.
+
+    Returns:
+        List of role objects.
+    """
+
+    active_role_names = token.get_roles()
+    extra_fields = token.get_extra_fields()
+    if extra_fields:
+        role_lifetimes = extra_fields.get_roles_lifetime()
+    else:
+        role_lifetimes = [-1] * len(active_role_names)
+    return [CRBACRole(name=name, lifetime=lifetime) for name, lifetime in zip(active_role_names, role_lifetimes)]
+
+
+def _is_rbac_role_critical(role: str) -> bool:
     """
     Check if the given role is critical (MCS)
 

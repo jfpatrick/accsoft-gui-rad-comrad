@@ -1,13 +1,13 @@
 import logging
 import operator
-from typing import Optional, Set, Any, Dict, cast, List
+from typing import Optional, Set, Any, cast, List, Tuple
 from pathlib import Path
 from qtpy import uic
 from qtpy.QtWidgets import QDialog, QWidget, QDialogButtonBox, QPushButton, QCheckBox, QListView, QVBoxLayout
-from qtpy.QtCore import (QStringListModel, QSortFilterProxyModel, QObject, QModelIndex, QPersistentModelIndex, Qt,
-                         QVariant)
+from qtpy.QtCore import (QSortFilterProxyModel, QObject, QModelIndex, QPersistentModelIndex, Qt,
+                         QVariant, QAbstractListModel)
 from qtpy.QtGui import QBrush
-from comrad.rbac import CRBACState, CRBACLoginStatus, is_rbac_role_critical
+from comrad.rbac import CRBACState, CRBACLoginStatus, CRBACRole
 from comrad.app.application import CApplication
 from .rbac_dialog import RbaAuthDialogWidget
 
@@ -42,8 +42,11 @@ class MscRolesModel(QSortFilterProxyModel):
         Returns:
             ``True`` if item should be included in the visible list.
         """
-        data = self.sourceModel().createIndex(source_row, 0).data(self.filterRole())
-        return isinstance(data, str) and (is_rbac_role_critical(data) or not self._msc_only)
+        is_critical = self.sourceModel().createIndex(source_row, 0).data(self.filterRole())
+        return is_critical or not self._msc_only
+
+    def filterRole(self) -> int:
+        return RolesModel.CRITICAL_ROLE
 
     def _set_msc_only(self, new_val: bool):
         self._msc_only = new_val
@@ -53,9 +56,11 @@ class MscRolesModel(QSortFilterProxyModel):
     """Display only MCS roles."""
 
 
-class RolesModel(QStringListModel):
+class RolesModel(QAbstractListModel):
 
-    def __init__(self, data: Dict[str, bool], parent: Optional[QObject] = None):
+    CRITICAL_ROLE = Qt.UserRole + 11
+
+    def __init__(self, data: List[Tuple[CRBACRole, bool]], parent: Optional[QObject] = None):
         """
         Custom string list model that memorizes selected positions.
 
@@ -63,9 +68,16 @@ class RolesModel(QStringListModel):
             data: Initial data.
             parent: Owner object.
         """
-        super().__init__(list(data.keys()), parent)
+        super().__init__(parent)
+        self._data: List[CRBACRole] = list(map(operator.itemgetter(0), data))
         self._checked_items: Set[QPersistentModelIndex] = {QPersistentModelIndex(self.createIndex(i, 0))
-                                                           for i, active in enumerate(data.values()) if active}
+                                                           for i, active
+                                                           in enumerate(map(operator.itemgetter(1), data))
+                                                           if active}
+
+    def rowCount(self, _: Optional[QModelIndex] = None) -> int:
+        """Returns the number of rows under the given parent."""
+        return len(self._data)
 
     def flags(self, index: QModelIndex) -> Qt.ItemFlags:
         """
@@ -98,11 +110,11 @@ class RolesModel(QStringListModel):
             return False
 
         if value == Qt.Checked:
-            val = self.data(index)
-            if is_rbac_role_critical(val):
+            is_critical = index.data(self.CRITICAL_ROLE)
+            if is_critical:
                 # At most one critical role can be selected at any time
                 # When selecting a new critical one, we need to deselect other critical ones
-                prev_mcs_indices = sorted((idx for idx in self._checked_items if is_rbac_role_critical(idx.data())),
+                prev_mcs_indices = sorted((idx for idx in self._checked_items if idx.data(self.CRITICAL_ROLE)),
                                           key=operator.methodcaller('row'))
                 for selected_index in reversed(prev_mcs_indices):
                     self.setData(self.createIndex(selected_index.row(), 0), Qt.Unchecked, Qt.CheckStateRole)
@@ -128,12 +140,15 @@ class RolesModel(QStringListModel):
             return QVariant()
         if role == Qt.CheckStateRole:
             return Qt.Checked if QPersistentModelIndex(index) in self._checked_items else Qt.Unchecked
+        elif role == self.CRITICAL_ROLE:
+            return self._data[index.row()].is_critical
         elif role == Qt.ForegroundRole:
-            val = self.data(index)
-            if is_rbac_role_critical(val):
+            is_critical = index.data(self.CRITICAL_ROLE)
+            if is_critical:
                 return QBrush(Qt.red)  # Else handle by default
-
-        return super().data(index, role)
+        elif role == Qt.DisplayRole:
+            return self._data[index.row()].name
+        return QVariant()
 
     def bulk_check(self, select: bool):
         """
@@ -146,7 +161,7 @@ class RolesModel(QStringListModel):
         end = self.createIndex(self.rowCount(), 0)
         if select:
             all_idx = (self.createIndex(i, 0) for i in range(self.rowCount()))
-            non_mcs_idx = (idx for idx in all_idx if not is_rbac_role_critical(idx.data()))
+            non_mcs_idx = (idx for idx in all_idx if not idx.data(self.CRITICAL_ROLE))
             self._checked_items = {QPersistentModelIndex(idx) for idx in non_mcs_idx} | self._checked_items
         else:
             self._checked_items.clear()
@@ -187,7 +202,7 @@ class RbaRolePicker(QDialog):
         self.setWindowTitle(f"RBAC Role Picker for '{rbac.user}'")
         self._username = rbac.user
 
-        self._src_model = RolesModel(data=rbac.roles or {}, parent=self)
+        self._src_model = RolesModel(data=rbac.roles or [], parent=self)
         self._model = MscRolesModel(self)
         self._model.setSourceModel(self._src_model)
         self._model.sort(0)

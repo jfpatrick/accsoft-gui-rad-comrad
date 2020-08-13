@@ -7,6 +7,7 @@ from comrad.app.application import CApplication
 from comrad.rbac import CRBACLoginStatus, CRBACState
 from comrad.rbac.rbac_dialog import RbaAuthDialogWidget
 from comrad.rbac.role_picker import RbaRolePicker
+from comrad.rbac.token_dialog import RbaTokenDialog
 from comrad.icons import icon
 from comrad.app.plugins.common import CToolbarWidgetPlugin
 
@@ -63,9 +64,13 @@ class RbaUserButton(QToolButton):
         menu = QMenu(self)
         self.setMenu(menu)
         self._rbac = rbac
-        action = QAction('Select Roles', self)
-        action.triggered.connect(self._open_role_picker)
-        menu.addAction(action)
+        act_roles = QAction('Select Roles', self)
+        act_roles.triggered.connect(self._open_role_picker)
+        menu.addAction(act_roles)
+        menu.addSeparator()
+        act_token = QAction('Show Existing RBAC Token', self)
+        act_token.triggered.connect(self._open_token_details)
+        menu.addAction(act_token)
 
     def _open_role_picker(self):
         if self._rbac.can_show_role_picker:
@@ -77,6 +82,18 @@ class RbaUserButton(QToolButton):
                                       'Action required',
                                       'Roles are currently not available via automatic login. Please logout and login '
                                       'again to enable the Role Picker.',
+                                      QMessageBox.Ok)
+
+    def _open_token_details(self):
+        token = self._rbac.token
+        if token:
+            dialog = RbaTokenDialog(token=token, parent=self)
+            dialog.exec_()
+        else:
+            QMessageBox().information(self,
+                                      'Action required',
+                                      'Token information is currently not available via automatic login. Please '
+                                      'logout and login again to view token details.',
                                       QMessageBox.Ok)
 
 
