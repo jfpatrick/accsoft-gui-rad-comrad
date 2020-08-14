@@ -5,7 +5,7 @@ from qtpy.QtWidgets import (QWidget, QToolButton, QMenu, QMessageBox, QDialog,
 from qtpy.QtCore import Qt, QSize
 from comrad.app.application import CApplication
 from comrad.rbac import CRBACLoginStatus, CRBACState
-from comrad.rbac.rbac_dialog import RbaAuthDialogWidget, RbaLoginDialog
+from comrad.rbac.rbac_dialog import RbaAuthDialogWidget, RbaExplicitLoginDialog
 from comrad.rbac.role_picker import RbaRolePicker
 from comrad.rbac.token_dialog import RbaTokenDialog
 from comrad.icons import icon
@@ -87,13 +87,26 @@ class RbaUserButton(QToolButton):
     def _on_roles_selected(self, selected_roles: List[str], role_picker: QDialog):
         # For some reason self.sender() gives handle to self here, so we have to pass role_picker explicitly in signal
 
-        # Note! This is a workaround (cause we can't re-login again without storing user's credentials),
-        # We must ask for login again.
-        dialog = RbaLoginDialog(new_roles=selected_roles, username=self._rbac.user, parent=self)
-        dialog.setWindowTitle('Authenticate to apply new roles')
-        if dialog.exec_() == QDialog.Accepted:
-            logger.debug('Closing role picker after successful login')
+        if self._rbac.status == CRBACLoginStatus.LOGGED_IN_BY_LOCATION:
+            self._rbac.login_by_location(preselected_roles=selected_roles)
+            # Since we were logged in by location before, assumption is that it will succeed again, not much
+            # else we can ask user to do. In corner cases it may fail though.
+            # It is better though to avoid ephemeral signal connection to close dialog after successful re-login,
+            # as this connection may stay alive.
             role_picker.accept()
+
+        elif self._rbac.status == CRBACLoginStatus.LOGGED_IN_BY_CREDENTIALS:
+            # Note! This is a workaround (cause we can't re-login again without storing user's credentials),
+            # We must ask for login again.
+
+            if self._rbac.user is None:
+                raise RuntimeError('Unexpectedly username is missing but status indicates successful explicit login')
+
+            dialog = RbaExplicitLoginDialog(new_roles=selected_roles, username=self._rbac.user, parent=self)
+            dialog.setWindowTitle('Authenticate to apply new roles')
+            if dialog.exec_() == QDialog.Accepted:
+                logger.debug('Closing role picker after successful login')
+                role_picker.accept()
 
     def _open_token_details(self):
         token = self._rbac.token

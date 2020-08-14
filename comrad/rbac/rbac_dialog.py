@@ -145,7 +145,7 @@ class RbaAuthDialogWidget(QWidget):
             self.loc_error.hide()
 
 
-class RbaLoginDialog(QDialog):
+class RbaExplicitLoginDialog(QDialog):
 
     def __init__(self, new_roles: List[str], username: str, parent: Optional[QWidget] = None):
         """
@@ -169,6 +169,7 @@ class RbaLoginDialog(QDialog):
                                                 initial_login_strategy=app.rbac.status,
                                                 roles=new_roles)
         self._main_widget.layout().setContentsMargins(0, 0, 0, 0)
+        self._main_widget.tabs.removeTab(0)  # Remove Login By Location tab
         self._btn_box = QDialogButtonBox(QDialogButtonBox.Cancel, self)
         layout.addWidget(self._main_widget)
         layout.addWidget(self._btn_box)
