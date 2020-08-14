@@ -1,10 +1,15 @@
-from typing import Optional, List
+import logging
+from typing import Optional, List, cast
 from pathlib import Path
 from qtpy import uic
-from qtpy.QtCore import Signal, QEvent
-from qtpy.QtWidgets import QWidget, QPushButton, QLineEdit, QLabel, QTabWidget
+from qtpy.QtCore import QEvent, QSignalBlocker, Qt
+from qtpy.QtWidgets import (QWidget, QPushButton, QLineEdit, QLabel, QTabWidget, QCheckBox, QVBoxLayout,
+                            QDialogButtonBox, QDialog)
 from comrad.app.application import CApplication
 from comrad.rbac import CRBACLoginStatus
+
+
+logger = logging.getLogger(__name__)
 
 
 _TAB_LOCATION_LOGIN = 0
@@ -12,15 +17,6 @@ _TAB_EXPLICIT_LOGIN = 1
 
 
 class RbaAuthDialogWidget(QWidget):
-
-    login_by_location = Signal([], [list])
-    """Is emitted when user desires to login by location. Optional parameter is the list of roles to be used."""
-
-    login_by_username = Signal([str, str], [str, str, list])
-    """
-    Is emitted when user attempts to use username/password pair to login.
-    Optional third parameter is the list of roles to be used.
-    """
 
     def __init__(self,
                  app: CApplication,
@@ -48,6 +44,8 @@ class RbaAuthDialogWidget(QWidget):
         self.user_error: QLabel = None
         self.loc_error: QLabel = None
         self.tabs: QTabWidget = None
+        self.roles_explicit: QCheckBox = None
+        self.roles_loc: QCheckBox = None
 
         uic.loadUi(Path(__file__).parent / 'rbac_dialog.ui', self)
 
@@ -63,17 +61,23 @@ class RbaAuthDialogWidget(QWidget):
         elif initial_login_strategy == CRBACLoginStatus.LOGGED_IN_BY_LOCATION:
             self.tabs.setCurrentIndex(_TAB_LOCATION_LOGIN)
 
+        self._immediate_roles: bool = False
+
         self.loc_btn.clicked.connect(self._login_loc)
         self.user_btn.clicked.connect(self._login_user)
 
+        if roles is None:
+            logging.debug('Enabling role picking at login')
+            self.roles_explicit.stateChanged.connect(self._roles_change)
+            self.roles_loc.stateChanged.connect(self._roles_change)
+        else:
+            # Roles already have been preselected, so we don't give user an opportunity to pick them here
+            logging.debug('Disabling role picking at login')
+            self.roles_explicit.hide()
+            self.roles_loc.hide()
+
         self._roles = roles
 
-        if roles is not None:
-            self.login_by_location[list].connect(app.rbac.login_by_location)
-            self.login_by_username[str, str, list].connect(app.rbac.login_by_credentials)
-        else:
-            self.login_by_location.connect(app.rbac.login_by_location)
-            self.login_by_username.connect(app.rbac.login_by_credentials)
         app.rbac.rbac_status_changed.connect(self._clean_password)
         app.rbac.rbac_error.connect(self._on_error)
 
@@ -83,13 +87,25 @@ class RbaAuthDialogWidget(QWidget):
             return True
         return super().event(event)
 
+    def _roles_change(self, state: Qt.CheckState):
+        blocker1 = QSignalBlocker(self.roles_explicit)
+        blocker2 = QSignalBlocker(self.roles_loc)
+        self._immediate_roles = state == Qt.Checked
+        self.roles_explicit.setChecked(self._immediate_roles)
+        self.roles_loc.setChecked(self._immediate_roles)
+        blocker1.unblock()
+        blocker2.unblock()
+
     def _login_loc(self):
         self.loc_error.hide()
         self.user_error.hide()
-        if self._roles is not None:
-            self.login_by_location[list].emit(self._roles)
+
+        app = cast(CApplication, CApplication.instance())
+
+        if self._immediate_roles:
+            app.rbac.login_by_location(select_roles=True)
         else:
-            self.login_by_location.emit()
+            app.rbac.login_by_location(preselected_roles=self._roles)
 
     def _login_user(self):
         user = self.username.text()
@@ -103,10 +119,13 @@ class RbaAuthDialogWidget(QWidget):
         else:
             self.user_error.hide()
             self.loc_error.hide()
-            if self._roles is not None:
-                self.login_by_username[str, str, list].emit(user, passwd, self._roles)
+
+            app = cast(CApplication, CApplication.instance())
+
+            if self._immediate_roles:
+                app.rbac.login_by_credentials(user=user, password=passwd, select_roles=True)
             else:
-                self.login_by_username.emit(user, passwd)
+                app.rbac.login_by_credentials(user=user, password=passwd, preselected_roles=self._roles)
             return
         self.user_error.show()
 
@@ -124,3 +143,39 @@ class RbaAuthDialogWidget(QWidget):
             self.tabs.setCurrentIndex(_TAB_EXPLICIT_LOGIN)
             self.user_error.show()
             self.loc_error.hide()
+
+
+class RbaLoginDialog(QDialog):
+
+    def __init__(self, new_roles: List[str], username: str, parent: Optional[QWidget] = None):
+        """
+        Wrapper for the :class:`comrad.rbac.rbac_dialog.RbaAuthDialogWidget`. Currently, we cannot re-login
+        with new roles, as :mod:`pyrbac` does not provide such capability. Instead, we are bound to ask
+        the user to login again with a new login dialog.
+
+        Args:
+            new_roles: Roles to use when signing in again.
+            username: Username to prefill for convenience.
+            parent: Owning object.
+        """
+        super().__init__(parent)
+        layout = QVBoxLayout()
+        layout.setSizeConstraint(QVBoxLayout.SetFixedSize)
+        self.setLayout(layout)
+        app = cast(CApplication, CApplication.instance())
+        self._main_widget = RbaAuthDialogWidget(app=app,
+                                                parent=self,
+                                                initial_username=username,
+                                                initial_login_strategy=app.rbac.status,
+                                                roles=new_roles)
+        self._main_widget.layout().setContentsMargins(0, 0, 0, 0)
+        self._btn_box = QDialogButtonBox(QDialogButtonBox.Cancel, self)
+        layout.addWidget(self._main_widget)
+        layout.addWidget(self._btn_box)
+        self._btn_box.rejected.connect(self.close)
+        app.rbac.rbac_status_changed.connect(self._on_rbac_status_changed)
+
+    def _on_rbac_status_changed(self, new_status: int):
+        if new_status != CRBACLoginStatus.LOGGED_OUT:
+            logger.debug(f'RBAC has connected, closing the login dialog')
+            self.accept()

@@ -1,11 +1,11 @@
 import logging
-from typing import Optional, cast
-from qtpy.QtWidgets import (QWidget, QToolButton, QMenu, QMessageBox,
+from typing import Optional, cast, List
+from qtpy.QtWidgets import (QWidget, QToolButton, QMenu, QMessageBox, QDialog,
                             QWidgetAction, QSizePolicy, QHBoxLayout, QAction)
 from qtpy.QtCore import Qt, QSize
 from comrad.app.application import CApplication
 from comrad.rbac import CRBACLoginStatus, CRBACState
-from comrad.rbac.rbac_dialog import RbaAuthDialogWidget
+from comrad.rbac.rbac_dialog import RbaAuthDialogWidget, RbaLoginDialog
 from comrad.rbac.role_picker import RbaRolePicker
 from comrad.rbac.token_dialog import RbaTokenDialog
 from comrad.icons import icon
@@ -74,8 +74,8 @@ class RbaUserButton(QToolButton):
 
     def _open_role_picker(self):
         if self._rbac.can_show_role_picker:
-            picker = RbaRolePicker(rbac=self._rbac, parent=self)
-            # Currently role picker will notify RBAC on its own, we don't need to handle callbacks here
+            picker = RbaRolePicker(roles=self._rbac.roles or [], parent=self)
+            picker.roles_selected.connect(self._on_roles_selected)
             picker.exec_()
         else:
             QMessageBox().information(self,
@@ -83,6 +83,17 @@ class RbaUserButton(QToolButton):
                                       'Roles are currently not available via automatic login. Please logout and login '
                                       'again to enable the Role Picker.',
                                       QMessageBox.Ok)
+
+    def _on_roles_selected(self, selected_roles: List[str], role_picker: QDialog):
+        # For some reason self.sender() gives handle to self here, so we have to pass role_picker explicitly in signal
+
+        # Note! This is a workaround (cause we can't re-login again without storing user's credentials),
+        # We must ask for login again.
+        dialog = RbaLoginDialog(new_roles=selected_roles, username=self._rbac.user, parent=self)
+        dialog.setWindowTitle('Authenticate to apply new roles')
+        if dialog.exec_() == QDialog.Accepted:
+            logger.debug('Closing role picker after successful login')
+            role_picker.accept()
 
     def _open_token_details(self):
         token = self._rbac.token
@@ -112,9 +123,13 @@ class RbaAuthButton(QToolButton):
         self.setIconSize(QSize(24, 24))
         self.setAutoRaise(True)
         self.setPopupMode(QToolButton.InstantPopup)
-        self._menu = QMenu(self)
+        self._menu = TabFocusPreservingMenu(self)
         action = QWidgetAction(self)
         action.setDefaultWidget(RbaAuthDialogWidget(parent=self, app=app))
+        # rba_widget = RbaAuthDialogWidget(parent=self, app=app)
+        # action.setDefaultWidget(rba_widget)
+        # rba_widget.setFocusPolicy(Qt.TabFocus)
+        # rba_widget.setFocusProxy(rba_widget.tabs)
         self._menu.addAction(action)
         self.setToolButtonStyle(Qt.ToolButtonIconOnly)
         self.decorate(rbac=app.rbac)
@@ -155,3 +170,31 @@ class RbaToolbarPlugin(CToolbarWidgetPlugin):
 
     def create_widget(self):
         return RbaButtonSet()
+
+
+class TabFocusPreservingMenu(QMenu):
+    """
+    Subclass that restores default Tab behavior.
+
+    As explained `here <https://stackoverflow.com/a/20388856>`__, menus have a special treatment
+    of Tab keystrokes, mainly to navigate up and down the menu. However, we want to preserve Tab
+    navigation within out login widget, otherwise jumping between Username/Password fields is
+    inconvenient.
+    """
+
+    def focusNextPrevChild(self, next: bool) -> bool:
+        """
+        Finds a new widget to give the keyboard focus to, as appropriate for ``Tab`` and ``Shift+Tab``,
+        and returns ``True`` if it can find a new widget, or ``False`` if it can't.
+
+        If ``next`` is ``True``, this function searches forward, if ``next`` is ``False``, it searches backward.
+
+        Sometimes, you will want to reimplement this function. For example, a web browser might reimplement it to
+        move its "current active link" forward or backward, and call :meth:`QWidget.focusNextPrevChild` only when
+        it reaches the last or first link on the "page".
+
+        Child widgets call :meth:`QWidget.focusNextPrevChild` on their parent widgets, but only the window that
+        contains the child widgets decides where to redirect focus. By reimplementing this function for an object,
+        you thus gain control of focus traversal for all child widgets.
+        """
+        return QWidget.focusNextPrevChild(self, next)

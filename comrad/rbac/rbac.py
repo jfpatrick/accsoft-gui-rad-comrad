@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Optional, List, Callable, Tuple
 from enum import IntEnum, auto
 from qtpy.QtCore import Signal, QObject
+from qtpy.QtWidgets import QDialog
 from pyrbac import AuthenticationClient, AuthenticationError, Token
 from comrad._cwm_utils import parse_cmw_error_message
 
@@ -115,19 +116,27 @@ class CRBACState(QObject):
             return None
         return self._last_pyrbac_token
 
-    def login_by_credentials(self, user: str, password: str, roles: Optional[List[str]] = None):
+    def login_by_credentials(self,
+                             user: str,
+                             password: str,
+                             select_roles: bool = False,
+                             preselected_roles: Optional[List[str]] = None):
         self._generic_login(user,
                             password,
                             login_status=CRBACLoginStatus.LOGGED_IN_BY_CREDENTIALS,
                             login_debug_type='with credentials',
                             login_func=self._client.login_explicit,
-                            roles=roles)
+                            select_roles=select_roles,
+                            preselected_roles=preselected_roles)
 
-    def login_by_location(self, roles: Optional[List[str]] = None):
+    def login_by_location(self,
+                          select_roles: bool = False,
+                          preselected_roles: Optional[List[str]] = None):
         self._generic_login(login_status=CRBACLoginStatus.LOGGED_IN_BY_LOCATION,
                             login_debug_type='by location',
                             login_func=self._client.login_location,
-                            roles=roles)
+                            select_roles=select_roles,
+                            preselected_roles=preselected_roles)
 
     def logout(self):
         logger.debug('RBA Logout requested')
@@ -156,18 +165,28 @@ class CRBACState(QObject):
                        login_status: CRBACLoginStatus,
                        login_debug_type: str,
                        login_func: Callable,
-                       roles: Optional[List[str]] = None):
-        force_relogin = roles is not None and self.status != CRBACLoginStatus.LOGGED_OUT
+                       select_roles: bool,
+                       preselected_roles: Optional[List[str]]):
+        # These are mutually exclusive
+        if select_roles:
+            preselected_roles = None
+
+        force_relogin = (not select_roles and preselected_roles is not None
+                         and self.status != CRBACLoginStatus.LOGGED_OUT)
         if force_relogin:
-            logger.debug(f'RBA Re-Login {login_debug_type} requested with roles: {roles}')
+            logger.debug(f'RBA Re-Login {login_debug_type} requested with roles: {preselected_roles}')
         else:
             logger.debug(f'RBA Login {login_debug_type} requested')
             if self.status != CRBACLoginStatus.LOGGED_OUT:
                 logger.debug('RBA login dropped, as user logged in already')
                 return
 
+        if select_roles:
+            logger.debug('RBA will show role picking prompt')
         try:
-            token: Token = login_func(*login_args, functools.partial(self._on_pyrbac_login, roles_selected=roles))
+            token: Token = login_func(*login_args, functools.partial(self._on_pyrbac_login,
+                                                                     select_interactively=select_roles,
+                                                                     preselected_roles=preselected_roles))
         except AuthenticationError as e:
             self.rbac_on_error(message=parse_cmw_error_message(str(e)),
                                by_loc=login_status == CRBACLoginStatus.LOGGED_IN_BY_LOCATION)
@@ -192,11 +211,20 @@ class CRBACState(QObject):
             # This will communicate token to Java, and Java will update the login status later
             self.rbac_token_changed.emit(token.get_encoded(), int(login_status))
 
-    def _on_pyrbac_login(self, roles_available: List[str], roles_selected: Optional[List[str]] = None) -> List[str]:
+    def _on_pyrbac_login(self,
+                         roles_available: List[str],
+                         select_interactively: bool,
+                         preselected_roles: Optional[List[str]]) -> List[str]:
         self._all_roles = roles_available
-        if roles_selected is None:
+        if select_interactively:
             # Default login without explicit roles. Select all non-critical roles.
-            roles_selected = [r for r in roles_available if not _is_rbac_role_critical(r)]
+            role_objects = [(CRBACRole(name=r), _is_default_role(r)) for r in roles_available]
+            roles_selected = _select_roles_interactively(role_objects)
+        elif preselected_roles is None:
+            # Default login without explicit roles. Select all non-critical roles.
+            roles_selected = [r for r in roles_available if _is_default_role(r)]
+        else:
+            roles_selected = preselected_roles
         logger.debug(f'RBA request roles: {roles_selected}')
         return roles_selected
 
@@ -225,6 +253,11 @@ def objectify_roles(token: Token) -> List[CRBACRole]:
     else:
         role_lifetimes = [-1] * len(active_role_names)
     return [CRBACRole(name=name, lifetime=lifetime) for name, lifetime in zip(active_role_names, role_lifetimes)]
+
+
+def _is_default_role(role: str) -> bool:
+    # When signing in without explicit roles, select all non-critical roles.
+    return not _is_rbac_role_critical(role)
 
 
 def _is_rbac_role_critical(role: str) -> bool:
@@ -271,6 +304,22 @@ def _get_auth_client(rbac_env: Optional[str] = None) -> AuthenticationClient:
             return AuthenticationClient.create()
         else:
             raise
+
+
+def _select_roles_interactively(roles: List[Tuple[CRBACRole, bool]]) -> List[str]:
+    from comrad.rbac.role_picker import RbaRolePicker
+    picker = RbaRolePicker(roles=roles, force_select=True)
+    res: List[str] = []
+
+    def on_roles_picked(selected_roles: List[str], role_picker: QDialog):
+        nonlocal res
+        res = selected_roles
+        role_picker.accept()
+
+    picker.roles_selected.connect(on_roles_picked)
+    picker.exec_()
+
+    return res
 
 
 _RBAC_KEY_MAP = {

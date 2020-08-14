@@ -1,15 +1,13 @@
 import logging
 import operator
-from typing import Optional, Set, Any, cast, List, Tuple
+from typing import Optional, Set, Any, List, Tuple
 from pathlib import Path
 from qtpy import uic
-from qtpy.QtWidgets import QDialog, QWidget, QDialogButtonBox, QPushButton, QCheckBox, QListView, QVBoxLayout
-from qtpy.QtCore import (QSortFilterProxyModel, QObject, QModelIndex, QPersistentModelIndex, Qt,
+from qtpy.QtWidgets import QDialog, QWidget, QDialogButtonBox, QPushButton, QCheckBox, QListView
+from qtpy.QtCore import (QSortFilterProxyModel, QObject, QModelIndex, QPersistentModelIndex, Qt, Signal,
                          QVariant, QAbstractListModel)
-from qtpy.QtGui import QBrush
-from comrad.rbac import CRBACState, CRBACLoginStatus, CRBACRole
-from comrad.app.application import CApplication
-from .rbac_dialog import RbaAuthDialogWidget
+from qtpy.QtGui import QBrush, QKeyEvent
+from comrad.rbac import CRBACRole
 
 
 logger = logging.getLogger(__name__)
@@ -174,15 +172,21 @@ class RolesModel(QAbstractListModel):
 
 class RbaRolePicker(QDialog):
 
-    def __init__(self, rbac: CRBACState, parent: Optional[QWidget] = None):
+    roles_selected = Signal(list, QDialog)
+    """Notifies interested parties that list of roles has been confirmed and a re-login is required to apply it."""
+
+    def __init__(self, roles: List[Tuple[CRBACRole, bool]], force_select: bool = False, parent: Optional[QWidget] = None):
         """
         Dialog to select user roles.
 
         Args:
             rbac: Reference to the RBAC manager.
+            force_select: Dialog cannot be closed without applying changes.
             parent: Parent widget to own this object.
         """
-        super().__init__(parent)
+        flags = ((Qt.Dialog | Qt.WindowTitleHint | Qt.CustomizeWindowHint)
+                 if force_select else Qt.WindowFlags())
+        super().__init__(parent, flags)
 
         # For IDE support, assign types to dynamically created items from the *.ui file
         self.btn_box: QDialogButtonBox = None
@@ -199,15 +203,21 @@ class RbaRolePicker(QDialog):
         self.btn_clear_all.clicked.connect(self._on_clear_all)
         self.btn_select_all.clicked.connect(self._on_select_all)
 
-        self.setWindowTitle(f"RBAC Role Picker for '{rbac.user}'")
-        self._username = rbac.user
+        if force_select:
+            self.btn_box.removeButton(self.btn_box.button(QDialogButtonBox.Cancel))
+        self._force_select = force_select
 
-        self._src_model = RolesModel(data=rbac.roles or [], parent=self)
+        self._src_model = RolesModel(data=roles, parent=self)
         self._model = MscRolesModel(self)
         self._model.setSourceModel(self._src_model)
         self._model.sort(0)
         self.role_view.setModel(self._model)
         self._on_show_msc_only()
+
+    def keyPressEvent(self, event: QKeyEvent):
+        if event.key() == Qt.Key_Escape and self._force_select:
+            return
+        super().keyPressEvent(event)
 
     def _on_show_msc_only(self):
         msc_only = self.mcs_checkbox.isChecked()
@@ -222,47 +232,4 @@ class RbaRolePicker(QDialog):
         self._src_model.bulk_check(True)
 
     def _save_changes(self):
-        selected_roles = list(self._src_model.selected_roles)
-
-        # Note! This is a workaround (cause we can't relogin again without storing user's credentials),
-        # We must ask for login again.
-        dialog = RbaLoginDialog(new_roles=selected_roles, username=self._username, parent=self)
-        dialog.setWindowTitle('Authenticate to apply new roles')
-        if dialog.exec_() == QDialog.Accepted:
-            self.accept()
-
-
-class RbaLoginDialog(QDialog):
-
-    def __init__(self, new_roles: List[str], username: str, parent: Optional[QWidget] = None):
-        """
-        Wrapper for the :class:`comrad.rbac.rbac_dialog.RbaAuthDialogWidget`. Currently, we cannot re-login
-        with new roles, as :mod:`pyrbac` does not provide such capability. Instead, we are bound to ask
-        the user to login again with a new login dialog.
-
-        Args:
-            new_roles: Roles to use when signing in again.
-            username: Username to prefill for convenience.
-            parent: Owning object.
-        """
-        super().__init__(parent)
-        layout = QVBoxLayout()
-        layout.setSizeConstraint(QVBoxLayout.SetFixedSize)
-        self.setLayout(layout)
-        app = cast(CApplication, CApplication.instance())
-        self._main_widget = RbaAuthDialogWidget(app=app,
-                                                parent=self,
-                                                initial_username=username,
-                                                initial_login_strategy=app.rbac.status,
-                                                roles=new_roles)
-        self._main_widget.layout().setContentsMargins(0, 0, 0, 0)
-        self._btn_box = QDialogButtonBox(QDialogButtonBox.Cancel, self)
-        layout.addWidget(self._main_widget)
-        layout.addWidget(self._btn_box)
-        self._btn_box.rejected.connect(self.close)
-        app.rbac.rbac_status_changed.connect(self._on_rbac_status_changed)
-
-    def _on_rbac_status_changed(self, new_status: int):
-        if new_status != CRBACLoginStatus.LOGGED_OUT:
-            logger.debug(f'RBAC has connected, closing the login dialog')
-            self.accept()
+        self.roles_selected.emit(list(self._src_model.selected_roles), self)

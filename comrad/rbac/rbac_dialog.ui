@@ -7,13 +7,13 @@
     <x>0</x>
     <y>0</y>
     <width>348</width>
-    <height>199</height>
+    <height>250</height>
    </rect>
   </property>
   <property name="maximumSize">
    <size>
     <width>348</width>
-    <height>199</height>
+    <height>250</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -25,13 +25,13 @@
      <property name="minimumSize">
       <size>
        <width>330</width>
-       <height>181</height>
+       <height>232</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
        <width>330</width>
-       <height>181</height>
+       <height>232</height>
       </size>
      </property>
      <property name="currentIndex">
@@ -41,7 +41,7 @@
       <property name="maximumSize">
        <size>
         <width>16777215</width>
-        <height>148</height>
+        <height>203</height>
        </size>
       </property>
       <attribute name="title">
@@ -60,6 +60,29 @@
           <size>
            <width>20</width>
            <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="roles_loc">
+         <property name="text">
+          <string>Select roles at login</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Fixed</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>15</height>
           </size>
          </property>
         </spacer>
@@ -247,6 +270,29 @@
           <bool>true</bool>
          </property>
         </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="roles_explicit">
+         <property name="text">
+          <string>Select roles at login</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_4">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Fixed</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>15</height>
+          </size>
+         </property>
+        </spacer>
        </item>
        <item>
         <widget class="QPushButton" name="user_btn">
