@@ -133,7 +133,7 @@ else:
     PyJapc.getParam = _fixed_papc_get_param
 
 
-class CPyJapc(QObject, PyJapc):
+class CPyJapc(PyJapc, QObject):
     """Singleton instance to avoid RBAC login for multiple Japc connections."""
 
     japc_status_changed = Signal(bool)
@@ -156,10 +156,10 @@ class CPyJapc(QObject, PyJapc):
         # which fails to read data from private virtual devices.
         # When passing selector, it is important to set incaAcceleratorName, because default 'auto' name
         # will try to infer the accelerator from the selector and will fail, if we are passing None
-        QObject.__init__(self)
         PyJapc.__init__(self,
                         selector='',
                         incaAcceleratorName='' if app.use_inca else None)
+        QObject.__init__(self)
         self._logged_in: bool = False
         self._use_inca = app.use_inca
         self._app.rbac.rbac_logout_user.connect(self.rbacLogout)
