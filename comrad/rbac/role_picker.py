@@ -1,6 +1,6 @@
 import logging
 import operator
-from typing import Optional, Set, Any, List, Tuple
+from typing import Optional, Set, Any, List
 from pathlib import Path
 from qtpy import uic
 from qtpy.QtWidgets import QDialog, QWidget, QDialogButtonBox, QPushButton, QCheckBox, QListView
@@ -58,7 +58,7 @@ class RolesModel(QAbstractListModel):
 
     CRITICAL_ROLE = Qt.UserRole + 11
 
-    def __init__(self, data: List[Tuple[CRBACRole, bool]], parent: Optional[QObject] = None):
+    def __init__(self, data: List[CRBACRole], parent: Optional[QObject] = None):
         """
         Custom string list model that memorizes selected positions.
 
@@ -67,10 +67,10 @@ class RolesModel(QAbstractListModel):
             parent: Owner object.
         """
         super().__init__(parent)
-        self._data: List[CRBACRole] = list(map(operator.itemgetter(0), data))
+        self._data: List[CRBACRole] = data
         self._checked_items: Set[QPersistentModelIndex] = {QPersistentModelIndex(self.createIndex(i, 0))
                                                            for i, active
-                                                           in enumerate(map(operator.itemgetter(1), data))
+                                                           in enumerate(map(operator.attrgetter('active'), data))
                                                            if active}
 
     def rowCount(self, _: Optional[QModelIndex] = None) -> int:
@@ -175,12 +175,12 @@ class RbaRolePicker(QDialog):
     roles_selected = Signal(list, QDialog)
     """Notifies interested parties that list of roles has been confirmed and a re-login is required to apply it."""
 
-    def __init__(self, roles: List[Tuple[CRBACRole, bool]], force_select: bool = False, parent: Optional[QWidget] = None):
+    def __init__(self, roles: List[CRBACRole], force_select: bool = False, parent: Optional[QWidget] = None):
         """
         Dialog to select user roles.
 
         Args:
-            rbac: Reference to the RBAC manager.
+            roles: All available roles.
             force_select: Dialog cannot be closed without applying changes.
             parent: Parent widget to own this object.
         """

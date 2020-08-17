@@ -73,8 +73,9 @@ class RbaUserButton(QToolButton):
         menu.addAction(act_token)
 
     def _open_role_picker(self):
-        if self._rbac.can_show_role_picker:
-            picker = RbaRolePicker(roles=self._rbac.roles or [], parent=self)
+        token = self._rbac.token
+        if token is not None:
+            picker = RbaRolePicker(roles=token.roles, parent=self)
             picker.roles_selected.connect(self._on_roles_selected)
             picker.exec_()
         else:
@@ -110,7 +111,7 @@ class RbaUserButton(QToolButton):
 
     def _open_token_details(self):
         token = self._rbac.token
-        if token:
+        if token is not None:
             dialog = RbaTokenDialog(token=token, parent=self)
             dialog.exec_()
         else:
