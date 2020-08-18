@@ -182,7 +182,7 @@ def make_cmd(entrypoint: str,
         # Mirror current log level to the child app (e.g. when running in DEBUG, also launch example in DEBUG)
         args.append('--log-level')
         args.append(logging.getLevelName(logging.getLogger().level))
-    _disable_implicit_plugin(args, plugin_id=rbac_plugin.RBACButtonPlugin.plugin_id)
+    _disable_implicit_plugin(args, plugin_id=rbac_plugin.RbaToolbarPlugin.plugin_id)
     args.append(str(file_path))
     logger.debug(f'Launching app with args: {args}')
     env = dict(os.environ, PYJAPC_SIMULATION_INIT=(japc_generator or ''))

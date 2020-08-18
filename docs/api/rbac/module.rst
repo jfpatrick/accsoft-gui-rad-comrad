@@ -1,5 +1,5 @@
 RBAC
 =====================
 
-.. automodule:: comrad.rbac
+.. automodule:: comrad.rbac.rbac
     :members:

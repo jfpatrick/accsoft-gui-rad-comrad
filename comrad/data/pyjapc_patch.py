@@ -133,11 +133,11 @@ else:
     PyJapc.getParam = _fixed_papc_get_param
 
 
-class CPyJapc(QObject, PyJapc):
+class CPyJapc(PyJapc, QObject):
     """Singleton instance to avoid RBAC login for multiple Japc connections."""
 
     japc_status_changed = Signal(bool)
-    japc_login_error = Signal(tuple)
+    japc_login_error = Signal(str, bool)
     japc_param_error = Signal(str, bool)
 
     def __init__(self):
@@ -156,15 +156,14 @@ class CPyJapc(QObject, PyJapc):
         # which fails to read data from private virtual devices.
         # When passing selector, it is important to set incaAcceleratorName, because default 'auto' name
         # will try to infer the accelerator from the selector and will fail, if we are passing None
-        QObject.__init__(self)
         PyJapc.__init__(self,
                         selector='',
                         incaAcceleratorName='' if app.use_inca else None)
+        QObject.__init__(self)
         self._logged_in: bool = False
         self._use_inca = app.use_inca
         self._app.rbac.rbac_logout_user.connect(self.rbacLogout)
-        self._app.rbac.rbac_login_user.connect(self.login_by_credentials)
-        self._app.rbac.rbac_login_by_location.connect(self.login_by_location)
+        self._app.rbac.rbac_token_changed.connect(self._on_token_changed_from_pyrbac)
         self.japc_login_error.connect(self._app.rbac.rbac_on_error)
         self.japc_param_error.connect(self._app.on_control_error)
         logger.debug('JAPC is set up and ready!')
@@ -180,22 +179,13 @@ class CPyJapc(QObject, PyJapc):
             pass
 
     def login_by_location(self):
-        logger.debug('Attempting RBAC login by location')
+        logger.debug('Attempting RBAC login by location (via Java RBAC)')
         self.rbacLogin(on_exception=self._login_err)
         if self._logged_in:
             token = self.rbacGetToken()
             if token:
                 self._app.rbac.user = token.getUser().getName()  # FIXME: This is Java call. We need to abstract it into PyRBAC
                 self._app.rbac.status = CRBACLoginStatus.LOGGED_IN_BY_LOCATION
-
-    def login_by_credentials(self, username: str, password: str):
-        logger.debug('Attempting RBAC login with credentials')
-        self.rbacLogin(username=username, password=password, on_exception=self._login_err)
-        if self._logged_in:
-            token = self.rbacGetToken()
-            if token:
-                self._app.rbac.user = token.getUser().getName()  # FIXME: This is Java call. We need to abstract it into PyRBAC
-                self._app.rbac.status = CRBACLoginStatus.LOGGED_IN_BY_CREDENTIALS
 
     @property
     def logged_in(self):
@@ -247,6 +237,20 @@ class CPyJapc(QObject, PyJapc):
             kwargs['checkDims'] = False
         self._expect_japc_error(super().setParam, *args, display_popup=True, **kwargs)
 
+    def _on_token_changed_from_pyrbac(self, pyrbac_token: list, login_status: int):
+        logger.debug('Updating Java-RBAC token with the external token from pyrbac')
+        config = cern.rbac.common.RbacConfiguration.getCurrent()
+        new_token = cern.rbac.common.RbaToken.parseAndValidate(jpype.java.nio.ByteBuffer.wrap(pyrbac_token), config)
+        cern.rbac.util.holder.ClientTierTokenHolder.setRbaToken(new_token)
+
+        actual_token = self.rbacGetToken()
+        if actual_token:
+            self._set_online(login_status != CRBACLoginStatus.LOGGED_OUT)
+            self._app.rbac.user = actual_token.getUser().getName()
+            self._app.rbac.status = CRBACLoginStatus(login_status)
+        else:
+            logger.warning(f'Failed to get a new token from Java')
+
     def _set_online(self, logged_in: bool):
         self._logged_in = logged_in
         self.japc_status_changed.emit(logged_in)
@@ -254,7 +258,7 @@ class CPyJapc(QObject, PyJapc):
             self._app.rbac.status = CRBACLoginStatus.LOGGED_OUT
 
     def _login_err(self, message: str, login_by_location: bool):
-        self.japc_login_error.emit((message, login_by_location))
+        self.japc_login_error.emit(message, login_by_location)
 
     def _expect_japc_error(self, fn: Callable, *args, display_popup: bool = False, **kwargs):
         try:

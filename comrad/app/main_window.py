@@ -101,6 +101,10 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
             title = self.current_file()
         else:
             title = self._display_widget.windowTitle()
+
+        # Set the process name for RBAC (visible in Token Information)
+        os.environ['RBAC_APPLICATION_NAME'] = title + ' / ComRAD'
+
         title += ' - ComRAD'
         if is_read_only():
             title += ' [Read Only]'

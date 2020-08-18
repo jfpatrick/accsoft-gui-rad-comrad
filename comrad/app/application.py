@@ -94,7 +94,7 @@ class CApplication(PyDMApplication):
         """
         args = [_APP_NAME]
         args.extend(command_line_args or [])
-        self.rbac = CRBACState()  # We must keep it before super because dependant plugins will be initialized in super()
+        self.rbac = CRBACState(rbac_env=cmw_env)  # We must keep it before super because dependant plugins will be initialized in super()
         self.ccda_endpoint = ccda_endpoint
         self.cmw_env = cmw_env
         self.use_inca = use_inca
