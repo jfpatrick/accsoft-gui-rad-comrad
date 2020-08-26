@@ -18,6 +18,7 @@ def run_designer(ccda_env: str,
                  client: Optional[int] = None,
                  resource_dir: Optional[Union[Path, str]] = None,
                  enable_internal_props: bool = False,
+                 extra_data_plugin_paths: Optional[List[str]] = None,
                  log_level: Optional[str] = None,
                  blocking: bool = True):
     """
@@ -34,6 +35,8 @@ def run_designer(ccda_env: str,
         client: port to use when run in the client mode (standard feature).
         resource_dir: custom resource directory (standard feature).
         enable_internal_props: enable internal dynamic properties (standard feature).
+        extra_data_plugin_paths: List of paths with user-defined data plugins. They will be joined with paths
+                                 read from ``COMRAD_DATA_PLUGIN_PATH``.
         log_level: logging level passed to Python widgets.
         blocking: wait for the Designer to close before returning from the method.
 
@@ -50,7 +53,7 @@ def run_designer(ccda_env: str,
     }
 
     if online:
-        env.update(get_japc_support_envs())
+        env.update(get_japc_support_envs(extra_data_plugin_paths))
         env['PYDM_DESIGNER_ONLINE'] = '1'
         env['QT_DESIGNER_RAD_INCA'] = str(int(use_inca))
         if java_env:

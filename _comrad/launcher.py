@@ -124,8 +124,8 @@ def _install_controls_arguments(parser: argparse._ActionsContainer):
                              'service for integration/acceptance/system testing to be used by external clients; '
                              'uses CCDB INT schema; - INT: unstable integration service for internal CMW '
                              'integration testing used by the CMW team only; uses CCDB INT schema; - DEV: '
-                             "Development environment. Uses CCDB DEV schema. The environments with suffix '2' are"
-                             ' similar to original ones but use alternative CCDB endpoints.',
+                             "Development environment. Uses CCDB DEV schema. The environments with suffix '2' are "
+                             'similar to original ones but use alternative CCDB endpoints.',
                         choices=['PRO', 'TEST', 'INT', 'DEV', 'PRO2', 'TEST2', 'INT2', 'DEV2'],
                         default='PRO')
     parser.add_argument('--java-env',
@@ -134,6 +134,13 @@ def _install_controls_arguments(parser: argparse._ActionsContainer):
                              'affect all of them.',
                         metavar='key=value',
                         nargs=argparse.ONE_OR_MORE)
+    parser.add_argument('--extra-data-plugin-path',
+                        help='Path to user-defined ComRAD data plugins for alternative control-system communications. '
+                             'It is joined together with standard ComRAD data handlers (e.g. JAPC) as well as plugins '
+                             'found in paths defined by COMRAD_DATA_PLUGIN_PATH.',
+                        metavar='PATH',
+                        nargs=argparse.ZERO_OR_MORE,
+                        default=None)
 
 
 def _install_debug_arguments(parser: argparse._ActionsContainer):
@@ -206,8 +213,8 @@ def _run_subcommand(parser: argparse.ArgumentParser):
                                    'COMRAD_TOOLBAR_PLUGIN_PATH for any custom plugins). The order must be a comma-'
                                    'separated string with plugin IDs. For built-in items use following identifiers:'
                                    ' - RBAC dialog button: comrad.rbac'
-                                   ''
-                                   "Example usage: --enable-plugins 'comrad.rbac'",
+                                   ' '
+                                   "Example usage: --enable-plugins 'comrad.rbac'.",
                               default=None)
     plugin_group.add_argument('--disable-plugins',
                               metavar="'ID,...'",
@@ -217,8 +224,8 @@ def _run_subcommand(parser: argparse.ArgumentParser):
                                    'COMRAD_TOOLBAR_PLUGIN_PATH for any custom plugins). The order must be a comma-'
                                    'separated string with plugin IDs. For built-in items use following identifiers:'
                                    ' - RBAC dialog button: comrad.rbac'
-                                   ''
-                                   "Example usage: --disable-plugins 'comrad.rbac'",
+                                   ' '
+                                   "Example usage: --disable-plugins 'comrad.rbac'.",
                               default=None)
     plugin_group.add_argument('--status-plugin-path',
                               metavar='PATH',
@@ -244,8 +251,8 @@ def _run_subcommand(parser: argparse.ArgumentParser):
                                    ' - Toolbar separator: comrad.sep'
                                    ' - Toolbar empty space: comrad.spacer'
                                    ' - RBAC dialog button: comrad.rbac'
-                                   ''
-                                   "Example usage: --nav-bar-order 'comrad.home,comrad.sep,comrad.spacer,comrad.rbac'",
+                                   ' '
+                                   "Example usage: --nav-bar-order 'comrad.home,comrad.sep,comrad.spacer,comrad.rbac'.",
                               default=None)
 
     debug_group = parser.add_argument_group('Debugging')
@@ -298,7 +305,7 @@ def _run_comrad(args: argparse.Namespace) -> bool:
 
     environment = {
         'PYDM_TOOLS_PATH': comrad_asset('tools'),
-        **get_japc_support_envs(),
+        **get_japc_support_envs(args.extra_data_plugin_path),
     }
 
     for k, v in environment.items():
@@ -350,6 +357,7 @@ def _run_comrad(args: argparse.Namespace) -> bool:
                        fullscreen=args.fullscreen,
                        read_only=args.read_only,
                        macros=macros,
+                       data_plugin_paths=args.extra_data_plugin_path,
                        nav_bar_plugin_path=args.nav_plugin_path,
                        status_bar_plugin_path=args.status_plugin_path,
                        menu_bar_plugin_path=args.menu_plugin_path,
@@ -380,6 +388,7 @@ def _run_designer(args: argparse.Namespace) -> bool:
                  client=args.client,
                  resource_dir=args.resourcedir,
                  log_level=args.log_level,
+                 extra_data_plugin_paths=args.extra_data_plugin_path,
                  enable_internal_props=args.enableinternaldynamicproperties)
     return True
 
@@ -408,6 +417,17 @@ Environment:
                        f'Qt v{versions.qt}\n' + \
                        f'Python v{versions.python}'
 
+    items: Iterable[str]
+
+    from .common import assemble_extra_data_plugin_paths
+    extra_plugin_paths = assemble_extra_data_plugin_paths()
+    if extra_plugin_paths:
+        version_str += '\n\nUser-defined ComRAD data plugin paths:'
+        items = filter(None, extra_plugin_paths.split(os.pathsep))  # Filter out empty strings
+        for p in items:
+            version_str += f'\n * {p}'
+
+    version_str += '\n\n'
     # This uses private API based on assumption that we checked when constructing the parser
     parser._print_message(version_str)
 
