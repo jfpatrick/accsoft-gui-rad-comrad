@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>472</width>
+    <height>258</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Basic data plugin</string>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <item>
+    <widget class="CScrollingPlot" name="CScrollingPlot">
+     <property name="showLegend" stdset="0">
+      <bool>true</bool>
+     </property>
+     <property name="curves" stdset="0">
+      <stringlist>
+       <string>{&quot;channel&quot;: &quot;random://[0, 50]&quot;, &quot;style&quot;: &quot;Line Graph&quot;, &quot;layer&quot;: &quot;&quot;, &quot;name&quot;: &quot;Range 0-50&quot;, &quot;color&quot;: &quot;yellow&quot;, &quot;line_style&quot;: 1, &quot;line_width&quot;: 1, &quot;symbol&quot;: null, &quot;symbol_size&quot;: 10}</string>
+       <string>{&quot;channel&quot;: &quot;random://[25,70]&quot;, &quot;style&quot;: &quot;Line Graph&quot;, &quot;layer&quot;: &quot;&quot;, &quot;name&quot;: &quot;Range 25-70&quot;, &quot;color&quot;: &quot;red&quot;, &quot;line_style&quot;: 1, &quot;line_width&quot;: 1, &quot;symbol&quot;: null, &quot;symbol_size&quot;: 10}</string>
+      </stringlist>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ScrollingPlotWidget</class>
+   <extends>QGraphicsView</extends>
+   <header>accwidgets.graph.widgets.plotwidget</header>
+  </customwidget>
+  <customwidget>
+   <class>CScrollingPlot</class>
+   <extends>ScrollingPlotWidget</extends>
+   <header>comrad.widgets.graphs</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

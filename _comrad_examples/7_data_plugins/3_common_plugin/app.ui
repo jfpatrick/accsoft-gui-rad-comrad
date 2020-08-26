@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>375</width>
+    <height>235</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Common data plugin</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout_4">
+   <item>
+    <widget class="CPropertyEdit" name="CPropertyEdit">
+     <property name="title" stdset="0">
+      <string>SUBSCRIBE</string>
+     </property>
+     <property name="decoration" stdset="0">
+      <enum>PropertyEdit::GroupBox</enum>
+     </property>
+     <property name="fields" stdset="0">
+      <string>[{&quot;field&quot;: &quot;counter&quot;, &quot;type&quot;: 1, &quot;rw&quot;: false}]</string>
+     </property>
+     <property name="channel" stdset="0">
+      <string notr="true">count://3</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="CPropertyEdit" name="CPropertyEdit_2">
+     <property name="buttonPosition" stdset="0">
+      <enum>PropertyEdit::Right</enum>
+     </property>
+     <property name="title" stdset="0">
+      <string>GET</string>
+     </property>
+     <property name="decoration" stdset="0">
+      <enum>PropertyEdit::GroupBox</enum>
+     </property>
+     <property name="fields" stdset="0">
+      <string>[{&quot;field&quot;: &quot;counter&quot;, &quot;type&quot;: 1, &quot;rw&quot;: false}]</string>
+     </property>
+     <property name="buttons" stdset="0">
+      <set>PropertyEdit::GetButton</set>
+     </property>
+     <property name="channel" stdset="0">
+      <string notr="true">count://3</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="CPropertyEdit" name="CPropertyEdit_3">
+     <property name="buttonPosition" stdset="0">
+      <enum>PropertyEdit::Right</enum>
+     </property>
+     <property name="title" stdset="0">
+      <string>SET</string>
+     </property>
+     <property name="decoration" stdset="0">
+      <enum>PropertyEdit::GroupBox</enum>
+     </property>
+     <property name="sendOnlyUpdatedValues" stdset="0">
+      <bool>false</bool>
+     </property>
+     <property name="fields" stdset="0">
+      <string>[{&quot;field&quot;: &quot;counter&quot;, &quot;type&quot;: 1, &quot;rw&quot;: true}]</string>
+     </property>
+     <property name="buttons" stdset="0">
+      <set>PropertyEdit::GetButton|PropertyEdit::SetButton</set>
+     </property>
+     <property name="channel" stdset="0">
+      <string notr="true">count://3</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PropertyEdit</class>
+   <extends>QWidget</extends>
+   <header>accwidgets.property_edit.propedit</header>
+  </customwidget>
+  <customwidget>
+   <class>CPropertyEdit</class>
+   <extends>PropertyEdit</extends>
+   <header>comrad.widgets.inputs</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
