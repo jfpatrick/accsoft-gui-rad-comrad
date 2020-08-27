@@ -119,7 +119,7 @@ autodoc_default_options = {
                        '__eq__,'
                        '__dir__,'
                        '__delattr__,'
-                       'DrwaChildren,'
+                       'DrawChildren,'
                        'DrawWindowBackground,'
                        'IgnoreMask,'
                        'PaintDeviceMetric,'
@@ -175,7 +175,6 @@ autodoc_default_options = {
                        'clear,'
                        'clearFocus,'
                        'clearMask,'
-                       'close,'
                        'closeEvent,'
                        'colorCount,'
                        'connectNotify,'
@@ -640,11 +639,15 @@ rst_epilog = """
 html_css_files.append('s5defs-roles.css')
 
 
-# Prevent autodoc from making "alias of" end quitting to document anything
+# Prevent autodoc from making "alias of" and quitting to document anything
 from comrad import (CDisplay, CPropertyEditField, CAbstractPropertyEditLayoutDelegate,
                     CAbstractPropertyEditWidgetDelegate)
+from comrad.data_plugins import CDataPlugin
 CDisplay.__module__ = 'comrad.widgets.containers'
 CDisplay.__name__ = 'CDisplay'
+
+CDataPlugin.__module__ = 'comrad.data_plugins'
+CDataPlugin.__name__ = 'CDataPlugin'
 
 CPropertyEditField.__module__ = 'comrad.widgets.inputs'
 CPropertyEditField.__name__ = 'CPropertyEditField'

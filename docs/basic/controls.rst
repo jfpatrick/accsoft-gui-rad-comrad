@@ -167,7 +167,7 @@ of that field, e.g.:
    my_widget.channel = 'myDevice/myProperty#myField'
 
 When multiple widgets connect to the same address, only a single connection is created but it is serving multiple
-widgets. To view known connections in the running application, open menu "View"->"Show connections...".
+widgets. To view known connections in the running application, open menu "View"→"Show connections...".
 
 .. figure:: ../img/conn_dialog.png
    :align: center
