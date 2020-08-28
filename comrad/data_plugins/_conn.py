@@ -14,7 +14,12 @@ logger = logging.getLogger('comrad.data_plugins')
 class CDataConnection(PyDMConnection, metaclass=GenericQObjectMeta):
 
     new_value_signal = Signal([CChannelData],  # this overload will be default (when emit is used without key)
-                              # Needed here to not fail .connect() in PyDMConnection super methods
+                              # Nevertheless, we don't need to make default connect/disconnect. For some reason it
+                              # works with just PyDMConnection connect logic, which only uses explicit overloads.
+                              # Potentially, it can be caused by the inner logic of PyQt/Qt, which relies on overload
+                              # indexes. Since we replace index 0 here, but in the superclass it does connect index 0.
+                              # Subsequent overloads are needed here to not fail .connect() in PyDMConnection super methods
+                              # (otherwise KeyError will be thrown)
                               [int],
                               [float],
                               [str],
@@ -81,7 +86,6 @@ class CDataConnection(PyDMConnection, metaclass=GenericQObjectMeta):
         """
         logger.debug(f'Adding a listener for {self}')
         super().add_listener(channel)
-        self._connect_extra_signal_types(channel)
 
         # Connect write slots even if we are in the read-only mode, since the mode can change dynamically,
         # and it will be hard to connect slots at that point. Rather forbid sending data over signals
@@ -110,14 +114,6 @@ class CDataConnection(PyDMConnection, metaclass=GenericQObjectMeta):
             destroying: :obj:`True` if connection is being terminated completely.
         """
         if not destroying:
-            if channel.value_slot is not None:
-                try:
-                    # Use the default overload of the signal (CChannelData) for connection
-                    self.new_value_signal.disconnect(channel.value_slot)
-                    logger.debug(f'{self}: Disconnected new_value_signal from {channel.value_slot}')
-                except (KeyError, TypeError):
-                    pass
-
             if channel.value_signal is not None:
                 try:
                     channel.value_signal.disconnect(self.write_value)
@@ -171,16 +167,6 @@ class CDataConnection(PyDMConnection, metaclass=GenericQObjectMeta):
 
     def __repr__(self) -> str:
         return f'<{type(self).__name__}[{self._repr_name}] at {hex(id(self))}>'
-
-    def _connect_extra_signal_types(self, channel: CChannel):
-        # Superclass does not implement signal for some types that we use
-        if channel.value_slot is not None:
-            try:
-                # Use the default overload of the signal (CChannelData) for connection
-                self.new_value_signal.connect(channel.value_slot, Qt.QueuedConnection)
-            except (KeyError, TypeError):
-                pass
-            logger.debug(f'{self}: Connected new_value_signal to {channel.value_slot}')
 
     def _connect_write_slots(self, signal: Signal):
         set_slot_connected: bool = False
