@@ -11,6 +11,7 @@ from papc.system import System
 from papc.deviceproperty import Acquisition
 from papc.fieldtype import FieldType
 from papc.simulator.trig import RepeatedTimer
+from enum import IntEnum, IntFlag
 
 
 class DemoDevice(Device):
@@ -21,38 +22,42 @@ class DemoDevice(Device):
     num_bits = 5
     max_val = 2 ** num_bits
 
+    MyEnum = IntEnum('MyEnum', names=[f'OPTION{idx}' for idx in range(2 ** num_bits)], start=0)
+    MyBitMask = IntFlag('MyBitMask', names=[f'BIT{idx}' for idx in range(num_bits)])
+
     def __init__(self):
         int_val: int = 0
         super().__init__(name='DemoDevice', device_properties=(
             Acquisition(name='Acquisition', fields=(
                 FieldType(name='IntVal', datatype='int', initial_value=int_val),
-                FieldType(name='BitEnumVal', datatype='list', initial_value=[]),
-                FieldType(name='BitEnumValNum', datatype='int', initial_value=0),
+                FieldType(name='BitEnumVal', datatype=DemoDevice.MyBitMask, initial_value=0),
+                FieldType(name='BitEnumValNum', datatype=DemoDevice.MyEnum),
             )),
         ))
         self._int_val = int_val
-        self._bit_enum_val: int = 0
+        self._bit_enum_val = DemoDevice.MyEnum.OPTION0
         self._timer = RepeatedTimer(1 / self.frequency, self.time_tick)
 
     def time_tick(self):
         """Callback on timer fire."""
         self._int_val += 1
 
-        self._bit_enum_val += 1
-        if self._bit_enum_val >= self.max_val:
-            self._bit_enum_val = 0
+        new_bit_enum_val = self._bit_enum_val.value + 1
+        if new_bit_enum_val >= self.max_val:
+            new_bit_enum_val = 0
+        self._bit_enum_val = DemoDevice.MyEnum(new_bit_enum_val)
 
-        new_list = []
+        new_bit_mask = 0
         for idx in range(self.num_bits):
-            bit_val = 1 << idx
-            is_set = bool(self._bit_enum_val & bit_val)
+            enum_code = 1 << idx
+            is_set = bool(self._bit_enum_val.value & enum_code)
             if is_set:
-                new_list.append((bit_val, f'Bit {idx}'))
+                new_bit_mask |= enum_code
 
         self.set_state(new_values={
             'Acquisition#IntVal': self._int_val,
             'Acquisition#BitEnumValNum': self._bit_enum_val,
-            'Acquisition#BitEnumVal': new_list,
+            'Acquisition#BitEnumVal': new_bit_mask,
         }, timing_selector='')
 
 
