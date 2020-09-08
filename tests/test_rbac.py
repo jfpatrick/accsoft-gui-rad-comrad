@@ -108,7 +108,7 @@ def test_token_dialog_displays_data(qtbot: QtBot, make_token, valid, valid_str, 
     assert dialog.form.itemAt(8, QFormLayout.FieldRole).widget().text() == '0xd0gf00d'
 
 
-@pytest.mark.parametrize(f'valid,expected_color', [
+@pytest.mark.parametrize('valid,expected_color', [
     (True, '#66ff66'),
     (False, '#ff5050'),
 ])
@@ -819,7 +819,7 @@ def test_rbac_key_not_found(AuthenticationClient):
         rbac.login_by_location()
 
 
-@pytest.mark.parametrize(f'name,critical', [
+@pytest.mark.parametrize('name,critical', [
     ('AAA', False),
     ('XXX', False),
     ('MCS-', True),

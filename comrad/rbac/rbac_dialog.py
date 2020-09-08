@@ -178,5 +178,5 @@ class RbaExplicitLoginDialog(QDialog):
 
     def _on_rbac_status_changed(self, new_status: int):
         if new_status != CRBACLoginStatus.LOGGED_OUT:
-            logger.debug(f'RBAC has connected, closing the login dialog')
+            logger.debug('RBAC has connected, closing the login dialog')
             self.accept()
