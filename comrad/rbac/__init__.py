@@ -4,5 +4,4 @@ control system.
 """
 
 # flake8: noqa: E401,E403
-from .token import CRBACToken, CRBACRole
-from .rbac import CRBACLoginStatus, CRBACStartupLoginPolicy, CRBACState
+from ._mgr import CRbaLoginStatus, CRbaStartupLoginPolicy, CRbaState, CRbaToken, CRbaRole

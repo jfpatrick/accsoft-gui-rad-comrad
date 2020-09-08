@@ -11,7 +11,7 @@ from pydm.application import PyDMApplication
 from pydm.utilities import path_info, which
 from pydm.data_plugins import is_read_only
 from comrad.icons import icon
-from comrad.rbac import CRBACState
+from comrad.rbac import CRbaState
 from comrad.app.plugins import CToolbarID
 from .plugins._config import WindowPluginConfigTrie
 
@@ -106,7 +106,7 @@ class CApplication(PyDMApplication):
         """
         args = [_APP_NAME]
         args.extend(command_line_args or [])
-        self._rbac = CRBACState(rbac_env=cmw_env)  # We must keep it before super because dependant plugins will be initialized in super()
+        self._rbac = CRbaState()  # We must keep it before super because dependant plugins will be initialized in super()
         self._ccda_endpoint = ccda_endpoint
         self._cmw_env = cmw_env
         self._use_inca = use_inca
@@ -131,6 +131,10 @@ class CApplication(PyDMApplication):
         self.setWindowIcon(icon('app'))
         self.main_window.addToolBar(toolbar_area_from_str(toolbar_position), self.main_window.ui.navbar)
         self.main_window.ui.navbar.setToolButtonStyle(toolbar_style_from_str(toolbar_style))
+
+        # Attempting to login at startup after the main window has been initialized, so that we can display
+        # errors in the log console
+        self._rbac.startup_login(rbac_token)
 
         # Useful for sub-processes
         self._stylesheet_path = stylesheet_path
@@ -258,6 +262,8 @@ class CApplication(PyDMApplication):
         args.extend(filepath_args)
         if command_line_args is not None:
             args.extend(command_line_args)
+
+        logger.debug(f'Launching subprocess {args} with environment: {env}')
         subprocess.Popen(args, env=env, shell=False)
 
     def on_control_error(self, message: str, display_popup: bool):
@@ -295,7 +301,7 @@ class CApplication(PyDMApplication):
         return self._jvm_flags
 
     @property
-    def rbac(self) -> CRBACState:
+    def rbac(self) -> CRbaState:
         return self._rbac
 
     @property

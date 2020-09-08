@@ -1,8 +1,12 @@
 import pytest
+import logging
+from logging import LogRecord
+from _pytest.logging import LogCaptureFixture
+from pytestqt.qtbot import QtBot
 from unittest import mock
-from typing import cast
+from typing import cast, List
+from pyrbac import Token
 from comrad import CApplication
-from comrad.rbac import CRBACLoginStatus, CRBACStartupLoginPolicy
 from comrad.data.pyjapc_patch import CPyJapc
 
 
@@ -34,6 +38,7 @@ def mock_pyjapc():
     ParameterException = cern.japc.core.ParameterException
     ValueConversionException = cern.japc.value.ValueConversionException
     AuthenticationException = cern.rbac.client.authentication.AuthenticationException
+    TokenFormatException = cern.rbac.common.TokenFormatException
     # Now the same things with the standard Java exceptions, because they are used in tests as well
     IllegalStateException = java.lang.IllegalStateException
     RuntimeException = java.lang.RuntimeException
@@ -60,9 +65,16 @@ def mock_pyjapc():
             m = mock.MagicMock()
             m.authentication = mock_all_but_known_exceptions(f'{pkg_name}.authentication')
             return m
+        if pkg_name == 'cern.rbac.common.TokenFormatException':
+            return TokenFormatException
+        if pkg_name == 'cern.rbac.common':
+            m = mock.MagicMock()
+            m.TokenFormatException = mock_all_but_known_exceptions(f'{pkg_name}.TokenFormatException')
+            return mock
         if pkg_name == 'cern.rbac':
             m = mock.MagicMock()
             m.client = mock_all_but_known_exceptions(f'{pkg_name}.client')
+            m.common = mock_all_but_known_exceptions(f'{pkg_name}.common')
             return m
         if pkg_name == 'cern.japc.core':
             m = mock.MagicMock()
@@ -119,66 +131,14 @@ def test_japc_singleton():
     assert obj1 is obj2
 
 
-@pytest.mark.parametrize('succeeds,expected_status', [
-    (True, CRBACLoginStatus.LOGGED_IN_BY_LOCATION),
-    (False, CRBACLoginStatus.LOGGED_OUT),
-])
-@mock.patch('comrad.data.pyjapc_patch.CPyJapc.rbacLogin')
-@mock.patch('pyjapc.PyJapc.rbacGetToken')
-def test_rbac_login_by_location(rbacGetToken, rbacLogin, succeeds: bool, expected_status: CRBACLoginStatus):
-
-    japc = CPyJapc()
-
-    def set_logged_in(*_, **__):
-        japc._logged_in = succeeds
-
-    rbacLogin.side_effect = set_logged_in
-
-    rbac = cast(CApplication, CApplication.instance()).rbac
-    assert japc._logged_in is False
-    assert rbac.status == CRBACLoginStatus.LOGGED_OUT
-    assert rbac.user is None
-
-    rbacGetToken.return_value.getUser.return_value.getName.return_value = 'TEST_USER'
-
-    rbacGetToken.reset_mock()
-    japc.login_by_location()
-    rbacLogin.assert_called_once()
-    if succeeds:
-        rbacGetToken.assert_called_once()
-        assert rbac.user == 'TEST_USER'
-    else:
-        rbacGetToken.assert_not_called()
-        assert rbac.user is None
-    assert rbac.status == expected_status
-
-
 @mock.patch('pyjapc.PyJapc.rbacLogout')
 @mock.patch('pyjapc.PyJapc.rbacGetToken')
 def test_rbac_logout_succeeds(rbacGetToken, rbacLogout):
     japc = CPyJapc()
     japc._logged_in = True
-    rbac = cast(CApplication, CApplication.instance()).rbac
-    rbac.user = 'TEST_USER'
-    rbac._status = CRBACLoginStatus.LOGGED_IN_BY_LOCATION
-
     japc.rbacLogout()
     rbacLogout.assert_called_once()
     rbacGetToken.assert_not_called()
-    assert rbac.status == CRBACLoginStatus.LOGGED_OUT
-
-
-@mock.patch('pyjapc.PyJapc.rbacLogin')
-def test_rbac_login_only_once(rbacLogin):
-    japc = CPyJapc()
-    assert japc.logged_in is False
-
-    japc.login_by_location()
-    japc.login_by_location()
-    japc.login_by_location()
-    japc.login_by_location()
-    assert japc.logged_in is True
-    rbacLogin.assert_called_once()
 
 
 @mock.patch('pyjapc.PyJapc.rbacLogout')
@@ -189,33 +149,14 @@ def test_rbac_logout_only_once(rbacLogout):
     japc.rbacLogout()
     japc.rbacLogout()
     japc.rbacLogout()
-    assert japc.logged_in is False
+    assert japc._logged_in is False
     rbacLogout.assert_called_once()
 
 
-# TODO: Test case with login by credentials when appropriate dialog is implemented
-@pytest.mark.parametrize('login_policy,args', [
-    (CRBACStartupLoginPolicy.LOGIN_BY_LOCATION, {}),
-    (CRBACStartupLoginPolicy.NO_LOGIN, None),
-])
-def test_rbac_login_on_startup(login_policy, args):
-    rbac = cast(CApplication, CApplication.instance()).rbac
-    rbac.startup_login_policy = login_policy
-    with mock.patch('comrad.data.pyjapc_patch.CPyJapc.rbacLogin') as rbacLogin:
-        japc = CPyJapc()
-        if login_policy == CRBACStartupLoginPolicy.NO_LOGIN:
-            rbacLogin.assert_not_called()
-        else:
-            rbacLogin.assert_called_once_with(**args, on_exception=japc._login_err)
-
-
-def test_rbac_login_notifies_status(qtbot):
+def test_rbac_login_does_not_notify_status(qtbot):
     japc = CPyJapc()
-    assert japc.logged_in is False
-    with qtbot.wait_signal(japc.japc_status_changed) as blocker:
+    with qtbot.assert_not_emitted(japc.japc_status_changed):
         japc.rbacLogin()
-    assert blocker.args == [True]
-    assert japc.logged_in is True
 
 
 def test_rbac_logout_notifies_status(qtbot):
@@ -224,63 +165,108 @@ def test_rbac_logout_notifies_status(qtbot):
     with qtbot.wait_signal(japc.japc_status_changed) as blocker:
         japc.rbacLogout()
     assert blocker.args == [False]
-    assert japc.logged_in is False
+    assert japc._logged_in is False
 
 
-@mock.patch('pyjapc.PyJapc.rbacLogin')
-def test_rbac_login_fails_on_auth_exception(rbacLogin):
+@mock.patch('comrad.data.pyjapc_patch.cern')
+@mock.patch('pyjapc.PyJapc.rbacGetToken')
+def test_rbac_inject_token_succeeds(rbacGetToken, cern, qtbot):
+    japc = CPyJapc()
+    assert japc._logged_in is False
+    token = Token.create_empty_token()
+    java_token = mock.MagicMock()
+    cern.rbac.util.holder.ClientTierTokenHolder.setRbaToken.assert_not_called()
+    cern.rbac.common.RbaToken.parseAndValidate.assert_not_called()
+    cern.rbac.common.RbaToken.parseAndValidate.return_value = java_token
+    rbacGetToken.assert_not_called()
+    with qtbot.wait_signal(japc.japc_status_changed) as blocker:
+        japc._inject_token(token)
+    assert blocker.args == [True]
+    cern.rbac.common.RbaToken.parseAndValidate.assert_called_once()
+    cern.rbac.util.holder.ClientTierTokenHolder.setRbaToken.assert_called_once_with(java_token)
+    rbacGetToken.assert_called_once()
+    assert japc._logged_in is True
+
+
+def test_rbac_inject_token_notifies_status(qtbot):
+    japc = CPyJapc()
+    assert japc._logged_in is False
+    token = Token.create_empty_token()
+    with qtbot.wait_signal(japc.japc_status_changed) as blocker:
+        japc._inject_token(token)
+    assert blocker.args == [True]
+    assert japc._logged_in is True
+
+
+@pytest.mark.parametrize('error,expected_error', [
+    (RuntimeError('Test error'), 'Java refused generated token: Test error'),
+    (RuntimeError, 'Java refused generated token: '),
+    (ValueError, 'Java refused generated token: '),
+    (ValueError('Test value error'), 'Java refused generated token: Test value error'),
+])
+@mock.patch('comrad.data.pyjapc_patch.cern')
+@mock.patch('pyjapc.PyJapc.rbacGetToken')
+def test_rbac_inject_token_python_exception_caught(rbacGetToken, cern, qtbot, caplog: LogCaptureFixture, error, expected_error):
+    japc = CPyJapc()
+    assert japc._logged_in is False
+
+    def get_records():
+        return [r.getMessage() for r in cast(List[LogRecord], caplog.records) if
+                r.levelno == logging.ERROR and r.name == 'comrad.japc']
+
+    token = Token.create_empty_token()
+    cern.rbac.common.RbaToken.parseAndValidate.side_effect = error
+    cern.rbac.util.holder.ClientTierTokenHolder.setRbaToken.assert_not_called()
+    rbacGetToken.assert_not_called()
+    assert get_records() == []
+    with qtbot.assert_not_emitted(japc.japc_status_changed):
+        japc._inject_token(token)
+    assert get_records() == [expected_error]
+    cern.rbac.util.holder.ClientTierTokenHolder.setRbaToken.assert_not_called()
+    rbacGetToken.assert_not_called()
+    assert japc._logged_in is False
+
+
+@mock.patch('comrad.data.pyjapc_patch.cern')
+@mock.patch('pyjapc.PyJapc.rbacGetToken')
+def test_rbac_inject_token_java_exception_caught(rbacGetToken, cern, qtbot, caplog: LogCaptureFixture):
+    japc = CPyJapc()
+    assert japc._logged_in is False
 
     def raise_error(*_, **__):
         # We must add a custom method, rather than assigning type directly to side_effect,
         # because Java exception does not have a default Python initializer, causing error
         # TypeError: No matching overloads found for constructor
-        # cern.rbac.client.authentication.AuthenticationException()
+        # cern.rbac.common.TokenFormatException()
         import jpype
-        raise jpype.JPackage('cern.rbac.client.authentication.AuthenticationException')('Test exception')
+        raise jpype.JPackage('cern.rbac.common.TokenFormatException')('Test exception')
 
-    rbacLogin.side_effect = raise_error
-    japc = CPyJapc()
-    assert japc.logged_in is False
+    def get_records():
+        return [r.getMessage() for r in cast(List[LogRecord], caplog.records) if
+                r.levelno == logging.ERROR and r.name == 'comrad.japc']
 
-    callback = mock.Mock()
-
-    japc.rbacLogin(on_exception=callback)
-    callback.assert_called_once_with('Test exception', True)
-
-
-@pytest.mark.parametrize('error_type', [ValueError, TypeError, RuntimeError, Exception])
-@mock.patch('pyjapc.PyJapc.rbacLogin')
-def test_rbac_login_does_not_catch_python_exception(rbacLogin, error_type):
-    rbacLogin.side_effect = error_type
-    japc = CPyJapc()
-    assert japc.logged_in is False
-
-    callback = mock.Mock()
-
-    with pytest.raises(error_type):
-        japc.rbacLogin(on_exception=callback)
-    callback.assert_not_called()
+    token = Token.create_empty_token()
+    cern.rbac.common.RbaToken.parseAndValidate.side_effect = raise_error
+    cern.rbac.util.holder.ClientTierTokenHolder.setRbaToken.assert_not_called()
+    rbacGetToken.assert_not_called()
+    assert get_records() == []
+    with qtbot.assert_not_emitted(japc.japc_status_changed):
+        japc._inject_token(token)
+    assert get_records() == ['Java refused generated token: cern.rbac.common.TokenFormatException: Test exception']
+    cern.rbac.util.holder.ClientTierTokenHolder.setRbaToken.assert_not_called()
+    rbacGetToken.assert_not_called()
+    assert japc._logged_in is False
 
 
-@pytest.mark.parametrize('error_type', [
-    'cern.japc.value.ValueConversionException',
-    'cern.japc.core.ParameterException',
-])
-@pytest.mark.parametrize('exc_getter', ['get_param_exc_type', 'get_val_exc_type'])
-@mock.patch('pyjapc.PyJapc.rbacLogin')
-def test_rbac_login_does_not_catch_other_java_exceptions(rbacLogin, exc_getter, error_type):
-    import jpype
-    exc_type = jpype.JPackage(error_type)
-
-    rbacLogin.side_effect = exc_type
-    japc = CPyJapc()
-    assert japc.logged_in is False
-
-    callback = mock.Mock()
-
-    with pytest.raises(exc_type):
-        japc.rbacLogin(on_exception=callback)
-    callback.assert_not_called()
+@mock.patch('comrad.data.pyjapc_patch.CPyJapc._inject_token')
+def test_rbac_syncs_rbac_token(inject_token, qtbot: QtBot):
+    _ = CPyJapc()
+    app = cast(CApplication, CApplication.instance())
+    new_token = Token.create_empty_token()
+    inject_token.assert_not_called()
+    with qtbot.wait_signal(app.rbac._model.login_succeeded):
+        app.rbac._model.login_succeeded.emit(new_token)
+    inject_token.assert_called_once_with(new_token)
 
 
 @mock.patch('comrad.data.pyjapc_patch.PyJapcWrapper.getParam', return_value=3)

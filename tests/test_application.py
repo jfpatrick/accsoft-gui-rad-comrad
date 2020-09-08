@@ -56,19 +56,24 @@ def test_toolbar_area_from_str_fails(input, expected_error):
         toolbar_area_from_str(input)
 
 
-@pytest.mark.parametrize('serialized_token,expected_environ', [
-    (None, None),
-    ('abcdef', {'VAR1': 'SMTH', 'RBAC_TOKEN_SERIALIZED': 'abcdef'}),
+@pytest.mark.parametrize('serialized_token,should_find', [
+    (None, False),
+    ('abcdef', True),
 ])
-@mock.patch('comrad.app.application.os')
 @mock.patch('comrad.app.application.subprocess.Popen')
-@mock.patch('comrad.rbac.rbac.CRBACState.serialized_token', new_callable=mock.PropertyMock)
-def test_serialized_token_is_passed_to_subprocess(token_getter, Popen, os_mock, serialized_token, expected_environ, qtbot):
+def test_serialized_token_is_passed_to_subprocess(Popen, serialized_token, qtbot, should_find):
     _ = qtbot
-    token_getter.return_value = serialized_token
-    os_mock.environ = {'VAR1': 'SMTH'}
     app = cast(CApplication, QApplication.instance())
-    print(app.rbac)
-    Popen.assert_not_called()
-    CApplication.new_pydm_process(app, ui_file='test_file.ui')
-    Popen.assert_called_once_with(mock.ANY, env=expected_environ, shell=False)
+    with mock.patch.object(app, 'rbac') as rbac:
+        rbac.serialized_token = serialized_token
+        Popen.assert_not_called()
+        CApplication.new_pydm_process(app, ui_file='test_file.ui')
+        Popen.assert_called_once()
+        args = Popen.call_args[0][0]
+        if should_find:
+            assert '--rbac-token' in args
+            idx = args.index('--rbac-token')
+            assert len(args) > idx + 1
+            assert args[idx + 1] == serialized_token
+        else:
+            assert '--rbac-token' not in args

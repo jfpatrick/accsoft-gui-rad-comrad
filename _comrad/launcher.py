@@ -365,6 +365,7 @@ def _run_comrad(args: argparse.Namespace) -> bool:
                        ccda_endpoint=ccda_endpoint,
                        cmw_env=args.cmw_env,
                        default_selector=args.selector or None,
+                       rbac_token=args.rbac_token,
                        java_env=java_env,
                        perf_mon=args.perf_mon,
                        hide_nav_bar=args.hide_nav_bar,
