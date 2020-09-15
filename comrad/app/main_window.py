@@ -476,7 +476,7 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
         all_plugin_paths = str(Path(__file__).parent / 'plugins' / shipped_plugin_path)
 
         if cmd_line_paths:
-            all_plugin_paths = f'{cmd_line_paths}:{all_plugin_paths}'
+            all_plugin_paths = f'{cmd_line_paths}{os.pathsep}{all_plugin_paths}'
 
         extra_plugin_paths: str = ''
         try:
@@ -484,9 +484,9 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
         except KeyError:
             pass
         if extra_plugin_paths:
-            all_plugin_paths = f'{extra_plugin_paths}:{all_plugin_paths}'
+            all_plugin_paths = f'{extra_plugin_paths}{os.pathsep}{all_plugin_paths}'
 
-        locations = [Path(p) for p in all_plugin_paths.split(':')]
+        locations = [Path(p) for p in all_plugin_paths.split(os.pathsep)]
         return load_plugins_from_path(locations=locations,
                                       token='_plugin.py',
                                       base_type=base_type)
