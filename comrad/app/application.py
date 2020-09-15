@@ -38,9 +38,9 @@ class CApplication(PyDMApplication):
                  read_only: bool = False,
                  macros: Optional[Dict[str, str]] = None,
                  use_main_window: bool = True,
-                 nav_bar_plugin_path: Optional[str] = None,
-                 status_bar_plugin_path: Optional[str] = None,
-                 menu_bar_plugin_path: Optional[str] = None,
+                 nav_bar_plugin_path: Optional[List[str]] = None,
+                 status_bar_plugin_path: Optional[List[str]] = None,
+                 menu_bar_plugin_path: Optional[List[str]] = None,
                  stylesheet_path: Optional[str] = None,
                  toolbar_order: Optional[Iterable[Union[str, CToolbarID]]] = None,
                  plugin_whitelist: Optional[Iterable[str]] = None,
@@ -81,11 +81,11 @@ class CApplication(PyDMApplication):
             macros: A dictionary of macro variables to be forwarded to the display class being loaded.
             use_main_window: If "ui_file" is not given, this parameter controls whether or not to
                 create a :class:`~pydm.main_window.PyDMMainWindow` in the initialization (Default is ``True``).
-            nav_bar_plugin_path: Path to the directory with navigation bar (toolbar) plugins. This path has
+            nav_bar_plugin_path: Path(s) to the directory with navigation bar (toolbar) plugins. This path
                 can be augmented by ``COMRAD_TOOLBAR_PLUGIN_PATH`` environment variable.
-            status_bar_plugin_path: Path to the directory with status bar plugins. This path has
+            status_bar_plugin_path: Path(s) to the directory with status bar plugins. This path
                 can be augmented by ``COMRAD_STATUSBAR_PLUGIN_PATH`` environment variable.
-            menu_bar_plugin_path: Path to the directory with main menu plugins. This path has
+            menu_bar_plugin_path: Path(s) to the directory with main menu plugins. This path
                 can be augmented by ``COMRAD_MENUBAR_PLUGIN_PATH`` environment variable.
             stylesheet_path: Path to the *.qss file styling application and widgets.
             toolbar_order: List of IDs of toolbar items in order in which they must appear left-to-right.
@@ -208,11 +208,11 @@ class CApplication(PyDMApplication):
         if self.cmw_env:
             args.extend(['--cmw-env', self.cmw_env])
         if self._nav_bar_plugin_path:
-            args.extend(['--nav-plugin-path', self._nav_bar_plugin_path])
+            args.extend(['--nav-plugin-path', *self._nav_bar_plugin_path])
         if self._status_bar_plugin_path:
-            args.extend(['--status-plugin-path', self._status_bar_plugin_path])
+            args.extend(['--status-plugin-path', *self._status_bar_plugin_path])
         if self._menu_bar_plugin_path:
-            args.extend(['--menu-plugin-path', self._menu_bar_plugin_path])
+            args.extend(['--menu-plugin-path', *self._menu_bar_plugin_path])
         if self._toolbar_order:
 
             def _toolbar_to_str(val: Union[str, CToolbarID]):

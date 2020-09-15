@@ -229,16 +229,16 @@ def _run_subcommand(parser: argparse.ArgumentParser):
                               nargs=argparse.ONE_OR_MORE)
     plugin_group.add_argument('--status-plugin-path',
                               metavar='PATH',
-                              help='Specify the full path to a directory containing status bar ComRAD plugins.',
-                              default=None)
+                              help='Specify the full path(s) to location(s) containing status bar ComRAD plugins.',
+                              nargs=argparse.ONE_OR_MORE)
     plugin_group.add_argument('--menu-plugin-path',
                               metavar='PATH',
-                              help='Specify the full path to a directory containing menu bar ComRAD plugins.',
-                              default=None)
+                              help='Specify the full path(s) to location(s) containing menu bar ComRAD plugins.',
+                              nargs=argparse.ONE_OR_MORE)
     plugin_group.add_argument('--nav-plugin-path',
                               metavar='PATH',
-                              help='Specify the full path to a directory containing toolbar ComRAD plugins.',
-                              default=None)
+                              help='Specify the full path(s) to location(s) containing toolbar ComRAD plugins.',
+                              nargs=argparse.ONE_OR_MORE)
     plugin_group.add_argument('--nav-bar-order',
                               metavar='ID',
                               help='Specify the order of items to appear in the navigation bar. Plugins must be '
