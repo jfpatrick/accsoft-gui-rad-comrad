@@ -181,8 +181,7 @@ Using ComRAD Designer
 
 To connect a widget in ComRAD Designer, locate the property with the same name in the "Property Editor". There,
 you can either enter a string value into the field, or click "..." button to open a Device Property dialog,
-that allows you to discover devices and their structure. In the same dialog, you can select the protocol and
-optionally assign a cycle selector.
+that allows you to discover devices and their structure. In the same dialog, you can select the protocol.
 
 .. figure:: ../img/device_selector_from_prop.png
    :align: center
@@ -234,7 +233,7 @@ Data Plugins to handle various communication types, such as HTTP, RDB, etc. This
 architecture of PyDM, the underlying framework of ComRAD.
 `More information <https://slaclab.github.io/pydm-tutorial/intro/data_arch.html>`__.
 
-.. figure:: https://slaclab.github.io/pydm-tutorial/_images/architecture.png
+.. figure:: ../img/data_arch.png
    :align: center
    :alt: Data flux architecture
 
