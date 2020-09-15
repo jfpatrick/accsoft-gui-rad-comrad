@@ -11,6 +11,6 @@ launch_arguments = [
     '--nav-plugin-path', '~example',
     '--status-plugin-path', '~example',
     '--menu-plugin-path', '~example',
-    '--disable-plugins', 'com.example.new-submenu,com.example.existing-menu,com.example.existing-submenu,com.example.status-temp',
+    '--disable-plugins', 'com.example.new-submenu', 'com.example.existing-menu', 'com.example.existing-submenu', 'com.example.status-temp',
     '--enable-plugins', 'com.example.disabled',
 ]

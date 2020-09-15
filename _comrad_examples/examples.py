@@ -197,25 +197,36 @@ def _disable_implicit_plugin(input_args: List[str], plugin_id: str):
     It will not touch the plugin if it is involved in the example (mentioned in the launch arguments)
     in any way.
     """
-    disable_plugins_idx: Optional[int] = None
+    disable_plugins_first_idx: Optional[int] = None
+    disable_plugins_last_idx: Optional[int] = None
     disable_plugins_list: Optional[List[str]] = None
     for idx, arg in enumerate(input_args):
         if arg in ['--enable-plugins', '--disable-plugins', '--nav-bar-order']:
-            try:
-                plugins = input_args[idx + 1]
-            except IndexError:
+            plugin_ids = []
+            plugin_index = idx + 1
+            while True:
+                try:
+                    next_plugin = input_args[plugin_index]
+                except IndexError:
+                    break
+                if next_plugin.startswith('--'):
+                    break
+                plugin_index += 1
+                plugin_ids.append(next_plugin)
+            if not plugin_ids:
                 continue
-            plugin_ids = [x.strip() for x in plugins.split(',')]
             if plugin_id in plugin_ids:
                 return  # Do not modify args, given plugin is explicitly participating in the example
             if arg == '--disable-plugins':
-                disable_plugins_idx = idx + 1
+                disable_plugins_first_idx = idx + 1
+                disable_plugins_last_idx = plugin_index
                 disable_plugins_list = plugin_ids
-    if disable_plugins_idx is not None and disable_plugins_list is not None:
+    if (disable_plugins_first_idx is not None and disable_plugins_last_idx is not None
+            and disable_plugins_list is not None):
         disable_plugins_list.append(plugin_id)
-        input_args[disable_plugins_idx] = ','.join(disable_plugins_list)
+        input_args[disable_plugins_first_idx:disable_plugins_last_idx] = disable_plugins_list
     else:
-        input_args.extend(['--disable-plugins', plugin_id])
+        input_args.extend(['--disable-plugins', plugin_id, '--'])
 
 
 def _module_id(basedir: Path) -> str:

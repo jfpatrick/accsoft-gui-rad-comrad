@@ -6,7 +6,7 @@ import argparse
 import argcomplete
 import os
 import sys
-from typing import Optional, Iterable, cast, Tuple, Dict, List
+from typing import Optional, Tuple, Dict, List, Iterable
 from .comrad_info import COMRAD_DESCRIPTION, COMRAD_VERSION, get_versions_info
 from .log_config import install_logger_level
 from .common import get_japc_support_envs, comrad_asset
@@ -206,27 +206,27 @@ def _run_subcommand(parser: argparse.ArgumentParser):
 
     plugin_group = parser.add_argument_group('Extensions')
     plugin_group.add_argument('--enable-plugins',
-                              metavar="'ID,...'",
+                              metavar='ID',
                               help='Specify plugins that are disabled by default but should be enabled in '
                                    'this instance. Plugins can be built-in or custom ones that are '
                                    'visible to the application (make sure to specify --nav-plugin-path or '
-                                   'COMRAD_TOOLBAR_PLUGIN_PATH for any custom plugins). The order must be a comma-'
-                                   'separated string with plugin IDs. For built-in items use following identifiers:'
+                                   'COMRAD_TOOLBAR_PLUGIN_PATH for any custom plugins). For built-in items '
+                                   'use following identifiers:'
                                    ' - RBAC dialog button: comrad.rbac'
                                    ' '
-                                   "Example usage: --enable-plugins 'comrad.rbac'.",
-                              default=None)
+                                   'Example usage: --enable-plugins comrad.rbac org.example.my-plugin',
+                              nargs=argparse.ONE_OR_MORE)
     plugin_group.add_argument('--disable-plugins',
-                              metavar="'ID,...'",
+                              metavar='ID',
                               help='Specify plugins that are enabled by default but should be disabled in '
                                    'this instance. Plugins can be built-in or custom ones that are '
                                    'visible to the application (make sure to specify --nav-plugin-path or '
-                                   'COMRAD_TOOLBAR_PLUGIN_PATH for any custom plugins). The order must be a comma-'
-                                   'separated string with plugin IDs. For built-in items use following identifiers:'
+                                   'COMRAD_TOOLBAR_PLUGIN_PATH for any custom plugins). For built-in items '
+                                   'use following identifiers:'
                                    ' - RBAC dialog button: comrad.rbac'
                                    ' '
-                                   "Example usage: --disable-plugins 'comrad.rbac'.",
-                              default=None)
+                                   'Example usage: --disable-plugins comrad.rbac org.example.my-plugin',
+                              nargs=argparse.ONE_OR_MORE)
     plugin_group.add_argument('--status-plugin-path',
                               metavar='PATH',
                               help='Specify the full path to a directory containing status bar ComRAD plugins.',
@@ -240,11 +240,11 @@ def _run_subcommand(parser: argparse.ArgumentParser):
                               help='Specify the full path to a directory containing toolbar ComRAD plugins.',
                               default=None)
     plugin_group.add_argument('--nav-bar-order',
-                              metavar="'ID,...'",
+                              metavar='ID',
                               help='Specify the order of items to appear in the navigation bar. Plugins must be '
                                    'visible to the application (make sure to specify --nav-plugin-path or '
-                                   'COMRAD_TOOLBAR_PLUGIN_PATH for any custom plugins). The order must be a comma-'
-                                   'separated string with plugin IDs. For native items, use following identifiers:'
+                                   'COMRAD_TOOLBAR_PLUGIN_PATH for any custom plugins). For native items, use '
+                                   'following identifiers:'
                                    ' - "Back" button: comrad.back'
                                    ' - "Forward" button: comrad.fwd'
                                    ' - "Home" button: comrad.home'
@@ -252,8 +252,8 @@ def _run_subcommand(parser: argparse.ArgumentParser):
                                    ' - Toolbar empty space: comrad.spacer'
                                    ' - RBAC dialog button: comrad.rbac'
                                    ' '
-                                   "Example usage: --nav-bar-order 'comrad.home,comrad.sep,comrad.spacer,comrad.rbac'.",
-                              default=None)
+                                   'Example usage: --nav-bar-order comrad.home comrad.sep comrad.spacer comrad.rbac',
+                              nargs=argparse.ONE_OR_MORE)
 
     debug_group = parser.add_argument_group('Debugging')
     _install_debug_arguments(debug_group)
@@ -326,18 +326,6 @@ def _run_comrad(args: argparse.Namespace) -> bool:
         logger.exception(str(e))
         return False
 
-    order: Optional[Iterable[str]] = None
-    if args.nav_bar_order:
-        order = cast(str, args.nav_bar_order).split(',')
-
-    whitelist: Optional[Iterable[str]] = None
-    if args.enable_plugins:
-        whitelist = cast(str, args.enable_plugins).split(',')
-
-    blacklist: Optional[Iterable[str]] = None
-    if args.disable_plugins:
-        blacklist = cast(str, args.disable_plugins).split(',')
-
     # This has to sit here, because other os.environ settings MUST be before comrad or pydm import
     os.environ['PYCCDA_HOST'] = ccda_endpoint
 
@@ -361,9 +349,9 @@ def _run_comrad(args: argparse.Namespace) -> bool:
                        nav_bar_plugin_path=args.nav_plugin_path,
                        status_bar_plugin_path=args.status_plugin_path,
                        menu_bar_plugin_path=args.menu_plugin_path,
-                       toolbar_order=order,
-                       plugin_blacklist=blacklist,
-                       plugin_whitelist=whitelist,
+                       toolbar_order=args.nav_bar_order,
+                       plugin_blacklist=args.disable_plugins,
+                       plugin_whitelist=args.enable_plugins,
                        stylesheet_path=stylesheet)
     sys.exit(app.exec_())
     return True
