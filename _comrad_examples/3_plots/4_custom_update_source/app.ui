@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Custom update source with CScrollingPlot</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="CScrollingPlot" name="plot">
+     <property name="layerIDs" stdset="0">
+      <stringlist/>
+     </property>
+     <property name="axisLabels" stdset="0">
+      <string>{&quot;top&quot;: &quot;&quot;, &quot;bottom&quot;: &quot;&quot;, &quot;right&quot;: &quot;&quot;, &quot;left&quot;: &quot;&quot;}</string>
+     </property>
+     <property name="axisRanges" stdset="0">
+      <string>{&quot;x&quot;: &quot;auto&quot;, &quot;y&quot;: [0.0, 1.5]}</string>
+     </property>
+     <property name="leftTimeBoundary" stdset="0">
+      <double>15.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ScrollingPlotWidget</class>
+   <extends>QGraphicsView</extends>
+   <header>accwidgets.graph.widgets.plotwidget</header>
+  </customwidget>
+  <customwidget>
+   <class>CScrollingPlot</class>
+   <extends>ScrollingPlotWidget</extends>
+   <header>comrad.widgets.graphs</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
