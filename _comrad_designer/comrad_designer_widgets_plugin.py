@@ -8,6 +8,7 @@ signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 import accwidgets.property_edit.designer
 import accwidgets.led.designer
+import accwidgets.log_console.designer
 from pathlib import Path
 from typing import List
 from qtpy.QtWidgets import QAction, QWidget
@@ -22,11 +23,12 @@ from accwidgets._designer_base import WidgetsTaskMenuExtension
 from comrad import (CScrollingPlot, CCyclicPlot, CStaticPlot, CValueAggregator, CCommandButton, CScaleIndicator, CLogDisplay,
                     CEnumComboBox, CSlider, CSpinBox, CLabel, CByteIndicator, CLineEdit, CTemplateRepeater,
                     CEmbeddedDisplay, CShellCommand, CRelatedDisplayButton, CPushButton, CEnumButton, CCheckBox,
-                    CPropertyEdit, CLed, CContextFrame)
+                    CPropertyEdit, CLed, CContextFrame, CLogConsole)
 from comrad.icons import icon
 from _comrad_designer.utils import qtplugin_factory, CWidgetBoxGroup
 from _comrad_designer.rules_editor import RulesEditor
 from _comrad_designer.graphs import CPlottingItemEditorExtension, CLayerEditorExtension
+from _comrad_designer.log_console import CLogConsoleLoggersEditorExtension
 
 
 class _RulesExtension(WidgetsTaskMenuExtension):
@@ -91,7 +93,11 @@ _CLabel = qtplugin_factory(CLabel, group=CWidgetBoxGroup.INDICATORS, extensions=
 _CByteIndicator = qtplugin_factory(CByteIndicator, group=CWidgetBoxGroup.INDICATORS, extensions=_BASE_EXTENSIONS)
 # TODO: Uncomment when useful
 # _CImageView = qtplugin_factory(CImageView, group=CWidgetBoxGroup.INDICATORS, extensions=_BASE_EXTENSIONS)
-_CLogDisplay = qtplugin_factory(CLogDisplay, group=CWidgetBoxGroup.INDICATORS, extensions=_BASE_EXTENSIONS)
+_CLogDisplay = qtplugin_factory(CLogDisplay, group=CWidgetBoxGroup.HIDDEN, extensions=_BASE_EXTENSIONS)
+_CLogConsole = qtplugin_factory(CLogConsole,
+                                group=CWidgetBoxGroup.INDICATORS,
+                                icon=icon('LogConsole', file_path=Path(accwidgets.log_console.designer.__file__)),
+                                extensions=[CLogConsoleLoggersEditorExtension])
 _CScaleIndicator = qtplugin_factory(CScaleIndicator, group=CWidgetBoxGroup.INDICATORS, extensions=_BASE_EXTENSIONS)
 _CEnumLed = qtplugin_factory(CLed,
                              group=CWidgetBoxGroup.INDICATORS,

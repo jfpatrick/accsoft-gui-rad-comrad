@@ -52,6 +52,7 @@ from pydm.widgets.logdisplay import PyDMLogDisplay
 from pydm.widgets.enum_button import PyDMEnumButton
 from accwidgets.graph import ScrollingPlotWidget, CyclicPlotWidget, StaticPlotWidget
 from accwidgets.property_edit import PropertyEdit
+from accwidgets.log_console import LogConsole
 from _comrad_designer.utils import qtplugin_factory, CWidgetBoxGroup
 
 
@@ -86,3 +87,4 @@ _AccScrollingPlot = qtplugin_factory(ScrollingPlotWidget, group=CWidgetBoxGroup.
 _AccCyclicPlot = qtplugin_factory(CyclicPlotWidget, group=CWidgetBoxGroup.HIDDEN)
 _AccStaticPlot = qtplugin_factory(StaticPlotWidget, group=CWidgetBoxGroup.HIDDEN)
 _PropertyEdit = qtplugin_factory(PropertyEdit, group=CWidgetBoxGroup.HIDDEN)
+_LogConsole = qtplugin_factory(LogConsole, group=CWidgetBoxGroup.HIDDEN)
