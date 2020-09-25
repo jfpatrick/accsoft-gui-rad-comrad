@@ -14,7 +14,7 @@ from comrad.data.jpype_utils import get_cmw_user_message, get_java_user_message,
 from comrad.data.japc_enum import CEnumValue
 
 
-logger = logging.getLogger('comrad_japc')
+logger = logging.getLogger('comrad.japc')
 
 
 cern = jpype.JPackage('cern')

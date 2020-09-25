@@ -147,7 +147,7 @@ def _install_debug_arguments(parser: argparse._ActionsContainer):
     parser.add_argument('--log-level',
                         help='Configure level of log display (default: INFO).',
                         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-                        default='INFO')
+                        default=None)
 
 
 def _run_subcommand(parser: argparse.ArgumentParser):

@@ -6,7 +6,9 @@ from comrad.data.pyjapc_patch import CPyJapc
 from comrad.data_plugins import CCommonDataConnection, CDataPlugin, CChannelData, CChannel
 
 
-logger = logging.getLogger(__name__)
+# We are not using __name__, because when loaded by PyDM plugin system, it evaluates to a uuid, while we need
+# it to be in the "comrad" logger hierarchy (for CLogConsole)
+logger = logging.getLogger('comrad.data.japc_plugin')
 
 
 SPECIAL_FIELDS = {

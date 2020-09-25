@@ -17,7 +17,7 @@ from comrad.data.pyjapc_patch import CPyJapc
 from comrad.app.plugins.common import CToolbarWidgetPlugin
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('comrad.app.plugins.toolbar.pls_plugin')
 
 
 @dataclass

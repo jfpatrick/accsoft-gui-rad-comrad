@@ -12,7 +12,7 @@ from comrad.icons import icon
 from comrad.app.plugins.common import CToolbarWidgetPlugin
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('comrad.app.plugins.toolbar.rbac_plugin')
 
 
 class RbaButtonSet(QWidget):
