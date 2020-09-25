@@ -11,16 +11,13 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Basic CLogConsole example</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="CLogDisplay" name="CLogDisplay">
-     <property name="logLevel" stdset="0">
-      <enum>PyDMLogDisplay::WARNING</enum>
-     </property>
-     <property name="logName" stdset="0">
-      <string>test.app</string>
+    <widget class="CLogConsole" name="CLogConsole">
+     <property name="loggers" stdset="0">
+      <string>{&quot;test.app&quot;: 0}</string>
      </property>
     </widget>
    </item>
@@ -28,13 +25,13 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PyDMLogDisplay</class>
+   <class>LogConsole</class>
    <extends>QWidget</extends>
-   <header>pydm.widgets.logdisplay</header>
+   <header>accwidgets.log_console._viewer</header>
   </customwidget>
   <customwidget>
-   <class>CLogDisplay</class>
-   <extends>PyDMLogDisplay</extends>
+   <class>CLogConsole</class>
+   <extends>LogConsole</extends>
    <header>comrad.widgets.tables</header>
   </customwidget>
  </customwidgets>
