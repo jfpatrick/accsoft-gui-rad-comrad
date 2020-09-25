@@ -185,6 +185,9 @@ def _run_subcommand(parser: argparse.ArgumentParser):
     appearance_group.add_argument('--hide-menu-bar',
                                   action='store_true',
                                   help='Launch ComRAD with the menu bar hidden.')
+    appearance_group.add_argument('--hide-log-console',
+                                  action='store_true',
+                                  help='Launch ComRAD with the log console hidden.')
     appearance_group.add_argument('--hide-status-bar',
                                   action='store_true',
                                   help='Launch ComRAD with the status bar hidden.')
@@ -358,6 +361,7 @@ def _run_comrad(args: argparse.Namespace) -> bool:
                        perf_mon=args.perf_mon,
                        hide_nav_bar=args.hide_nav_bar,
                        hide_menu_bar=args.hide_menu_bar,
+                       hide_log_console=args.hide_log_console,
                        hide_status_bar=args.hide_status_bar,
                        fullscreen=args.fullscreen,
                        read_only=args.read_only,

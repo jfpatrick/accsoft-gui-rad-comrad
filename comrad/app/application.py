@@ -35,6 +35,7 @@ class CApplication(PyDMApplication):
                  perf_mon: bool = False,
                  hide_nav_bar: bool = False,
                  hide_menu_bar: bool = False,
+                 hide_log_console: bool = False,
                  hide_status_bar: bool = False,
                  read_only: bool = False,
                  macros: Optional[Dict[str, str]] = None,
@@ -77,6 +78,7 @@ class CApplication(PyDMApplication):
                 when the main window is first displayed.
             hide_menu_bar:  Whether or not to display the menu bar (File, View)
                 when the main window is first displayed.
+            hide_log_console: Whether or not to display the console log when the main window is first displayed.
             hide_status_bar: Whether or not to display the status bar (general messages and errors)
                 when the main window is first displayed.
             read_only: Whether or not to launch PyDM in a read-only state.
@@ -106,6 +108,7 @@ class CApplication(PyDMApplication):
         self._jvm_flags = java_env
         self._extra_data_plugin_paths = data_plugin_paths
         self._window_plugin_config = window_plugin_config
+        self._hide_log_console = hide_log_console
         super().__init__(ui_file=ui_file,
                          command_line_args=args,
                          display_args=display_args or [],
@@ -188,6 +191,8 @@ class CApplication(PyDMApplication):
             args.append('--hide-nav-bar')
         if self.hide_menu_bar:
             args.append('--hide-menu-bar')
+        if self.hide_log_console:
+            args.append('--hide-log-console')
         if self.hide_status_bar:
             args.append('--hide-status-bar')
         if self.fullscreen:
@@ -247,6 +252,8 @@ class CApplication(PyDMApplication):
     def make_main_window(self, stylesheet_path: Optional[str] = None):
         super().make_main_window(stylesheet_path)
         main_window = self.main_window
+        if self.hide_log_console:
+            main_window.hide_log_console()
         stylesheet = main_window.styleSheet()
         patch_stylesheet = Path(__file__).parent.absolute() / 'rule_override.qss'
         with patch_stylesheet.open() as f:
@@ -277,6 +284,10 @@ class CApplication(PyDMApplication):
     @property
     def extra_data_plugin_paths(self) -> Optional[List[str]]:
         return self._extra_data_plugin_paths
+
+    @property
+    def hide_log_console(self) -> bool:
+        return self._hide_log_console
 
     def _parse_window_plugin_config(self, input: Optional[List[str]]) -> WindowPluginConfigTrie:
         trie = WindowPluginConfigTrie()

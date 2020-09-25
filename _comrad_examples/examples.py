@@ -184,6 +184,9 @@ def make_cmd(entrypoint: str,
         # Mirror current log level to the child app (e.g. when running in DEBUG, also launch example in DEBUG)
         _append_arg(args, '--log-level')
         _append_arg(args, logging.getLevelName(logging.getLogger().level))
+    if '--hide-log-console' not in args:
+        # Disable log console in examples to not create cognitive overhead in already cramped UI
+        _append_arg(args, '--hide-log-console')
     _disable_implicit_plugin(args, plugin_id=rbac_plugin.RbaToolbarPlugin.plugin_id)
     _append_arg(args, str(file_path))
     logger.debug(f'Launching app with args: {args}')
