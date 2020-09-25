@@ -79,6 +79,17 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
         self._window_context.wildcardsChanged.connect(self.contextUpdated.emit)
         self._window_context.selectorChanged.connect(self.contextUpdated.emit)
         self.ui.action_exit.triggered.connect(self.close)
+        nav_toggle = cast(QAction, self.ui.navbar.toggleViewAction())
+        nav_toggle.setText('Show Navigation Bar')
+
+        # Remove custom Show navigation bar menu item and use the one provided by the widget
+        # (because when both are used, their check state gets out of sync
+        index = self.ui.menuView.actions().index(self.ui.actionShow_Navigation_Bar)
+        if index > -1:
+            self.ui.menuView.removeAction(self.ui.actionShow_Navigation_Bar)
+            self.ui.menuView.insertAction(self.ui.menuView.actions()[index], nav_toggle)
+            self.ui.actionShow_Navigation_Bar.deleteLater()
+            self.ui.actionShow_Navigation_Bar = None
 
     @property
     def context_ready(self) -> bool:
