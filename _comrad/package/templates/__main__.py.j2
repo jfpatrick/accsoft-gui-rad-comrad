@@ -1,0 +1,34 @@
+{% include "header.j2" %}
+
+import sys
+from pathlib import Path
+from _comrad import launcher
+
+
+_HERE = Path(__file__).parent
+_SRC_DIR = _HERE / '{{ src_dir }}'
+_ENTRYPOINT = _SRC_DIR / '{{ entrypoint }}'
+
+
+if __name__ == '__main__':
+    # TODO: This is a short-term hotfix. We need a more secure solution
+    # Work around behavior change in Python 3.7 (https://docs.python.org/3/whatsnew/3.7.html#changes-in-python-behavior),
+    # last bullet point mentioning sys.path
+    # See https://issues.cern.ch/browse/ACCPY-731 for details
+    # Removing this will likely require modifying *.ui files with promoted widgets derived from bundled files
+    if sys.version_info.major > 3 or (sys.version_info.major == 3 and sys.version_info.minor >= 7):
+        sys.path.insert(0, str(_SRC_DIR))
+
+    cmd = sys.argv[0]
+    # TODO: Wait for improvement in acc-py-deploy to expose a new env var that tells that it's being run in acc-py app run, and how it's done. Create new if block for that case
+    if cmd.endswith('__main__.py'):
+        pkg_name = _HERE.name
+        prog = f'python -m {pkg_name}'
+    else:
+        prog = None
+
+    comrad_run_args = sys.argv[1:]
+    cli_command = ['run', *comrad_run_args, str(_ENTRYPOINT)]
+    parser, use_lazy_version = launcher.create_args_parser(custom_run_prog=prog)
+    args = parser.parse_args(cli_command)
+    launcher.process_args(args, parser, use_lazy_version)

@@ -20,6 +20,9 @@ requirements = {
         'argcomplete>=1.10.0,<2',
         'colorlog>=4.0.2,<5',
         'qasync>=0.13.0,<1a0',
+        'questionary>=1.9<2a0',
+        'prompt_toolkit>=3.0,<4a0',  # This must be compatible with the 'questionary' version
+        'packaging>=20.4,<21a0',
         'QtPy>=1.7,<2',
         'pyjapc==2.2.0',  # We must keep it pinned to this version, because comrad is obliged to override getParam, which makes it very fragile to changes
         'accwidgets[graph,led,property_edit,timing_bar,log_console,rbac]>=1.3.2,<2a0',
@@ -29,6 +32,10 @@ requirements = {
         'dataclasses~=0.7;python_version<"3.7"',
         'pyCCDA~=0.10.1',
         'pyrbac',  # Exact version is expected to be provided by accwidgets. This stays here because we still have pyrbac imports
+        'Jinja2~=2.11',
+        'importlib-metadata>=1.7.0,<4.0a0;python_version<"3.8"',
+        'pyxdg~=0.27',
+        'stdlib-list>=0.8.0,<1a0;python_version<"3.10"',
     ],
     'test': [
         'pytest>=5.0.1,<5.1',
@@ -122,7 +129,7 @@ setup(
         'Typing :: Typed',
     ],
     package_data={
-        '': ['*.ui', '*.ico', '*.png', '*.qss', '*.json', '*.txt'],
+        '': ['*.ui', '*.ico', '*.png', '*.qss', '*.json', '*.txt', '*.j2'],
     },
     install_requires=requires,
     entry_points={
