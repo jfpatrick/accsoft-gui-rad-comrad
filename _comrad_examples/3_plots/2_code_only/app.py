@@ -19,8 +19,8 @@ class PlotDisplay(CDisplay):
         self.setLayout(main_layout)
         self.resize(900, 600)
         # Create scrolling and sliding plot
-        self.scrolling_plot: CScrollingPlot = CScrollingPlot()
-        self.sliding_plot: CCyclicPlot = CCyclicPlot()
+        self.scrolling_plot = CScrollingPlot()
+        self.sliding_plot = CCyclicPlot()
         # Add created plots to the windows layout
         main_layout.addWidget(self.scrolling_plot)
         main_layout.addWidget(self.sliding_plot)
@@ -123,7 +123,7 @@ class PlotDisplay(CDisplay):
         )
         # Add red triangles without a line attached to the same field
         self.sliding_plot.addCurve(
-            data_source='japc:///DemoDevice/Acquisition#RandomPoint',
+            data_source='DemoDevice/Acquisition#RandomPoint',
             layer='layer_0',
             color=QColor('red'),
             line_style=Qt.NoPen,

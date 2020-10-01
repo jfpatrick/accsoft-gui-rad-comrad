@@ -75,7 +75,7 @@ This kind of plugins are placed in the main navigation bar on the right hand sid
 for the position with standard buttons, such as RBAC or PLS, in accordance with its
 :attr:`~comrad.app.plugins.CPositionalPlugin.gravity` value.
 
-Action-based toolbar plugins also trigger menu creation "Plugins"->"Toolbar" To avoid that from happening, plugin may
+Action-based toolbar plugins also trigger menu creation "Plugins"→"Toolbar" To avoid that from happening, plugin may
 set its :attr:`~comrad.app.plugins.CToolbarActionPlugin.show_in_menu` to ``False``.
 
 To load custom navigation bar plugins into the application, specify the search path during the launch, and make sure

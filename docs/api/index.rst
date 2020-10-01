@@ -12,10 +12,11 @@ API Reference
     data/module
     json/module
     plugins/module
+    data_plugins/module
 
 
 
-Module index
+Index
 ------------
 
 * :ref:`modindex`

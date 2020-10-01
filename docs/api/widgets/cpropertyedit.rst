@@ -32,7 +32,7 @@ your device-property.
 
 .. seealso:: :ref:`What is a channel? <basic/controls:Channels>`
 
-Widget can display "Get" or "Set" buttons (or both) based on configuration `~comrad.CPropertyEdit.buttons`. When it
+Widget can display "Get" or "Set" buttons (or both) based on configuration :attr:`~comrad.CPropertyEdit.buttons`. When it
 is not displaying "Get", it will automatically subscribe to the "property". Displaying "Get" shows intent of explicitly
 retrieving data, thus subscription won't be created, and GET requests will be issued on button click.
 

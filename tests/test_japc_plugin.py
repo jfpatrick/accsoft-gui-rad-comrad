@@ -91,23 +91,12 @@ def test_connection_fails_with_wrong_context(selector, caplog: LogCaptureFixture
     assert actual_warnings == [f'Cannot create connection for address "device/property@{selector}"!']
 
 
-@pytest.mark.skip
-@mock.patch('pydm.widgets.channel.PyDMChannel')
-def test_remove_listener_disconnects_slots(PyDMChannel):
-    pass
-    # FIXME: Cant properly mock 'connect'
-    # japc = japc_plugin.get_japc()
-    # mocker.patch.object(japc, 'stopSubscriptions')
-    # mocker.patch.object(PyDMChannel.value_signal, 'connect')
-    # _ = japc_plugin.CJapcConnection(channel=PyDMChannel, address='test_addr')
-    # PyDMChannel.value_signal.connect.assert_called_once()
-
-
 @pytest.mark.parametrize('connected', [
     (True),
     (False),
 ])
 def test_close_clears_subscriptions(connected):
+    # FIXME: Test rather than unsubsribe calls clear subscriptions
     ch = channel.PyDMChannel(address='dev/prop#field')
     connection = japc_plugin.CJapcConnection(channel=ch, address='dev/prop#field', protocol='rda')
     connection.online = connected
@@ -142,21 +131,6 @@ def test_all_new_values_are_emitted_with_channel_data(other_type, sim_val, qtbot
     assert blocker.args == [japc_plugin.CChannelData(value=sim_val, meta_info={})]
 
 
-def test_requested_get_returns_same_uuid(qtbot: QtBot):
-    def side_effect(onValueReceived, **_):
-        onValueReceived(None, 3, {})
-        return mock.DEFAULT
-
-    japc_plugin.get_japc().getParam.side_effect = side_effect  # type: ignore
-
-    ch = channel.PyDMChannel(address='device/property')
-    cast(channel.CChannel, ch).request_slot = lambda *_: None
-    connection = japc_plugin.CJapcConnection(channel=ch, protocol='rda', address='/device/property')
-    with qtbot.wait_signal(connection.requested_value_signal) as blocker:
-        connection._requested_get('test-uuid')
-    assert blocker.args == [channel.CChannelData(value=3, meta_info={}), 'test-uuid']
-
-
 @pytest.mark.parametrize('meta_field,header_field', list(japc_plugin.SPECIAL_FIELDS.items()))
 def test_meta_field_resolved_on_field_level(meta_field, header_field):
     ch = channel.PyDMChannel(address=f'device/property#{meta_field}')
@@ -169,7 +143,7 @@ def test_meta_field_resolved_on_field_level(meta_field, header_field):
         'cycleStamp': mock.MagicMock(),
         'selector': 'test-cycle-name',
     }
-    connection._notify_listeners(f'device/property#{meta_field}', 42, header, signal_handle=callback, callback_signals=[sig])
+    connection._notify_listeners(f'device/property#{meta_field}', 42, header, emitter=callback, callback_signals=[sig])
     callback.assert_called_once_with(sig, channel.CChannelData(value=header[header_field], meta_info=header))
 
 
@@ -183,9 +157,9 @@ def test_meta_field_missing_from_incoming_header(caplog: LogCaptureFixture):
         'cycleStamp': mock.MagicMock(),
         'selector': 'test-cycle-name',
     }
-    connection._notify_listeners('device/property#acqStamp', 42, header, signal_handle=callback, callback_signals=[sig])
+    connection._notify_listeners('device/property#acqStamp', 42, header, emitter=callback, callback_signals=[sig])
     # We have to protect from warnings leaking from dependencies, e.g. cmmnbuild_dep_manager, regarding JVM :(
-    warning_records = [r for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.WARNING and r.module == 'japc_plugin']
+    warning_records = [r for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.WARNING and r.name == 'comrad.data_plugins']
     assert len(warning_records) == 1
     assert 'Cannot locate meta-field "acqStamp" inside packet header' in warning_records[0].msg
     callback.assert_not_called()
@@ -217,7 +191,7 @@ def test_meta_fields_are_injected_into_full_property(val, considered_header, dis
     connection = japc_plugin.CJapcConnection(channel=ch, protocol='japc', address='/device/property')
     callback = mock.Mock()
     sig = mock.MagicMock()
-    connection._notify_listeners('device/property', val, full_header, signal_handle=callback, callback_signals=[sig])
+    connection._notify_listeners('device/property', val, full_header, emitter=callback, callback_signals=[sig])
     callback.assert_called_once_with(sig, channel.CChannelData(value=combined_val, meta_info=full_header))
 
 

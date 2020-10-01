@@ -45,6 +45,7 @@ class CApplication(PyDMApplication):
                  toolbar_order: Optional[Iterable[Union[str, CToolbarID]]] = None,
                  plugin_whitelist: Optional[Iterable[str]] = None,
                  plugin_blacklist: Optional[Iterable[str]] = None,
+                 data_plugin_paths: Optional[List[str]] = None,
                  fullscreen: bool = False):
         """
         :class:`CApplication` handles loading ComRAD display files, opening
@@ -90,6 +91,7 @@ class CApplication(PyDMApplication):
             toolbar_order: List of IDs of toolbar items in order in which they must appear left-to-right.
             plugin_whitelist: List of plugin IDs that have to be enabled even if they are disabled by default.
             plugin_blacklist: List of plugin IDs that have to be disabled even if they are enabled by default.
+            data_plugin_paths: Extra paths to be searched for data plugins.
             fullscreen: Whether or not to launch PyDM in a full screen mode.
         """
         args = [_APP_NAME]
@@ -99,6 +101,7 @@ class CApplication(PyDMApplication):
         self.cmw_env = cmw_env
         self.use_inca = use_inca
         self.jvm_flags = java_env
+        self.extra_data_plugin_paths = data_plugin_paths
         super().__init__(ui_file=ui_file,
                          command_line_args=args,
                          display_args=display_args or [],
@@ -197,10 +200,11 @@ class CApplication(PyDMApplication):
         if self.main_window.window_context.selector:
             args.extend(['--selector', self.main_window.window_context.selector])
         if self.jvm_flags:
-            java_env = '--java-env'
-            for key, flag_val in self.jvm_flags:
-                java_env += f' {key}={flag_val}'
-            args.append(java_env)
+            args.append('--java-env')
+            args.extend([f'{key}={flag_val}' for key, flag_val in self.jvm_flags])
+        if self.extra_data_plugin_paths:
+            args.append('--extra-data-plugin-path')
+            args.extend(self.extra_data_plugin_paths)
         if self.cmw_env:
             args.extend(['--cmw-env', self.cmw_env])
         if self._nav_bar_plugin_path:

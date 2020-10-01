@@ -1,4 +1,5 @@
 import pydm
+import os
 import inspect
 from pathlib import Path
 from typing import Optional, Dict, Union, cast
@@ -38,6 +39,8 @@ class AboutDialog(QWidget):
         self.support: QLabel = None
         self.tools_table: QTableWidget = None
         self.plugins_table: QTableWidget = None
+        self.data_plugin_path_list: QListWidget = None
+        self.data_plugin_path_view: QWidget = None
         self.contrib_list: QListWidget = None
         self.environment: QGroupBox = None
         self.inca_enabled: QLabel = None
@@ -97,7 +100,7 @@ class AboutDialog(QWidget):
             self.tabs.removeTab(1)  # Remove Data plugins tab
         else:
             self._add_tools_to_list(pydm.tools.ext_tools)
-            self._populate_plugin_list()
+            self._populate_data_plugin_list()
             self._populate_japc()
 
     def _add_tools_to_list(self, tools: Union[ExternalTool, Dict[str, ExternalTool]]):
@@ -117,7 +120,7 @@ class AboutDialog(QWidget):
                 self.tools_table.setItem(new_row, 2, author_item)
                 self.tools_table.setItem(new_row, 3, file_item)
 
-    def _populate_plugin_list(self):
+    def _populate_data_plugin_list(self):
         pydm.data_plugins.initialize_plugins_if_needed()
         for protocol, plugin in pydm.data_plugins.plugin_modules.items():
             protocol_item = QTableWidgetItem(protocol)
@@ -126,6 +129,14 @@ class AboutDialog(QWidget):
             self.plugins_table.insertRow(new_row)
             self.plugins_table.setItem(new_row, 0, protocol_item)
             self.plugins_table.setItem(new_row, 1, file_item)
+        from _comrad.common import assemble_extra_data_plugin_paths
+        extra_paths = assemble_extra_data_plugin_paths(self.app.extra_data_plugin_paths)
+        if extra_paths:
+            items = filter(None, extra_paths.split(os.pathsep))  # Filter out empty strings
+            self.data_plugin_path_list.addItems(items)
+            self.data_plugin_path_view.show()
+        else:
+            self.data_plugin_path_view.hide()
 
     def _populate_credits(self):
         self.contrib_list.addItem('ComRAD Contributors:')
