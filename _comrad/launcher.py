@@ -6,15 +6,20 @@ import argparse
 import argcomplete
 import os
 import sys
-from typing import Optional, Tuple, Dict, List, Iterable
+from typing import Optional, Tuple, Dict, List, Iterable, Any
 from accwidgets.qt import exec_app_interruptable
 from .comrad_info import COMRAD_DESCRIPTION, COMRAD_VERSION, get_versions_info
 from .log_config import install_logger_level
 from .common import get_japc_support_envs, comrad_asset
 
 
-def run():
-    """Run ComRAD application and parse command-line arguments."""
+def create_args_parser() -> Tuple[argparse.ArgumentParser, bool]:
+    """
+    Build ComRAD application arguments.
+
+    Returns:
+        Tuple of arguments parser and flag if the lazy version resolution should be done.
+    """
     logo = """
 
    ██████╗ ██████╗ ███╗   ███╗██████╗  █████╗ ██████╗
@@ -24,7 +29,7 @@ def run():
   ╚██████╗╚██████╔╝██║ ╚═╝ ██║██║  ██║██║  ██║██████╔╝
    ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝
     """
-    common_parser_args = {
+    common_parser_args: Dict[str, Any] = {
         'add_help': False,  # Will be added manually (with consistent formatting)
         'formatter_class': argparse.RawDescriptionHelpFormatter,
     }
@@ -74,10 +79,10 @@ def run():
                                             **common_parser_args)
     _examples_subcommand(examples_parser)
 
-    # If run for auto-completion discovery, execution will stop here
-    argcomplete.autocomplete(parser)
+    return parser, use_lazy_version
 
-    args = parser.parse_args()
+
+def process_args(args: argparse.Namespace, parser: argparse.ArgumentParser, use_lazy_version: bool = False):
     if use_lazy_version and args.version:
         _run_version(parser)
         return
@@ -88,12 +93,24 @@ def run():
         from _comrad_examples.browser import run_browser as run_examples_browser
         run_examples_browser(args)
     else:
-        if args.cmd == 'run':
-            _run_comrad(args) or parser.print_usage()
-        elif args.cmd == 'designer':
-            _run_designer(args) or parser.print_usage()
-        else:
-            parser.print_help()
+        if args.cmd == 'run' and _run_comrad(args):
+            return
+        elif args.cmd == 'designer' and _run_designer(args):
+            return
+        parser.print_help()
+
+
+def run():
+    """Run ComRAD application and parse command-line arguments."""
+    parser, use_lazy_version = create_args_parser()
+
+    # If run for auto-completion discovery, execution will stop here
+    argcomplete.autocomplete(parser)
+    args = parser.parse_args()
+
+    process_args(args=args,
+                 parser=parser,
+                 use_lazy_version=use_lazy_version)
 
 
 def _install_help(parser: argparse._ActionsContainer):
