@@ -1,5 +1,4 @@
 import logging
-import numpy as np
 from enum import IntEnum
 from typing import List, Dict, Optional, Set, Any
 from pydm.widgets.base import PyDMWidget
@@ -38,7 +37,7 @@ class CValueAggregator(QWidget, CChannelDataProcessingMixin, CInitializedMixin, 
         AGGREGATED_FIRST = _QtDesignerGeneratorTrigger.AggregatedFirst
         """First new value arriving since the last trigger."""
 
-    updateTriggered = Signal([int], [float], [str], [bool], [np.ndarray])
+    updateTriggered = Signal([int], [float], [str], [bool], ['PyQt_PyObject'])
     """Emitted when the user changes the value."""
 
     def __init__(self, parent: Optional[QWidget] = None, init_channels: Optional[List[str]] = None):
