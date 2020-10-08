@@ -109,7 +109,7 @@ setup(
     author_email=get_comrad_info('COMRAD_AUTHOR_EMAIL'),
     url=get_comrad_info('COMRAD_WIKI'),
     license='None (internal package)',
-    packages=find_packages(exclude=('build*', 'dist*', 'docs*', 'tests*', '*.egg-info', '_comrad.debug')),
+    packages=find_packages(exclude=('build*', 'dist*', 'docs*', 'tests*', '*.egg-info')),
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: X11 Applications :: Qt',
