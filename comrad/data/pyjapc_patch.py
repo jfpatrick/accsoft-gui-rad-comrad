@@ -9,7 +9,7 @@ from qtpy.QtCore import QObject, Signal
 from pyjapc import PyJapc
 from comrad.rbac import CRBACLoginStatus, CRBACStartupLoginPolicy
 from comrad.app.application import CApplication
-from comrad.data.jpype_utils import get_user_message, meaning_from_jpype
+from comrad.data.jpype_utils import get_cmw_user_message, get_java_user_message, meaning_from_jpype
 from comrad.data.japc_enum import CEnumValue
 
 
@@ -213,7 +213,7 @@ class CPyJapc(PyJapc, QObject):
             # executed, thus avoiding the error.
             if isinstance(e, cern.rbac.client.authentication.AuthenticationException):
                 if on_exception is not None:
-                    message = get_user_message(e)
+                    message = get_cmw_user_message(e)
                     login_by_location = not username and not password
                     on_exception(message, login_by_location)
                 self._set_online(False)
@@ -270,10 +270,10 @@ class CPyJapc(PyJapc, QObject):
             # executed, thus avoiding the error.
             if isinstance(e, (cern.japc.core.ParameterException,  # CMW error, e.g. SET not supported
                               cern.japc.value.ValueConversionException)):  # JAPC error, e.g. wrong enum value
-                message = get_user_message(e)
-                self.japc_param_error.emit(message, display_popup)
+                message = get_cmw_user_message(e)
             else:
-                raise e
+                message = get_java_user_message(e)
+            self.japc_param_error.emit(message, display_popup)
 
     def _setup_jvm(self, log_level: int):
         """Overrides internal PyJapc hook to set any custom JVM flags"""

@@ -22,6 +22,7 @@ def pyjapc_subclass():
     # Call the real thing, just to get pointers to the real types
     import jpype
     cern = jpype.JPackage('cern')
+    java = jpype.JPackage('java')
 
     # In code, we interact with following exceptions:
     # 1. cern.japc.core.ParameterException
@@ -32,6 +33,9 @@ def pyjapc_subclass():
     ParameterException = cern.japc.core.ParameterException
     ValueConversionException = cern.japc.value.ValueConversionException
     AuthenticationException = cern.rbac.client.authentication.AuthenticationException
+    # Now the same things with the standard Java exceptions, because they are used in tests as well
+    IllegalStateException = java.lang.IllegalStateException
+    RuntimeException = java.lang.RuntimeException
 
     def mock_all_but_known_exceptions(pkg_name):
         # This method mocks java modules imported through jpype.JPackage
@@ -76,6 +80,19 @@ def pyjapc_subclass():
             m = mock.MagicMock()
             m.japc = mock_all_but_known_exceptions(f'{pkg_name}.japc')
             m.rbac = mock_all_but_known_exceptions(f'{pkg_name}.rbac')
+            return m
+        if pkg_name == 'java.lang.IllegalStateException':
+            return IllegalStateException
+        if pkg_name == 'java.lang.RuntimeException':
+            return RuntimeException
+        if pkg_name == 'java.lang':
+            m = mock.MagicMock()
+            m.core = mock_all_but_known_exceptions(f'{pkg_name}.IllegalStateException')
+            m.value = mock_all_but_known_exceptions(f'{pkg_name}.RuntimeException')
+            return m
+        if pkg_name == 'java':
+            m = mock.MagicMock()
+            m.japc = mock_all_but_known_exceptions(f'{pkg_name}.lang')
             return m
         return mock.DEFAULT
 
@@ -279,6 +296,37 @@ def test_japc_get_set_fails_on_cmw_exception(pyjapc_subclass, method, display_po
             assert args[0] == value  # Test setParam value
         import jpype
         exc_type = jpype.JPackage(error_type)
+        raise exc_type('Something happened --> Test exception')
+
+    pyjapc_subclass.super_mock.getParam.side_effect = raise_error
+    pyjapc_subclass.super_mock.setParam.side_effect = raise_error
+
+    japc = pyjapc_subclass()
+    args = ['test_addr']
+    if value is not None:
+        args.append(value)
+    with qtbot.wait_signal(japc.japc_param_error) as blocker:
+        getattr(japc, method)(*args)
+    assert blocker.args == ['Test exception', display_popup]
+
+
+@pytest.mark.parametrize('error_type', [
+    'cern.rbac.client.authentication.AuthenticationException',
+    'java.lang.IllegalStateException',
+    'java.lang.RuntimeException',
+])
+@pytest.mark.parametrize('method,display_popup,value', [
+    ('getParam', False, None),
+    ('setParam', True, 4),
+])
+def test_japc_get_set_does_catch_other_java_exception(pyjapc_subclass, method, display_popup, value, qtbot, error_type):
+
+    def raise_error(parameterName, *args, **__):
+        assert parameterName == 'test_addr'
+        if value is not None:
+            assert args[0] == value  # Test setParam value
+        import jpype
+        exc_type = jpype.JPackage(error_type)
         raise exc_type('Test exception')
 
     pyjapc_subclass.super_mock.getParam.side_effect = raise_error
@@ -307,35 +355,6 @@ def test_japc_get_set_does_not_catch_python_exception(pyjapc_subclass, method, v
     if value is not None:
         args.append(value)
     with pytest.raises(error_type):
-        with qtbot.assert_not_emitted(japc.japc_param_error):
-            getattr(japc, method)(*args)
-
-
-@pytest.mark.parametrize('error_type', ['cern.rbac.client.authentication.AuthenticationException'])
-@pytest.mark.parametrize('method,value', [
-    ('getParam', None),
-    ('setParam', 4),
-])
-def test_japc_get_set_does_not_catch_other_java_exception(pyjapc_subclass, method, value, qtbot, error_type):
-
-    import jpype
-    exc_type = jpype.JPackage(error_type)
-
-    def raise_error(*_, **__):
-        # We must add a custom method, rather than assigning type directly to side_effect,
-        # because Java exception does not have a default Python initializer, causing error
-        # TypeError: No matching overloads found for constructor
-        # cern.rbac.client.authentication.AuthenticationException()
-        raise exc_type('Test message')
-
-    pyjapc_subclass.super_mock.getParam.side_effect = raise_error
-    pyjapc_subclass.super_mock.setParam.side_effect = raise_error
-
-    japc = pyjapc_subclass()
-    args = ['test_addr']
-    if value is not None:
-        args.append(value)
-    with pytest.raises(exc_type, match=r'Test message'):
         with qtbot.assert_not_emitted(japc.japc_param_error):
             getattr(japc, method)(*args)
 
