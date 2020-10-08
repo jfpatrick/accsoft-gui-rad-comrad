@@ -52,6 +52,16 @@ def test_cpushbutton_pydm_props_disabled(qtbot: QtBot, caplog: LogCaptureFixture
     ('123', 345, False),
     ('abc', 'def', False),
     ('abc', None, False),
+    (True, 'False', False),
+    (True, 'false', False),
+    (True, 'FALSE', False),
+    (True, '0', False),
+    (False, 'True', False),
+    (False, '1', False),
+    (False, 'true', False),
+    (False, 'TRUE', False),
+    (False, 'Anything', False),
+    (False, 'True', True),
     (None, 'def', False),
     (None, None, False),
 ])
@@ -76,9 +86,9 @@ def test_cpushbutton_send_value(qtbot: QtBot, initial_value, press_value, is_val
         if not widget.pressValue:
             expected_value = None
         elif not is_value_relative or channel_type == str:
-            expected_value = channel_type(widget.pressValue)
+            expected_value = widget._convert(widget.pressValue)
         else:
-            expected_value = widget.value + channel_type(widget.pressValue)
+            expected_value = widget.value + widget._convert(widget.pressValue)
 
         with qtbot.wait_signal(widget.send_value_signal[channel_type]) as blocker:
             send_value = widget.sendValue()
@@ -104,6 +114,19 @@ def test_cpushbutton_send_value(qtbot: QtBot, initial_value, press_value, is_val
     ('Old str value', 'New str value'),
     ('Old str value', 42),
     ('Old str value', 10.10),
+    (True, False),
+    (False, True),
+    (False, False),
+    (True, True),
+    (True, '0'),
+    (False, '1'),
+    (False, '0'),
+    (True, '1'),
+    (True, 'false'),
+    (False, 'true'),
+    (False, 'false'),
+    (True, 'true'),
+    (False, 'Anything'),
 ])
 def test_cpushbutton_update_press_value(qtbot, current_channel_value, updated_value):
     widget = CPushButton()
@@ -127,7 +150,7 @@ def test_cpushbutton_update_press_value(qtbot, current_channel_value, updated_va
         assert (current_channel_value == widget.value).all()
     else:
         assert widget.value == current_channel_value
-    assert widget.pressValue == str(type(current_channel_value)(updated_value))
+    assert widget.pressValue == str(widget._convert(updated_value))
 
 
 @pytest.mark.parametrize('current_channel_value,updated_value,expected_log_error', [
@@ -157,5 +180,5 @@ def test_cpushbutton_update_press_value_incompatible_update_value(qtbot: QtBot, 
 
     # Make sure logging capture the error, and have the correct error message
     error_records = [r.msg for r in cast(List[LogRecord], caplog.records) if
-                     r.levelno == logging.ERROR and r.name.startswith('pydm')]
+                     r.levelno == logging.ERROR and r.name == 'comrad.widgets.buttons']
     assert error_records == [expected_log_error]
