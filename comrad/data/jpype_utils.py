@@ -38,7 +38,21 @@ def get_root_cause(jpype_exc: JException) -> JException:
     return last
 
 
-def get_user_message(jpype_exc: JException) -> str:
+def get_java_user_message(jpype_exc: JException) -> str:
+    """
+    Extracts the Java exception message.
+
+    Args:
+        jpype_exc: jPype exception, e.g. java.lang.Exception
+
+    Returns:
+        String extracted from the message.
+    """
+    throwable = get_root_cause(jpype_exc)
+    return throwable.getMessage()
+
+
+def get_cmw_user_message(jpype_exc: JException) -> str:
     """
     Extracts the last part of the Java exception message.
 
@@ -52,8 +66,7 @@ def get_user_message(jpype_exc: JException) -> str:
     Returns:
         String extracted from the message.
     """
-    throwable = get_root_cause(jpype_exc)
-    return parse_cmw_error_message(throwable.getMessage())
+    return parse_cmw_error_message(get_java_user_message(jpype_exc))
 
 
 def meaning_from_jpype(orig: object) -> CEnumValue.Meaning:
