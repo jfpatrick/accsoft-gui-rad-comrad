@@ -69,7 +69,7 @@ class CPushButton(CChannelDataProcessingMixin, CWidgetRulesMixin, CCustomizedToo
         super().init_for_designer()
         self.setText('RAD PushButton')
 
-    @deprecated_parent_prop(logger)
+    @deprecated_parent_prop(logger=logger, property_name='passwordProtected')
     def __set_passwordProtected(self, _):
         pass
 
@@ -78,7 +78,7 @@ class CPushButton(CChannelDataProcessingMixin, CWidgetRulesMixin, CCustomizedToo
     def __get_password(self) -> str:
         return super().password
 
-    @deprecated_parent_prop(logger)
+    @deprecated_parent_prop(logger=logger, property_name='password')
     def __set_password(self, _):
         pass
 
@@ -87,7 +87,7 @@ class CPushButton(CChannelDataProcessingMixin, CWidgetRulesMixin, CCustomizedToo
     def __get_protectedPassword(self) -> str:
         return super().protectedPassword
 
-    @deprecated_parent_prop(logger)
+    @deprecated_parent_prop(logger=logger, property_name='protectedPassword')
     def __set_protectedPassword(self, _):
         pass
 

@@ -4,19 +4,21 @@ Module containing functionality to handle deprecated API.
 
 import functools
 import logging
-from typing import Dict, Any, Callable, cast
+from typing import Dict, Any, Callable, cast, Optional
 from types import MethodType
 
 
 logger = logging.getLogger(__name__)
 
 
-def deprecated_parent_prop(logger: logging.Logger):
+def deprecated_parent_prop(logger: logging.Logger, property_name: Optional[str] = None):
     """
     Decorator to deprecate properties exposed to Qt Designer that are actually defined in dependencies outside of ComRAD.
 
     Args:
         logger: Logger that should produce a warning (to localize where those warnings come from).
+        property_name: If decorator is used on the property setter, it is better to give property name, rather than
+                       the setter name, as they might be different.
 
     Returns:
         Wrapper method with decorated logic.
@@ -37,7 +39,8 @@ def deprecated_parent_prop(logger: logging.Logger):
                 name = cast(QWidget, self).objectName()
                 if not name:
                     name = f'unidentified {type(self).__name__}'
-                logger.warning(f'{method.__name__} property is disabled in ComRAD (found in {name})')
+                meth_name = property_name or method.__name__
+                logger.warning(f'{meth_name} property is disabled in ComRAD (found in {name})')
 
         return _wrapper
     return _method_wrapper
