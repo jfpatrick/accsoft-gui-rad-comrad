@@ -29,13 +29,13 @@ class CInitializedMixin:
 class CHideUnusedFeaturesMixin:
     """Mixin that hides PyDM properties that are exposed to Qt Designer and are not used in ComRAD."""
 
-    @deprecated_parent_prop(logger)
+    @deprecated_parent_prop(logger=logger, property_name='alarmSensitiveBorder')
     def __set_alarmSensitiveBorder(self, _):
         pass
 
     alarmSensitiveBorder = Property(bool, lambda _: False, __set_alarmSensitiveBorder, designable=False)
 
-    @deprecated_parent_prop(logger)
+    @deprecated_parent_prop(logger=logger, property_name='alarmSensitiveContent')
     def __set_alarmSensitiveContent(self, _):
         pass
 
@@ -120,13 +120,13 @@ class CNoPVTextFormatterMixin:
     Qt Designer and are not used in ComRAD.
     """
 
-    @deprecated_parent_prop(logger)
+    @deprecated_parent_prop(logger=logger, property_name='precisionFromPV')
     def __set_precisionFromPV(self, _):
         pass
 
     precisionFromPV = Property(bool, lambda _: False, __set_precisionFromPV, designable=False)
 
-    @deprecated_parent_prop(logger)
+    @deprecated_parent_prop(logger=logger, property_name='showUnits')
     def __set_showUnits(self, _):
         pass
 

@@ -184,7 +184,7 @@ class CSlider(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTooltipMixin
         self._user_defined_limits = True
         self._widget_initialized = True
 
-    @deprecated_parent_prop(logger)
+    @deprecated_parent_prop(logger=logger, property_name='userDefinedLimits')
     def __set_userDefinedLimits(self, _):
         pass
 

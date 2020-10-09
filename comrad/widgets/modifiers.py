@@ -197,7 +197,7 @@ class CValueAggregator(QWidget, CChannelDataProcessingMixin, CInitializedMixin, 
       update and only then fire a new one.
     """
 
-    @deprecated_parent_prop(logger)
+    @deprecated_parent_prop(logger=logger, property_name='channel')
     def __set_channel(self, _):
         pass
 
@@ -206,7 +206,7 @@ class CValueAggregator(QWidget, CChannelDataProcessingMixin, CInitializedMixin, 
     def __get_minimumSize(self) -> QSize:
         return super().minimumSize()
 
-    @deprecated_parent_prop(logger)
+    @deprecated_parent_prop(logger=logger, property_name='minimumSize')
     def __set_minimumSize(self, _):
         pass
 
@@ -215,7 +215,7 @@ class CValueAggregator(QWidget, CChannelDataProcessingMixin, CInitializedMixin, 
     def __get_maximumSize(self) -> QSize:
         return super().maximumSize()
 
-    @deprecated_parent_prop(logger)
+    @deprecated_parent_prop(logger=logger, property_name='maximumSize')
     def __set_maximumSize(self, _):
         pass
 
@@ -224,7 +224,7 @@ class CValueAggregator(QWidget, CChannelDataProcessingMixin, CInitializedMixin, 
     def __get_baseSize(self) -> QSize:
         return super().baseSize()
 
-    @deprecated_parent_prop(logger)
+    @deprecated_parent_prop(logger=logger, property_name='baseSize')
     def __set_baseSize(self, _):
         pass
 
@@ -233,13 +233,13 @@ class CValueAggregator(QWidget, CChannelDataProcessingMixin, CInitializedMixin, 
     def __get_sizeIncrement(self) -> QSize:
         return super().sizeIncrement()
 
-    @deprecated_parent_prop(logger)
+    @deprecated_parent_prop(logger=logger, property_name='sizeIncrement')
     def __set_sizeIncrement(self, _):
         pass
 
     sizeIncrement = Property('QSize', __get_sizeIncrement, __set_sizeIncrement, designable=False)
 
-    @deprecated_parent_prop(logger)
+    @deprecated_parent_prop(logger=logger, property_name='sizePolicy')
     def __set_sizePolicy(self, _):
         pass
 

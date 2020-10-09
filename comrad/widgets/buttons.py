@@ -1,6 +1,6 @@
 import logging
 import copy
-from typing import Optional, Union
+from typing import Optional, Union, Any
 from pydm.widgets.base import PyDMWritableWidget
 from pydm.widgets.pushbutton import PyDMPushButton
 from pydm.widgets.related_display_button import PyDMRelatedDisplayButton
@@ -8,7 +8,7 @@ from pydm.widgets.shell_command import PyDMShellCommand
 from pydm.widgets.enum_button import PyDMEnumButton
 from qtpy.QtWidgets import QWidget, QPushButton
 from qtpy.QtGui import QIcon
-from qtpy.QtCore import Signal, Property
+from qtpy.QtCore import Signal, Property, Slot
 from comrad.deprecations import deprecated_parent_prop
 from comrad.data.channel import CChannelData
 from comrad.data.japc_enum import CEnumValue
@@ -69,7 +69,85 @@ class CPushButton(CChannelDataProcessingMixin, CWidgetRulesMixin, CCustomizedToo
         super().init_for_designer()
         self.setText('RAD PushButton')
 
-    @deprecated_parent_prop(logger)
+    @Slot()
+    def sendValue(self) -> Any:
+        """
+        Send a new value to the channel.
+
+        This function interprets the settings of the :class:`CPushButton` and sends
+        the appropriate value out through the :attr:`send_value_signal`.
+
+        The implementation is copied from :class:`PyDMPushButton` and overridden to take advantage of
+        the local conversion logic.
+
+        Returns:
+            None if any of the following condition is :obj:`False`:
+                #. There's no new value (:attr:`pressValue`) for the widget
+                #. There's no initial or current value for the widget
+                #. The confirmation dialog returns ``No`` as the user's answer to the dialog
+                #. The password validation dialog returns a validation error
+            Otherwise, return the value sent to the channel:
+                #. The value sent to the channel is the same as the :attr:`pressValue` if the existing
+                   channel type is a :obj:`str`, or the :attr:`relative` flag is :obj:`False`
+                #. The value sent to the channel is the sum of the existing value and the :attr:`pressValue`
+                   if the :attr:`relative` flag is :obj:`True`, and the channel type is not a :obj:`str`
+        """
+        send_value = None
+        if self._pressValue is None or self.value is None:
+            return None
+
+        if not self.confirm_dialog():
+            return None
+
+        if not self.validate_password():
+            return None
+
+        if not self._relative or self.channeltype == str:
+            send_value = self._convert(self._pressValue)
+            self.send_value_signal[self.channeltype].emit(send_value)
+        else:
+            send_value = self.value + self._convert(self._pressValue)
+            self.send_value_signal[self.channeltype].emit(send_value)
+        return send_value
+
+    @Slot(int)
+    @Slot(float)
+    @Slot(str)
+    def updatePressValue(self, value: Union[int, float, str]):
+        """
+        Update the :attr:`pressValue` of a function by passing a signal to the :class:`CPushButton`.
+
+        This is useful to dynamically change the :attr:`pressValue` of the button
+        during runtime. This enables the applied value to be linked to the
+        state of a different widget, say a :class:`QLineEdit` or :class:`QSlider`.
+
+        The implementation is copied from :class:`PyDMPushButton` and overridden to take advantage of
+        the local conversion logic.
+
+        Args:
+            value: Incoming value.
+        """
+        try:
+            self.pressValue = self._convert(value)
+        except (ValueError, TypeError):
+            logger.error(f"'{value}' is not a valid pressValue for '{self.channel}'.")
+
+    def _convert(self, value: Union[int, float, str]) -> Any:
+        """
+        Alternative conversion method to calling ``self.channeltype``, in order to remove quirks.
+
+        Args:
+            value: Original (string) value.
+
+        Returns:
+            Value of the converted type.
+        """
+        if self.channeltype == bool and (str(value) == '0' or str(value).lower() == 'false'):
+            # allows 0, false, False to specify False values for boolean types
+            return False
+        return self.channeltype(value)
+
+    @deprecated_parent_prop(logger=logger, property_name='passwordProtected')
     def __set_passwordProtected(self, _):
         pass
 
@@ -78,7 +156,7 @@ class CPushButton(CChannelDataProcessingMixin, CWidgetRulesMixin, CCustomizedToo
     def __get_password(self) -> str:
         return super().password
 
-    @deprecated_parent_prop(logger)
+    @deprecated_parent_prop(logger=logger, property_name='password')
     def __set_password(self, _):
         pass
 
@@ -87,7 +165,7 @@ class CPushButton(CChannelDataProcessingMixin, CWidgetRulesMixin, CCustomizedToo
     def __get_protectedPassword(self) -> str:
         return super().protectedPassword
 
-    @deprecated_parent_prop(logger)
+    @deprecated_parent_prop(logger=logger, property_name='protectedPassword')
     def __set_protectedPassword(self, _):
         pass
 

@@ -184,7 +184,7 @@ class CScaleIndicator(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTool
         self._limits_from_channel = False
         self._widget_initialized = True
 
-    @deprecated_parent_prop(logger)
+    @deprecated_parent_prop(logger=logger, property_name='limitsFromChannel')
     def __set_limitsFromChannel(self, _):
         pass
 

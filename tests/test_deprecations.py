@@ -81,11 +81,14 @@ def test_prop_deprecation_no_mixin(qtbot, superclasses):
     (True, False, False),
     (False, False, False),
 ])
-@pytest.mark.parametrize('obj_name,expected_warning', [
-    ('objName', 'test_prop property is disabled in ComRAD (found in objName)'),
-    (None, 'test_prop property is disabled in ComRAD (found in unidentified MyWidget)'),
+@pytest.mark.parametrize('obj_name,custom_prop_name,expected_warning', [
+    ('objName', None, 'test_prop property is disabled in ComRAD (found in objName)'),
+    ('objName', 'custom_prop', 'custom_prop property is disabled in ComRAD (found in objName)'),
+    (None, None, 'test_prop property is disabled in ComRAD (found in unidentified MyWidget)'),
+    (None, 'custom_prop', 'custom_prop property is disabled in ComRAD (found in unidentified MyWidget)'),
 ])
-def test_prop_deprecation_displays_warning(qtbot, caplog: LogCaptureFixture, obj_name, in_designer, initialized, should_issue, expected_warning):
+def test_prop_deprecation_displays_warning(qtbot, caplog: LogCaptureFixture, obj_name, custom_prop_name,
+                                           in_designer, initialized, should_issue, expected_warning):
     _ = qtbot
     import logging
     from qtpy.QtCore import Property
@@ -101,7 +104,7 @@ def test_prop_deprecation_displays_warning(qtbot, caplog: LogCaptureFixture, obj
                 return obj_name
 
             @Property(str)
-            @deprecated_parent_prop(logging.getLogger())
+            @deprecated_parent_prop(logger=logging.getLogger(), property_name=custom_prop_name)
             def test_prop(self):
                 return ''
 
