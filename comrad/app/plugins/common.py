@@ -4,7 +4,7 @@ import uuid
 import inspect
 import logging
 from pathlib import Path
-from typing import Optional, Union, Iterable, Dict, List, cast, Type, Generator, Tuple, TypeVar
+from typing import Optional, Union, Iterable, Dict, cast, Type, Generator, Tuple, TypeVar
 from types import ModuleType
 from enum import Enum, auto, unique
 from qtpy.QtWidgets import QWidget, QAction, QMenu
@@ -146,7 +146,7 @@ class CStatusBarPlugin(CWidgetPlugin, metaclass=abc.ABCMeta):
 _T = TypeVar('_T', bound=CPlugin)
 
 
-def load_plugins_from_path(locations: List[Path], token: str, base_type: Type[CPlugin] = CPlugin):
+def load_plugins_from_path(locations: Iterable[Path], token: str, base_type: Type[CPlugin] = CPlugin):
     """
     Load plugins from file locations that match a specific token.
 

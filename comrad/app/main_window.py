@@ -157,9 +157,9 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
                 self.handle_open_file_error(filename, e)
 
     def load_window_plugins(self,
-                            nav_bar_plugin_path: Optional[str] = None,
-                            status_bar_plugin_path: Optional[str] = None,
-                            menu_bar_plugin_path: Optional[str] = None,
+                            nav_bar_plugin_path: Optional[List[str]] = None,
+                            status_bar_plugin_path: Optional[List[str]] = None,
+                            menu_bar_plugin_path: Optional[List[str]] = None,
                             plugin_whitelist: Optional[Iterable[str]] = None,
                             plugin_blacklist: Optional[Iterable[str]] = None,
                             toolbar_order: Optional[List[Union[str, CToolbarID]]] = None):
@@ -167,11 +167,11 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
         Loads plugins and places them around the main window.
 
         Args:
-            nav_bar_plugin_path: Path to the directory with navigation bar (toolbar) plugins. This path has
+            nav_bar_plugin_path: Path(s) to the directory with navigation bar (toolbar) plugins. This path has
                 can be augmented by ``COMRAD_TOOLBAR_PLUGIN_PATH`` environment variable.
-            status_bar_plugin_path: Path to the directory with status bar plugins. This path has
+            status_bar_plugin_path: Path(s) to the directory with status bar plugins. This path has
                 can be augmented by ``COMRAD_STATUSBAR_PLUGIN_PATH`` environment variable.
-            menu_bar_plugin_path: Path to the directory with main menu plugins. This path has
+            menu_bar_plugin_path: Path(s) to the directory with main menu plugins. This path has
                 can be augmented by ``COMRAD_MENUBAR_PLUGIN_PATH`` environment variable.
             toolbar_order: List of IDs of toolbar items in order in which they must appear left-to-right.
             plugin_whitelist: List of plugin IDs that have to be enabled even if they are disabled by default.
@@ -247,7 +247,7 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
             logger.warning("You are using unsupported operating system. Can't open the file...")
 
     def _load_toolbar_plugins(self,
-                              cmd_line_paths: Optional[str],
+                              cmd_line_paths: Optional[List[str]],
                               order: Optional[List[Union[str, CToolbarID]]] = None,
                               whitelist: Optional[Iterable[str]] = None,
                               blacklist: Optional[Iterable[str]] = None) -> Optional[List[CPlugin]]:
@@ -376,7 +376,7 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
         return stored_plugins
 
     def _load_menubar_plugins(self,
-                              cmd_line_paths: Optional[str],
+                              cmd_line_paths: Optional[List[str]],
                               whitelist: Optional[Iterable[str]] = None,
                               blacklist: Optional[Iterable[str]] = None) -> Optional[List[CPlugin]]:
         menubar_plugins = CMainWindow._load_plugins(env_var_path_key='COMRAD_MENUBAR_PLUGIN_PATH',
@@ -423,7 +423,7 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
         return stored_plugins
 
     def _load_status_bar_plugins(self,
-                                 cmd_line_paths: Optional[str],
+                                 cmd_line_paths: Optional[List[str]],
                                  whitelist: Optional[Iterable[str]] = None,
                                  blacklist: Optional[Iterable[str]] = None) -> Optional[List[CPlugin]]:
         status_bar_plugins = CMainWindow._load_plugins(env_var_path_key='COMRAD_STATUSBAR_PLUGIN_PATH',
@@ -469,14 +469,11 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
 
     @staticmethod
     def _load_plugins(env_var_path_key: str,
-                      cmd_line_paths: Optional[str],
+                      cmd_line_paths: Optional[List[str]],
                       shipped_plugin_path: str,
                       base_type: Type = CPlugin) -> Dict[str, Type]:
 
-        all_plugin_paths = str(Path(__file__).parent / 'plugins' / shipped_plugin_path)
-
-        if cmd_line_paths:
-            all_plugin_paths = f'{cmd_line_paths}:{all_plugin_paths}'
+        all_plugin_paths = [str(Path(__file__).parent / 'plugins' / shipped_plugin_path)]
 
         extra_plugin_paths: str = ''
         try:
@@ -484,10 +481,12 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
         except KeyError:
             pass
         if extra_plugin_paths:
-            all_plugin_paths = f'{extra_plugin_paths}:{all_plugin_paths}'
+            all_plugin_paths = extra_plugin_paths.split(os.pathsep) + all_plugin_paths
 
-        locations = [Path(p) for p in all_plugin_paths.split(':')]
-        return load_plugins_from_path(locations=locations,
+        if cmd_line_paths:
+            all_plugin_paths = cmd_line_paths + all_plugin_paths
+
+        return load_plugins_from_path(locations=map(Path, all_plugin_paths),
                                       token='_plugin.py',
                                       base_type=base_type)
 
