@@ -218,11 +218,11 @@ class CApplication(PyDMApplication):
             def _toolbar_to_str(val: Union[str, CToolbarID]):
                 return val if isinstance(val, str) else val.value
 
-            args.extend(['--nav-bar-order', ','.join(map(_toolbar_to_str, self._toolbar_order))])
+            args.extend(['--nav-bar-order', *map(_toolbar_to_str, self._toolbar_order)])
         if self._plugin_whitelist:
-            args.extend(['--enable-plugins', ','.join(self._plugin_whitelist)])
+            args.extend(['--enable-plugins', *self._plugin_whitelist])
         if self._plugin_blacklist:
-            args.extend(['--disable-plugins', ','.join(self._plugin_blacklist)])
+            args.extend(['--disable-plugins', *self._plugin_blacklist])
         args.extend(['--log-level', logging.getLevelName(logging.getLogger('').getEffectiveLevel())])
         args.append(filepath)
         args.extend(self.display_args)

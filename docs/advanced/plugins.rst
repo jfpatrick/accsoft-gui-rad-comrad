@@ -64,7 +64,7 @@ CLI provides flags to enable or disable plugins, e.g.
 
    comrad run \
      --enable-plugins org.example.my-plugin \
-     --disable-plugins comrad.rbac,org.example.my-another-plugin
+     --disable-plugins comrad.rbac org.example.my-another-plugin
 
 
 Navigation bar plugins
@@ -99,7 +99,7 @@ from the right, e.g.:
 .. code-block:: bash
 
    comrad run --nav-bar-order \
-     org.example.my-plugin,comrad.sep,comrad.spacer,comrad.home \
+     org.example.my-plugin comrad.sep comrad.spacer comrad.home \
      /path/to/my/app.ui
 
 :class:`~comrad.app.plugins.CToolbarID` provides all known values for non-plugin items inside the navigation bar, such as

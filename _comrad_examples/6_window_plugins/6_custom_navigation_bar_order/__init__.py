@@ -11,5 +11,5 @@ entrypoint = 'app.ui'
 
 launch_arguments = [
     '--nav-plugin-path', '~example',
-    '--nav-bar-order', 'com.example.demo,comrad.sep,comrad.home',
+    '--nav-bar-order', 'com.example.demo', 'comrad.sep', 'comrad.home',
 ]
