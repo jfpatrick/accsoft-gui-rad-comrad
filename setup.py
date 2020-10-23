@@ -20,7 +20,7 @@ requirements = {
         'argcomplete>=1.10.0,<2',
         'colorlog>=4.0.2,<5',
         'QtPy>=1.7,<2',
-        'pyjapc==2.1.2',  # We must keep it pinned to this version, because comrad is obliged to override getParam, which makes it very fragile to changes
+        'pyjapc==2.2.0',  # We must keep it pinned to this version, because comrad is obliged to override getParam, which makes it very fragile to changes
         'accwidgets>=0.4,<0.5',
         'papc>=0.4,<0.5',
         'pydm==1.8.0.post0',
