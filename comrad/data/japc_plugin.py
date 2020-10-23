@@ -181,11 +181,7 @@ class CJapcConnection(CCommonDataConnection):
             get_japc().startSubscriptions(parameterName=self._pyjapc_param_name, selector=self._selector)
         except Exception as e:
             # TODO: Catch more specific Jpype errors here
-            logger.exception(f'Unexpected error while subscribing to {self.address}'
-                             '. Please verify the parameters and make sure the address is in the form'
-                             f"'{self.protocol}:///device/property#field@selector' or"
-                             f"'{self.protocol}:///device/prop#field' or"
-                             f"'{self.protocol}:///device/property'. Underlying problem: {str(e)}")
+            logger.exception(f'Unexpected error while subscribing to {self.address}: {e!s}')
 
     def _on_subscription_exception(self, param_name: str, _: str, exception: Exception):
         logger.exception(f'Exception {type(exception).__name__} triggered '  # type: ignore
