@@ -4,7 +4,8 @@ it can be used with ComRAD.
 """
 import jpype
 import logging
-from typing import cast, Optional, Callable, Any
+from enum import IntFlag, IntEnum
+from typing import cast, Optional, Callable, Any, Dict, List
 from qtpy.QtCore import QObject, Signal
 from pyjapc import PyJapc
 from comrad.rbac import CRBACLoginStatus, CRBACStartupLoginPolicy
@@ -64,20 +65,45 @@ def _original_fixed_get_param(self,
         p.getValue(s, listener)
 
 
+def _papc_extract_val(orig: Dict[str, Any]) -> Any:
+
+    def enum_item_to_obj(enum_item: IntEnum) -> CEnumValue:
+        code = enum_item.value
+        label = enum_item.name
+        return CEnumValue(code=code, label=label, meaning=CEnumValue.Meaning.NONE, settable=True)
+
+    def flags_item_to_obj(flag_item: IntFlag) -> List[CEnumValue]:
+        res = []
+        for bit in type(flag_item):
+            if bit in flag_item:
+                res.append(CEnumValue(code=bit.value, label=bit.name, meaning=CEnumValue.Meaning.NONE, settable=False))
+        return res
+
+    val = orig['value']
+    if isinstance(val, IntEnum):
+        return enum_item_to_obj(val)
+    elif isinstance(val, IntFlag):
+        return flags_item_to_obj(val)
+    else:
+        return val
+
+
 def _fixed_papc_get_param(self, parameterName, getHeader=False, noPyConversion=False,
                           unixtime=False, onValueReceived=None, onException=None, **kwargs):
     # The main difference here is that papc never passes the header to onValueReceived event
-    # when getHeader is set to True. The rest is almost identical to v0.4 (except for fixing code style
-    # to keep linters happy)
+    # when getHeader is set to True. In addition, it runs custom logic to resolve enums and enum sets, similar to
+    # how it overrides real PyJapc to convert into CEnumValue. Lastly, it removes useless papc warnings about not
+    # implemented interfaces.
+    # The rest is almost identical to v0.4 (except for fixing code style to keep linters happy)
 
     # We mimic the (ugly) interface exposed by PyJapc to support timingSelectorOverride.
     selector = kwargs.pop('timingSelectorOverride', self.selector)
-    if kwargs:
-        self._raise_error(NotImplementedError('getParam with arbitrary kwargs not supported in simulation mode'))
-    if unixtime or noPyConversion:
-        self._raise_error(NotImplementedError('unixtime and/or noPyConversion not supported in simulation mode'))
-    if onException:
-        self._raise_error(NotImplementedError('onException not supported in simulation mode'))
+    # if kwargs:
+    #     self._raise_error(NotImplementedError('getParam with arbitrary kwargs not supported in simulation mode'))
+    # if unixtime or noPyConversion:
+    #     self._raise_error(NotImplementedError('unixtime and/or noPyConversion not supported in simulation mode'))
+    # if onException:
+    #     self._raise_error(NotImplementedError('onException not supported in simulation mode'))
 
     # TODO: we are not mimicking the exceptions raised just yet.
     from papc.reference import PropertyReference
@@ -93,15 +119,14 @@ def _fixed_papc_get_param(self, parameterName, getHeader=False, noPyConversion=F
     # We have different behaviour for properties vs fields (for getHeader).
     # For props: we have a dictionary of ``{prop_name: values}, {prop_headers}``
     # For fields: we have ``value, {prop_headers}``
-
     if isinstance(param_ref, PropertyReference):
         # Pull out just the field name.
         f_name = lambda name: FieldReference(name).field
-        value = {f_name(field): data['value'] for field, data in result.items()}
+        value = {f_name(field): _papc_extract_val(data) for field, data in result.items()}
     else:
         # Get the only item out of the result dictionary.
         [field_result] = result.values()
-        value = field_result['value']
+        value = _papc_extract_val(field_result)
 
     if onValueReceived:
         if getHeader:
@@ -115,6 +140,67 @@ def _fixed_papc_get_param(self, parameterName, getHeader=False, noPyConversion=F
             return value, header
         else:
             return value
+
+
+def _fixed_papc_subscribe_param(self, parameterName, onValueReceived=None, onException=None, getHeader=False,
+                                noPyConversion=False, unixtime=False, **kwargs):
+    # The main difference here is that it runs custom logic to resolve enums and enum sets, similar to
+    # how it overrides real PyJapc to convert into CEnumValue. Lastly, it removes useless papc warnings about not
+    # implemented interfaces.
+    # The rest is almost identical to v0.4 (except for fixing code style to keep linters happy)
+    selector = kwargs.pop('timingSelectorOverride', self.selector)
+
+    # if kwargs:
+    #     self._raise_error(NotImplementedError('getParam with arbitrary kwargs not supported in simulation mode'))
+    # if noPyConversion:
+    #     self._raise_error(NotImplementedError('noPyConversion not supported in simulation mode'))
+    # if unixtime:
+    #     self._raise_error(NotImplementedError('unixtime not supported in simulation mode'))
+    # if onException:
+    #     self._raise_error(NotImplementedError('onException not supported in simulation mode'))
+
+    from papc.reference import PropertyReference
+    from papc.reference import FieldReference
+
+    # Py36 workaround :(
+    from papc.system import _parameter_ref_from_string, ParameterReferenceType
+    PR_from_string = getattr(ParameterReferenceType, 'from_string', _parameter_ref_from_string)
+
+    param_ref = PR_from_string(parameterName)
+
+    # Track whether a result has been received yet for this subscription.
+    first_result_received = False
+
+    from papc.interfaces.pyjapc import JapcSubscription
+
+    def prepare_result(result):
+        nonlocal first_result_received
+        toggled_header = []
+        if getHeader:
+            header = self._get_header_base(selector)
+            header.update({'isFirstUpdate': not first_result_received})
+            toggled_header.append(header)
+        # Now that we have received at least one result,
+        # we have been initialised.
+        first_result_received = True
+        if isinstance(param_ref, PropertyReference):
+            # Pull out just the field name.
+            p_name = str(param_ref)
+            f_name = lambda name: FieldReference(name).field
+            result = {f_name(field): _papc_extract_val(data) for field, data in result.items()}
+            # args: property_name, values, headerInfos
+
+            return onValueReceived(p_name, result, *toggled_header)
+        else:
+            name, info = result.popitem()
+            # args: parameterName, value, headerInfo
+            return onValueReceived(name, _papc_extract_val(info), *toggled_header)
+
+    sub = self.system.subscriptions.create(parameterName, selector, prepare_result)
+    sub = JapcSubscription(self.system, sub)
+
+    self._subscriptions.append(sub)
+    return sub
 
 
 # This is a hack, and should be abstracted away, but with current status of both,
@@ -131,6 +217,9 @@ else:
     # we switched to https, would require users to always enter credentials.
     # The original forked fix is here: git+ssh://git@gitlab.cern.ch:7999/isinkare/papc.git@fix/async-get-interface
     PyJapc.getParam = _fixed_papc_get_param
+    # This replacement harmonizes processing of enums between getParam, subscribeParam to make it
+    # similar to PyJapc's overridden _convertSimpleValToPy.
+    PyJapc.subscribeParam = _fixed_papc_subscribe_param
 
 
 class CPyJapc(PyJapc, QObject):
@@ -249,7 +338,7 @@ class CPyJapc(PyJapc, QObject):
             self._app.rbac.user = actual_token.getUser().getName()
             self._app.rbac.status = CRBACLoginStatus(login_status)
         else:
-            logger.warning(f'Failed to get a new token from Java')
+            logger.warning('Failed to get a new token from Java')
 
     def _set_online(self, logged_in: bool):
         self._logged_in = logged_in

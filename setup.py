@@ -22,7 +22,7 @@ requirements = {
         'QtPy>=1.7,<2',
         'pyjapc==2.2.0',  # We must keep it pinned to this version, because comrad is obliged to override getParam, which makes it very fragile to changes
         'accwidgets>=0.4,<0.5',
-        'papc>=0.4,<0.5',
+        'papc>=0.5.1,<0.6',
         'pydm==1.8.0.post0',
         'JPype1>=0.7,<0.7.2',  # 0.7.2 seems incompatible with pyjapc as of now
         'dataclasses~=0.7;python_version<"3.7"',
