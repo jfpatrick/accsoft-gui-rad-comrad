@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Custom update source with CValueAggregator</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="CScrollingPlot" name="plot">
+     <property name="showLegend" stdset="0">
+      <bool>true</bool>
+     </property>
+     <property name="curves" stdset="0">
+      <stringlist>
+       <string>{&quot;channel&quot;: &quot;DemoDevice/Acquisition#field1&quot;, &quot;style&quot;: &quot;Line Graph&quot;, &quot;layer&quot;: &quot;&quot;, &quot;name&quot;: &quot;field1&quot;, &quot;color&quot;: &quot;white&quot;, &quot;line_style&quot;: 1, &quot;line_width&quot;: 1, &quot;symbol&quot;: null, &quot;symbol_size&quot;: 10}</string>
+       <string>{&quot;channel&quot;: &quot;DemoDevice/Acquisition#field2&quot;, &quot;style&quot;: &quot;Line Graph&quot;, &quot;layer&quot;: &quot;&quot;, &quot;name&quot;: &quot;field2&quot;, &quot;color&quot;: &quot;#ff55ff&quot;, &quot;line_style&quot;: 1, &quot;line_width&quot;: 1, &quot;symbol&quot;: null, &quot;symbol_size&quot;: 10}</string>
+      </stringlist>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="CValueAggregator" name="fusion">
+     <property name="valueTransformation">
+      <string notr="true">if len(values) == 2:
+    # Dictionary values view (values from all channels)
+    vals = values.values()
+    # Extract timestamp from the first channel
+    # (expect timestamps are the same for both channels)
+    timestamp = next(iter(headers.values()))['acqStamp'].timestamp()
+    # Make a tuple (val1, val2, timestamp)
+    arg = tuple([*vals, timestamp])
+    # Forward data to update sources
+    output(arg)</string>
+     </property>
+     <property name="inputChannels" stdset="0">
+      <stringlist>
+       <string>DemoDevice/Acquisition#field1</string>
+       <string>DemoDevice/Acquisition#field2</string>
+      </stringlist>
+     </property>
+     <property name="generatorTrigger" stdset="0">
+      <enum>CValueAggregator::AggregatedLast</enum>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ScrollingPlotWidget</class>
+   <extends>QGraphicsView</extends>
+   <header>accwidgets.graph.widgets.plotwidget</header>
+  </customwidget>
+  <customwidget>
+   <class>CScrollingPlot</class>
+   <extends>ScrollingPlotWidget</extends>
+   <header>comrad.widgets.graphs</header>
+  </customwidget>
+  <customwidget>
+   <class>CValueAggregator</class>
+   <extends>QWidget</extends>
+   <header>comrad.widgets.modifiers</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
