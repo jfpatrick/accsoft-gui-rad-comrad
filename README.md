@@ -119,8 +119,8 @@ xdg-open path/to/docs/output/dir/index.html
 Cross-referencing "Intersphinx" plugin takes heavy advantage of custom inventories
 to create links for third-party libraries, such as Qt, PyQt and others. Not all of them
 are available in the friendly way, that's why we have few custom inventories (located in
-`docs/*.inv` files). These files are package using [sphobjinv](https://pypi.org/project/sphobjinv/)
-tool from corrsponding `docs/*.txt` files. If you want to add a missing symbol, modify
+`docs/*.inv` files). These files are packaged using [sphobjinv](https://pypi.org/project/sphobjinv/)
+tool from corresponding `docs/*.txt` files. If you want to add a missing symbol, modify
 the `*.txt` file, re-create the inventory:
 ```bash
 sphobjinv convert zlib --overwrite docs/<lib>.txt docs/<lib>.inv
