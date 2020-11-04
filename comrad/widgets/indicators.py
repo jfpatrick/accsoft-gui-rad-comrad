@@ -265,22 +265,10 @@ class CLed(CColorRulesMixin, CValueTransformerMixin, CInitializedMixin, CHideUnu
         else:
             self.color = color
 
-    def __get_color(self) -> QColor:
-        return super().color
-
-    def __set_color(self, new_val: QColor):
-        Led._set_color_prop_wrapper(self, new_val)
-
-    color: QColor = Property('QColor', __get_color, __set_color, designable=False)
+    color: QColor = Property('QColor', Led.color.fget, Led.color.fset, designable=False)
     """Fill color of the LED."""
 
-    def __get_status(self) -> Led.Status:
-        return super().status
-
-    def __set_status(self, new_val: Led.Status):
-        Led._set_status(self, new_val)
-
-    status = Property(int, __get_status, __set_status, designable=False)
+    status = Property(int, Led.status.fget, Led.status.fset, designable=False)
     """Status to switch LED to a predefined color."""
 
     @staticmethod
