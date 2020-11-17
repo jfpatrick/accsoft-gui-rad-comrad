@@ -51,7 +51,7 @@ def modify_in_place(new_cls: Type):
     Returns:
         Modified superclass instance.
     """
-    super_class = new_cls.__mro__[1]
+    super_class = new_cls.mro()[1]
     logger.debug(f'Monkey-patching {super_class.__name__}...')
     predicate = lambda x: inspect.isfunction(x) or inspect.isdatadescriptor(x)
     super_members: Dict[str, Callable] = dict(inspect.getmembers(object=super_class, predicate=predicate))

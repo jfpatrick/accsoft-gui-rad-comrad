@@ -20,7 +20,7 @@ def test_cwidget_is_pydmwidget():
     class cl1(CWidget):
         pass
 
-    assert cl1.__mro__[1] == PyDMWidget
+    assert cl1.mro()[1] == PyDMWidget
     assert CWidget == PyDMWidget
 
 
