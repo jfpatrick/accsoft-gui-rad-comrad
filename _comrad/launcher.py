@@ -331,6 +331,13 @@ def _run_comrad(args: argparse.Namespace) -> bool:
 
     stylesheet: Optional[str] = comrad_asset('dark.qss') if args.dark_mode else args.stylesheet
 
+    # TODO: This is a short-term hotfix. We need a more secure solution
+    # Work around behavior change in Python 3.7 (https://docs.python.org/3/whatsnew/3.7.html#changes-in-python-behavior),
+    # last bullet point mentioning sys.path
+    # See https://issues.cern.ch/browse/ACCPY-731 for details
+    if sys.version_info.major > 3 or (sys.version_info.major == 3 and sys.version_info.minor >= 7):
+        sys.path.append(os.getcwd())
+
     app = CApplication(ui_file=args.display_file,
                        command_line_args=args.display_args,
                        use_inca=not args.no_inca,
