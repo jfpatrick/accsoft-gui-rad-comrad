@@ -203,26 +203,33 @@ def _fixed_papc_subscribe_param(self, parameterName, onValueReceived=None, onExc
     return sub
 
 
-# This is a hack, and should be abstracted away, but with current status of both,
-# and the need to override getParam, it's impossible.
-# TODO: Eliminate this when PyJapc and PAPC are improved
-if not PyJapc.__module__.startswith('papc.'):
-    PyJapc.getParam = _original_fixed_get_param
-else:
-    # This is another hack, because papc has to have the same interface as PyJapc,
+in_papc_mode = PyJapc.__module__.startswith('papc.')
+
+
+class PyJapcWrapper(PyJapc):
+    """
+    This class wraps PyJapc with substituted methods, to localize method swizzling, to avoid influencing other
+    PyJapc instances (not participating in PyDM data plugin system) that can
+    be used in the user-code or other parts of the components, e.g. PyJapc used by TimingBarModel.
+
+    This layer provides hacks that fix limiting behaviors of pyjapc and papc libraries.
+    """
+
+    # Papc has to have the same interface as PyJapc,
     # And we are fixing PyJapc interface, papc change needs to be done, but it cant
     # be submitted to the official papc, until official PyJapc is done. Until recently,
     # solution was to use forked papc, but it's not friendly for comrad release, as
     # might fail to download on machines that do not have ssh keys for gitlab, or if
     # we switched to https, would require users to always enter credentials.
     # The original forked fix is here: git+ssh://git@gitlab.cern.ch:7999/isinkare/papc.git@fix/async-get-interface
-    PyJapc.getParam = _fixed_papc_get_param
+    getParam = _fixed_papc_get_param if in_papc_mode else _original_fixed_get_param
+
     # This replacement harmonizes processing of enums between getParam, subscribeParam to make it
     # similar to PyJapc's overridden _convertSimpleValToPy.
-    PyJapc.subscribeParam = _fixed_papc_subscribe_param
+    subscribeParam = _fixed_papc_subscribe_param if in_papc_mode else PyJapc.subscribeParam
 
 
-class CPyJapc(PyJapc, QObject):
+class CPyJapc(PyJapcWrapper, QObject):
     """Singleton instance to avoid RBAC login for multiple Japc connections."""
 
     japc_status_changed = Signal(bool)
@@ -245,9 +252,9 @@ class CPyJapc(PyJapc, QObject):
         # which fails to read data from private virtual devices.
         # When passing selector, it is important to set incaAcceleratorName, because default 'auto' name
         # will try to infer the accelerator from the selector and will fail, if we are passing None
-        PyJapc.__init__(self,
-                        selector='',
-                        incaAcceleratorName='' if app.use_inca else None)
+        PyJapcWrapper.__init__(self,
+                               selector='',
+                               incaAcceleratorName='' if app.use_inca else None)
         QObject.__init__(self)
         self._logged_in: bool = False
         self._use_inca = app.use_inca

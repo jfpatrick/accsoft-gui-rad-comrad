@@ -106,8 +106,8 @@ def pyjapc_subclass():
                                  rbacLogin=mock.DEFAULT,
                                  rbacLogout=mock.DEFAULT,
                                  rbacGetToken=mock.DEFAULT):
-            from comrad.data.pyjapc_patch import CPyJapc, PyJapc
-            CPyJapc.super_mock = PyJapc  # Keep the pointer for the tests to check for call assertions
+            from comrad.data.pyjapc_patch import CPyJapc, PyJapcWrapper
+            CPyJapc.super_mock = PyJapcWrapper  # Keep the pointer for the tests to check for call assertions
             CPyJapc.__del__ = mock.Mock()  # Avoid calling clearSubscriptions and other nonsense at the end of the test
             yield CPyJapc
 
