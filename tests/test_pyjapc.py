@@ -3,10 +3,11 @@ from unittest import mock
 from typing import cast
 from comrad import CApplication
 from comrad.rbac import CRBACLoginStatus, CRBACStartupLoginPolicy
+from comrad.data.pyjapc_patch import CPyJapc
 
 
-@pytest.fixture()
-def pyjapc_subclass():
+@pytest.fixture(autouse=True)
+def mock_pyjapc():
     # Because unittest.mock is unable to fully mock superclass (especially in the multiple inheritance case),
     # we have to mock all super methods manually.
 
@@ -106,10 +107,9 @@ def pyjapc_subclass():
                                  rbacLogin=mock.DEFAULT,
                                  rbacLogout=mock.DEFAULT,
                                  rbacGetToken=mock.DEFAULT):
-            from comrad.data.pyjapc_patch import CPyJapc, PyJapcWrapper
-            CPyJapc.super_mock = PyJapcWrapper  # Keep the pointer for the tests to check for call assertions
-            CPyJapc.__del__ = mock.Mock()  # Avoid calling clearSubscriptions and other nonsense at the end of the test
-            yield CPyJapc
+            from comrad.data.pyjapc_patch import PyJapc
+            PyJapc.__del__ = mock.Mock()  # Avoid calling clearSubscriptions and other nonsense at the end of the test
+            yield
 
 
 def test_japc_singleton():
@@ -123,49 +123,54 @@ def test_japc_singleton():
     (True, CRBACLoginStatus.LOGGED_IN_BY_LOCATION),
     (False, CRBACLoginStatus.LOGGED_OUT),
 ])
-def test_rbac_login_by_location(pyjapc_subclass, succeeds: bool, expected_status: CRBACLoginStatus):
+@mock.patch('comrad.data.pyjapc_patch.CPyJapc.rbacLogin')
+@mock.patch('pyjapc.PyJapc.rbacGetToken')
+def test_rbac_login_by_location(rbacGetToken, rbacLogin, succeeds: bool, expected_status: CRBACLoginStatus):
 
-    japc = pyjapc_subclass()
-    with mock.patch.object(japc, 'rbacLogin') as rbacLogin:
+    japc = CPyJapc()
 
-        def set_logged_in(*_, **__):
-            japc._logged_in = succeeds
+    def set_logged_in(*_, **__):
+        japc._logged_in = succeeds
 
-        rbacLogin.side_effect = set_logged_in
+    rbacLogin.side_effect = set_logged_in
 
-        rbac = cast(CApplication, CApplication.instance()).rbac
-        assert japc._logged_in is False
-        assert rbac.status == CRBACLoginStatus.LOGGED_OUT
+    rbac = cast(CApplication, CApplication.instance()).rbac
+    assert japc._logged_in is False
+    assert rbac.status == CRBACLoginStatus.LOGGED_OUT
+    assert rbac.user is None
+
+    rbacGetToken.return_value.getUser.return_value.getName.return_value = 'TEST_USER'
+
+    rbacGetToken.reset_mock()
+    japc.login_by_location()
+    rbacLogin.assert_called_once()
+    if succeeds:
+        rbacGetToken.assert_called_once()
+        assert rbac.user == 'TEST_USER'
+    else:
+        rbacGetToken.assert_not_called()
         assert rbac.user is None
-
-        pyjapc_subclass.super_mock.rbacGetToken.return_value.getUser.return_value.getName.return_value = 'TEST_USER'
-
-        japc.login_by_location()
-        rbacLogin.assert_called_once()
-        if succeeds:
-            pyjapc_subclass.super_mock.rbacGetToken.assert_called_once()
-            assert rbac.user == 'TEST_USER'
-        else:
-            pyjapc_subclass.super_mock.rbacGetToken.assert_not_called()
-            assert rbac.user is None
-        assert rbac.status == expected_status
+    assert rbac.status == expected_status
 
 
-def test_rbac_logout_succeeds(pyjapc_subclass):
-    japc = pyjapc_subclass()
+@mock.patch('pyjapc.PyJapc.rbacLogout')
+@mock.patch('pyjapc.PyJapc.rbacGetToken')
+def test_rbac_logout_succeeds(rbacGetToken, rbacLogout):
+    japc = CPyJapc()
     japc._logged_in = True
     rbac = cast(CApplication, CApplication.instance()).rbac
     rbac.user = 'TEST_USER'
     rbac._status = CRBACLoginStatus.LOGGED_IN_BY_LOCATION
 
     japc.rbacLogout()
-    pyjapc_subclass.super_mock.rbacLogout.assert_called_once()
-    pyjapc_subclass.super_mock.rbacGetToken.assert_not_called()
+    rbacLogout.assert_called_once()
+    rbacGetToken.assert_not_called()
     assert rbac.status == CRBACLoginStatus.LOGGED_OUT
 
 
-def test_rbac_login_only_once(pyjapc_subclass):
-    japc = pyjapc_subclass()
+@mock.patch('pyjapc.PyJapc.rbacLogin')
+def test_rbac_login_only_once(rbacLogin):
+    japc = CPyJapc()
     assert japc.logged_in is False
 
     japc.login_by_location()
@@ -173,18 +178,19 @@ def test_rbac_login_only_once(pyjapc_subclass):
     japc.login_by_location()
     japc.login_by_location()
     assert japc.logged_in is True
-    pyjapc_subclass.super_mock.rbacLogin.assert_called_once()
+    rbacLogin.assert_called_once()
 
 
-def test_rbac_logout_only_once(pyjapc_subclass):
-    japc = pyjapc_subclass()
+@mock.patch('pyjapc.PyJapc.rbacLogout')
+def test_rbac_logout_only_once(rbacLogout):
+    japc = CPyJapc()
     japc._logged_in = True
     japc.rbacLogout()
     japc.rbacLogout()
     japc.rbacLogout()
     japc.rbacLogout()
     assert japc.logged_in is False
-    pyjapc_subclass.super_mock.rbacLogout.assert_called_once()
+    rbacLogout.assert_called_once()
 
 
 # TODO: Test case with login by credentials when appropriate dialog is implemented
@@ -192,19 +198,19 @@ def test_rbac_logout_only_once(pyjapc_subclass):
     (CRBACStartupLoginPolicy.LOGIN_BY_LOCATION, {}),
     (CRBACStartupLoginPolicy.NO_LOGIN, None),
 ])
-def test_rbac_login_on_startup(pyjapc_subclass, login_policy, args):
+def test_rbac_login_on_startup(login_policy, args):
     rbac = cast(CApplication, CApplication.instance()).rbac
     rbac.startup_login_policy = login_policy
     with mock.patch('comrad.data.pyjapc_patch.CPyJapc.rbacLogin') as rbacLogin:
-        japc = pyjapc_subclass()
+        japc = CPyJapc()
         if login_policy == CRBACStartupLoginPolicy.NO_LOGIN:
             rbacLogin.assert_not_called()
         else:
             rbacLogin.assert_called_once_with(**args, on_exception=japc._login_err)
 
 
-def test_rbac_login_notifies_status(pyjapc_subclass, qtbot):
-    japc = pyjapc_subclass()
+def test_rbac_login_notifies_status(qtbot):
+    japc = CPyJapc()
     assert japc.logged_in is False
     with qtbot.wait_signal(japc.japc_status_changed) as blocker:
         japc.rbacLogin()
@@ -212,8 +218,8 @@ def test_rbac_login_notifies_status(pyjapc_subclass, qtbot):
     assert japc.logged_in is True
 
 
-def test_rbac_logout_notifies_status(pyjapc_subclass, qtbot):
-    japc = pyjapc_subclass()
+def test_rbac_logout_notifies_status(qtbot):
+    japc = CPyJapc()
     japc._logged_in = True
     with qtbot.wait_signal(japc.japc_status_changed) as blocker:
         japc.rbacLogout()
@@ -221,7 +227,8 @@ def test_rbac_logout_notifies_status(pyjapc_subclass, qtbot):
     assert japc.logged_in is False
 
 
-def test_rbac_login_fails_on_auth_exception(pyjapc_subclass):
+@mock.patch('pyjapc.PyJapc.rbacLogin')
+def test_rbac_login_fails_on_auth_exception(rbacLogin):
 
     def raise_error(*_, **__):
         # We must add a custom method, rather than assigning type directly to side_effect,
@@ -231,8 +238,8 @@ def test_rbac_login_fails_on_auth_exception(pyjapc_subclass):
         import jpype
         raise jpype.JPackage('cern.rbac.client.authentication.AuthenticationException')('Test exception')
 
-    pyjapc_subclass.super_mock.rbacLogin.side_effect = raise_error
-    japc = pyjapc_subclass()
+    rbacLogin.side_effect = raise_error
+    japc = CPyJapc()
     assert japc.logged_in is False
 
     callback = mock.Mock()
@@ -242,9 +249,10 @@ def test_rbac_login_fails_on_auth_exception(pyjapc_subclass):
 
 
 @pytest.mark.parametrize('error_type', [ValueError, TypeError, RuntimeError, Exception])
-def test_rbac_login_does_not_catch_python_exception(pyjapc_subclass, error_type):
-    pyjapc_subclass.super_mock.rbacLogin.side_effect = error_type
-    japc = pyjapc_subclass()
+@mock.patch('pyjapc.PyJapc.rbacLogin')
+def test_rbac_login_does_not_catch_python_exception(rbacLogin, error_type):
+    rbacLogin.side_effect = error_type
+    japc = CPyJapc()
     assert japc.logged_in is False
 
     callback = mock.Mock()
@@ -259,12 +267,13 @@ def test_rbac_login_does_not_catch_python_exception(pyjapc_subclass, error_type)
     'cern.japc.core.ParameterException',
 ])
 @pytest.mark.parametrize('exc_getter', ['get_param_exc_type', 'get_val_exc_type'])
-def test_rbac_login_does_not_catch_other_java_exceptions(pyjapc_subclass, exc_getter, error_type):
+@mock.patch('pyjapc.PyJapc.rbacLogin')
+def test_rbac_login_does_not_catch_other_java_exceptions(rbacLogin, exc_getter, error_type):
     import jpype
     exc_type = jpype.JPackage(error_type)
 
-    pyjapc_subclass.super_mock.rbacLogin.side_effect = exc_type
-    japc = pyjapc_subclass()
+    rbacLogin.side_effect = exc_type
+    japc = CPyJapc()
     assert japc.logged_in is False
 
     callback = mock.Mock()
@@ -274,17 +283,18 @@ def test_rbac_login_does_not_catch_other_java_exceptions(pyjapc_subclass, exc_ge
     callback.assert_not_called()
 
 
-def test_japc_get_succeeds(pyjapc_subclass):
-    pyjapc_subclass.super_mock.getParam.return_value = 3
-    japc = pyjapc_subclass()
+@mock.patch('comrad.data.pyjapc_patch.PyJapcWrapper.getParam', return_value=3)
+def test_japc_get_succeeds(getParam):
+    japc = CPyJapc()
     assert japc.getParam('test_addr') == 3
-    pyjapc_subclass.super_mock.getParam.assert_called_once_with('test_addr')
+    getParam.assert_called_once_with('test_addr')
 
 
-def test_japc_set_succeeds(pyjapc_subclass):
-    japc = pyjapc_subclass()
+@mock.patch('pyjapc.PyJapc.setParam')
+def test_japc_set_succeeds(setParam):
+    japc = CPyJapc()
     japc.setParam('test_addr', 4)
-    pyjapc_subclass.super_mock.setParam.assert_called_once_with('test_addr', 4, checkDims=False)
+    setParam.assert_called_once_with('test_addr', 4, checkDims=False)
 
 
 @pytest.mark.parametrize('error_type', [
@@ -295,7 +305,9 @@ def test_japc_set_succeeds(pyjapc_subclass):
     ('getParam', False, None),
     ('setParam', True, 4),
 ])
-def test_japc_get_set_fails_on_cmw_exception(pyjapc_subclass, method, display_popup, value, qtbot, error_type):
+@mock.patch('comrad.data.pyjapc_patch.PyJapcWrapper.getParam')
+@mock.patch('pyjapc.PyJapc.setParam')
+def test_japc_get_set_fails_on_cmw_exception(setParam, getParam, method, display_popup, value, qtbot, error_type):
 
     def raise_error(parameterName, *args, **__):
         assert parameterName == 'test_addr'
@@ -305,10 +317,10 @@ def test_japc_get_set_fails_on_cmw_exception(pyjapc_subclass, method, display_po
         exc_type = jpype.JPackage(error_type)
         raise exc_type('Something happened --> Test exception')
 
-    pyjapc_subclass.super_mock.getParam.side_effect = raise_error
-    pyjapc_subclass.super_mock.setParam.side_effect = raise_error
+    getParam.side_effect = raise_error
+    setParam.side_effect = raise_error
 
-    japc = pyjapc_subclass()
+    japc = CPyJapc()
     args = ['test_addr']
     if value is not None:
         args.append(value)
@@ -326,7 +338,9 @@ def test_japc_get_set_fails_on_cmw_exception(pyjapc_subclass, method, display_po
     ('getParam', False, None),
     ('setParam', True, 4),
 ])
-def test_japc_get_set_does_catch_other_java_exception(pyjapc_subclass, method, display_popup, value, qtbot, error_type):
+@mock.patch('comrad.data.pyjapc_patch.PyJapcWrapper.getParam')
+@mock.patch('pyjapc.PyJapc.setParam')
+def test_japc_get_set_does_catch_other_java_exception(setParam, getParam, method, display_popup, value, qtbot, error_type):
 
     def raise_error(parameterName, *args, **__):
         assert parameterName == 'test_addr'
@@ -336,10 +350,10 @@ def test_japc_get_set_does_catch_other_java_exception(pyjapc_subclass, method, d
         exc_type = jpype.JPackage(error_type)
         raise exc_type('Test exception')
 
-    pyjapc_subclass.super_mock.getParam.side_effect = raise_error
-    pyjapc_subclass.super_mock.setParam.side_effect = raise_error
+    getParam.side_effect = raise_error
+    setParam.side_effect = raise_error
 
-    japc = pyjapc_subclass()
+    japc = CPyJapc()
     args = ['test_addr']
     if value is not None:
         args.append(value)
@@ -353,11 +367,13 @@ def test_japc_get_set_does_catch_other_java_exception(pyjapc_subclass, method, d
     ('setParam', 4),
 ])
 @pytest.mark.parametrize('error_type', [ValueError, TypeError, RuntimeError, Exception, BaseException])
-def test_japc_get_set_does_not_catch_python_exception(pyjapc_subclass, method, value, qtbot, error_type):
-    pyjapc_subclass.super_mock.getParam.side_effect = error_type
-    pyjapc_subclass.super_mock.setParam.side_effect = error_type
+@mock.patch('comrad.data.pyjapc_patch.PyJapcWrapper.getParam')
+@mock.patch('pyjapc.PyJapc.setParam')
+def test_japc_get_set_does_not_catch_python_exception(setParam, getParam, method, value, qtbot, error_type):
+    getParam.side_effect = error_type
+    setParam.side_effect = error_type
 
-    japc = pyjapc_subclass()
+    japc = CPyJapc()
     args = ['test_addr']
     if value is not None:
         args.append(value)
@@ -366,12 +382,12 @@ def test_japc_get_set_does_not_catch_python_exception(pyjapc_subclass, method, v
             getattr(japc, method)(*args)
 
 
-def test_jvm_flags_are_passed(pyjapc_subclass):
+def test_jvm_flags_are_passed():
     with mock.patch('jpype.java') as java:
         cast(CApplication, CApplication.instance()).jvm_flags = {
             'FLAG1': 'val1',
             'FLAG2': 2,
         }
-        _ = pyjapc_subclass()
+        _ = CPyJapc()
         java.lang.System.setProperty.assert_any_call('FLAG1', 'val1')
         java.lang.System.setProperty.assert_any_call('FLAG2', '2')
