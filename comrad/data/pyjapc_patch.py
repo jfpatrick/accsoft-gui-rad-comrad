@@ -230,13 +230,26 @@ class PyJapcWrapper(PyJapc):
 
 
 class CPyJapc(PyJapcWrapper, QObject):
-    """Singleton instance to avoid RBAC login for multiple Japc connections."""
 
     japc_status_changed = Signal(bool)
     japc_login_error = Signal(str, bool)
     japc_param_error = Signal(str, bool)
 
+    @classmethod
+    def instance(cls):
+        """
+        Method to retrieve a singleton of the JAPC service instance.
+
+        It is done to avoid multiple log-in attempts when having several channels working with JAPC.
+        Currently PyJapc also defeats the opportunity to use different instances with different InCA configuration
+        setting. Therefore, we use singleton everywhere in for now.
+        """
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+
     def __init__(self):
+        """Singleton instance to avoid RBAC login for multiple Japc connections."""
         app = cast(CApplication, CApplication.instance())
         if not app.use_inca:
             logger.debug('User has opted-out from using InCA')
@@ -394,3 +407,5 @@ class CPyJapc(PyJapcWrapper, QObject):
             return [enum_item_to_obj(v) for v in val.getEnumItemSet()]
         else:
             return super()._convertSimpleValToPy(val)
+
+    _instance = None

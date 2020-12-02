@@ -8,22 +8,17 @@ from logging import LogRecord
 from pytestqt.qtbot import QtBot
 from _pytest.logging import LogCaptureFixture
 from qtpy.QtCore import Signal, Slot, QObject
-from comrad.data import japc_plugin, channel
+from comrad.data import japc_plugin
+from comrad.data.japc_plugin import CJapcConnection, CChannelData, SPECIAL_FIELDS
+from comrad.data.channel import PyDMChannel, CChannel, CContext
+from comrad.data.pyjapc_patch import CPyJapc
 from _comrad.comrad_info import COMRAD_DEFAULT_PROTOCOL
 
 
 @pytest.fixture(autouse=True)
-def reset_singleton():
-    japc_plugin._japc = None
-    with mock.patch('comrad.data.japc_plugin.CPyJapc'):
+def mock_singleton():
+    with mock.patch('comrad.data.pyjapc_patch.CPyJapc.instance'):
         yield
-    japc_plugin._japc = None
-
-
-def test_japc_singleton():
-    obj1 = japc_plugin.get_japc()
-    obj2 = japc_plugin.get_japc()
-    assert obj1 is obj2
 
 
 @pytest.mark.parametrize('selector,filter,expected_selector', [
@@ -43,14 +38,15 @@ def test_japc_singleton():
     ('rda://srv/mydevice/myprop', None, 'rda://srv/mydevice/myprop'),
     ('rda://srv/mydevice/myprop#cycleName', 'cycleName', 'rda://srv/mydevice/myprop'),
 ])
-def test_connection_address(param_name, selector, filter, expected_meta_field, expected_param_name, expected_selector):
-    ch = channel.PyDMChannel(address=param_name)
-    ctx = channel.CContext(selector=selector, data_filters=filter)
-    cast(channel.CChannel, ch).context = ctx
+@mock.patch('comrad.data.japc_plugin.CJapcConnection.add_listener')
+def test_connection_address(add_listener, param_name, selector, filter, expected_meta_field, expected_param_name,
+                            expected_selector):
+    ch = PyDMChannel(address=param_name)
+    ctx = CContext(selector=selector, data_filters=filter)
+    cast(CChannel, ch).context = ctx
     input_addr = ch.address.split('://')[-1]
-    with mock.patch('comrad.data.japc_plugin.CJapcConnection.add_listener') as add_listener:
-        connection = japc_plugin.CJapcConnection(channel=ch, protocol='rda', address=input_addr)
-        add_listener.assert_called_once()
+    connection = CJapcConnection(channel=ch, protocol='rda', address=input_addr)
+    add_listener.assert_called_once()
     assert connection._pyjapc_param_name == expected_param_name
     if expected_selector is None:
         assert 'timingSelectorOverride' not in connection._japc_additional_args
@@ -68,11 +64,11 @@ def test_connection_address(param_name, selector, filter, expected_meta_field, e
     'device/property@LHC.USER.ALL',
     'device/property#field@LHC.USER.ALL',
 ])
-def test_connection_fails_with_wrong_parameter_name(channel_address, caplog: LogCaptureFixture):
-    ch = channel.PyDMChannel(address=channel_address)
-    with mock.patch('comrad.data.japc_plugin.CJapcConnection.add_listener') as add_listener:
-        _ = japc_plugin.CJapcConnection(channel=ch, protocol='rda', address=ch.address)
-        add_listener.assert_not_called()
+@mock.patch('comrad.data.japc_plugin.CJapcConnection.add_listener')
+def test_connection_fails_with_wrong_parameter_name(add_listener, channel_address, caplog: LogCaptureFixture):
+    ch = PyDMChannel(address=channel_address)
+    _ = CJapcConnection(channel=ch, protocol='rda', address=ch.address)
+    add_listener.assert_not_called()
     actual_warnings = [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.ERROR]
     assert actual_warnings == [f'Cannot create connection with invalid parameter name format "{channel_address}"!']
 
@@ -81,12 +77,12 @@ def test_connection_fails_with_wrong_parameter_name(channel_address, caplog: Log
     '@@@',
     'LHS.USER',
 ])
-def test_connection_fails_with_wrong_context(selector, caplog: LogCaptureFixture):
-    ch = channel.PyDMChannel(address='device/property')
-    cast(channel.CChannel, ch).context = channel.CContext(selector=selector)
-    with mock.patch('comrad.data.japc_plugin.CJapcConnection.add_listener') as add_listener:
-        _ = japc_plugin.CJapcConnection(channel=ch, protocol='rda', address='/device/property')
-        add_listener.assert_not_called()
+@mock.patch('comrad.data.japc_plugin.CJapcConnection.add_listener')
+def test_connection_fails_with_wrong_context(add_listener, selector, caplog: LogCaptureFixture):
+    ch = PyDMChannel(address='device/property')
+    cast(CChannel, ch).context = CContext(selector=selector)
+    _ = CJapcConnection(channel=ch, protocol='rda', address='/device/property')
+    add_listener.assert_not_called()
     actual_warnings = [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.ERROR]
     assert actual_warnings == [f'Cannot create connection for address "device/property@{selector}"!']
 
@@ -97,12 +93,12 @@ def test_connection_fails_with_wrong_context(selector, caplog: LogCaptureFixture
 ])
 def test_close_clears_subscriptions(connected):
     # FIXME: Test rather than unsubsribe calls clear subscriptions
-    ch = channel.PyDMChannel(address='dev/prop#field')
-    connection = japc_plugin.CJapcConnection(channel=ch, address='dev/prop#field', protocol='rda')
+    ch = PyDMChannel(address='dev/prop#field')
+    connection = CJapcConnection(channel=ch, address='dev/prop#field', protocol='rda')
     connection.online = connected
-    japc_plugin.get_japc().clearSubscriptions.assert_not_called()
+    CPyJapc.instance.return_value.clearSubscriptions.assert_not_called()
     connection.close()
-    japc_plugin.get_japc().clearSubscriptions.assert_called_with(parameterName='dev/prop#field', selector=None)
+    CPyJapc.instance.return_value.clearSubscriptions.assert_called_with(parameterName='dev/prop#field', selector=None)
 
 
 @pytest.mark.parametrize('other_type,sim_val', [
@@ -110,10 +106,10 @@ def test_close_clears_subscriptions(connected):
     (float, 52.3),
     (str, 'test'),
     (np.ndarray, np.array([1, 2])),
-    (japc_plugin.CChannelData, 99),
-    (japc_plugin.CChannelData, 52.3),
-    (japc_plugin.CChannelData, 'test'),
-    (japc_plugin.CChannelData, np.array([1, 2])),
+    (CChannelData, 99),
+    (CChannelData, 52.3),
+    (CChannelData, 'test'),
+    (CChannelData, np.array([1, 2])),
 ])
 def test_all_new_values_are_emitted_with_channel_data(other_type, sim_val, qtbot: QtBot):
 
@@ -124,17 +120,17 @@ def test_all_new_values_are_emitted_with_channel_data(other_type, sim_val, qtbot
             pass
 
     receiver = Receiver()
-    ch = channel.PyDMChannel(address='device/property', value_slot=receiver.value_changed)
-    connection = japc_plugin.CJapcConnection(channel=ch, protocol='japc', address='/device/property')
+    ch = PyDMChannel(address='device/property', value_slot=receiver.value_changed)
+    connection = CJapcConnection(channel=ch, protocol='japc', address='/device/property')
     with qtbot.wait_signal(connection.new_value_signal) as blocker:
         connection._on_async_get(None, value=sim_val, headerInfo={})  # Simulate emission of a signal
-    assert blocker.args == [japc_plugin.CChannelData(value=sim_val, meta_info={})]
+    assert blocker.args == [CChannelData(value=sim_val, meta_info={})]
 
 
-@pytest.mark.parametrize('meta_field,header_field', list(japc_plugin.SPECIAL_FIELDS.items()))
+@pytest.mark.parametrize('meta_field,header_field', list(SPECIAL_FIELDS.items()))
 def test_meta_field_resolved_on_field_level(meta_field, header_field):
-    ch = channel.PyDMChannel(address=f'device/property#{meta_field}')
-    connection = japc_plugin.CJapcConnection(channel=ch, protocol='rda', address=f'/device/property#{meta_field}')
+    ch = PyDMChannel(address=f'device/property#{meta_field}')
+    connection = CJapcConnection(channel=ch, protocol='rda', address=f'/device/property#{meta_field}')
     callback = mock.Mock()
     sig = mock.MagicMock()
     header = {
@@ -144,12 +140,12 @@ def test_meta_field_resolved_on_field_level(meta_field, header_field):
         'selector': 'test-cycle-name',
     }
     connection._notify_listeners(f'device/property#{meta_field}', 42, header, emitter=callback, callback_signals=[sig])
-    callback.assert_called_once_with(sig, channel.CChannelData(value=header[header_field], meta_info=header))
+    callback.assert_called_once_with(sig, CChannelData(value=header[header_field], meta_info=header))
 
 
 def test_meta_field_missing_from_incoming_header(caplog: LogCaptureFixture):
-    ch = channel.PyDMChannel(address='device/property#acqStamp')
-    connection = japc_plugin.CJapcConnection(channel=ch, protocol='rda', address='/device/property#acqStamp')
+    ch = PyDMChannel(address='device/property#acqStamp')
+    connection = CJapcConnection(channel=ch, protocol='rda', address='/device/property#acqStamp')
     callback = mock.Mock()
     sig = mock.MagicMock()
     header = {
@@ -187,12 +183,12 @@ def test_meta_field_missing_from_incoming_header(caplog: LogCaptureFixture):
 ])
 def test_meta_fields_are_injected_into_full_property(val, considered_header, disregarded_header, combined_val):
     full_header = {**disregarded_header, **considered_header}
-    ch = channel.PyDMChannel(address='device/property')
-    connection = japc_plugin.CJapcConnection(channel=ch, protocol='japc', address='/device/property')
+    ch = PyDMChannel(address='device/property')
+    connection = CJapcConnection(channel=ch, protocol='japc', address='/device/property')
     callback = mock.Mock()
     sig = mock.MagicMock()
     connection._notify_listeners('device/property', val, full_header, emitter=callback, callback_signals=[sig])
-    callback.assert_called_once_with(sig, channel.CChannelData(value=combined_val, meta_info=full_header))
+    callback.assert_called_once_with(sig, CChannelData(value=combined_val, meta_info=full_header))
 
 
 def test_write_slots_with_no_params_issue_empty_property_set(qtbot: QtBot):
@@ -200,11 +196,11 @@ def test_write_slots_with_no_params_issue_empty_property_set(qtbot: QtBot):
         sig = Signal()  # Notice no parameters here, this should be considered as "command"
 
     sender = TestWidget()
-    ch = channel.PyDMChannel(address='device/property', value_signal=sender.sig)
-    _ = japc_plugin.CJapcConnection(channel=ch, protocol='japc', address='/device/property')
+    ch = PyDMChannel(address='device/property', value_signal=sender.sig)
+    _ = CJapcConnection(channel=ch, protocol='japc', address='/device/property')
     with qtbot.wait_signal(sender.sig):
         sender.sig.emit()
-    japc_plugin.get_japc().setParam.assert_called_once_with(parameterName='device/property', parameterValue={})  # type: ignore
+    CPyJapc.instance.return_value.setParam.assert_called_once_with(parameterName='device/property', parameterValue={})  # type: ignore
 
 
 @pytest.mark.parametrize('protocol', ['japc', 'rda3', 'rda', 'tgm', 'no'])
@@ -225,7 +221,7 @@ def test_japc_plugin_is_used_on_protocols(protocol):
     plugin: PyDMPlugin = plugin_for_address(f'{protocol}:///device/property')
     assert plugin.protocol == protocol
     # Direct comparison does not work because loaded plugin has mangled class path
-    assert plugin.connection_class.__name__ == japc_plugin.CJapcConnection.__name__
+    assert plugin.connection_class.__name__ == CJapcConnection.__name__
 
 
 def test_japc_plugin_is_used_on_no_protocol():
@@ -246,4 +242,4 @@ def test_japc_plugin_is_used_on_no_protocol():
     plugin: PyDMPlugin = plugin_for_address('device/property')
     assert plugin.protocol == COMRAD_DEFAULT_PROTOCOL
     # Direct comparison does not work because loaded plugin has mangled class path
-    assert plugin.connection_class.__name__ == japc_plugin.CJapcConnection.__name__
+    assert plugin.connection_class.__name__ == CJapcConnection.__name__

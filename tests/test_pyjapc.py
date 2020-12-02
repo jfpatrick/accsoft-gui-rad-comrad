@@ -112,6 +112,13 @@ def pyjapc_subclass():
             yield CPyJapc
 
 
+def test_japc_singleton():
+    from comrad.data.pyjapc_patch import CPyJapc
+    obj1 = CPyJapc.instance()
+    obj2 = CPyJapc.instance()
+    assert obj1 is obj2
+
+
 @pytest.mark.parametrize('succeeds,expected_status', [
     (True, CRBACLoginStatus.LOGGED_IN_BY_LOCATION),
     (False, CRBACLoginStatus.LOGGED_OUT),

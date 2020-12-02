@@ -9,9 +9,6 @@ from comrad.data_plugins import CCommonDataConnection, CDataPlugin, CChannelData
 logger = logging.getLogger(__name__)
 
 
-_japc: Optional[CPyJapc] = None
-
-
 SPECIAL_FIELDS = {
     'acqStamp': 'acqStamp',
     'setStamp': 'setStamp',
@@ -28,22 +25,6 @@ Special fields defined by FESA which are meta-information and will be packaged i
 Thus they should be accessed in the header and not main data block. Unfortunately, there's difference between FESA
 names and JAPC, thus we need a map of what to request vs what to retrieve.
 """
-
-
-def get_japc() -> CPyJapc:
-    """
-    Method to retrieve a singleton of the JAPC service instance.
-
-    It is done to avoid multiple log-in attempts when having several channels working with JAPC.
-
-    Returns:
-        Singleton instance.
-    """
-
-    global _japc
-    if _japc is None:
-        _japc = CPyJapc()
-    return _japc
 
 
 class CJapcConnection(CCommonDataConnection):
@@ -106,7 +87,7 @@ class CJapcConnection(CCommonDataConnection):
         japc_address.data_filters = None
         self._pyjapc_param_name = str(japc_address)
 
-        get_japc().japc_status_changed.connect(self._on_japc_status_changed)
+        CPyJapc.instance().japc_status_changed.connect(self._on_japc_status_changed)
         self.add_listener(channel)
 
     def add_listener(self, channel: CChannel):
@@ -126,30 +107,30 @@ class CJapcConnection(CCommonDataConnection):
         self.set(value={})
 
     def get(self, callback: Callable[[str, Any, Dict[str, Any]], None]):
-        get_japc().getParam(parameterName=self._pyjapc_param_name,
-                            onValueReceived=callback,
-                            getHeader=True,  # Needed for meta-fields
-                            noPyConversion=False,
-                            **self._japc_additional_args)
+        CPyJapc.instance().getParam(parameterName=self._pyjapc_param_name,
+                                    onValueReceived=callback,
+                                    getHeader=True,  # Needed for meta-fields
+                                    noPyConversion=False,
+                                    **self._japc_additional_args)
 
     def set(self, value: Any):
-        get_japc().setParam(parameterName=self._pyjapc_param_name,
-                            parameterValue=value,
-                            **self._japc_additional_args)
+        CPyJapc.instance().setParam(parameterName=self._pyjapc_param_name,
+                                    parameterValue=value,
+                                    **self._japc_additional_args)
 
     def subscribe(self, callback: Callable[[str, Any, Dict[str, Any]], None]):
         logger.debug(f'{self}: Subscribing to JAPC')
-        get_japc().subscribeParam(parameterName=self._pyjapc_param_name,
-                                  onValueReceived=callback,
-                                  onException=self._on_subscription_exception,
-                                  getHeader=True,  # Needed for meta-fields
-                                  noPyConversion=False,
-                                  **self._japc_additional_args)
+        CPyJapc.instance().subscribeParam(parameterName=self._pyjapc_param_name,
+                                          onValueReceived=callback,
+                                          onException=self._on_subscription_exception,
+                                          getHeader=True,  # Needed for meta-fields
+                                          noPyConversion=False,
+                                          **self._japc_additional_args)
         self._start_subscriptions()
 
     def unsubscribe(self):
-        get_japc().clearSubscriptions(parameterName=self._pyjapc_param_name,
-                                      selector=self._selector)
+        CPyJapc.instance().clearSubscriptions(parameterName=self._pyjapc_param_name,
+                                              selector=self._selector)
 
     def process_incoming_value(self, parameterName: str, value: Any, headerInfo: Dict[str, Any]) -> CChannelData[Any]:  # type: ignore  # arguments are different from super
         # These parameters are defined to the signature, expected by PyJapc
@@ -178,7 +159,7 @@ class CJapcConnection(CCommonDataConnection):
     def _start_subscriptions(self):
         logger.debug(f'{self}: Starting subscriptions')
         try:
-            get_japc().startSubscriptions(parameterName=self._pyjapc_param_name, selector=self._selector)
+            CPyJapc.instance().startSubscriptions(parameterName=self._pyjapc_param_name, selector=self._selector)
         except Exception as e:
             # TODO: Catch more specific Jpype errors here
             logger.exception(f'Unexpected error while subscribing to {self.address}: {e!s}')
@@ -193,7 +174,7 @@ class CJapcConnection(CCommonDataConnection):
             logger.debug(f'{self}: Reviving blocked subscriptions after login')
             self._some_subscriptions_failed = False
             # Need to stop subscriptions before restarting, otherwise they will not start
-            get_japc().stopSubscriptions(parameterName=self._pyjapc_param_name, selector=self._selector)
+            CPyJapc.instance().stopSubscriptions(parameterName=self._pyjapc_param_name, selector=self._selector)
             self._start_subscriptions()
 
 
