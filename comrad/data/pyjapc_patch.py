@@ -206,6 +206,40 @@ def _fixed_papc_subscribe_param(self, parameterName, onValueReceived=None, onExc
 in_papc_mode = PyJapc.__module__.startswith('papc.')
 
 
+if in_papc_mode:
+    # Monkey-patch papc subscriptions with some expectations that TimingBar has about underlying Java objects
+    from papc.interfaces.pyjapc import JapcSubscription
+    from comrad.monkey import MonkeyPatchedClass, modify_in_place
+
+    @modify_in_place
+    class CPapcSubscription(JapcSubscription, MonkeyPatchedClass):
+
+        def stopMonitoring(self, *args, **kwargs):
+            # At the time of implementation, papc did not have this method. But just in case it was implemented
+            # in the meantime, try calling the implementation.
+            try:
+                fn = self._overridden_members['stopMonitoring']
+            except KeyError:
+                return
+            fn(self, *args, **kwargs)
+
+    @modify_in_place
+    class CPapc(PyJapc, MonkeyPatchedClass):
+
+        def _transformSubscribeCacheKey(self, param_name: str, selector: Optional[str] = None) -> str:
+            # At the time of implementation, papc did not have this method. But just in case it was implemented
+            # in the meantime, try calling the implementation.
+            try:
+                fn = self._overridden_members['_transformSubscribeCacheKey']
+            except KeyError:
+                return f'{param_name}@{selector!s}'
+            return fn(self, param_name, selector)
+
+        @property
+        def _subscriptionHandleDict(self):
+            raise ValueError
+
+
 class PyJapcWrapper(PyJapc):
     """
     This class wraps PyJapc with substituted methods, to localize method swizzling, to avoid influencing other
