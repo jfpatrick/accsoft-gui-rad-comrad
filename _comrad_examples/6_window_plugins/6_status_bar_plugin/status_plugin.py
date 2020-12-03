@@ -1,9 +1,5 @@
-import logging
 from qtpy.QtWidgets import QWidget, QLabel
 from comrad import CStatusBarPlugin
-
-
-logger = logging.getLogger('Demo plugin')
 
 
 class PermanentPlugin(CStatusBarPlugin):
@@ -13,7 +9,7 @@ class PermanentPlugin(CStatusBarPlugin):
     is_permanent = True
     position = CStatusBarPlugin.Position.RIGHT
 
-    def create_widget(self) -> QWidget:
+    def create_widget(self, _) -> QWidget:
         return QLabel('Permanent plugin')
 
 
@@ -22,5 +18,5 @@ class TempPlugin(CStatusBarPlugin):
 
     plugin_id = 'com.example.status-temp'
 
-    def create_widget(self) -> QWidget:
+    def create_widget(self, _) -> QWidget:
         return QLabel('Temporary plugin')

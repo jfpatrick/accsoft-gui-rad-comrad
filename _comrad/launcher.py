@@ -254,7 +254,17 @@ def _run_subcommand(parser: argparse.ArgumentParser):
                                    ' '
                                    'Example usage: --nav-bar-order comrad.home comrad.sep comrad.spacer comrad.rbac',
                               nargs=argparse.ONE_OR_MORE)
-
+    plugin_group.add_argument('--window-plugin-config',
+                              metavar='key=value',
+                              help='Specify configuration for window plugins (status bar, menu bar or navigation bar). '
+                                   "Key of each config value should start with plugins's ID, followed by the "
+                                   'configuration key name, e.g. comrad.pls.show_bar=1 will trigger the "show_bar" '
+                                   'option on the plugin with ID "comrad.pls". For the bundled comrad plugins, the '
+                                   'following keys are available: comrad.pls.show_bar, comrad.pls.supercycle, '
+                                   'comrad.pls.show_domain, comrad.pls.show_time, comrad.pls.show_start, '
+                                   'comrad.pls.show_user, comrad.pls.show_lsa, comrad.pls.show_tz, '
+                                   'comrad.pls.heartbeat, comrad.pls.microseconds, comrad.pls.utc.',
+                              nargs=argparse.ONE_OR_MORE)
     debug_group = parser.add_argument_group('Debugging')
     _install_debug_arguments(debug_group)
     debug_group.add_argument('--perf-mon',
@@ -357,6 +367,7 @@ def _run_comrad(args: argparse.Namespace) -> bool:
                        status_bar_plugin_path=args.status_plugin_path,
                        menu_bar_plugin_path=args.menu_plugin_path,
                        toolbar_order=args.nav_bar_order,
+                       window_plugin_config=args.window_plugin_config,
                        plugin_blacklist=args.disable_plugins,
                        plugin_whitelist=args.enable_plugins,
                        stylesheet_path=stylesheet)

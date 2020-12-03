@@ -12,6 +12,7 @@ from pydm.data_plugins import is_read_only
 from comrad.icons import icon
 from comrad.rbac import CRBACState
 from comrad.app.plugins import CToolbarID
+from .plugins._config import WindowPluginConfigTrie
 
 
 logger = logging.getLogger(__name__)
@@ -43,6 +44,7 @@ class CApplication(PyDMApplication):
                  menu_bar_plugin_path: Optional[List[str]] = None,
                  stylesheet_path: Optional[str] = None,
                  toolbar_order: Optional[Iterable[Union[str, CToolbarID]]] = None,
+                 window_plugin_config: Optional[List[str]] = None,
                  plugin_whitelist: Optional[Iterable[str]] = None,
                  plugin_blacklist: Optional[Iterable[str]] = None,
                  data_plugin_paths: Optional[List[str]] = None,
@@ -89,6 +91,7 @@ class CApplication(PyDMApplication):
                 can be augmented by ``COMRAD_MENUBAR_PLUGIN_PATH`` environment variable.
             stylesheet_path: Path to the *.qss file styling application and widgets.
             toolbar_order: List of IDs of toolbar items in order in which they must appear left-to-right.
+            window_plugin_config: List of specific configurations for the window plugins (parsed by plugins).
             plugin_whitelist: List of plugin IDs that have to be enabled even if they are disabled by default.
             plugin_blacklist: List of plugin IDs that have to be disabled even if they are enabled by default.
             data_plugin_paths: Extra paths to be searched for data plugins.
@@ -102,6 +105,7 @@ class CApplication(PyDMApplication):
         self._use_inca = use_inca
         self._jvm_flags = java_env
         self._extra_data_plugin_paths = data_plugin_paths
+        self._window_plugin_config = window_plugin_config
         super().__init__(ui_file=ui_file,
                          command_line_args=args,
                          display_args=display_args or [],
@@ -139,7 +143,8 @@ class CApplication(PyDMApplication):
                     return identifier
 
             order = list(map(_convert, toolbar_order))
-        self.main_window.load_window_plugins(nav_bar_plugin_path=nav_bar_plugin_path,
+        self.main_window.load_window_plugins(config=self._parse_window_plugin_config(window_plugin_config),
+                                             nav_bar_plugin_path=nav_bar_plugin_path,
                                              status_bar_plugin_path=status_bar_plugin_path,
                                              menu_bar_plugin_path=menu_bar_plugin_path,
                                              toolbar_order=order,
@@ -219,6 +224,8 @@ class CApplication(PyDMApplication):
                 return val if isinstance(val, str) else val.value
 
             args.extend(['--nav-bar-order', *map(_toolbar_to_str, self._toolbar_order)])
+        if self._window_plugin_config:
+            args.extend(['--window-plugin-config', *self._window_plugin_config])
         if self._plugin_whitelist:
             args.extend(['--enable-plugins', *self._plugin_whitelist])
         if self._plugin_blacklist:
@@ -270,3 +277,17 @@ class CApplication(PyDMApplication):
     @property
     def extra_data_plugin_paths(self) -> Optional[List[str]]:
         return self._extra_data_plugin_paths
+
+    def _parse_window_plugin_config(self, input: Optional[List[str]]) -> WindowPluginConfigTrie:
+        trie = WindowPluginConfigTrie()
+        if not input:
+            return trie
+        for specifier in input:
+            kv_pair = tuple(specifier.split('='))
+            if len(kv_pair) != 2:
+                logger.warning(f'Cannot parse window plugin config key-value pair '
+                               f'{specifier}. It should have format "key=value".')
+                continue
+            key, val = kv_pair
+            trie.add_val(key, val)
+        return trie
