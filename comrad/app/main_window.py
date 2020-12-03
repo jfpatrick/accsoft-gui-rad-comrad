@@ -5,8 +5,7 @@ import subprocess
 from itertools import chain
 from pathlib import Path
 from typing import Optional, Union, Iterable, cast, Tuple, Type, List, Dict
-from qtpy.QtWidgets import (QWidget, QMenu, QAction, QMainWindow, QFileDialog, QApplication, QSpacerItem,
-                            QSizePolicy, QHBoxLayout)
+from qtpy.QtWidgets import QWidget, QMenu, QAction, QMainWindow, QFileDialog, QApplication, QSizePolicy
 from qtpy.QtCore import QCoreApplication, Qt, Signal, QObject
 from pydm.pydm_ui import Ui_MainWindow
 from pydm.main_window import PyDMMainWindow
@@ -320,9 +319,7 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
         def _add_toolbar_spacer():
             # Add spacer to compress toolbar items when possible
             spacer = QWidget()
-            layout = QHBoxLayout()
-            spacer.setLayout(layout)
-            layout.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Preferred))
+            spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
             self.ui.navbar.addWidget(spacer)
 
         # If we have sequence supplied, we need to re-order toolbar items
