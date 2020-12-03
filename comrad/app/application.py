@@ -96,12 +96,12 @@ class CApplication(PyDMApplication):
         """
         args = [_APP_NAME]
         args.extend(command_line_args or [])
-        self.rbac = CRBACState(rbac_env=cmw_env)  # We must keep it before super because dependant plugins will be initialized in super()
-        self.ccda_endpoint = ccda_endpoint
-        self.cmw_env = cmw_env
-        self.use_inca = use_inca
-        self.jvm_flags = java_env
-        self.extra_data_plugin_paths = data_plugin_paths
+        self._rbac = CRBACState(rbac_env=cmw_env)  # We must keep it before super because dependant plugins will be initialized in super()
+        self._ccda_endpoint = ccda_endpoint
+        self._cmw_env = cmw_env
+        self._use_inca = use_inca
+        self._jvm_flags = java_env
+        self._extra_data_plugin_paths = data_plugin_paths
         super().__init__(ui_file=ui_file,
                          command_line_args=args,
                          display_args=display_args or [],
@@ -246,3 +246,27 @@ class CApplication(PyDMApplication):
             stylesheet += f.read()
             main_window.setStyleSheet(stylesheet)
             logger.debug('Augmented application stylesheet with color rule overrides')
+
+    @property
+    def use_inca(self) -> bool:
+        return self._use_inca
+
+    @property
+    def ccda_endpoint(self) -> str:
+        return self._ccda_endpoint
+
+    @property
+    def cmw_env(self) -> Optional[str]:
+        return self._cmw_env
+
+    @property
+    def jvm_flags(self) -> Optional[Dict[str, str]]:
+        return self._jvm_flags
+
+    @property
+    def rbac(self) -> CRBACState:
+        return self._rbac
+
+    @property
+    def extra_data_plugin_paths(self) -> Optional[List[str]]:
+        return self._extra_data_plugin_paths
