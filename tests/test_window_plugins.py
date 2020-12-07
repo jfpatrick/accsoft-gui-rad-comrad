@@ -5,6 +5,7 @@ from typing import Tuple, List, Type
 from unittest import mock
 from pathlib import Path
 from comrad.app.plugins.common import load_plugins_from_path, filter_enabled_plugins, CPlugin
+from comrad.app.plugins._config import WindowPluginConfigTrie
 
 
 class CPluginSubclass(CPlugin):
@@ -163,3 +164,70 @@ def test_filter_enabled_plugins(whitelist, blacklist, plugins):
                                                  whitelist=whitelist,
                                                  blacklist=blacklist))
     assert enabled_plugins == plugins
+
+
+def test_trie_default_dict_on_init():
+    trie = WindowPluginConfigTrie()
+    assert trie.root == {}
+    assert trie.root['test'] == {}
+    assert trie.root == {'test': {}}
+    assert trie.root['test']['subtree'] == {}
+    assert trie.root == {'test': {'subtree': {}}}
+    assert trie.root['test']['subtree']['subsubtree'] == {}
+    assert trie.root == {'test': {'subtree': {'subsubtree': {}}}}
+
+
+def test_trie_add_val_succeeds_with_proper_hierarchy():
+    trie = WindowPluginConfigTrie()
+    assert trie.root == {}
+    trie.add_val('key', 'val1')
+    assert trie.root == {'key': 'val1'}
+    trie.add_val('key2', 'val2')
+    assert trie.root == {'key': 'val1', 'key2': 'val2'}
+    trie.add_val('key3.subkey', 'val3')
+    assert trie.root == {'key': 'val1', 'key2': 'val2', 'key3': {'subkey': 'val3'}}
+    trie.add_val('key3.subkey2.subsubkey', 'val4')
+    assert trie.root == {'key': 'val1', 'key2': 'val2', 'key3': {'subkey': 'val3', 'subkey2': {'subsubkey': 'val4'}}}
+
+
+@pytest.mark.parametrize('added_key,faulty_key', [
+    ('key', ''),
+    ('key', 'key.subkey'),
+    ('key.subkey', 'key.subkey.subsubkey'),
+    ('key.subkey', 'key.subkey.subsubkey.subsubsub'),
+])
+def test_trie_add_val_fails_with_invalid_hierarchy(added_key, faulty_key):
+    # When first using key for non-dictionary value, and then trying to assign a subkey
+    trie = WindowPluginConfigTrie()
+    assert trie.root == {}
+    trie.add_val(added_key, 'val1')
+    with pytest.raises(KeyError):
+        trie.add_val(faulty_key, 'val2')
+
+
+def test_trie_add_val_fails_with_empty_key():
+    trie = WindowPluginConfigTrie()
+    assert trie.root == {}
+    with pytest.raises(KeyError):
+        trie.add_val('', 'val1')
+
+
+@pytest.mark.parametrize('inputs,key,expected_config', [
+    ([], '', None),
+    ([], 'plugin_id', None),
+    ([('plugin_id.key', 'val')], '', None),
+    ([('plugin_id.key', 'val')], 'plugin_id', {'key': 'val'}),
+    ([('plugin_id.key.subkey.subsubkey', 'val'), ('plugin_id.key.subkey2', 'val3'), ('plugin_id.key2', 'val2')], 'plugin_id', {'key.subkey.subsubkey': 'val', 'key.subkey2': 'val3', 'key2': 'val2'}),
+    ([('plugin_id.key.subkey.subsubkey', 'val'), ('plugin_id.key.subkey2', 'val3'), ('plugin_id.key2', 'val2')], 'plugin_id.key', {'subkey.subsubkey': 'val', 'subkey2': 'val3'}),
+    ([('plugin_id.key.subkey.subsubkey', 'val'), ('plugin_id.key.subkey2', 'val3'), ('plugin_id.key2', 'val2')], 'plugin_id.key.subkey', {'subsubkey': 'val'}),
+    ([('plugin_id.key.subkey.subsubkey', 'val'), ('plugin_id.key.subkey2', 'val3'), ('plugin_id.key2', 'val2')], 'plugin_id.key2', None),
+    ([('plugin_id.key.subkey.subsubkey', 'val'), ('plugin_id.key.subkey2', 'val3'), ('plugin_id.key2', 'val2')], '.', None),
+    ([('plugin_id.key.subkey.subsubkey', 'val'), ('plugin_id.key.subkey2', 'val3'), ('plugin_id.key2', 'val2')], '.key', None),
+    ([('plugin_id.key.subkey.subsubkey', 'val'), ('plugin_id.key.subkey2', 'val3'), ('plugin_id.key2', 'val2')], 'plugin_id.', None),
+    ([('plugin_id.key.subkey.subsubkey', 'val'), ('plugin_id.key.subkey2', 'val3'), ('plugin_id.key2', 'val2')], 'unknown_id', None),
+])
+def test_trie_get_flat_config(inputs, key, expected_config):
+    trie = WindowPluginConfigTrie()
+    for k, v in inputs:
+        trie.add_val(key=k, val=v)
+    assert trie.get_flat_config(key) == expected_config

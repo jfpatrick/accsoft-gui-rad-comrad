@@ -182,7 +182,7 @@ class RbaToolbarPlugin(CToolbarWidgetPlugin):
     plugin_id = 'comrad.rbac'
     gravity = 999
 
-    def create_widget(self):
+    def create_widget(self, _):
         return RbaButtonSet()
 
 

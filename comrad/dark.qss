@@ -165,6 +165,21 @@ QMenu::item:selected,
     background-color: rgb(45, 45, 45);
 }
 
+TimingBar {
+    qproperty-timingMarkColor: red;
+    qproperty-timingMarkTextColor: black;
+    qproperty-normalCycleColor: rgb(191, 191, 191);
+    qproperty-highlightedCycleColor: rgb(236, 228, 182);
+    qproperty-backgroundPatternColor: black;
+    qproperty-backgroundPatternAltColor: rgb(48, 48, 48);
+    qproperty-backgroundTopColor: rgb(79, 79, 79);
+    qproperty-backgroundBottomColor: rgb(38, 38, 38);
+    qproperty-backgroundTopAltColor: rgb(85, 85, 85);
+    qproperty-backgroundBottomAltColor: rgb(49, 49, 49);
+    qproperty-textColor: rgb(238, 238, 238);
+    qproperty-frameColor: black;
+}
+
 #navbar {
     border-bottom: 1px solid rgb(42, 42, 42);
 }

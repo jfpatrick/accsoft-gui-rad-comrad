@@ -176,19 +176,33 @@ def make_cmd(entrypoint: str,
     # We must run it as an external process, because event loop is already running
     file_path = example_path / entrypoint
     args: List[str] = ['comrad', 'run']
+
     if extra_args is not None:
-        args.extend(extra_args)
+        for arg in extra_args:
+            _append_arg(args, arg)
     if '--log-level' not in args:
         # Mirror current log level to the child app (e.g. when running in DEBUG, also launch example in DEBUG)
-        args.append('--log-level')
-        args.append(logging.getLevelName(logging.getLogger().level))
+        _append_arg(args, '--log-level')
+        _append_arg(args, logging.getLevelName(logging.getLogger().level))
     _disable_implicit_plugin(args, plugin_id=rbac_plugin.RbaToolbarPlugin.plugin_id)
-    args.append(str(file_path))
+    _append_arg(args, str(file_path))
     logger.debug(f'Launching app with args: {args}')
     env = dict(os.environ, PYJAPC_SIMULATION_INIT=(japc_generator or ''))
     python_path = env.get('PYTHONPATH', '')
     env['PYTHONPATH'] = f'{_CURR_DIR}:{python_path}'
     return args, env
+
+
+def _append_arg(args: List[str], arg: str):
+    """Appends args safely, taking in account multiple values arguments and '--' terminator.
+
+    Args:
+        args: Argument list.
+        arg: New argument.
+    """
+    if arg.startswith('--') and args[-1] == '--':
+        args.pop()
+    args.append(arg)
 
 
 def _disable_implicit_plugin(input_args: List[str], plugin_id: str):
@@ -226,7 +240,9 @@ def _disable_implicit_plugin(input_args: List[str], plugin_id: str):
         disable_plugins_list.append(plugin_id)
         input_args[disable_plugins_first_idx:disable_plugins_last_idx] = disable_plugins_list
     else:
-        input_args.extend(['--disable-plugins', plugin_id, '--'])
+        _append_arg(input_args, '--disable-plugins')
+        _append_arg(input_args, plugin_id)
+        _append_arg(input_args, '--')
 
 
 def _module_id(basedir: Path) -> str:

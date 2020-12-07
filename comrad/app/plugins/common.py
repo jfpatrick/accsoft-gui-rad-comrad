@@ -1,8 +1,8 @@
-import abc
 import os
 import uuid
 import inspect
 import logging
+from abc import ABCMeta, abstractmethod
 from pathlib import Path
 from typing import Optional, Union, Iterable, Dict, cast, Type, Generator, Tuple, TypeVar
 from types import ModuleType
@@ -14,7 +14,7 @@ from qtpy.QtGui import QIcon
 logger = logging.getLogger(__name__)
 
 
-class CPlugin(metaclass=abc.ABCMeta):
+class CPlugin(metaclass=ABCMeta):
     """Base class for all ComRAD plugins."""
 
     enabled: bool = True
@@ -24,7 +24,7 @@ class CPlugin(metaclass=abc.ABCMeta):
     """Reverse domain string that represents the unique ID of the plugin class."""
 
 
-class CPositionalPlugin(metaclass=abc.ABCMeta):
+class CPositionalPlugin(metaclass=ABCMeta):
     """Base class for ComRAD toolbar plugins."""
 
     class Position(Enum):
@@ -44,7 +44,7 @@ class CPositionalPlugin(metaclass=abc.ABCMeta):
     and no explicit order is given, how they should be aligned."""
 
 
-class CActionPlugin(CPlugin, metaclass=abc.ABCMeta):
+class CActionPlugin(CPlugin, metaclass=ABCMeta):
     """Base class for action-based ComRAD plugins (nav-bar, menubar)."""
 
     shortcut: Optional[str] = None
@@ -53,12 +53,12 @@ class CActionPlugin(CPlugin, metaclass=abc.ABCMeta):
     icon: Union[str, QIcon, None] = None
     """If defined, icon will be applied to the action of the plugin."""
 
-    @abc.abstractmethod
+    @abstractmethod
     def triggered(self):
         """Callback when the action is triggered."""
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def title(self) -> str:
         """Title of the action."""
         pass
@@ -84,36 +84,46 @@ class CToolbarID(Enum):
     """Separating empty space between left-aligned toolbar items and right-aligned ones."""
 
 
-class CToolbarPlugin(metaclass=abc.ABCMeta):
+class CToolbarPlugin(metaclass=ABCMeta):
     """Base class for toolbar ComRAD plugins."""
     pass
 
 
-class CToolbarActionPlugin(CActionPlugin, CPositionalPlugin, CToolbarPlugin, metaclass=abc.ABCMeta):
+class CToolbarActionPlugin(CActionPlugin, CPositionalPlugin, CToolbarPlugin, metaclass=ABCMeta):
     """Base class for action-based ComRAD toolbar plugins."""
 
     show_in_menu: bool = True
     """In addition to displaying the plugin in toolbar, add it to "Plugins->Toolbar" menu."""
 
 
-class CWidgetPlugin(CPlugin, CPositionalPlugin, metaclass=abc.ABCMeta):
+class CWidgetPlugin(CPlugin, CPositionalPlugin, metaclass=ABCMeta):
     """Base class for ComRAD plugins that render as widgets."""
 
-    @abc.abstractmethod
-    def create_widget(self) -> QWidget:
-        """Instantiate a widget to be rendered in GUI."""
+    @abstractmethod
+    def create_widget(self, config: Optional[Dict[str, str]]) -> QWidget:
+        """
+        Instantiate a widget to be rendered in GUI.
+
+        Args:
+            config: Launch configuration that is injected by ``--window-plugin-config`` flag. The keys get matched with
+                    plugin ID and are combined into a dictionary. Hence, if an app is launched with the flag
+                    ``--window-plugin-config com.example.plugin.config1=val1 com.example.plugin.config2=val2``, the
+                    ``config`` argument will be a dictionary ``{'config1': 'val1', 'config2': val2'}``. If
+                    ``--window-plugin-config`` was not provided by the user, or does not contain any keys for the
+                     current widget, ``config`` value will be :obj:`None`.
+        """
         pass
 
 
-class CToolbarWidgetPlugin(CWidgetPlugin, CToolbarPlugin, metaclass=abc.ABCMeta):
+class CToolbarWidgetPlugin(CWidgetPlugin, CToolbarPlugin, metaclass=ABCMeta):
     """Base class for widget-based ComRAD toolbar plugins."""
     pass
 
 
-class CMenuBarPlugin(CPlugin, metaclass=abc.ABCMeta):
+class CMenuBarPlugin(CPlugin, metaclass=ABCMeta):
     """Base class for ComRAD main menu plugins."""
 
-    @abc.abstractmethod
+    @abstractmethod
     def top_level(self) -> Union[str, Iterable[str]]:
         """Name of the top level menu or path to the submenu.
 
@@ -122,7 +132,7 @@ class CMenuBarPlugin(CPlugin, metaclass=abc.ABCMeta):
         """
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def menu_item(self) -> Union[QAction, QMenu]:
         """Actual menu item to inject.
 
@@ -130,7 +140,7 @@ class CMenuBarPlugin(CPlugin, metaclass=abc.ABCMeta):
         pass
 
 
-class CStatusBarPlugin(CWidgetPlugin, metaclass=abc.ABCMeta):
+class CStatusBarPlugin(CWidgetPlugin, metaclass=ABCMeta):
     """Base class for ComRAD status bar plugins."""
 
     is_permanent: bool = False

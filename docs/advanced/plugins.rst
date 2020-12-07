@@ -8,6 +8,7 @@ RBAC button, is implemented using the same plugin system.
 - `Overview`_
 
   * `Enabling/disabling plugins`_
+  * `Configuring plugins at launch`_
 
 - `Navigation bar plugins`_
 
@@ -65,6 +66,25 @@ CLI provides flags to enable or disable plugins, e.g.
    comrad run \
      --enable-plugins org.example.my-plugin \
      --disable-plugins comrad.rbac org.example.my-another-plugin
+
+
+Configuring plugins at launch
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Widget-based plugins can be reconfigured at launch. For that, ``--window-plugin-config`` command line argument can be
+used. It consumes key-value pairs, separated by ``=``, where key is prefixed with the plugin's ID. This flag can take
+multiple values, allowing to pass one or more settings to one or more widget-based window plugins. E.g.
+
+.. code-block:: bash
+
+   comrad run \
+     --window-plugin-config \
+       org.example.my-plugin.setting1=val1 \
+       org.example.my-plugin.setting2=val2 \
+       org.example.my-another-plugin.setting1=val3
+
+will pass ``setting1`` and ``setting2`` to plugin with ID ``org.example.my-plugin``, as well as ``setting1`` to plugin
+with ID ``org.example.my-another-plugin``.
 
 
 Navigation bar plugins
@@ -151,7 +171,7 @@ of the appropriate base classes, specify plugin properties, and sometimes define
    class DemoWidgetPlugin(CToolbarWidgetPlugin):
        plugin_id = 'org.example.my-widget-plugin'
 
-       def create_widget(self):
+       def create_widget(self, _):
            lbl = QLabel("I'm a demo plugin!")
            lbl.setIndent(10)
            return lbl

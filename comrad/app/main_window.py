@@ -16,6 +16,7 @@ from .about import AboutDialog
 from .plugins.common import (load_plugins_from_path, CToolbarActionPlugin, CActionPlugin, CToolbarWidgetPlugin,
                              CPositionalPlugin, CToolbarID, CPlugin, CMenuBarPlugin, CStatusBarPlugin,
                              CToolbarPlugin, filter_enabled_plugins)
+from .plugins._config import WindowPluginConfigTrie
 
 
 logger = logging.getLogger(__name__)
@@ -156,6 +157,7 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
                 self.handle_open_file_error(filename, e)
 
     def load_window_plugins(self,
+                            config: WindowPluginConfigTrie,
                             nav_bar_plugin_path: Optional[List[str]] = None,
                             status_bar_plugin_path: Optional[List[str]] = None,
                             menu_bar_plugin_path: Optional[List[str]] = None,
@@ -166,6 +168,7 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
         Loads plugins and places them around the main window.
 
         Args:
+            config: Parsed user configuration for window plugins (``--window-plugin-config`` flag).
             nav_bar_plugin_path: Path(s) to the directory with navigation bar (toolbar) plugins. This path has
                 can be augmented by ``COMRAD_TOOLBAR_PLUGIN_PATH`` environment variable.
             status_bar_plugin_path: Path(s) to the directory with status bar plugins. This path has
@@ -178,14 +181,16 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
 
 
         """
-        self._stored_plugins.extend(self._load_toolbar_plugins(nav_bar_plugin_path,
+        self._stored_plugins.extend(self._load_toolbar_plugins(config=config,
+                                                               cmd_line_paths=nav_bar_plugin_path,
                                                                order=toolbar_order,
                                                                whitelist=plugin_whitelist,
                                                                blacklist=plugin_blacklist) or [])
-        self._stored_plugins.extend(self._load_menubar_plugins(menu_bar_plugin_path,
+        self._stored_plugins.extend(self._load_menubar_plugins(cmd_line_paths=menu_bar_plugin_path,
                                                                whitelist=plugin_whitelist,
                                                                blacklist=plugin_blacklist) or [])
-        self._stored_plugins.extend(self._load_status_bar_plugins(status_bar_plugin_path,
+        self._stored_plugins.extend(self._load_status_bar_plugins(config=config,
+                                                                  cmd_line_paths=status_bar_plugin_path,
                                                                   whitelist=plugin_whitelist,
                                                                   blacklist=plugin_blacklist) or [])
 
@@ -246,6 +251,7 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
             logger.warning("You are using unsupported operating system. Can't open the file...")
 
     def _load_toolbar_plugins(self,
+                              config: WindowPluginConfigTrie,
                               cmd_line_paths: Optional[List[str]],
                               order: Optional[List[Union[str, CToolbarID]]] = None,
                               whitelist: Optional[Iterable[str]] = None,
@@ -292,7 +298,8 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
                 plugin = action_plugin
             else:
                 widget_plugin = cast(CToolbarWidgetPlugin, plugin_type())
-                item = widget_plugin.create_widget()
+                widget_config = CMainWindow._read_widget_plugin_config(config=config, plugin_id=plugin_type.plugin_id)
+                item = widget_plugin.create_widget(widget_config)
                 stored_plugins.append(widget_plugin)
                 plugin = widget_plugin
 
@@ -420,6 +427,7 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
         return stored_plugins
 
     def _load_status_bar_plugins(self,
+                                 config: WindowPluginConfigTrie,
                                  cmd_line_paths: Optional[List[str]],
                                  whitelist: Optional[Iterable[str]] = None,
                                  blacklist: Optional[Iterable[str]] = None) -> Optional[List[CPlugin]]:
@@ -439,7 +447,8 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
                                                      blacklist=blacklist):
             logger.debug(f'Instantiating plugin "{plugin_type.plugin_id}"')
             plugin = cast(CStatusBarPlugin, plugin_type())
-            widget = plugin.create_widget()
+            widget_config = CMainWindow._read_widget_plugin_config(config=config, plugin_id=plugin_type.plugin_id)
+            widget = plugin.create_widget(widget_config)
             item = (widget, plugin.is_permanent, plugin.gravity)
             (status_bar_left if plugin.position == CPositionalPlugin.Position.LEFT else status_bar_right).append(item)
             stored_plugins.append(plugin)
@@ -486,6 +495,15 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
         return load_plugins_from_path(locations=map(Path, all_plugin_paths),
                                       token='_plugin.py',
                                       base_type=base_type)
+
+    @staticmethod
+    def _read_widget_plugin_config(config: WindowPluginConfigTrie, plugin_id: str) -> Optional[Dict[str, str]]:
+        try:
+            return config.get_flat_config(plugin_id)
+        except KeyError:
+            logger.warning(f'Cannot read configuration for erroneous window plugin ID '
+                           f'"{plugin_id}". The plugin will be initialized without configuration.')
+        return None
 
 
 @modify_in_place
