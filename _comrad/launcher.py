@@ -6,10 +6,12 @@ import argparse
 import functools
 import os
 import sys
+from dataclasses import dataclass
 from typing import Optional, Tuple, Dict, List, Iterable, Any, Set, cast
 from argparse import RawDescriptionHelpFormatter, ArgumentParser, Namespace
 from pathlib import Path
 from argcomplete import autocomplete
+from argparse_profiles import ProfileParser
 from accwidgets.qt import exec_app_interruptable
 from .comrad_info import COMRAD_DESCRIPTION, COMRAD_VERSION, get_versions_info
 from .log_config import install_logger_level
@@ -17,13 +19,14 @@ from .common import get_japc_support_envs, comrad_asset
 from .package import generate_pyproject_with_spec, make_requirement_safe, Requirement, parse_maintainer_info
 
 
-def create_args_parser(custom_run_prog: Optional[str] = None) -> Tuple[ArgumentParser, bool]:
+def create_args_parser(deployed_pkg_name: Optional[str] = None) -> Tuple[ArgumentParser, bool]:
     """
     Build ComRAD application arguments.
 
     Args:
-        custom_run_prog: Program name to suply to "run" subcommand, in order to make hlep message reflect
-                         the state of things for packaged applications.
+        deployed_pkg_name: Name of the application when it's deployed with "comrad package". This replaces a number
+                           of configurations from standard "comrad" (which is used at the development time) to
+                           deployed package name that is more relevant for the user.
 
     Returns:
         Tuple of arguments parser and flag if the lazy version resolution should be done.
@@ -61,17 +64,20 @@ def create_args_parser(custom_run_prog: Optional[str] = None) -> Tuple[ArgumentP
 
     _install_help(parser)
 
-    subparsers = parser.add_subparsers(dest='cmd')
-    app_parser_args = {} if custom_run_prog is None else {'prog': custom_run_prog}
-    app_parser = subparsers.add_parser('run',
-                                       help='Launch main ComRAD application.',
-                                       description='  This command launches the client application with ComRAD environment.\n'
-                                                   '  It is the starting point for runtime applications that have been\n'
-                                                   '  developed with ComRAD tools and rely on control system marshalling\n'
-                                                   '  logic and other conveniences provided by ComRAD.',
-                                       **app_parser_args,
-                                       **common_parser_args)
-    _run_subcommand(app_parser)
+    subparsers = parser.add_subparsers(dest='cmd', parser_class=_EmptyLoadSaveActionProfileParser)
+    app_parser_args = {} if deployed_pkg_name is None else {'prog': f'python -m {deployed_pkg_name}'}
+    app_parser = cast(_EmptyLoadSaveActionProfileParser,
+                      subparsers.add_parser('run',
+                                            help='Launch main ComRAD application.',
+                                            description='  This command launches the client application with ComRAD environment.\n'
+                                                        '  It is the starting point for runtime applications that have been\n'
+                                                        '  developed with ComRAD tools and rely on control system marshalling\n'
+                                                        '  logic and other conveniences provided by ComRAD.',
+                                            **app_parser_args,
+                                            **common_parser_args))
+    subparsers._parser_class = ArgumentParser  # Make sure all other subcommands are of regular type
+    app_parser._parser_class = ArgumentParser  # Make sure all subparsers of "comrad run" are of regular type
+    _run_subcommand(parser=app_parser, deployed_pkg_name=deployed_pkg_name)
 
     designer_parser = subparsers.add_parser('designer',
                                             help='Launch ComRAD Designer.',
@@ -103,6 +109,67 @@ def create_args_parser(custom_run_prog: Optional[str] = None) -> Tuple[ArgumentP
     return parser, use_lazy_version
 
 
+@dataclass
+class DeployedArgs:
+    """
+    This class separates arguments for the usage in deployed applications, that can be properly
+    supplied into-the argparse-profiles. There are currently 3 levels of argument priorities:
+
+    - Lowest: Baked-in (implicit) application arguments
+    - Medium: Arguments embedded into the profile
+    - Highest: Arguments supplied by the user.
+
+    To parse them properly (also to save them into a profile and load them from the profile), care is needed
+    during parsing, therefore we keep them decoupled.
+    """
+
+    baked_in: List[str]
+    """Baked-in (implicit) application arguments."""
+
+    user: List[str]
+    """Arguments supplied by the user."""
+
+    entrypoint: str
+    """Main application file."""
+
+    command: str
+    """Subcommand to run."""
+
+
+def parse_args(parser: ArgumentParser, args: Optional[DeployedArgs] = None) -> Namespace:
+    """
+    Parse arguments using a given parser.
+
+    Args:
+        parser: That acts as an entrypoint for parsing the arguments.
+        args: Packaged applications can use these arguments, to properly merge them by priority, depending on the
+              source of the argument.
+
+    Returns:
+        Parsed arguments as a namespace.
+    """
+    args_to_parse: Optional[List[str]] = None
+    # Namespace represents compiled implicit arguments that will have
+    # lower priority than the final_args
+    pre_parsed_namespace: Optional[Namespace] = None
+    if args:
+        pre_parsed_args = [args.command] + args.baked_in + [_DELIM, args.entrypoint]
+        # This pre-parses (before second final parsing in the end of the
+        # function to produce a lower-priority namespace)
+        pre_parsed_namespace = parser.parse_args(pre_parsed_args)
+        # There can be only a single '--' in the arguments. We use it by default in the end to
+        # safely terminate in the end, but if it happened to be used in the middle by the user
+        # we have to fallback and hope that user did not put array in the end without the '--' termination
+        positionals = [args.entrypoint] if _DELIM in args.user else [_DELIM, args.entrypoint]
+        # Baked-in args must be supplied here even with pre-parsing for the final namespace to be complete
+        args_to_parse = [args.command] + args.baked_in + args.user + positionals
+
+    return parser.parse_args(args=args_to_parse, namespace=pre_parsed_namespace)
+
+
+_DELIM = '--'
+
+
 def process_args(args: Namespace, parser: ArgumentParser, use_lazy_version: bool = False):
     if use_lazy_version and args.version:
         _run_version(parser)
@@ -130,12 +197,23 @@ def run():
 
         # If run for auto-completion discovery, execution will stop here
         autocomplete(parser)
-        args = parser.parse_args()
+        args = parse_args(parser)
 
         process_args(args=args,
                      parser=parser,
                      use_lazy_version=use_lazy_version)
     except KeyboardInterrupt:
+        pass
+
+
+class _EmptyLoadSaveActionProfileParser(ProfileParser):
+    """
+    Subclass to allow defining load and save actions of argparse-profiles manually in the desired place.
+    """
+
+    def create_parser_args(self, parser_action_group_name: str):
+        # Do nothing in this method, because we'll add the actions manually in the right place,
+        # where it fits compared to other action groups.
         pass
 
 
@@ -194,11 +272,31 @@ def _install_debug_arguments(parser: ArgumentParser):
                         default=None)
 
 
-def _run_subcommand(parser: ArgumentParser):
+def _run_subcommand(parser: _EmptyLoadSaveActionProfileParser, deployed_pkg_name: Optional[str]):
+    parser._argparse_profiles_default_path = Path(deployed_pkg_name or 'comrad')
     required_group = parser.add_argument_group('Required arguments')
     required_group.add_argument('display_file',
                                 metavar='FILE',
                                 help='Main client program (can be a Qt Designer or a Python file).')
+
+    launch_group = parser.add_argument_group('Launch configuration')
+    profile_params = launch_group.add_mutually_exclusive_group()
+    parser._argparse_profiles_load_action = profile_params.add_argument('--use-profile',
+                                                                        default=argparse.SUPPRESS,
+                                                                        type=str,
+                                                                        required=False,
+                                                                        action='append',
+                                                                        dest='argparse_profiles_load_action',
+                                                                        help='Name of the profile file to load additional flags from.',
+                                                                        metavar='PROFILE_NAME')
+    parser._argparse_profiles_save_action = profile_params.add_argument('--save-to-profile',
+                                                                        default=argparse.SUPPRESS,
+                                                                        type=str,
+                                                                        required=False,
+                                                                        dest='argparse_profiles_save_action',
+                                                                        help='Name of the profile file to save the current parameters to. '
+                                                                             'Passing this flag will not allow the application to start.',
+                                                                        metavar='PROFILE_NAME')
 
     display_group = parser.add_argument_group('Display configuration')
     display_group.add_argument('display_args',
