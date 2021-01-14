@@ -111,7 +111,7 @@ class PLSSelectorDialog(QDialog):
         self.stack.setCurrentIndex(self.STACK_LOADING)
         try:
             self._data = list(self.ccda.SelectorDomain.search())
-        except Exception as e:
+        except Exception as e:  # noqa: B902
             err_msg = 'Failed to contact CCDB'
             logger.error(f'{err_msg}: {e}')
             self.stack.setCurrentIndex(self.STACK_ERROR)

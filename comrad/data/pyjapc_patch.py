@@ -315,7 +315,7 @@ class CPyJapc(PyJapcWrapper, QObject):
             logger.debug('Attempting login by location on the first connection')
             try:
                 self.login_by_location()
-            except BaseException:
+            except BaseException:  # noqa: B902
                 logger.info('Login by location failed. User will have to manually acquire RBAC token.')
         elif app.rbac.startup_login_policy == CRBACStartupLoginPolicy.LOGIN_BY_CREDENTIALS:
             # TODO: Implement presenting a dialog here

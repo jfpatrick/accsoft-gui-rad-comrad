@@ -160,7 +160,7 @@ class CJapcConnection(CCommonDataConnection):
         logger.debug(f'{self}: Starting subscriptions')
         try:
             CPyJapc.instance().startSubscriptions(parameterName=self._pyjapc_param_name, selector=self._selector)
-        except Exception as e:
+        except Exception as e:  # noqa: B902
             # TODO: Catch more specific Jpype errors here
             logger.exception(f'Unexpected error while subscribing to {self.address}: {e!s}')
 

@@ -225,7 +225,7 @@ __builtins__['output'] = {output_func_name}
                 return global_vars[return_var]  # This variable should have been set within wrapped_code
             except KeyError:
                 return None
-        except BaseException as e:
+        except BaseException as e:  # noqa: B902
             last_stack_trace = traceback.format_exc().split('\n')[-3]
             logger.exception(f'ERROR: Exception occurred while running a transformation.\n'
                              f'{last_stack_trace}\n{e.__class__.__name__}: {str(e)}')
