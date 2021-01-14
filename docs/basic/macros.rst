@@ -41,8 +41,20 @@ line interface:
 .. code-block:: bash
 
    comrad run \
-     -m 'variable1=value, variable2=another_value' \
+     -m "variable1=value, variable2=another_value" \
      /path/to/my/app.ui
+
+or in JSON format:
+
+.. code-block:: bash
+
+   comrad run \
+     -m '{"variable1": "value", "variable2": "another_value"}' \
+     /path/to/my/app.ui
+
+.. note:: When launching via PyCharm debugger, it may swallow quotes, therefore you need to pay close attention in what
+          shape arguments reach ComRAD, potentially avoiding JSON format as more quote-heavy.
+
 
 
 Macros in Python-based displays
