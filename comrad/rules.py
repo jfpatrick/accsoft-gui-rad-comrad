@@ -651,7 +651,7 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
 
                 self.widget_map[widget_ref].append(job_unit)
 
-    def calculate_expression(self, widget_ref: ReferenceType, rule: Dict[str, Any]):
+    def calculate_expression(self, widget_ref: ReferenceType, _: int, rule: Dict[str, Any]):
         job_unit = rule
         job_unit['calculate'] = False
 
@@ -683,7 +683,7 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
             return
         elif isinstance(rule_obj, (CEnumRule, CNumRangeRule)):
             from comrad.widgets.mixins import CWidgetRulesMixin
-            _, __, base_type = cast(CWidgetRulesMixin, widget_ref()).RULE_PROPERTIES[rule_obj.prop]
+            __, ___, base_type = cast(CWidgetRulesMixin, widget_ref()).RULE_PROPERTIES[rule_obj.prop]
             packet = cast(CChannelData[Any], job_unit['values'][0])
             if not isinstance(packet, CChannelData):
                 notify_value(None)
