@@ -510,6 +510,18 @@ class _UiMainWindow(Ui_MainWindow, MonkeyPatchedClass):
     possible to not confuse the user with naming.
     """
 
+    def setupUi(self, MainWindow: QMainWindow):
+        try:
+            self._overridden_members['setupUi'](self, MainWindow)
+        except BaseException:  # noqa: B902
+            # This catches built-in error produced by QtCore.QMetaObject.connectSlotsByName(MainWindow)
+            # inside pydm_ui.py's setupUi. This error ("QtCore.QMetaObject.connectSlotsByName(MainWindow)")
+            # is raised when MainWindow is monkey-patched, which is currently the only possible approach.
+            # Fortunately, this call is the last in the setupUi file, so it can be assumed that execution
+            # is allowed to continue after the exception. Also, there are no existing slots to connect at the
+            # time of calling, so nothing is lost.
+            pass
+
     def retranslateUi(self, MainWindow: QMainWindow):
         _translate = QCoreApplication.translate
         self._overridden_members['retranslateUi'](self, MainWindow)
