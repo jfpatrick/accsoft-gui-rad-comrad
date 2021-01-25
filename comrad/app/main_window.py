@@ -78,16 +78,13 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
         self._window_context.dataFiltersChanged.connect(self.contextUpdated.emit)
         self._window_context.wildcardsChanged.connect(self.contextUpdated.emit)
         self._window_context.selectorChanged.connect(self.contextUpdated.emit)
-        self.ui.action_exit.triggered.connect(self.close)
-        nav_toggle = cast(QAction, self.ui.navbar.toggleViewAction())
-        nav_toggle.setText('Show Navigation Bar')
 
-        # Remove custom Show navigation bar menu item and use the one provided by the widget
+        # Remove custom Show navigation bar menu item and use the one provided by the widget (toggleViewAction)
         # (because when both are used, their check state gets out of sync
         index = self.ui.menuView.actions().index(self.ui.actionShow_Navigation_Bar)
         if index > -1:
             self.ui.menuView.removeAction(self.ui.actionShow_Navigation_Bar)
-            self.ui.menuView.insertAction(self.ui.menuView.actions()[index], nav_toggle)
+            self.ui.menuView.insertAction(self.ui.menuView.actions()[index], self.ui.navbar.toggleViewAction())
             self.ui.actionShow_Navigation_Bar.deleteLater()
             self.ui.actionShow_Navigation_Bar = None
 
@@ -513,18 +510,11 @@ class _UiMainWindow(Ui_MainWindow, MonkeyPatchedClass):
     possible to not confuse the user with naming.
     """
 
-    def setupUi(self, MainWindow: QMainWindow):
-        self.action_exit = QAction(MainWindow)
-        self.action_exit.setEnabled(True)
-        self.action_exit.setShortcutContext(Qt.ApplicationShortcut)
-        self.action_exit.setObjectName('action_exit')
-        self._overridden_members['setupUi'](self, MainWindow)
-        self.menuFile.addSeparator()
-        self.menuFile.addAction(self.action_exit)
-
     def retranslateUi(self, MainWindow: QMainWindow):
         _translate = QCoreApplication.translate
         self._overridden_members['retranslateUi'](self, MainWindow)
         MainWindow.setWindowTitle(_translate('MainWindow', 'ComRAD Main Window'))
         self.actionAbout_PyDM.setText(_translate('MainWindow', 'About ComRAD'))
-        self.action_exit.setText(_translate('MainWindow', 'Exit'))
+
+        nav_toggle = cast(QAction, self.navbar.toggleViewAction())
+        nav_toggle.setText(_translate('MainWindow', 'Show Navigation Bar'))
