@@ -29,6 +29,13 @@ Linked displays are read from :attr:`~comrad.CRelatedDisplayButton.filenames` pr
 Otherwise, path will stay relative to the location of the file that contains the :class:`~comrad.CRelatedDisplayButton`
 instance.
 
+When more than one display is specified in :attr:`~comrad.CRelatedDisplayButton.filenames`, user will have to choose
+where to navigate on click, via dropdown menu.
+
+Right clicking on :class:`~comrad.CRelatedDisplayButton` allows to open a display in a new window, even if default
+configuration is set for inline display replacement. In case of multiple related displays, user is also able to choose
+which one to open in the new window.
+
 You can parametrize linked displays via
 :attr:`~comrad.CRelatedDisplayButton.macros` property.
 
