@@ -191,7 +191,7 @@ class CScaleIndicator(CWidgetRulesMixin, CValueTransformerMixin, CCustomizedTool
     limitsFromChannel = Property(bool, lambda _: False, __set_limitsFromChannel, designable=False)
 
 
-class CLed(CColorRulesMixin, CValueTransformerMixin, CInitializedMixin, CHideUnusedFeaturesMixin, PyDMWidget, Led):
+class CLed(CColorRulesMixin, CValueTransformerMixin, CInitializedMixin, CHideUnusedFeaturesMixin, CCustomizedTooltipMixin, PyDMWidget, Led):
 
     def __init__(self, parent: Optional[QWidget] = None, init_channel: Optional[str] = None):
         """
