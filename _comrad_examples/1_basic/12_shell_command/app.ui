@@ -38,8 +38,10 @@
      <property name="text">
       <string>Press me!</string>
      </property>
-     <property name="command" stdset="0">
-      <string>glxgears</string>
+     <property name="commands" stdset="0">
+      <stringlist>
+       <string>glxgears</string>
+      </stringlist>
      </property>
     </widget>
    </item>

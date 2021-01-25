@@ -5,8 +5,9 @@ import subprocess
 from itertools import chain
 from pathlib import Path
 from typing import Optional, Union, Iterable, cast, Tuple, Type, List, Dict
-from qtpy.QtWidgets import QWidget, QMenu, QAction, QMainWindow, QFileDialog, QApplication, QSizePolicy
+from qtpy.QtWidgets import QWidget, QMenu, QAction, QMainWindow, QFileDialog, QApplication, QSizePolicy, QMessageBox
 from qtpy.QtCore import QCoreApplication, Qt, Signal, QObject
+from qtpy.QtGui import QCloseEvent, QGuiApplication
 from pydm.pydm_ui import Ui_MainWindow
 from pydm.main_window import PyDMMainWindow
 from pydm.data_plugins import is_read_only
@@ -78,16 +79,13 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
         self._window_context.dataFiltersChanged.connect(self.contextUpdated.emit)
         self._window_context.wildcardsChanged.connect(self.contextUpdated.emit)
         self._window_context.selectorChanged.connect(self.contextUpdated.emit)
-        self.ui.action_exit.triggered.connect(self.close)
-        nav_toggle = cast(QAction, self.ui.navbar.toggleViewAction())
-        nav_toggle.setText('Show Navigation Bar')
 
-        # Remove custom Show navigation bar menu item and use the one provided by the widget
+        # Remove custom Show navigation bar menu item and use the one provided by the widget (toggleViewAction)
         # (because when both are used, their check state gets out of sync
         index = self.ui.menuView.actions().index(self.ui.actionShow_Navigation_Bar)
         if index > -1:
             self.ui.menuView.removeAction(self.ui.actionShow_Navigation_Bar)
-            self.ui.menuView.insertAction(self.ui.menuView.actions()[index], nav_toggle)
+            self.ui.menuView.insertAction(self.ui.menuView.actions()[index], self.ui.navbar.toggleViewAction())
             self.ui.actionShow_Navigation_Bar.deleteLater()
             self.ui.actionShow_Navigation_Bar = None
 
@@ -155,6 +153,26 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
                     self.open_file(filename)
             except (IOError, OSError, ValueError, ImportError) as e:
                 self.handle_open_file_error(filename, e)
+
+    def closeEvent(self, event: QCloseEvent):
+        """
+        This augments PyDM's :meth:`~pydm.main_window.PyDMMainWindow.quit_main_window` providing similar confirmation
+        dialog when application is closed in another way than menu click, e.g. Alt+F4 or title bar close button.
+
+        Args:
+            event: Close event.
+        """
+        if [w for w in cast(QGuiApplication, self.app).topLevelWidgets() if isinstance(w, QMainWindow)] == [self]:
+            event.ignore()
+            quit_message = QMessageBox.question(self,
+                                                'Quitting Application',
+                                                'Exit Application?',
+                                                QMessageBox.Yes | QMessageBox.No)
+            if quit_message == QMessageBox.Yes:
+                self._overridden_members['closeEvent'](self, event)
+                event.accept()
+        else:
+            self._overridden_members['closeEvent'](self, event)
 
     def load_window_plugins(self,
                             config: WindowPluginConfigTrie,
@@ -514,17 +532,22 @@ class _UiMainWindow(Ui_MainWindow, MonkeyPatchedClass):
     """
 
     def setupUi(self, MainWindow: QMainWindow):
-        self.action_exit = QAction(MainWindow)
-        self.action_exit.setEnabled(True)
-        self.action_exit.setShortcutContext(Qt.ApplicationShortcut)
-        self.action_exit.setObjectName('action_exit')
-        self._overridden_members['setupUi'](self, MainWindow)
-        self.menuFile.addSeparator()
-        self.menuFile.addAction(self.action_exit)
+        try:
+            self._overridden_members['setupUi'](self, MainWindow)
+        except BaseException:  # noqa: B902
+            # This catches built-in error produced by QtCore.QMetaObject.connectSlotsByName(MainWindow)
+            # inside pydm_ui.py's setupUi. This error ("QtCore.QMetaObject.connectSlotsByName(MainWindow)")
+            # is raised when MainWindow is monkey-patched, which is currently the only possible approach.
+            # Fortunately, this call is the last in the setupUi file, so it can be assumed that execution
+            # is allowed to continue after the exception. Also, there are no existing slots to connect at the
+            # time of calling, so nothing is lost.
+            pass
 
     def retranslateUi(self, MainWindow: QMainWindow):
         _translate = QCoreApplication.translate
         self._overridden_members['retranslateUi'](self, MainWindow)
         MainWindow.setWindowTitle(_translate('MainWindow', 'ComRAD Main Window'))
         self.actionAbout_PyDM.setText(_translate('MainWindow', 'About ComRAD'))
-        self.action_exit.setText(_translate('MainWindow', 'Exit'))
+
+        nav_toggle = cast(QAction, self.navbar.toggleViewAction())
+        nav_toggle.setText(_translate('MainWindow', 'Show Navigation Bar'))

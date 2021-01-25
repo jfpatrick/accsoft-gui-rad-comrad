@@ -40,11 +40,7 @@ def qtplugin_factory(cls: Type[_T],
 
         def __init__(self):
             """ComRAD Designer widget plugin wrapper."""
-            super().__init__(cls=cls, is_container=is_container, group=group, extensions=extensions)
-            self._icon = icon
-
-        def icon(self):
-            return self._icon or super().icon()
+            super().__init__(cls=cls, is_container=is_container, group=group, extensions=extensions, icon=icon)
 
         def domXml(self):
             """

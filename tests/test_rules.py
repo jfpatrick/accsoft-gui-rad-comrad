@@ -728,7 +728,7 @@ def test_rules_engine_calculates_range_value(qtbot: QtBot, incoming_val, range_m
     }
 
     if isinstance(incoming_val, int):
-        engine.calculate_expression(widget_ref=widget_ref, rule=job_unit)
+        engine.calculate_expression(widget_ref, 0, job_unit)
         callback.assert_called_with({
             'widget': widget_ref,
             'name': 'test_name',
@@ -737,7 +737,7 @@ def test_rules_engine_calculates_range_value(qtbot: QtBot, incoming_val, range_m
         })
     else:
         with pytest.raises(ValueError):
-            engine.calculate_expression(widget_ref=widget_ref, rule=job_unit)
+            engine.calculate_expression(widget_ref, 0, job_unit)
         callback.assert_not_called()
 
 
@@ -775,7 +775,7 @@ def test_rules_engine_calculates_enum_value(qtbot: QtBot, incoming_val, field, f
         'values': [CChannelData(value=incoming_val, meta_info={})],
     }
 
-    engine.calculate_expression(widget_ref=widget_ref, rule=job_unit)
+    engine.calculate_expression(widget_ref, 0, job_unit)
     callback.assert_called_with({
         'widget': widget_ref,
         'name': 'test_name',

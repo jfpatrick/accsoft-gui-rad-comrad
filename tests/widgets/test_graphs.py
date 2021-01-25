@@ -159,7 +159,7 @@ def test_pydmchanneldatasource_transforms_value_into_correct_format(input, last_
 
 def test_cplotwidgetbase_forbids_weird_subclasses(caplog: LogCaptureFixture):
 
-    class WeirdSubclass(CPlotWidgetBase):
+    class WeirdSubclass(QObject, CPlotWidgetBase):
         pass
 
     assert len(caplog.records) == 0
