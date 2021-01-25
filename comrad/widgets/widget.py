@@ -206,6 +206,12 @@ class CWidget(PyDMWidget, MonkeyPatchedClass, CContextEnabledObject):
         ch.context = context
         return ch
 
+    def get_address(self):
+        # Avoid NoneType error and a warning when channels are not installed
+        if not len(self._channels):
+            return ''
+        return self._overridden_members['get_address'](self)
+
     reconnect = CContextEnabledObject.reconnect
 
     context = CContextEnabledObject.context
