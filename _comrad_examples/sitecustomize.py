@@ -2,6 +2,7 @@
 This file is run automatically because the containing directory is added to the PYTHONPATH
 """
 import os
+import logging
 
 
 # Setup hooks to replace PyJapc with Papc
@@ -22,7 +23,15 @@ if _GENERATOR_PATH:
     # # Note: We try to minimise the pollution of the PyJapc namespace by pushing
     # # as much of the patching as possible into replace_pyjapc.
     pyjapc.PyJapc = _replace_pyjapc(_GENERATOR_PATH)
-    print(f'Replacing PyJAPC with a mocked version: {_GENERATOR_PATH}')
+
+    # To disable papc warnings that are not really useful, we instal a filter to suppress them
+    class PapcFilter(logging.Filter):
+
+        def filter(self, record: logging.LogRecord) -> bool:
+            return 'not supported in simulation mode' not in record.getMessage()
+
+    logging.getLogger('papc.interfaces').addFilter(PapcFilter())
+
 
 # Clean up the PyJapc namespace from our simulation activities.
 del _replace_pyjapc
