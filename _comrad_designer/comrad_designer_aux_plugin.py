@@ -52,38 +52,37 @@ from pydm.widgets.logdisplay import PyDMLogDisplay
 from pydm.widgets.enum_button import PyDMEnumButton
 from accwidgets.graph import ScrollingPlotWidget, CyclicPlotWidget, StaticPlotWidget
 from accwidgets.property_edit import PropertyEdit
-from _comrad_designer.utils import qtplugin_factory
+from _comrad_designer.utils import qtplugin_factory, CWidgetBoxGroup
 
 
 # This is a special category name hardcoded into Qt Designer (not by me, but by Qt)
 # Category with this name will not appear in the widget box
 # In Qt sources you can find it in qttools/src/designer/src/components/widgetbox/widgetboxtreewidget.cpp
 # Declared on line 70 and used on lines 613, 630
-_COMRAD_GROUP_HIDDEN_ITEMS = '[invisible]'
 
 
-_PyDMLabel = qtplugin_factory(PyDMLabel, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-_PyDMCheckbox = qtplugin_factory(PyDMCheckbox, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-_PyDMEnumButton = qtplugin_factory(PyDMEnumButton, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-_PyDMPushButton = qtplugin_factory(PyDMPushButton, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-_PyDMRelatedDisplayButton = qtplugin_factory(PyDMRelatedDisplayButton, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-_PyDMShellCommand = qtplugin_factory(PyDMShellCommand, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-# _PyDMWaveformTable = qtplugin_factory(PyDMWaveformTable, group=_COMRAD_GROUP_HIDDEN_ITEMS)
+_PyDMLabel = qtplugin_factory(PyDMLabel, group=CWidgetBoxGroup.HIDDEN)
+_PyDMCheckbox = qtplugin_factory(PyDMCheckbox, group=CWidgetBoxGroup.HIDDEN)
+_PyDMEnumButton = qtplugin_factory(PyDMEnumButton, group=CWidgetBoxGroup.HIDDEN)
+_PyDMPushButton = qtplugin_factory(PyDMPushButton, group=CWidgetBoxGroup.HIDDEN)
+_PyDMRelatedDisplayButton = qtplugin_factory(PyDMRelatedDisplayButton, group=CWidgetBoxGroup.HIDDEN)
+_PyDMShellCommand = qtplugin_factory(PyDMShellCommand, group=CWidgetBoxGroup.HIDDEN)
+# _PyDMWaveformTable = qtplugin_factory(PyDMWaveformTable, group=CWidgetBoxGroup.HIDDEN)
 # TODO: Uncomment if CFrame is needed
-# _PyDMFrame = qtplugin_factory(PyDMFrame, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-_PyDMEmbeddedDisplay = qtplugin_factory(PyDMEmbeddedDisplay, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-_PyDMTemplateRepeater = qtplugin_factory(PyDMTemplateRepeater, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-_PyDMEnumComboBox = qtplugin_factory(PyDMEnumComboBox, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-_PyDMLineEdit = qtplugin_factory(PyDMLineEdit, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-_PyDMSlider = qtplugin_factory(PyDMSlider, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-_PyDMSpinbox = qtplugin_factory(PyDMSpinbox, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-_PyDMByteIndicator = qtplugin_factory(PyDMByteIndicator, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-# _PyDMImageView = qtplugin_factory(PyDMImageView, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-_PyDMLogDisplay = qtplugin_factory(PyDMLogDisplay, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-_PyDMScaleIndicator = qtplugin_factory(PyDMScaleIndicator, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-# _PyDMTabWidget = qtplugin_factory(PyDMTabWidget, group=_COMRAD_GROUP_HIDDEN_ITEMS)
+# _PyDMFrame = qtplugin_factory(PyDMFrame, group=CWidgetBoxGroup.HIDDEN)
+_PyDMEmbeddedDisplay = qtplugin_factory(PyDMEmbeddedDisplay, group=CWidgetBoxGroup.HIDDEN)
+_PyDMTemplateRepeater = qtplugin_factory(PyDMTemplateRepeater, group=CWidgetBoxGroup.HIDDEN)
+_PyDMEnumComboBox = qtplugin_factory(PyDMEnumComboBox, group=CWidgetBoxGroup.HIDDEN)
+_PyDMLineEdit = qtplugin_factory(PyDMLineEdit, group=CWidgetBoxGroup.HIDDEN)
+_PyDMSlider = qtplugin_factory(PyDMSlider, group=CWidgetBoxGroup.HIDDEN)
+_PyDMSpinbox = qtplugin_factory(PyDMSpinbox, group=CWidgetBoxGroup.HIDDEN)
+_PyDMByteIndicator = qtplugin_factory(PyDMByteIndicator, group=CWidgetBoxGroup.HIDDEN)
+# _PyDMImageView = qtplugin_factory(PyDMImageView, group=CWidgetBoxGroup.HIDDEN)
+_PyDMLogDisplay = qtplugin_factory(PyDMLogDisplay, group=CWidgetBoxGroup.HIDDEN)
+_PyDMScaleIndicator = qtplugin_factory(PyDMScaleIndicator, group=CWidgetBoxGroup.HIDDEN)
+# _PyDMTabWidget = qtplugin_factory(PyDMTabWidget, group=CWidgetBoxGroup.HIDDEN)
 
-_AccScrollingPlot = qtplugin_factory(ScrollingPlotWidget, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-_AccCyclicPlot = qtplugin_factory(CyclicPlotWidget, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-_AccStaticPlot = qtplugin_factory(StaticPlotWidget, group=_COMRAD_GROUP_HIDDEN_ITEMS)
-_PropertyEdit = qtplugin_factory(PropertyEdit, group=_COMRAD_GROUP_HIDDEN_ITEMS)
+_AccScrollingPlot = qtplugin_factory(ScrollingPlotWidget, group=CWidgetBoxGroup.HIDDEN)
+_AccCyclicPlot = qtplugin_factory(CyclicPlotWidget, group=CWidgetBoxGroup.HIDDEN)
+_AccStaticPlot = qtplugin_factory(StaticPlotWidget, group=CWidgetBoxGroup.HIDDEN)
+_PropertyEdit = qtplugin_factory(PropertyEdit, group=CWidgetBoxGroup.HIDDEN)
