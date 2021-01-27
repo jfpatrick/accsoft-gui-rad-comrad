@@ -38,6 +38,10 @@ def _setup_logging():
     stderr_handler.setLevel(_ERROR_THRESHOLD)
     logging.basicConfig(handlers=[stdout_handler, stderr_handler])
 
+    # Initialize standard loggers, that are picked up by CLogConsole by default
+    logging.getLogger('comrad')  # This will be parent for all comrad.* loggers
+    logging.getLogger('pydm')  # This will be parent for all pydm.* loggers
+
 
 def install_logger_level(level: Optional[str]):
     """Sets the root logger level according to the command line parameters.
@@ -58,6 +62,14 @@ def install_logger_level(level: Optional[str]):
         if level_idx:
             # Redefine the level of the root logger
             logger.setLevel(level_idx)
+    else:
+        # This covers both NOTSET (=0), and None (not passed in arguments)
+
+        # Hide PyDM INFO messages that are impossible to silence (only if no log level has been selected by the user)
+        logging.getLogger('pydm').setLevel(logging.WARNING)
+
+        # Install it to INFO for the rest of things
+        install_logger_level('INFO')
 
 
 _LOGGING_SETUP: bool = False

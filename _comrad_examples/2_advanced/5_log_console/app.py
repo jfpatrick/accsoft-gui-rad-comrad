@@ -5,13 +5,13 @@ import random
 
 
 logger = logging.getLogger('test.app')
+logger.setLevel(logging.DEBUG)
 
 
 class DemoDisplay(CDisplay):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setWindowTitle('Basic CLogDisplay example')
         self._timer = QTimer(self)
         self._timer.timeout.connect(self.next_message)
         self._timer.start(1000)

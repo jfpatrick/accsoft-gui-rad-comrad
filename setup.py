@@ -21,7 +21,7 @@ requirements = {
         'colorlog>=4.0.2,<5',
         'QtPy>=1.7,<2',
         'pyjapc==2.2.0',  # We must keep it pinned to this version, because comrad is obliged to override getParam, which makes it very fragile to changes
-        'accwidgets[graph,led,property_edit,timing_bar]>=1.0,<2a0',
+        'accwidgets[graph,led,property_edit,timing_bar,log_console]>=1.0,<2a0',
         'papc>=0.5.1,<0.6',
         'pydm==1.10.7.post0',
         'JPype1>=0.7,<0.7.2',  # 0.7.2 seems incompatible with pyjapc as of now

@@ -5,14 +5,17 @@ import subprocess
 from itertools import chain
 from pathlib import Path
 from typing import Optional, Union, Iterable, cast, Tuple, Type, List, Dict
-from qtpy.QtWidgets import QWidget, QMenu, QAction, QMainWindow, QFileDialog, QApplication, QSizePolicy, QMessageBox
+from qtpy.QtWidgets import (QWidget, QMenu, QAction, QMainWindow, QFileDialog, QApplication, QSizePolicy, QMessageBox,
+                            QDockWidget)
 from qtpy.QtCore import QCoreApplication, Qt, Signal, QObject
 from qtpy.QtGui import QCloseEvent, QGuiApplication
 from pydm.pydm_ui import Ui_MainWindow
 from pydm.main_window import PyDMMainWindow
 from pydm.data_plugins import is_read_only
+from accwidgets.log_console import LogConsoleDock
 from comrad.monkey import modify_in_place, MonkeyPatchedClass
 from comrad.data.context import CContext, CContextProvider
+from comrad.widgets.tables import CLogConsole
 from .about import AboutDialog
 from .plugins.common import (load_plugins_from_path, CToolbarActionPlugin, CActionPlugin, CToolbarWidgetPlugin,
                              CPositionalPlugin, CToolbarID, CPlugin, CMenuBarPlugin, CStatusBarPlugin,
@@ -88,6 +91,25 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
             self.ui.menuView.insertAction(self.ui.menuView.actions()[index], self.ui.navbar.toggleViewAction())
             self.ui.actionShow_Navigation_Bar.deleteLater()
             self.ui.actionShow_Navigation_Bar = None
+
+        log_console = CLogConsole()
+        dock = LogConsoleDock(allowed_areas=Qt.BottomDockWidgetArea, console=log_console)
+        dock.setFeatures(QDockWidget.DockWidgetClosable)
+        dock.console.expanded = False
+        self.addDockWidget(Qt.BottomDockWidgetArea, dock)
+        self._console_dock = dock
+        self.ui.menuView.addSeparator()
+        log_console_action = cast(QAction, dock.toggleViewAction())
+        log_console_action.setText('Show Log Console')
+
+        # Insert before "Show status bar"
+        for action in self.ui.menuView.actions():
+            if action.text() == 'Show Status Bar':
+                self.ui.menuView.insertAction(action, log_console_action)
+                break
+
+    def hide_log_console(self):
+        self._console_dock.hide()
 
     @property
     def context_ready(self) -> bool:
