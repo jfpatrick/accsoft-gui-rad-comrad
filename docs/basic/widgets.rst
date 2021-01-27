@@ -3,7 +3,7 @@ Widget overview
 
 ComRAD widgets in many cases are direct counterparts of the standard Qt Widgets
 (e.g. :ref:`CLabel <clabellocal>` is merely a fancier :class:`QLabel`).
-They can also be compound - constructed of several primitive Qt Widgets (e.g. :ref:`CLogDisplay <clogdisplaylocal>`),
+They can also be compound - constructed of several primitive Qt Widgets (e.g. :ref:`CLogConsole <clogconsolelocal>`),
 or completely custom - PyQtGraph descendants are :class:`QGraphicsView` descendants.
 
 All ComRAD widgets are C-prefixed, and follow the Q-prefix notation of Qt.
@@ -60,15 +60,15 @@ Index of widgets
                         individual boolean fields. This widget can work with **booleans**
                         for a single bit, **integers** representing the array of bits in
                         binary notation, or **BitEnums**.
-   CLogDisplay |clogdisplaywiki|
+   CLogConsole |clogconsolewiki|
    ---------------------------------------------------------------------------------------
-   |clogdisplay|        .. _clogdisplaylocal:
+   |clogconsole|        .. _clogconsolelocal:
 
                         | **Note! This component is not related to the logs**
                           **control system, such as Timber / CALS / NXCALS.**
                         |
 
-                        Log display simply captures conventional Python
+                        Log console simply captures conventional Python
                         :class:`logging.Logger` output to display messages in the UI, when
                         console output cannot be seen, e.g. when launched form CCM. These
                         loggers are the same ones that are usually used to print console
@@ -246,7 +246,7 @@ Index of widgets
 
 .. |clabel| image:: ../img/widget_clabel.png
 .. |cbyteindicator| image:: ../img/widget_cbyteindicator.png
-.. |clogdisplay| image:: ../img/widget_clogdisplay.png
+.. |clogconsole| image:: ../img/widget_clogconsole.png
 .. |cscaleindicator| image:: ../img/widget_cscaleindicator.png
 .. |ccheckbox| image:: ../img/widget_ccheckbox.png
 .. |cled| image:: ../img/widget_cled.png
@@ -348,9 +348,9 @@ Index of widgets
 
     <a href="../api/widgets/ccheckbox.html" class="apibutton">More details...</a>
 
-.. |clogdisplaywiki| raw:: html
+.. |clogconsolewiki| raw:: html
 
-    <a href="../api/widgets/clogdisplay.html" class="apibutton">More details...</a>
+    <a href="../api/widgets/clogconsole.html" class="apibutton">More details...</a>
 
 .. |cscaleindicatorwiki| raw:: html
 

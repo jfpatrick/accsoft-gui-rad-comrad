@@ -17,7 +17,7 @@ Widgets
     clabel
     cled
     clineedit
-    clogdisplay
+    clogconsole
     cpropertyedit
     cpushbutton
     crelateddisplaybutton
