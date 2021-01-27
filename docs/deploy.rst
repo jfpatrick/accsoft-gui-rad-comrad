@@ -3,7 +3,8 @@ Deployment
 
 Deploying ComRAD applications is done in a similar fashion to other PyQt applications.
 
-.. warning:: Currently, the deployment is merely an educated guess, a suggestion, and may change in the future.
+.. warning:: Currently, the deployment is merely an educated guess, a suggestion, and may change in the future
+             to be compatible with acc-py-deploy.
 
 To deploy a ComRAD application on an operational machine, such as found in CCC, the application has to be
 installed on NFS inside a dedicated virtual environment, e.g. ``/nfs/user/somegroup/comrad``.
@@ -18,7 +19,7 @@ Then, in CCM the following script can be created to launch an application:
 
 .. code-block:: bash
 
-   source /acc/local/share/python/acc-py-pyqt/setup.sh \
+   source /acc/local/share/python/acc-py/base/2020.11/setup.sh \
      && source /nfs/user/somegroup/comrad/bin/activate \
      && comrad run /path/to/my/app.ui
 
