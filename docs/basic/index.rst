@@ -9,6 +9,7 @@ simple application. If you have never used it, consider reviewing :doc:`Getting 
 
    widgets
    controls
+   timing
    macros
    mix
    codecentric
