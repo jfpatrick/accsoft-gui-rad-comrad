@@ -20,6 +20,7 @@ Now that you have installed ComRAD as explained in the :doc:`install`, we can st
 
 - `Running the application`_
 
+  * `ComRAD main window`_
   * `Using alternative color schemes`_
 
 - `Hot reloading application's UI`_
@@ -205,6 +206,43 @@ To see all available options, refer to the help command:
 .. code-block:: bash
 
    comrad run -h
+
+
+ComRAD main window
+^^^^^^^^^^^^^^^^^^
+
+ComRAD decorates user interfaces with common controls that can be customized. Average application will have similar
+decorations to the following example:
+
+.. figure:: img/main_window.png
+   :align: center
+   :alt: Simple ComRAD application window
+
+   Simple ComRAD application window
+
+Various parts of the interface can be shown or hidden via "View" menu in the **Main menu** bar or via launch arguments
+(explore ``comrad run -h``).
+
+* **Main menu** provides basic configuration means for the application and the most vital functions. It can also be
+  extended with user-defined plugins (:ref:`advanced/plugins:Menu plugins`).
+* **Navigation** buttons provide controls similar to that of a web browser, where user can navigate back and forth between
+  displays, that are replaced using :ref:`crelateddisplaybutton`. Beside accommodating standard controls, navigation bar
+  is capable of embedding user-defined navigation items, using :ref:`advanced/plugins:Navigation bar plugins`.
+* **RBAC control** provides means to authenticate, configure user roles and display RBAC token information. More information
+  can be found in :doc:`basic/rbac`.
+* **Main Log Console** captures Python log output and aggregates it in a resizeable dock widget. To learn more about
+  the console, see :ref:`clogconsole`.
+* **Status bar** can provide status information, such as loading progress of a file. It can also be extended with
+  :ref:`custom plugins <advanced/plugins:Status bar plugins>`.
+* **Timing control** allows selecting a timing user for the entire application. When timing users must be applied only to
+  a part of the application :ref:`ccontextframe` can be employed. In addition, **Timing control** provides configuration
+  and ability to show the timing bar, as shown below. More information about timing can be found in :doc:`basic/timing`.
+
+.. figure:: img/timing_bar_window.png
+   :align: center
+   :alt: Simple application with timing bar enabled
+
+   Simple application with timing bar enabled
 
 Using alternative color schemes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
