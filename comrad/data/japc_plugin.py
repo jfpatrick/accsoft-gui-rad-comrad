@@ -1,6 +1,7 @@
 import logging
+import re
 from qtpy.QtCore import QObject
-from typing import Any, Optional, Callable, Dict
+from typing import Any, Optional, Callable, Dict, Union, Tuple
 from comrad.data.addr import ControlEndpointAddress
 from comrad.data.pyjapc_patch import CPyJapc
 from comrad.data_plugins import CCommonDataConnection, CDataPlugin, CChannelData, CChannel
@@ -27,6 +28,26 @@ Special fields defined by FESA which are meta-information and will be packaged i
 Thus they should be accessed in the header and not main data block. Unfortunately, there's difference between FESA
 names and JAPC, thus we need a map of what to request vs what to retrieve.
 """
+
+
+def parse_field_trait(field_name: str) -> Union[None, Tuple[CChannelData.FieldTrait, str]]:
+    """
+    FESA encodes special traits (min/max/units) that are visible as regular data fields, but they rather augment
+    another field with additional information, rather than expose a piece of data. These fields must never be
+    SET.
+
+    Args:
+        field_name: Name of the field.
+
+    Returns:
+        :obj:`True` if the field name corresponds to a trait rather than a regular field.
+    """
+    mo = re.match(r'(?P<field>.*)_(?P<modifier>min|max|units)$', field_name)
+    if mo and mo.groups():
+        captures = mo.groupdict()
+        trait = CChannelData.FieldTrait(captures['modifier'])
+        return trait, captures['field']
+    return None
 
 
 class CJapcConnection(CCommonDataConnection):

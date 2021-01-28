@@ -9,7 +9,7 @@ from pytestqt.qtbot import QtBot
 from _pytest.logging import LogCaptureFixture
 from qtpy.QtCore import Signal, Slot, QObject
 from comrad.data import japc_plugin
-from comrad.data.japc_plugin import CJapcConnection, CChannelData, SPECIAL_FIELDS
+from comrad.data.japc_plugin import CJapcConnection, CChannelData, SPECIAL_FIELDS, parse_field_trait
 from comrad.data.channel import PyDMChannel, CChannel, CContext
 from comrad.data.pyjapc_patch import CPyJapc
 from _comrad.comrad_info import COMRAD_DEFAULT_PROTOCOL
@@ -19,6 +19,27 @@ from _comrad.comrad_info import COMRAD_DEFAULT_PROTOCOL
 def mock_singleton():
     with mock.patch('comrad.data.pyjapc_patch.CPyJapc.instance'):
         yield
+
+
+@pytest.mark.parametrize('input,expected_output', [
+    ('testField_min', (CChannelData.FieldTrait.MIN, 'testField')),
+    ('testField_max', (CChannelData.FieldTrait.MAX, 'testField')),
+    ('testField_units', (CChannelData.FieldTrait.UNITS, 'testField')),
+    ('testField_madf', None),
+    ('testField_ma', None),
+    ('testField', None),
+    ('_min', (CChannelData.FieldTrait.MIN, '')),
+    ('_max', (CChannelData.FieldTrait.MAX, '')),
+    ('_units', (CChannelData.FieldTrait.UNITS, '')),
+    ('dev/prop#field_min', (CChannelData.FieldTrait.MIN, 'dev/prop#field')),
+    ('dev/prop#field_max', (CChannelData.FieldTrait.MAX, 'dev/prop#field')),
+    ('dev/prop#field_units', (CChannelData.FieldTrait.UNITS, 'dev/prop#field')),
+    ('dev/prop#_min', (CChannelData.FieldTrait.MIN, 'dev/prop#')),
+    ('dev/prop#_max', (CChannelData.FieldTrait.MAX, 'dev/prop#')),
+    ('dev/prop#_units', (CChannelData.FieldTrait.UNITS, 'dev/prop#')),
+])
+def test_parse_field_trait(input, expected_output):
+    assert parse_field_trait(input) == expected_output
 
 
 @pytest.mark.parametrize('selector,filter,expected_selector', [
@@ -37,6 +58,33 @@ def mock_singleton():
     ('rda://srv/mydevice/myprop#myfield', None, 'rda://srv/mydevice/myprop#myfield'),
     ('rda://srv/mydevice/myprop', None, 'rda://srv/mydevice/myprop'),
     ('rda://srv/mydevice/myprop#cycleName', 'cycleName', 'rda://srv/mydevice/myprop'),
+    ('mydevice/myprop#_min', None, 'mydevice/myprop#_min'),
+    ('mydevice/myprop#_max', None, 'mydevice/myprop#_max'),
+    ('mydevice/myprop#_units', None, 'mydevice/myprop#_units'),
+    ('mydevice/myprop#myfield_min', None, 'mydevice/myprop#myfield_min'),
+    ('mydevice/myprop#myfield_max', None, 'mydevice/myprop#myfield_max'),
+    ('mydevice/myprop#myfield_units', None, 'mydevice/myprop#myfield_units'),
+    ('mydevice/myprop#cycleName_min', None, 'mydevice/myprop#cycleName_min'),
+    ('mydevice/myprop#cycleName_max', None, 'mydevice/myprop#cycleName_max'),
+    ('mydevice/myprop#cycleName_units', None, 'mydevice/myprop#cycleName_units'),
+    ('rda:///mydevice/myprop#_min', None, 'rda:///mydevice/myprop#_min'),
+    ('rda:///mydevice/myprop#_max', None, 'rda:///mydevice/myprop#_max'),
+    ('rda:///mydevice/myprop#_units', None, 'rda:///mydevice/myprop#_units'),
+    ('rda:///mydevice/myprop#myfield_min', None, 'rda:///mydevice/myprop#myfield_min'),
+    ('rda:///mydevice/myprop#myfield_max', None, 'rda:///mydevice/myprop#myfield_max'),
+    ('rda:///mydevice/myprop#myfield_units', None, 'rda:///mydevice/myprop#myfield_units'),
+    ('rda:///mydevice/myprop#cycleName_min', None, 'rda:///mydevice/myprop#cycleName_min'),
+    ('rda:///mydevice/myprop#cycleName_max', None, 'rda:///mydevice/myprop#cycleName_max'),
+    ('rda:///mydevice/myprop#cycleName_units', None, 'rda:///mydevice/myprop#cycleName_units'),
+    ('rda://srv/mydevice/myprop#_min', None, 'rda://srv/mydevice/myprop#_min'),
+    ('rda://srv/mydevice/myprop#_max', None, 'rda://srv/mydevice/myprop#_max'),
+    ('rda://srv/mydevice/myprop#_units', None, 'rda://srv/mydevice/myprop#_units'),
+    ('rda://srv/mydevice/myprop#myfield_min', None, 'rda://srv/mydevice/myprop#myfield_min'),
+    ('rda://srv/mydevice/myprop#myfield_max', None, 'rda://srv/mydevice/myprop#myfield_max'),
+    ('rda://srv/mydevice/myprop#myfield_units', None, 'rda://srv/mydevice/myprop#myfield_units'),
+    ('rda://srv/mydevice/myprop#cycleName_min', None, 'rda://srv/mydevice/myprop#cycleName_min'),
+    ('rda://srv/mydevice/myprop#cycleName_max', None, 'rda://srv/mydevice/myprop#cycleName_max'),
+    ('rda://srv/mydevice/myprop#cycleName_units', None, 'rda://srv/mydevice/myprop#cycleName_units'),
 ])
 @mock.patch('comrad.data.japc_plugin.CJapcConnection.add_listener')
 def test_connection_address(add_listener, param_name, selector, filter, expected_meta_field, expected_param_name,

@@ -1,4 +1,5 @@
 import logging
+from enum import Enum
 from typing import Callable, Optional, cast, Any, Generic, TypeVar, Dict
 from dataclasses import dataclass
 from qtpy.QtCore import Signal
@@ -105,8 +106,38 @@ class CChannelData(Generic[T], metaclass=GenericMeta):
     Container to transmit data from the control system plugins to the widgets.
     """
 
+    class FieldTrait(Enum):
+        """
+        Extra information that may be associated with certain fields (numeric).
+        """
+
+        MIN = 'min'
+        """Minimum value possible to store in a numeric field."""
+
+        MAX = 'max'
+        """Maximum value possible to store in a numeric field."""
+
+        UNITS = 'units'
+        """Units of measurement associated with a numeric field."""
+
     value: T
     """Actual value that can be a dictionary for the whole property or a value of the data field."""
 
     meta_info: Dict[str, Any]
-    """Meta information (or header as called by JAPC and RDA). This contains timestamps, cycle names and other related meta-information."""
+    """
+    Meta information (or header as called by JAPC and RDA).
+    This contains timestamps, cycle names and other related meta-information.
+    In addition to normal header information, ComRAD will store field traits here (see :class:`FieldTrait`), as
+    sub-dictionaries, e.g.
+
+    >>> {
+    >>>     'acqStamp': ...
+    >>>     ...
+    >>>     'min': {
+    >>>         'fieldName': 0.5,
+    >>>     },
+    >>>     'max': {
+    >>>         'fieldName': 1.5,
+    >>>     },
+    >>> }
+    """
