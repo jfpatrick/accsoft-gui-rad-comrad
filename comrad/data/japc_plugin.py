@@ -137,6 +137,20 @@ class CJapcConnection(CCommonDataConnection):
                                     **self._japc_additional_args)
 
     def set(self, value: Any):
+        if not self._is_property_level:
+            if parse_field_trait(self._pyjapc_param_name) is not None:
+                logger.error(f'Cannot write into meta-field "{self._pyjapc_param_name}". SET operation will be ignored.')
+                return
+        elif isinstance(value, dict):
+            excluded_fields = [name for name in value.keys() if parse_field_trait(name) is not None]
+            if excluded_fields:
+                logger.warning('Cannot write meta-fields of property "{prop}": {fields}. They will be excluded from '
+                               'the SET payload.'.format(fields=', '.join(excluded_fields), prop=self._pyjapc_param_name))
+                new_val = {**value}
+                for field_name in excluded_fields:
+                    del new_val[field_name]
+                value = new_val
+
         CPyJapc.instance().setParam(parameterName=self._pyjapc_param_name,
                                     parameterValue=value,
                                     **self._japc_additional_args)

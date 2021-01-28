@@ -334,6 +334,92 @@ def test_field_traits_are_not_removed_from_value_dictionary(val, header):
     assert payload.value == val
 
 
+@pytest.mark.parametrize('address,expect_set_param_called,expected_error', [
+    ('mydevice/myprop#myfield', True, None),
+    ('mydevice/myprop#cycleName', True, None),
+    ('rda:///mydevice/myprop#myfield', True, None),
+    ('rda:///mydevice/myprop#cycleName', True, None),
+    ('rda://srv/mydevice/myprop#myfield', True, None),
+    ('rda://srv/mydevice/myprop#cycleName', True, None),
+    ('mydevice/myprop#_min', False, 'Cannot write into meta-field "mydevice/myprop#_min". SET operation will be ignored.'),
+    ('mydevice/myprop#_max', False, 'Cannot write into meta-field "mydevice/myprop#_max". SET operation will be ignored.'),
+    ('mydevice/myprop#_units', False, 'Cannot write into meta-field "mydevice/myprop#_units". SET operation will be ignored.'),
+    ('mydevice/myprop#myfield_min', False, 'Cannot write into meta-field "mydevice/myprop#myfield_min". SET operation will be ignored.'),
+    ('mydevice/myprop#myfield_max', False, 'Cannot write into meta-field "mydevice/myprop#myfield_max". SET operation will be ignored.'),
+    ('mydevice/myprop#myfield_units', False, 'Cannot write into meta-field "mydevice/myprop#myfield_units". SET operation will be ignored.'),
+    ('mydevice/myprop#cycleName_min', False, 'Cannot write into meta-field "mydevice/myprop#cycleName_min". SET operation will be ignored.'),
+    ('mydevice/myprop#cycleName_max', False, 'Cannot write into meta-field "mydevice/myprop#cycleName_max". SET operation will be ignored.'),
+    ('mydevice/myprop#cycleName_units', False, 'Cannot write into meta-field "mydevice/myprop#cycleName_units". SET operation will be ignored.'),
+    ('rda:///mydevice/myprop#_min', False, 'Cannot write into meta-field "rda:///mydevice/myprop#_min". SET operation will be ignored.'),
+    ('rda:///mydevice/myprop#_max', False, 'Cannot write into meta-field "rda:///mydevice/myprop#_max". SET operation will be ignored.'),
+    ('rda:///mydevice/myprop#_units', False, 'Cannot write into meta-field "rda:///mydevice/myprop#_units". SET operation will be ignored.'),
+    ('rda:///mydevice/myprop#myfield_min', False, 'Cannot write into meta-field "rda:///mydevice/myprop#myfield_min". SET operation will be ignored.'),
+    ('rda:///mydevice/myprop#myfield_max', False, 'Cannot write into meta-field "rda:///mydevice/myprop#myfield_max". SET operation will be ignored.'),
+    ('rda:///mydevice/myprop#myfield_units', False, 'Cannot write into meta-field "rda:///mydevice/myprop#myfield_units". SET operation will be ignored.'),
+    ('rda:///mydevice/myprop#cycleName_min', False, 'Cannot write into meta-field "rda:///mydevice/myprop#cycleName_min". SET operation will be ignored.'),
+    ('rda:///mydevice/myprop#cycleName_max', False, 'Cannot write into meta-field "rda:///mydevice/myprop#cycleName_max". SET operation will be ignored.'),
+    ('rda:///mydevice/myprop#cycleName_units', False, 'Cannot write into meta-field "rda:///mydevice/myprop#cycleName_units". SET operation will be ignored.'),
+    ('rda://srv/mydevice/myprop#_min', False, 'Cannot write into meta-field "rda://srv/mydevice/myprop#_min". SET operation will be ignored.'),
+    ('rda://srv/mydevice/myprop#_max', False, 'Cannot write into meta-field "rda://srv/mydevice/myprop#_max". SET operation will be ignored.'),
+    ('rda://srv/mydevice/myprop#_units', False, 'Cannot write into meta-field "rda://srv/mydevice/myprop#_units". SET operation will be ignored.'),
+    ('rda://srv/mydevice/myprop#myfield_min', False, 'Cannot write into meta-field "rda://srv/mydevice/myprop#myfield_min". SET operation will be ignored.'),
+    ('rda://srv/mydevice/myprop#myfield_max', False, 'Cannot write into meta-field "rda://srv/mydevice/myprop#myfield_max". SET operation will be ignored.'),
+    ('rda://srv/mydevice/myprop#myfield_units', False, 'Cannot write into meta-field "rda://srv/mydevice/myprop#myfield_units". SET operation will be ignored.'),
+    ('rda://srv/mydevice/myprop#cycleName_min', False, 'Cannot write into meta-field "rda://srv/mydevice/myprop#cycleName_min". SET operation will be ignored.'),
+    ('rda://srv/mydevice/myprop#cycleName_max', False, 'Cannot write into meta-field "rda://srv/mydevice/myprop#cycleName_max". SET operation will be ignored.'),
+    ('rda://srv/mydevice/myprop#cycleName_units', False, 'Cannot write into meta-field "rda://srv/mydevice/myprop#cycleName_units". SET operation will be ignored.'),
+])
+def test_set_of_field_trait_directly_is_ignored(address, expected_error, expect_set_param_called, caplog: LogCaptureFixture):
+    ch = PyDMChannel(address=address)
+    connection = CJapcConnection(channel=ch, protocol='japc', address=address)
+    CPyJapc.instance.return_value.setParam.assert_not_called()  # type: ignore
+    connection.set(value='test_val')
+    actual_errors = [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.ERROR and r.name == 'comrad.data.japc_plugin']
+    if expect_set_param_called:
+        CPyJapc.instance.return_value.setParam.assert_called_once()  # type: ignore
+        assert actual_errors == []
+    else:
+        CPyJapc.instance.return_value.setParam.assert_not_called()  # type: ignore
+        assert actual_errors == [expected_error]
+
+
+@pytest.mark.parametrize('input_value,expected_set_value,expected_warning', [
+    ({}, {}, None),
+    ({'val': 42}, {'val': 42}, None),
+    ({'val': 42, 'val2': 'val2'}, {'val': 42, 'val2': 'val2'}, None),
+    ({'val_min': 0.1}, {}, 'Cannot write meta-fields of property "device/property": val_min. They will be excluded from the SET payload.'),
+    ({'val': 42, 'val_min': 0.1}, {'val': 42}, 'Cannot write meta-fields of property "device/property": val_min. They will be excluded from the SET payload.'),
+    ({'val': 42, 'val2': 'val2', 'val_min': 0.1}, {'val': 42, 'val2': 'val2'}, 'Cannot write meta-fields of property "device/property": val_min. They will be excluded from the SET payload.'),
+    ({'val_max': 0.1}, {}, 'Cannot write meta-fields of property "device/property": val_max. They will be excluded from the SET payload.'),
+    ({'val': 42, 'val_max': 0.1}, {'val': 42}, 'Cannot write meta-fields of property "device/property": val_max. They will be excluded from the SET payload.'),
+    ({'val': 42, 'val2': 'val2', 'val_max': 0.1}, {'val': 42, 'val2': 'val2'}, 'Cannot write meta-fields of property "device/property": val_max. They will be excluded from the SET payload.'),
+    ({'val_units': 'test'}, {}, 'Cannot write meta-fields of property "device/property": val_units. They will be excluded from the SET payload.'),
+    ({'val': 42, 'val_units': 'test'}, {'val': 42}, 'Cannot write meta-fields of property "device/property": val_units. They will be excluded from the SET payload.'),
+    ({'val': 42, 'val2': 'val2', 'val_units': 'test'}, {'val': 42, 'val2': 'val2'}, 'Cannot write meta-fields of property "device/property": val_units. They will be excluded from the SET payload.'),
+    ({'val_min': 0.1, 'val_max': 0.5}, {}, 'Cannot write meta-fields of property "device/property": val_min, val_max. They will be excluded from the SET payload.'),
+    ({'val': 42, 'val_min': 0.1, 'val_max': 0.5}, {'val': 42}, 'Cannot write meta-fields of property "device/property": val_min, val_max. They will be excluded from the SET payload.'),
+    ({'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val_max': 0.5}, {'val': 42, 'val2': 'val2'}, 'Cannot write meta-fields of property "device/property": val_min, val_max. They will be excluded from the SET payload.'),
+    ({'val_min': 0.1, 'val2_min': 0.3}, {}, 'Cannot write meta-fields of property "device/property": val_min, val2_min. They will be excluded from the SET payload.'),
+    ({'val': 42, 'val_min': 0.1, 'val2_min': 0.3}, {'val': 42}, 'Cannot write meta-fields of property "device/property": val_min, val2_min. They will be excluded from the SET payload.'),
+    ({'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val2_min': 0.3}, {'val': 42, 'val2': 'val2'}, 'Cannot write meta-fields of property "device/property": val_min, val2_min. They will be excluded from the SET payload.'),
+    ({'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'}, {}, 'Cannot write meta-fields of property "device/property": val_min, val2_min, val_units. They will be excluded from the SET payload.'),
+    ({'val': 42, 'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'}, {'val': 42}, 'Cannot write meta-fields of property "device/property": val_min, val2_min, val_units. They will be excluded from the SET payload.'),
+    ({'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'}, {'val': 42, 'val2': 'val2'},
+     'Cannot write meta-fields of property "device/property": val_min, val2_min, val_units. They will be excluded from the SET payload.'),
+])
+def test_property_set_excludes_field_traits_from_payload(input_value, expected_warning, expected_set_value, caplog: LogCaptureFixture):
+    ch = PyDMChannel(address='device/property')
+    connection = CJapcConnection(channel=ch, protocol='japc', address='/device/property')
+    CPyJapc.instance.return_value.setParam.assert_not_called()  # type: ignore
+    connection.set(value=input_value)
+    actual_warnings = [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.WARNING and r.name == 'comrad.data.japc_plugin']
+    if expected_warning:
+        assert actual_warnings == [expected_warning]
+    else:
+        assert actual_warnings == []
+    CPyJapc.instance.return_value.setParam.assert_called_once_with(parameterName='device/property', parameterValue=expected_set_value)  # type: ignore
+
+
 def test_write_slots_with_no_params_issue_empty_property_set(qtbot: QtBot):
     class TestWidget(QObject):
         sig = Signal()  # Notice no parameters here, this should be considered as "command"
