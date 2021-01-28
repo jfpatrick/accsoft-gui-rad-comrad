@@ -2,7 +2,7 @@ import logging
 import copy
 import weakref
 from typing import Optional, Dict, Any, Union, cast, Tuple
-from qtpy.QtWidgets import QWidget, QLabel, QComboBox
+from qtpy.QtWidgets import QWidget, QLabel, QComboBox, QSpinBox, QDoubleSpinBox
 from qtpy.QtCore import Property, QVariant, Signal
 from qtpy.QtGui import QFocusEvent, QGuiApplication, QPalette, QColor
 from pydm.widgets.base import PyDMWritableWidget
@@ -346,6 +346,7 @@ class CPropertyEditWidgetDelegate(_PropertyEditWidgetDelegate):
                      user_data: Optional[Dict[str, Any]],
                      item_type: PropertyEdit.ValueType,
                      widget: QWidget):
+        is_numeric = item_type == PropertyEdit.ValueType.INTEGER or item_type == PropertyEdit.ValueType.REAL
         if isinstance(value, CEnumValue):
             if isinstance(widget, Led) and item_type == PropertyEdit.ValueType.BOOLEAN:
                 try:
@@ -366,9 +367,31 @@ class CPropertyEditWidgetDelegate(_PropertyEditWidgetDelegate):
                     else:
                         combo.setEditable(False)
                         value = value.code
+        elif user_data is not None and is_numeric:
+            # Handle editable numeric fields
+            if isinstance(widget, QSpinBox) or isinstance(widget, QDoubleSpinBox):
+                try:
+                    widget.setMinimum(user_data[CChannelData.FieldTrait.MIN.value])
+                except KeyError:
+                    pass
+                try:
+                    widget.setMaximum(user_data[CChannelData.FieldTrait.MAX.value])
+                except KeyError:
+                    pass
+                try:
+                    widget.setSuffix(f' {user_data[CChannelData.FieldTrait.UNITS.value]}')
+                except KeyError:
+                    pass
 
         super().display_data(field_id=field_id,
                              value=value,
                              user_data=user_data,
                              item_type=item_type,
                              widget=widget)
+
+        # Handle non-editable numeric fields (needs to have text set in super() first)
+        if user_data is not None and is_numeric and isinstance(widget, QLabel):
+            try:
+                widget.setText(f'{widget.text()} {user_data[CChannelData.FieldTrait.UNITS.value]}')
+            except KeyError:
+                pass
