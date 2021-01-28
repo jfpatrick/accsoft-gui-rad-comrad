@@ -168,6 +168,16 @@ class CJapcConnection(CCommonDataConnection):
             except KeyError:
                 raise ValueError(f'Cannot locate meta-field "{self._meta_field}" inside packet header ({headerInfo}).')
         elif self._is_property_level and isinstance(value, dict):
+            # Pre-process special FESA modifiers and store them in the header instead of the value dictionary
+            for field_name, field_val in value.items():
+                traits = parse_field_trait(field_name)
+                if traits is None:
+                    continue
+                trait, related_field = traits
+                if trait.value not in headerInfo.keys():
+                    headerInfo[trait.value] = {}
+                headerInfo[trait.value][related_field] = field_val
+
             # To not put logic of resolving "special" fields into widgets that work with the whole property,
             # we populate meta fields into the property, like if it was data
             for request_key, reply_key in SPECIAL_FIELDS.items():

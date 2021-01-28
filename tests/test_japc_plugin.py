@@ -239,6 +239,101 @@ def test_meta_fields_are_injected_into_full_property(val, considered_header, dis
     callback.assert_called_once_with(sig, CChannelData(value=combined_val, meta_info=full_header))
 
 
+@pytest.mark.parametrize('val,header,expected_header', [
+    ({}, {}, {}),
+    ({'val': 42}, {}, {}),
+    ({'val': 42, 'val2': 'val2'}, {}, {}),
+    ({'val_min': 0.1}, {}, {'min': {'val': 0.1}}),
+    ({'val': 42, 'val_min': 0.1}, {}, {'min': {'val': 0.1}}),
+    ({'val': 42, 'val2': 'val2', 'val_min': 0.1}, {}, {'min': {'val': 0.1}}),
+    ({'val_max': 0.1}, {}, {'max': {'val': 0.1}}),
+    ({'val': 42, 'val_max': 0.1}, {}, {'max': {'val': 0.1}}),
+    ({'val': 42, 'val2': 'val2', 'val_max': 0.1}, {}, {'max': {'val': 0.1}}),
+    ({'val_units': 'test'}, {}, {'units': {'val': 'test'}}),
+    ({'val': 42, 'val_units': 'test'}, {}, {'units': {'val': 'test'}}),
+    ({'val': 42, 'val2': 'val2', 'val_units': 'test'}, {}, {'units': {'val': 'test'}}),
+    ({'val_min': 0.1, 'val_max': 0.5}, {}, {'min': {'val': 0.1}, 'max': {'val': 0.5}}),
+    ({'val': 42, 'val_min': 0.1, 'val_max': 0.5}, {}, {'min': {'val': 0.1}, 'max': {'val': 0.5}}),
+    ({'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val_max': 0.5}, {}, {'min': {'val': 0.1}, 'max': {'val': 0.5}}),
+    ({'val_min': 0.1, 'val2_min': 0.3}, {}, {'min': {'val': 0.1, 'val2': 0.3}}),
+    ({'val': 42, 'val_min': 0.1, 'val2_min': 0.3}, {}, {'min': {'val': 0.1, 'val2': 0.3}}),
+    ({'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val2_min': 0.3}, {}, {'min': {'val': 0.1, 'val2': 0.3}}),
+    ({'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'}, {}, {'min': {'val': 0.1, 'val2': 0.3}, 'units': {'val': 'test'}}),
+    ({'val': 42, 'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'}, {}, {'min': {'val': 0.1, 'val2': 0.3}, 'units': {'val': 'test'}}),
+    ({'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'}, {}, {'min': {'val': 0.1, 'val2': 0.3}, 'units': {'val': 'test'}}),
+    ({}, {'headerField': 'headerVal'}, {'headerField': 'headerVal'}),
+    ({'val': 42}, {'headerField': 'headerVal'}, {'headerField': 'headerVal'}),
+    ({'val': 42, 'val2': 'val2'}, {'headerField': 'headerVal'}, {'headerField': 'headerVal'}),
+    ({'val_min': 0.1}, {'headerField': 'headerVal'}, {'min': {'val': 0.1}, 'headerField': 'headerVal'}),
+    ({'val': 42, 'val_min': 0.1}, {'headerField': 'headerVal'}, {'min': {'val': 0.1}, 'headerField': 'headerVal'}),
+    ({'val': 42, 'val2': 'val2', 'val_min': 0.1}, {'headerField': 'headerVal'}, {'min': {'val': 0.1}, 'headerField': 'headerVal'}),
+    ({'val_max': 0.1}, {'headerField': 'headerVal'}, {'max': {'val': 0.1}, 'headerField': 'headerVal'}),
+    ({'val': 42, 'val_max': 0.1}, {'headerField': 'headerVal'}, {'max': {'val': 0.1}, 'headerField': 'headerVal'}),
+    ({'val': 42, 'val2': 'val2', 'val_max': 0.1}, {'headerField': 'headerVal'}, {'max': {'val': 0.1}, 'headerField': 'headerVal'}),
+    ({'val_units': 'test'}, {'headerField': 'headerVal'}, {'units': {'val': 'test'}, 'headerField': 'headerVal'}),
+    ({'val': 42, 'val_units': 'test'}, {'headerField': 'headerVal'}, {'units': {'val': 'test'}, 'headerField': 'headerVal'}),
+    ({'val': 42, 'val2': 'val2', 'val_units': 'test'}, {'headerField': 'headerVal'}, {'units': {'val': 'test'}, 'headerField': 'headerVal'}),
+    ({'val_min': 0.1, 'val_max': 0.5}, {'headerField': 'headerVal'}, {'min': {'val': 0.1}, 'max': {'val': 0.5}, 'headerField': 'headerVal'}),
+    ({'val': 42, 'val_min': 0.1, 'val_max': 0.5}, {'headerField': 'headerVal'}, {'min': {'val': 0.1}, 'max': {'val': 0.5}, 'headerField': 'headerVal'}),
+    ({'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val_max': 0.5}, {'headerField': 'headerVal'}, {'min': {'val': 0.1}, 'max': {'val': 0.5}, 'headerField': 'headerVal'}),
+    ({'val_min': 0.1, 'val2_min': 0.3}, {'headerField': 'headerVal'}, {'min': {'val': 0.1, 'val2': 0.3}, 'headerField': 'headerVal'}),
+    ({'val': 42, 'val_min': 0.1, 'val2_min': 0.3}, {'headerField': 'headerVal'}, {'min': {'val': 0.1, 'val2': 0.3}, 'headerField': 'headerVal'}),
+    ({'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val2_min': 0.3}, {'headerField': 'headerVal'}, {'min': {'val': 0.1, 'val2': 0.3}, 'headerField': 'headerVal'}),
+    ({'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'}, {'headerField': 'headerVal'}, {'min': {'val': 0.1, 'val2': 0.3}, 'units': {'val': 'test'}, 'headerField': 'headerVal'}),
+    ({'val': 42, 'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'}, {'headerField': 'headerVal'}, {'min': {'val': 0.1, 'val2': 0.3}, 'units': {'val': 'test'}, 'headerField': 'headerVal'}),
+    ({'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'}, {'headerField': 'headerVal'}, {'min': {'val': 0.1, 'val2': 0.3}, 'units': {'val': 'test'}, 'headerField': 'headerVal'}),
+])
+def test_field_traits_are_moved_into_header(val, header, expected_header):
+    ch = PyDMChannel(address='device/property')
+    connection = CJapcConnection(channel=ch, protocol='japc', address='/device/property')
+    callback = mock.Mock()
+    sig = mock.MagicMock()
+    connection._notify_listeners('device/property', val, header, emitter=callback, callback_signals=[sig])
+    callback.assert_called_once()
+    payload = callback.call_args[0][1]
+    assert isinstance(payload, CChannelData)
+    assert payload.meta_info == expected_header
+
+
+@pytest.mark.parametrize('header', [
+    {},
+    {'headerField': 'headerVal'},
+])
+@pytest.mark.parametrize('val', [
+    {},
+    {'val': 42},
+    {'val': 42, 'val2': 'val2'},
+    {'val_min': 0.1},
+    {'val': 42, 'val_min': 0.1},
+    {'val': 42, 'val2': 'val2', 'val_min': 0.1},
+    {'val_max': 0.1},
+    {'val': 42, 'val_max': 0.1},
+    {'val': 42, 'val2': 'val2', 'val_max': 0.1},
+    {'val_units': 'test'},
+    {'val': 42, 'val_units': 'test'},
+    {'val': 42, 'val2': 'val2', 'val_units': 'test'},
+    {'val_min': 0.1, 'val_max': 0.5},
+    {'val': 42, 'val_min': 0.1, 'val_max': 0.5},
+    {'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val_max': 0.5},
+    {'val_min': 0.1, 'val2_min': 0.3},
+    {'val': 42, 'val_min': 0.1, 'val2_min': 0.3},
+    {'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val2_min': 0.3},
+    {'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'},
+    {'val': 42, 'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'},
+    {'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'},
+])
+def test_field_traits_are_not_removed_from_value_dictionary(val, header):
+    ch = PyDMChannel(address='device/property')
+    connection = CJapcConnection(channel=ch, protocol='japc', address='/device/property')
+    callback = mock.Mock()
+    sig = mock.MagicMock()
+    connection._notify_listeners('device/property', val, header, emitter=callback, callback_signals=[sig])
+    callback.assert_called_once()
+    payload = callback.call_args[0][1]
+    assert isinstance(payload, CChannelData)
+    assert payload.value == val
+
+
 def test_write_slots_with_no_params_issue_empty_property_set(qtbot: QtBot):
     class TestWidget(QObject):
         sig = Signal()  # Notice no parameters here, this should be considered as "command"
