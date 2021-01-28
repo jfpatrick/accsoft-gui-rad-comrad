@@ -339,11 +339,12 @@ class PLSPluginButton(QToolButton):
         menu.addAction(act_bar)
 
     def _open_user_selector(self):
-        PLSSelectorDialog().exec_()
+        dialog = PLSSelectorDialog(parent=self)
+        dialog.exec_()
 
     def _open_bar_config(self):
         parent = cast(PLSToolbarWidget, self.parent())
-        dialog = PLSTimingConfigDialog(parent.config)
+        dialog = PLSTimingConfigDialog(config=parent.config, parent=self)
         dialog.config_updated.connect(self._on_timing_config_updated)
         dialog.exec_()
 
