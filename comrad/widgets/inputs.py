@@ -1,6 +1,7 @@
 import logging
 import copy
-from typing import Optional, Dict, Any, Union, cast
+import weakref
+from typing import Optional, Dict, Any, Union, cast, Tuple
 from qtpy.QtWidgets import QWidget, QLabel, QComboBox
 from qtpy.QtCore import Property, QVariant, Signal
 from qtpy.QtGui import QFocusEvent, QGuiApplication, QPalette, QColor
@@ -270,6 +271,10 @@ class CPropertyEdit(CChannelDataProcessingMixin, CRequestingMixin, CWidgetRulesM
             return
 
         super().value_changed(packet)
+
+        # Workaround to propagate reflection data into the delegate (that would normally be derived at creation time)
+        self._update_field_traits(self.widget_delegate.widget_map, packet.meta_info)
+
         self.setValue(packet.value)
 
     @PropertyEdit.buttons.setter
@@ -281,6 +286,28 @@ class CPropertyEdit(CChannelDataProcessingMixin, CRequestingMixin, CWidgetRulesM
         PropertyEdit.buttons.fset(self, new_val)
         disable_subscribe = bool(new_val & PropertyEdit.Buttons.GET)
         self.connect_value_slot = not disable_subscribe
+
+    def _update_field_traits(self, widget_map: Dict[str, Tuple[weakref.ReferenceType, _PropertyEditField]], meta_info: Dict[str, Any]):
+        """
+        Updates min/max/field information in the widget delegate (that would normally be configured statically)
+        with the latest information from the control system.
+        """
+        for trait_type in CChannelData.FieldTrait:
+            try:
+                traits: Dict[str, Any] = meta_info[trait_type.value]
+            except KeyError:
+                continue
+            if not isinstance(traits, dict):
+                continue
+            for field_name, trait_val in traits.items():
+                try:
+                    widget_config = widget_map[field_name]
+                except KeyError:
+                    continue
+                _, field_config = widget_config
+                if field_config.user_data is None:
+                    field_config.user_data = {}
+                field_config.user_data[trait_type.value] = trait_val
 
 
 class CPropertyEditWidgetDelegate(_PropertyEditWidgetDelegate):

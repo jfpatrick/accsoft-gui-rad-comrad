@@ -58,6 +58,178 @@ def test_cpropertyedit_value_changed(qtbot: QtBot, val, should_set_value):
             setValue.assert_not_called()
 
 
+@pytest.mark.parametrize('incoming_header,expected_config', [
+    (
+        {},
+        {
+            'str': None,
+            'int': None,
+            'bool': None,
+            'float': None,
+            'enum': {
+                'options': [
+                    ('none', 0),
+                    ('one', 4),
+                    ('two', 5),
+                ],
+            },
+        },
+    ),
+    (
+        {'min': {'int': -2}},
+        {
+            'str': None,
+            'int': {
+                'min': -2,
+            },
+            'bool': None,
+            'float': None,
+            'enum': {
+                'options': [
+                    ('none', 0),
+                    ('one', 4),
+                    ('two', 5),
+                ],
+            },
+        },
+    ),
+    (
+        {'max': {'int': 5}},
+        {
+            'str': None,
+            'int': {
+                'max': 5,
+            },
+            'bool': None,
+            'float': None,
+            'enum': {
+                'options': [
+                    ('none', 0),
+                    ('one', 4),
+                    ('two', 5),
+                ],
+            },
+        },
+    ),
+    (
+        {'units': {'int': 'TST'}},
+        {
+            'str': None,
+            'int': {
+                'units': 'TST',
+            },
+            'bool': None,
+            'float': None,
+            'enum': {
+                'options': [
+                    ('none', 0),
+                    ('one', 4),
+                    ('two', 5),
+                ],
+            },
+        },
+    ),
+    (
+        {'min': {'int': 1}, 'max': {'int': 5}},
+        {
+            'str': None,
+            'int': {
+                'min': 1,
+                'max': 5,
+            },
+            'bool': None,
+            'float': None,
+            'enum': {
+                'options': [
+                    ('none', 0),
+                    ('one', 4),
+                    ('two', 5),
+                ],
+            },
+        },
+    ),
+    (
+        {'min': {'int': 1, 'float': 0.5}},
+        {
+            'str': None,
+            'int': {
+                'min': 1,
+            },
+            'bool': None,
+            'float': {
+                'min': 0.5,
+            },
+            'enum': {
+                'options': [
+                    ('none', 0),
+                    ('one', 4),
+                    ('two', 5),
+                ],
+            },
+        },
+    ),
+    (
+        {'min': {'int': 1, 'float': 0.5}, 'units': {'int': 'TST'}},
+        {
+            'str': None,
+            'int': {
+                'min': 1,
+                'units': 'TST',
+            },
+            'bool': None,
+            'float': {
+                'min': 0.5,
+            },
+            'enum': {
+                'options': [
+                    ('none', 0),
+                    ('one', 4),
+                    ('two', 5),
+                ],
+            },
+        },
+    ),
+])
+@pytest.mark.parametrize('val', [
+    {},
+    {'str': 'val1', 'int': 10},
+    {'float': -1.5, 'int': 10},
+    {'float': -1.5, 'int': 10, 'str': 'val1', 'bool': True},
+])
+@pytest.mark.parametrize('disregarded_header', [
+    {},
+    {'notImportant': 'notImportant'},
+])
+def test_cpropertyedit_field_traits_are_updated_in_delegate(qtbot: QtBot, val, incoming_header,
+                                                            expected_config, disregarded_header):
+    full_header = {**disregarded_header, **incoming_header}
+    map_widget_dict = lambda wmap: {k: v[1].user_data for k, v in wmap.items()}
+    widget = CPropertyEdit()
+    qtbot.add_widget(widget)
+    widget.fields = [
+        CPropertyEditField(field='str', type=CPropertyEdit.ValueType.STRING, editable=False),
+        CPropertyEditField(field='int', type=CPropertyEdit.ValueType.INTEGER, editable=False),
+        CPropertyEditField(field='bool', type=CPropertyEdit.ValueType.BOOLEAN, editable=False),
+        CPropertyEditField(field='float', type=CPropertyEdit.ValueType.REAL, editable=False),
+        CPropertyEditField(field='enum', type=CPropertyEdit.ValueType.ENUM, editable=False, user_data=CPropertyEdit.ValueType.enum_user_data([('none', 0), ('one', 4), ('two', 5)])),
+    ]
+    assert map_widget_dict(widget.widget_delegate.widget_map) == {
+        'str': None,
+        'int': None,
+        'bool': None,
+        'float': None,
+        'enum': {
+            'options': [
+                ('none', 0),
+                ('one', 4),
+                ('two', 5),
+            ],
+        },
+    }
+    widget.channelValueChanged(CChannelData(value=val, meta_info=full_header))
+    assert map_widget_dict(widget.widget_delegate.widget_map) == expected_config
+
+
 @pytest.mark.parametrize('buttons,expected_connect_slot', [
     (CPropertyEdit.Buttons.GET, False),
     (CPropertyEdit.Buttons.SET, True),
