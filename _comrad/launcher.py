@@ -201,8 +201,10 @@ def _run_subcommand(parser: argparse.ArgumentParser):
 
     display_group = parser.add_argument_group('Display configuration')
     display_group.add_argument('display_args',
-                               help='Any extra arguments to be passed to the ComRAD client application '
-                                    '(which is a QApplication subclass).',
+                               help='Any extra arguments to be passed to the main CDisplay subclass (only '
+                                    'when user supplies *.py file as FILE with CDisplay subclass, "args" keyword is '
+                                    'populated with this list). This may be useful to pass arguments from '
+                                    'CRelatedDisplayButton.',
                                metavar='...',
                                nargs=argparse.REMAINDER,
                                default=None)
