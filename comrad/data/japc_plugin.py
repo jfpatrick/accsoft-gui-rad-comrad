@@ -1,6 +1,7 @@
 import logging
+import re
 from qtpy.QtCore import QObject
-from typing import Any, Optional, Callable, Dict
+from typing import Any, Optional, Callable, Dict, Union, Tuple
 from comrad.data.addr import ControlEndpointAddress
 from comrad.data.pyjapc_patch import CPyJapc
 from comrad.data_plugins import CCommonDataConnection, CDataPlugin, CChannelData, CChannel
@@ -27,6 +28,26 @@ Special fields defined by FESA which are meta-information and will be packaged i
 Thus they should be accessed in the header and not main data block. Unfortunately, there's difference between FESA
 names and JAPC, thus we need a map of what to request vs what to retrieve.
 """
+
+
+def parse_field_trait(field_name: str) -> Union[None, Tuple[CChannelData.FieldTrait, str]]:
+    """
+    FESA encodes special traits (min/max/units) that are visible as regular data fields, but they rather augment
+    another field with additional information, rather than expose a piece of data. These fields must never be
+    SET.
+
+    Args:
+        field_name: Name of the field.
+
+    Returns:
+        :obj:`True` if the field name corresponds to a trait rather than a regular field.
+    """
+    mo = re.match(r'(?P<field>.*)_(?P<modifier>min|max|units)$', field_name)
+    if mo and mo.groups():
+        captures = mo.groupdict()
+        trait = CChannelData.FieldTrait(captures['modifier'])
+        return trait, captures['field']
+    return None
 
 
 class CJapcConnection(CCommonDataConnection):
@@ -116,6 +137,20 @@ class CJapcConnection(CCommonDataConnection):
                                     **self._japc_additional_args)
 
     def set(self, value: Any):
+        if not self._is_property_level:
+            if parse_field_trait(self._pyjapc_param_name) is not None:
+                logger.error(f'Cannot write into meta-field "{self._pyjapc_param_name}". SET operation will be ignored.')
+                return
+        elif isinstance(value, dict):
+            excluded_fields = [name for name in value.keys() if parse_field_trait(name) is not None]
+            if excluded_fields:
+                logger.warning('Cannot write meta-fields of property "{prop}": {fields}. They will be excluded from '
+                               'the SET payload.'.format(fields=', '.join(excluded_fields), prop=self._pyjapc_param_name))
+                new_val = {**value}
+                for field_name in excluded_fields:
+                    del new_val[field_name]
+                value = new_val
+
         CPyJapc.instance().setParam(parameterName=self._pyjapc_param_name,
                                     parameterValue=value,
                                     **self._japc_additional_args)
@@ -147,6 +182,16 @@ class CJapcConnection(CCommonDataConnection):
             except KeyError:
                 raise ValueError(f'Cannot locate meta-field "{self._meta_field}" inside packet header ({headerInfo}).')
         elif self._is_property_level and isinstance(value, dict):
+            # Pre-process special FESA modifiers and store them in the header instead of the value dictionary
+            for field_name, field_val in value.items():
+                traits = parse_field_trait(field_name)
+                if traits is None:
+                    continue
+                trait, related_field = traits
+                if trait.value not in headerInfo.keys():
+                    headerInfo[trait.value] = {}
+                headerInfo[trait.value][related_field] = field_val
+
             # To not put logic of resolving "special" fields into widgets that work with the whole property,
             # we populate meta fields into the property, like if it was data
             for request_key, reply_key in SPECIAL_FIELDS.items():

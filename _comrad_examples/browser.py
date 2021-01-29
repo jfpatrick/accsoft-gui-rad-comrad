@@ -6,11 +6,12 @@ how to use ComRAD ecosystem.
 import logging
 import types
 import argparse
+from subprocess import Popen
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, cast
 from qtpy import uic
 from qtpy.QtCore import Qt, Signal
-from qtpy.QtGui import QShowEvent
+from qtpy.QtGui import QShowEvent, QCloseEvent
 from qtpy.QtWidgets import (QMainWindow, QTreeWidgetItem, QTreeWidget, QStackedWidget, QTabWidget, QApplication,
                             QAbstractScrollArea, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit, QFrame)
 from pydm.utilities.iconfont import IconFont
@@ -70,6 +71,8 @@ class ExamplesWindow(QMainWindow):
         self._selected_example_entrypoint: Optional[str] = None
         self._selected_example_japc_generator: Optional[str] = None
         self._selected_example_args: Optional[List[str]] = None
+        self._running_example: Optional[Popen] = None
+        self._running_designer: Optional[Popen] = None
 
         self.alert_icon_lbl.setPixmap(IconFont().icon('exclamation-triangle').pixmap(self.alert_icon_lbl.minimumSize()))
         self.arg_frame.hide()
@@ -107,6 +110,11 @@ class ExamplesWindow(QMainWindow):
         self.examples_tree.itemClicked.connect(self._on_example_selected)
         self.example_run_btn.clicked.connect(self._run_example)
         self.show()
+
+    def closeEvent(self, event: QCloseEvent):
+        self._kill_running_example_if_needed()
+        self._kill_running_designer_if_needed()
+        super().closeEvent(event)
 
     def _show_about(self):
         """
@@ -257,7 +265,7 @@ class ExamplesWindow(QMainWindow):
                 widget = EditorTab(file_path=file_path, file_type=ext, parent=self.tabs)
             elif ext == '.ui':
                 tab = DesignerTab(file_path=file_path, parent=self.tabs)
-                tab.designer_opened.connect(ExamplesWindow._open_designer_file)
+                tab.designer_opened.connect(self._open_designer_file)
                 widget = tab
             else:
                 raise ValueError(f'Unsupported file type: {ext}')
@@ -292,21 +300,29 @@ class ExamplesWindow(QMainWindow):
             gcc_libs = str(pathlib.Path(cmd_env['ACC_PY_PREFIX']).absolute() / 'gcc' / 'lib64')
             cmd_env['LD_LIBRARY_PATH'] = gcc_libs + ':' + cmd_env.get('LD_LIBRARY_PATH', '')
 
-        import subprocess
-        try:
-            subprocess.run(args=cmd_args, shell=False, env=cmd_env, check=True)
-        except subprocess.CalledProcessError as e:
-            logger.exception(f'"comrad run" has failed: {str(e)}')
+        self._kill_running_example_if_needed()
+        self._running_example = Popen(args=cmd_args, shell=False, env=cmd_env)
 
-    @staticmethod
-    def _open_designer_file(file_path: str):
+    def _kill_running_example_if_needed(self):
+        if self._running_example is not None:
+            self._running_example.kill()
+            self._running_example = None
+
+    def _kill_running_designer_if_needed(self):
+        if self._running_designer is not None:
+            self._running_designer.kill()
+            self._running_designer = None
+
+    def _open_designer_file(self, file_path: str):
         """Opens *.ui file in Qt Designer"""
         from _comrad.designer import run_designer
         from _comrad.comrad_info import CCDA_MAP
 
-        run_designer(files=[file_path],
-                     ccda_env=CCDA_MAP['PRO'],
-                     log_level=logging.getLevelName(logging.getLogger().level))
+        self._kill_running_designer_if_needed()
+        self._running_designer = cast(Popen, run_designer(files=[file_path],
+                                                          blocking=False,
+                                                          ccda_env=CCDA_MAP['PRO'],
+                                                          log_level=logging.getLevelName(logging.getLogger().level)))
 
 
 class DesignerTab(QWidget):

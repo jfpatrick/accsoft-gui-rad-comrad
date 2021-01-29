@@ -1,7 +1,8 @@
 import logging
 import copy
-from typing import Optional, Dict, Any, Union, cast
-from qtpy.QtWidgets import QWidget, QLabel, QComboBox
+import weakref
+from typing import Optional, Dict, Any, Union, cast, Tuple
+from qtpy.QtWidgets import QWidget, QLabel, QComboBox, QSpinBox, QDoubleSpinBox
 from qtpy.QtCore import Property, QVariant, Signal
 from qtpy.QtGui import QFocusEvent, QGuiApplication, QPalette, QColor
 from pydm.widgets.base import PyDMWritableWidget
@@ -270,6 +271,10 @@ class CPropertyEdit(CChannelDataProcessingMixin, CRequestingMixin, CWidgetRulesM
             return
 
         super().value_changed(packet)
+
+        # Workaround to propagate reflection data into the delegate (that would normally be derived at creation time)
+        self._update_field_traits(self.widget_delegate.widget_map, packet.meta_info)
+
         self.setValue(packet.value)
 
     @PropertyEdit.buttons.setter
@@ -281,6 +286,28 @@ class CPropertyEdit(CChannelDataProcessingMixin, CRequestingMixin, CWidgetRulesM
         PropertyEdit.buttons.fset(self, new_val)
         disable_subscribe = bool(new_val & PropertyEdit.Buttons.GET)
         self.connect_value_slot = not disable_subscribe
+
+    def _update_field_traits(self, widget_map: Dict[str, Tuple[weakref.ReferenceType, _PropertyEditField]], meta_info: Dict[str, Any]):
+        """
+        Updates min/max/field information in the widget delegate (that would normally be configured statically)
+        with the latest information from the control system.
+        """
+        for trait_type in CChannelData.FieldTrait:
+            try:
+                traits: Dict[str, Any] = meta_info[trait_type.value]
+            except KeyError:
+                continue
+            if not isinstance(traits, dict):
+                continue
+            for field_name, trait_val in traits.items():
+                try:
+                    widget_config = widget_map[field_name]
+                except KeyError:
+                    continue
+                _, field_config = widget_config
+                if field_config.user_data is None:
+                    field_config.user_data = {}
+                field_config.user_data[trait_type.value] = trait_val
 
 
 class CPropertyEditWidgetDelegate(_PropertyEditWidgetDelegate):
@@ -319,6 +346,7 @@ class CPropertyEditWidgetDelegate(_PropertyEditWidgetDelegate):
                      user_data: Optional[Dict[str, Any]],
                      item_type: PropertyEdit.ValueType,
                      widget: QWidget):
+        is_numeric = item_type == PropertyEdit.ValueType.INTEGER or item_type == PropertyEdit.ValueType.REAL
         if isinstance(value, CEnumValue):
             if isinstance(widget, Led) and item_type == PropertyEdit.ValueType.BOOLEAN:
                 try:
@@ -339,9 +367,31 @@ class CPropertyEditWidgetDelegate(_PropertyEditWidgetDelegate):
                     else:
                         combo.setEditable(False)
                         value = value.code
+        elif user_data is not None and is_numeric:
+            # Handle editable numeric fields
+            if isinstance(widget, QSpinBox) or isinstance(widget, QDoubleSpinBox):
+                try:
+                    widget.setMinimum(user_data[CChannelData.FieldTrait.MIN.value])
+                except KeyError:
+                    pass
+                try:
+                    widget.setMaximum(user_data[CChannelData.FieldTrait.MAX.value])
+                except KeyError:
+                    pass
+                try:
+                    widget.setSuffix(f' {user_data[CChannelData.FieldTrait.UNITS.value]}')
+                except KeyError:
+                    pass
 
         super().display_data(field_id=field_id,
                              value=value,
                              user_data=user_data,
                              item_type=item_type,
                              widget=widget)
+
+        # Handle non-editable numeric fields (needs to have text set in super() first)
+        if user_data is not None and is_numeric and isinstance(widget, QLabel):
+            try:
+                widget.setText(f'{widget.text()} {user_data[CChannelData.FieldTrait.UNITS.value]}')
+            except KeyError:
+                pass

@@ -8,6 +8,7 @@ device inside the control system, while the later one augments this communicatio
 - `Channels`_
 
   * `Meta fields`_
+  * `Field traits`_
 
 - `Contexts`_
 
@@ -77,6 +78,24 @@ So, for example, accessing the address ``myDevice/myProperty#cycleName`` will tr
           ``updateFlags``. This field is a very low-level combination of bits that is not intended to be visible
           to the control system users, and therefore is not supported.
 
+
+Field traits
+^^^^^^^^^^^^
+
+In addition to special handling of `Meta fields`_, ComRAD can recognize FESA-level special fields that do not represent
+and independent piece of data, but rather augment another field. Yet, they are represented as regular data-fields in
+CCDE and on the transport level. Typically, these are min/max values for numeric fields and units of measurement.
+For example, ``myDevice/myProperty#myField_min`` is considered a minimum value for field
+``myDevice/myProperty#myField``. Same applies to fields with ``_max`` and ``_units`` suffix. This notation is
+conventional in FESA and is always expected to represent this special case.
+
+Field traits cannot be written into (they are expected to be changed by FESA developers). Hence, if one has a
+:ref:`clineedit` connected to ``myDevice/myProperty#myField_min``, sending a new value to the control system
+will produce an error, e.g. ``Cannot write into meta-field "myDevice/myProperty#myField_min". SET operation will be
+ignored.`` For widgets that work with the whole property as opposed to a single field (e.g. :ref:`cpropertyedit`),
+these fields will be removed from the payload before being sent to the control system and corresponding warning
+will be issued, e.g. ``Cannot write meta-fields of property "myDevice/myProperty": myField_min. They will be
+excluded from the SET payload.``.
 
 Contexts
 --------

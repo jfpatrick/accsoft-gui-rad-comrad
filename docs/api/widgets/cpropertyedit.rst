@@ -53,6 +53,14 @@ are sticking with default "form" layout, it is possible to modify its margins an
           where you will override :meth:`~comrad.CPropertyEditWidgetDelegate.display_data` and
           :meth:`~comrad.CPropertyEditWidgetDelegate.send_data` methods with logic accepting these custom types.
 
+:class:`~comrad.CPropertyEdit` works together with the system recognizing :ref:`basic/controls:Field traits` and can
+configure numerical fields (:attr:`~comrad.CPropertyEdit.ValueType.INTEGER`, :attr:`~comrad.CPropertyEdit.ValueType.REAL`)
+to have input limits (for editable fields) and measurement units.
+
+.. note:: This numeric field configuration is performed by the :attr:`~comrad.CPropertyEdit.widget_delegate`, therefore
+          it is up to user implementation when a custom delegate being used.
+
+
 Supported data types
 ^^^^^^^^^^^^^^^^^^^^
 

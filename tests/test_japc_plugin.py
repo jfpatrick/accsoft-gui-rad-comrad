@@ -9,7 +9,7 @@ from pytestqt.qtbot import QtBot
 from _pytest.logging import LogCaptureFixture
 from qtpy.QtCore import Signal, Slot, QObject
 from comrad.data import japc_plugin
-from comrad.data.japc_plugin import CJapcConnection, CChannelData, SPECIAL_FIELDS
+from comrad.data.japc_plugin import CJapcConnection, CChannelData, SPECIAL_FIELDS, parse_field_trait
 from comrad.data.channel import PyDMChannel, CChannel, CContext
 from comrad.data.pyjapc_patch import CPyJapc
 from _comrad.comrad_info import COMRAD_DEFAULT_PROTOCOL
@@ -19,6 +19,27 @@ from _comrad.comrad_info import COMRAD_DEFAULT_PROTOCOL
 def mock_singleton():
     with mock.patch('comrad.data.pyjapc_patch.CPyJapc.instance'):
         yield
+
+
+@pytest.mark.parametrize('input,expected_output', [
+    ('testField_min', (CChannelData.FieldTrait.MIN, 'testField')),
+    ('testField_max', (CChannelData.FieldTrait.MAX, 'testField')),
+    ('testField_units', (CChannelData.FieldTrait.UNITS, 'testField')),
+    ('testField_madf', None),
+    ('testField_ma', None),
+    ('testField', None),
+    ('_min', (CChannelData.FieldTrait.MIN, '')),
+    ('_max', (CChannelData.FieldTrait.MAX, '')),
+    ('_units', (CChannelData.FieldTrait.UNITS, '')),
+    ('dev/prop#field_min', (CChannelData.FieldTrait.MIN, 'dev/prop#field')),
+    ('dev/prop#field_max', (CChannelData.FieldTrait.MAX, 'dev/prop#field')),
+    ('dev/prop#field_units', (CChannelData.FieldTrait.UNITS, 'dev/prop#field')),
+    ('dev/prop#_min', (CChannelData.FieldTrait.MIN, 'dev/prop#')),
+    ('dev/prop#_max', (CChannelData.FieldTrait.MAX, 'dev/prop#')),
+    ('dev/prop#_units', (CChannelData.FieldTrait.UNITS, 'dev/prop#')),
+])
+def test_parse_field_trait(input, expected_output):
+    assert parse_field_trait(input) == expected_output
 
 
 @pytest.mark.parametrize('selector,filter,expected_selector', [
@@ -37,6 +58,33 @@ def mock_singleton():
     ('rda://srv/mydevice/myprop#myfield', None, 'rda://srv/mydevice/myprop#myfield'),
     ('rda://srv/mydevice/myprop', None, 'rda://srv/mydevice/myprop'),
     ('rda://srv/mydevice/myprop#cycleName', 'cycleName', 'rda://srv/mydevice/myprop'),
+    ('mydevice/myprop#_min', None, 'mydevice/myprop#_min'),
+    ('mydevice/myprop#_max', None, 'mydevice/myprop#_max'),
+    ('mydevice/myprop#_units', None, 'mydevice/myprop#_units'),
+    ('mydevice/myprop#myfield_min', None, 'mydevice/myprop#myfield_min'),
+    ('mydevice/myprop#myfield_max', None, 'mydevice/myprop#myfield_max'),
+    ('mydevice/myprop#myfield_units', None, 'mydevice/myprop#myfield_units'),
+    ('mydevice/myprop#cycleName_min', None, 'mydevice/myprop#cycleName_min'),
+    ('mydevice/myprop#cycleName_max', None, 'mydevice/myprop#cycleName_max'),
+    ('mydevice/myprop#cycleName_units', None, 'mydevice/myprop#cycleName_units'),
+    ('rda:///mydevice/myprop#_min', None, 'rda:///mydevice/myprop#_min'),
+    ('rda:///mydevice/myprop#_max', None, 'rda:///mydevice/myprop#_max'),
+    ('rda:///mydevice/myprop#_units', None, 'rda:///mydevice/myprop#_units'),
+    ('rda:///mydevice/myprop#myfield_min', None, 'rda:///mydevice/myprop#myfield_min'),
+    ('rda:///mydevice/myprop#myfield_max', None, 'rda:///mydevice/myprop#myfield_max'),
+    ('rda:///mydevice/myprop#myfield_units', None, 'rda:///mydevice/myprop#myfield_units'),
+    ('rda:///mydevice/myprop#cycleName_min', None, 'rda:///mydevice/myprop#cycleName_min'),
+    ('rda:///mydevice/myprop#cycleName_max', None, 'rda:///mydevice/myprop#cycleName_max'),
+    ('rda:///mydevice/myprop#cycleName_units', None, 'rda:///mydevice/myprop#cycleName_units'),
+    ('rda://srv/mydevice/myprop#_min', None, 'rda://srv/mydevice/myprop#_min'),
+    ('rda://srv/mydevice/myprop#_max', None, 'rda://srv/mydevice/myprop#_max'),
+    ('rda://srv/mydevice/myprop#_units', None, 'rda://srv/mydevice/myprop#_units'),
+    ('rda://srv/mydevice/myprop#myfield_min', None, 'rda://srv/mydevice/myprop#myfield_min'),
+    ('rda://srv/mydevice/myprop#myfield_max', None, 'rda://srv/mydevice/myprop#myfield_max'),
+    ('rda://srv/mydevice/myprop#myfield_units', None, 'rda://srv/mydevice/myprop#myfield_units'),
+    ('rda://srv/mydevice/myprop#cycleName_min', None, 'rda://srv/mydevice/myprop#cycleName_min'),
+    ('rda://srv/mydevice/myprop#cycleName_max', None, 'rda://srv/mydevice/myprop#cycleName_max'),
+    ('rda://srv/mydevice/myprop#cycleName_units', None, 'rda://srv/mydevice/myprop#cycleName_units'),
 ])
 @mock.patch('comrad.data.japc_plugin.CJapcConnection.add_listener')
 def test_connection_address(add_listener, param_name, selector, filter, expected_meta_field, expected_param_name,
@@ -189,6 +237,187 @@ def test_meta_fields_are_injected_into_full_property(val, considered_header, dis
     sig = mock.MagicMock()
     connection._notify_listeners('device/property', val, full_header, emitter=callback, callback_signals=[sig])
     callback.assert_called_once_with(sig, CChannelData(value=combined_val, meta_info=full_header))
+
+
+@pytest.mark.parametrize('val,header,expected_header', [
+    ({}, {}, {}),
+    ({'val': 42}, {}, {}),
+    ({'val': 42, 'val2': 'val2'}, {}, {}),
+    ({'val_min': 0.1}, {}, {'min': {'val': 0.1}}),
+    ({'val': 42, 'val_min': 0.1}, {}, {'min': {'val': 0.1}}),
+    ({'val': 42, 'val2': 'val2', 'val_min': 0.1}, {}, {'min': {'val': 0.1}}),
+    ({'val_max': 0.1}, {}, {'max': {'val': 0.1}}),
+    ({'val': 42, 'val_max': 0.1}, {}, {'max': {'val': 0.1}}),
+    ({'val': 42, 'val2': 'val2', 'val_max': 0.1}, {}, {'max': {'val': 0.1}}),
+    ({'val_units': 'test'}, {}, {'units': {'val': 'test'}}),
+    ({'val': 42, 'val_units': 'test'}, {}, {'units': {'val': 'test'}}),
+    ({'val': 42, 'val2': 'val2', 'val_units': 'test'}, {}, {'units': {'val': 'test'}}),
+    ({'val_min': 0.1, 'val_max': 0.5}, {}, {'min': {'val': 0.1}, 'max': {'val': 0.5}}),
+    ({'val': 42, 'val_min': 0.1, 'val_max': 0.5}, {}, {'min': {'val': 0.1}, 'max': {'val': 0.5}}),
+    ({'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val_max': 0.5}, {}, {'min': {'val': 0.1}, 'max': {'val': 0.5}}),
+    ({'val_min': 0.1, 'val2_min': 0.3}, {}, {'min': {'val': 0.1, 'val2': 0.3}}),
+    ({'val': 42, 'val_min': 0.1, 'val2_min': 0.3}, {}, {'min': {'val': 0.1, 'val2': 0.3}}),
+    ({'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val2_min': 0.3}, {}, {'min': {'val': 0.1, 'val2': 0.3}}),
+    ({'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'}, {}, {'min': {'val': 0.1, 'val2': 0.3}, 'units': {'val': 'test'}}),
+    ({'val': 42, 'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'}, {}, {'min': {'val': 0.1, 'val2': 0.3}, 'units': {'val': 'test'}}),
+    ({'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'}, {}, {'min': {'val': 0.1, 'val2': 0.3}, 'units': {'val': 'test'}}),
+    ({}, {'headerField': 'headerVal'}, {'headerField': 'headerVal'}),
+    ({'val': 42}, {'headerField': 'headerVal'}, {'headerField': 'headerVal'}),
+    ({'val': 42, 'val2': 'val2'}, {'headerField': 'headerVal'}, {'headerField': 'headerVal'}),
+    ({'val_min': 0.1}, {'headerField': 'headerVal'}, {'min': {'val': 0.1}, 'headerField': 'headerVal'}),
+    ({'val': 42, 'val_min': 0.1}, {'headerField': 'headerVal'}, {'min': {'val': 0.1}, 'headerField': 'headerVal'}),
+    ({'val': 42, 'val2': 'val2', 'val_min': 0.1}, {'headerField': 'headerVal'}, {'min': {'val': 0.1}, 'headerField': 'headerVal'}),
+    ({'val_max': 0.1}, {'headerField': 'headerVal'}, {'max': {'val': 0.1}, 'headerField': 'headerVal'}),
+    ({'val': 42, 'val_max': 0.1}, {'headerField': 'headerVal'}, {'max': {'val': 0.1}, 'headerField': 'headerVal'}),
+    ({'val': 42, 'val2': 'val2', 'val_max': 0.1}, {'headerField': 'headerVal'}, {'max': {'val': 0.1}, 'headerField': 'headerVal'}),
+    ({'val_units': 'test'}, {'headerField': 'headerVal'}, {'units': {'val': 'test'}, 'headerField': 'headerVal'}),
+    ({'val': 42, 'val_units': 'test'}, {'headerField': 'headerVal'}, {'units': {'val': 'test'}, 'headerField': 'headerVal'}),
+    ({'val': 42, 'val2': 'val2', 'val_units': 'test'}, {'headerField': 'headerVal'}, {'units': {'val': 'test'}, 'headerField': 'headerVal'}),
+    ({'val_min': 0.1, 'val_max': 0.5}, {'headerField': 'headerVal'}, {'min': {'val': 0.1}, 'max': {'val': 0.5}, 'headerField': 'headerVal'}),
+    ({'val': 42, 'val_min': 0.1, 'val_max': 0.5}, {'headerField': 'headerVal'}, {'min': {'val': 0.1}, 'max': {'val': 0.5}, 'headerField': 'headerVal'}),
+    ({'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val_max': 0.5}, {'headerField': 'headerVal'}, {'min': {'val': 0.1}, 'max': {'val': 0.5}, 'headerField': 'headerVal'}),
+    ({'val_min': 0.1, 'val2_min': 0.3}, {'headerField': 'headerVal'}, {'min': {'val': 0.1, 'val2': 0.3}, 'headerField': 'headerVal'}),
+    ({'val': 42, 'val_min': 0.1, 'val2_min': 0.3}, {'headerField': 'headerVal'}, {'min': {'val': 0.1, 'val2': 0.3}, 'headerField': 'headerVal'}),
+    ({'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val2_min': 0.3}, {'headerField': 'headerVal'}, {'min': {'val': 0.1, 'val2': 0.3}, 'headerField': 'headerVal'}),
+    ({'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'}, {'headerField': 'headerVal'}, {'min': {'val': 0.1, 'val2': 0.3}, 'units': {'val': 'test'}, 'headerField': 'headerVal'}),
+    ({'val': 42, 'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'}, {'headerField': 'headerVal'}, {'min': {'val': 0.1, 'val2': 0.3}, 'units': {'val': 'test'}, 'headerField': 'headerVal'}),
+    ({'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'}, {'headerField': 'headerVal'}, {'min': {'val': 0.1, 'val2': 0.3}, 'units': {'val': 'test'}, 'headerField': 'headerVal'}),
+])
+def test_field_traits_are_moved_into_header(val, header, expected_header):
+    ch = PyDMChannel(address='device/property')
+    connection = CJapcConnection(channel=ch, protocol='japc', address='/device/property')
+    callback = mock.Mock()
+    sig = mock.MagicMock()
+    connection._notify_listeners('device/property', val, header, emitter=callback, callback_signals=[sig])
+    callback.assert_called_once()
+    payload = callback.call_args[0][1]
+    assert isinstance(payload, CChannelData)
+    assert payload.meta_info == expected_header
+
+
+@pytest.mark.parametrize('header', [
+    {},
+    {'headerField': 'headerVal'},
+])
+@pytest.mark.parametrize('val', [
+    {},
+    {'val': 42},
+    {'val': 42, 'val2': 'val2'},
+    {'val_min': 0.1},
+    {'val': 42, 'val_min': 0.1},
+    {'val': 42, 'val2': 'val2', 'val_min': 0.1},
+    {'val_max': 0.1},
+    {'val': 42, 'val_max': 0.1},
+    {'val': 42, 'val2': 'val2', 'val_max': 0.1},
+    {'val_units': 'test'},
+    {'val': 42, 'val_units': 'test'},
+    {'val': 42, 'val2': 'val2', 'val_units': 'test'},
+    {'val_min': 0.1, 'val_max': 0.5},
+    {'val': 42, 'val_min': 0.1, 'val_max': 0.5},
+    {'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val_max': 0.5},
+    {'val_min': 0.1, 'val2_min': 0.3},
+    {'val': 42, 'val_min': 0.1, 'val2_min': 0.3},
+    {'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val2_min': 0.3},
+    {'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'},
+    {'val': 42, 'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'},
+    {'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'},
+])
+def test_field_traits_are_not_removed_from_value_dictionary(val, header):
+    ch = PyDMChannel(address='device/property')
+    connection = CJapcConnection(channel=ch, protocol='japc', address='/device/property')
+    callback = mock.Mock()
+    sig = mock.MagicMock()
+    connection._notify_listeners('device/property', val, header, emitter=callback, callback_signals=[sig])
+    callback.assert_called_once()
+    payload = callback.call_args[0][1]
+    assert isinstance(payload, CChannelData)
+    assert payload.value == val
+
+
+@pytest.mark.parametrize('address,expect_set_param_called,expected_error', [
+    ('mydevice/myprop#myfield', True, None),
+    ('mydevice/myprop#cycleName', True, None),
+    ('rda:///mydevice/myprop#myfield', True, None),
+    ('rda:///mydevice/myprop#cycleName', True, None),
+    ('rda://srv/mydevice/myprop#myfield', True, None),
+    ('rda://srv/mydevice/myprop#cycleName', True, None),
+    ('mydevice/myprop#_min', False, 'Cannot write into meta-field "mydevice/myprop#_min". SET operation will be ignored.'),
+    ('mydevice/myprop#_max', False, 'Cannot write into meta-field "mydevice/myprop#_max". SET operation will be ignored.'),
+    ('mydevice/myprop#_units', False, 'Cannot write into meta-field "mydevice/myprop#_units". SET operation will be ignored.'),
+    ('mydevice/myprop#myfield_min', False, 'Cannot write into meta-field "mydevice/myprop#myfield_min". SET operation will be ignored.'),
+    ('mydevice/myprop#myfield_max', False, 'Cannot write into meta-field "mydevice/myprop#myfield_max". SET operation will be ignored.'),
+    ('mydevice/myprop#myfield_units', False, 'Cannot write into meta-field "mydevice/myprop#myfield_units". SET operation will be ignored.'),
+    ('mydevice/myprop#cycleName_min', False, 'Cannot write into meta-field "mydevice/myprop#cycleName_min". SET operation will be ignored.'),
+    ('mydevice/myprop#cycleName_max', False, 'Cannot write into meta-field "mydevice/myprop#cycleName_max". SET operation will be ignored.'),
+    ('mydevice/myprop#cycleName_units', False, 'Cannot write into meta-field "mydevice/myprop#cycleName_units". SET operation will be ignored.'),
+    ('rda:///mydevice/myprop#_min', False, 'Cannot write into meta-field "rda:///mydevice/myprop#_min". SET operation will be ignored.'),
+    ('rda:///mydevice/myprop#_max', False, 'Cannot write into meta-field "rda:///mydevice/myprop#_max". SET operation will be ignored.'),
+    ('rda:///mydevice/myprop#_units', False, 'Cannot write into meta-field "rda:///mydevice/myprop#_units". SET operation will be ignored.'),
+    ('rda:///mydevice/myprop#myfield_min', False, 'Cannot write into meta-field "rda:///mydevice/myprop#myfield_min". SET operation will be ignored.'),
+    ('rda:///mydevice/myprop#myfield_max', False, 'Cannot write into meta-field "rda:///mydevice/myprop#myfield_max". SET operation will be ignored.'),
+    ('rda:///mydevice/myprop#myfield_units', False, 'Cannot write into meta-field "rda:///mydevice/myprop#myfield_units". SET operation will be ignored.'),
+    ('rda:///mydevice/myprop#cycleName_min', False, 'Cannot write into meta-field "rda:///mydevice/myprop#cycleName_min". SET operation will be ignored.'),
+    ('rda:///mydevice/myprop#cycleName_max', False, 'Cannot write into meta-field "rda:///mydevice/myprop#cycleName_max". SET operation will be ignored.'),
+    ('rda:///mydevice/myprop#cycleName_units', False, 'Cannot write into meta-field "rda:///mydevice/myprop#cycleName_units". SET operation will be ignored.'),
+    ('rda://srv/mydevice/myprop#_min', False, 'Cannot write into meta-field "rda://srv/mydevice/myprop#_min". SET operation will be ignored.'),
+    ('rda://srv/mydevice/myprop#_max', False, 'Cannot write into meta-field "rda://srv/mydevice/myprop#_max". SET operation will be ignored.'),
+    ('rda://srv/mydevice/myprop#_units', False, 'Cannot write into meta-field "rda://srv/mydevice/myprop#_units". SET operation will be ignored.'),
+    ('rda://srv/mydevice/myprop#myfield_min', False, 'Cannot write into meta-field "rda://srv/mydevice/myprop#myfield_min". SET operation will be ignored.'),
+    ('rda://srv/mydevice/myprop#myfield_max', False, 'Cannot write into meta-field "rda://srv/mydevice/myprop#myfield_max". SET operation will be ignored.'),
+    ('rda://srv/mydevice/myprop#myfield_units', False, 'Cannot write into meta-field "rda://srv/mydevice/myprop#myfield_units". SET operation will be ignored.'),
+    ('rda://srv/mydevice/myprop#cycleName_min', False, 'Cannot write into meta-field "rda://srv/mydevice/myprop#cycleName_min". SET operation will be ignored.'),
+    ('rda://srv/mydevice/myprop#cycleName_max', False, 'Cannot write into meta-field "rda://srv/mydevice/myprop#cycleName_max". SET operation will be ignored.'),
+    ('rda://srv/mydevice/myprop#cycleName_units', False, 'Cannot write into meta-field "rda://srv/mydevice/myprop#cycleName_units". SET operation will be ignored.'),
+])
+def test_set_of_field_trait_directly_is_ignored(address, expected_error, expect_set_param_called, caplog: LogCaptureFixture):
+    ch = PyDMChannel(address=address)
+    connection = CJapcConnection(channel=ch, protocol='japc', address=address)
+    CPyJapc.instance.return_value.setParam.assert_not_called()  # type: ignore
+    connection.set(value='test_val')
+    actual_errors = [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.ERROR and r.name == 'comrad.data.japc_plugin']
+    if expect_set_param_called:
+        CPyJapc.instance.return_value.setParam.assert_called_once()  # type: ignore
+        assert actual_errors == []
+    else:
+        CPyJapc.instance.return_value.setParam.assert_not_called()  # type: ignore
+        assert actual_errors == [expected_error]
+
+
+@pytest.mark.parametrize('input_value,expected_set_value,expected_warning', [
+    ({}, {}, None),
+    ({'val': 42}, {'val': 42}, None),
+    ({'val': 42, 'val2': 'val2'}, {'val': 42, 'val2': 'val2'}, None),
+    ({'val_min': 0.1}, {}, 'Cannot write meta-fields of property "device/property": val_min. They will be excluded from the SET payload.'),
+    ({'val': 42, 'val_min': 0.1}, {'val': 42}, 'Cannot write meta-fields of property "device/property": val_min. They will be excluded from the SET payload.'),
+    ({'val': 42, 'val2': 'val2', 'val_min': 0.1}, {'val': 42, 'val2': 'val2'}, 'Cannot write meta-fields of property "device/property": val_min. They will be excluded from the SET payload.'),
+    ({'val_max': 0.1}, {}, 'Cannot write meta-fields of property "device/property": val_max. They will be excluded from the SET payload.'),
+    ({'val': 42, 'val_max': 0.1}, {'val': 42}, 'Cannot write meta-fields of property "device/property": val_max. They will be excluded from the SET payload.'),
+    ({'val': 42, 'val2': 'val2', 'val_max': 0.1}, {'val': 42, 'val2': 'val2'}, 'Cannot write meta-fields of property "device/property": val_max. They will be excluded from the SET payload.'),
+    ({'val_units': 'test'}, {}, 'Cannot write meta-fields of property "device/property": val_units. They will be excluded from the SET payload.'),
+    ({'val': 42, 'val_units': 'test'}, {'val': 42}, 'Cannot write meta-fields of property "device/property": val_units. They will be excluded from the SET payload.'),
+    ({'val': 42, 'val2': 'val2', 'val_units': 'test'}, {'val': 42, 'val2': 'val2'}, 'Cannot write meta-fields of property "device/property": val_units. They will be excluded from the SET payload.'),
+    ({'val_min': 0.1, 'val_max': 0.5}, {}, 'Cannot write meta-fields of property "device/property": val_min, val_max. They will be excluded from the SET payload.'),
+    ({'val': 42, 'val_min': 0.1, 'val_max': 0.5}, {'val': 42}, 'Cannot write meta-fields of property "device/property": val_min, val_max. They will be excluded from the SET payload.'),
+    ({'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val_max': 0.5}, {'val': 42, 'val2': 'val2'}, 'Cannot write meta-fields of property "device/property": val_min, val_max. They will be excluded from the SET payload.'),
+    ({'val_min': 0.1, 'val2_min': 0.3}, {}, 'Cannot write meta-fields of property "device/property": val_min, val2_min. They will be excluded from the SET payload.'),
+    ({'val': 42, 'val_min': 0.1, 'val2_min': 0.3}, {'val': 42}, 'Cannot write meta-fields of property "device/property": val_min, val2_min. They will be excluded from the SET payload.'),
+    ({'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val2_min': 0.3}, {'val': 42, 'val2': 'val2'}, 'Cannot write meta-fields of property "device/property": val_min, val2_min. They will be excluded from the SET payload.'),
+    ({'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'}, {}, 'Cannot write meta-fields of property "device/property": val_min, val2_min, val_units. They will be excluded from the SET payload.'),
+    ({'val': 42, 'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'}, {'val': 42}, 'Cannot write meta-fields of property "device/property": val_min, val2_min, val_units. They will be excluded from the SET payload.'),
+    ({'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'}, {'val': 42, 'val2': 'val2'},
+     'Cannot write meta-fields of property "device/property": val_min, val2_min, val_units. They will be excluded from the SET payload.'),
+])
+def test_property_set_excludes_field_traits_from_payload(input_value, expected_warning, expected_set_value, caplog: LogCaptureFixture):
+    ch = PyDMChannel(address='device/property')
+    connection = CJapcConnection(channel=ch, protocol='japc', address='/device/property')
+    CPyJapc.instance.return_value.setParam.assert_not_called()  # type: ignore
+    connection.set(value=input_value)
+    actual_warnings = [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.WARNING and r.name == 'comrad.data.japc_plugin']
+    if expected_warning:
+        assert actual_warnings == [expected_warning]
+    else:
+        assert actual_warnings == []
+    CPyJapc.instance.return_value.setParam.assert_called_once_with(parameterName='device/property', parameterValue=expected_set_value)  # type: ignore
 
 
 def test_write_slots_with_no_params_issue_empty_property_set(qtbot: QtBot):
