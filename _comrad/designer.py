@@ -1,5 +1,6 @@
 import os
 import logging
+from subprocess import Popen, CalledProcessError, run as subprocess_run, CompletedProcess
 from pathlib import Path
 from typing import Optional, List, Dict, Union
 from .common import get_japc_support_envs
@@ -20,7 +21,7 @@ def run_designer(ccda_env: str,
                  enable_internal_props: bool = False,
                  extra_data_plugin_paths: Optional[List[str]] = None,
                  log_level: Optional[str] = None,
-                 blocking: bool = True):
+                 blocking: bool = True) -> Optional[Union[Popen, CompletedProcess]]:
     """
     Runs the Qt Designer with ComRAD modifications.
 
@@ -41,7 +42,8 @@ def run_designer(ccda_env: str,
         blocking: wait for the Designer to close before returning from the method.
 
     Returns:
-        CompletedProcess instance returned from subprocess.run()
+        :class:`~subprocess.CompletedProcess` instance returned from :func:`subprocess.run` for blocking execution
+        or :class:`~subprocess.Popen` instance for non-blocking execution.
     """
     import _comrad_designer
     path_to_plugins: Path = Path(_comrad_designer.__file__).parent.absolute()
@@ -84,11 +86,10 @@ def run_designer(ccda_env: str,
 
     env = dict(os.environ, **env)
 
-    import subprocess
     if blocking:
         try:
-            return subprocess.run(args=cmd, shell=False, env=env, check=True)
-        except subprocess.CalledProcessError as e:
+            return subprocess_run(args=cmd, shell=False, env=env, check=True)
+        except CalledProcessError as e:
             exit(e.returncode)
     else:
-        _ = subprocess.Popen(args=cmd, shell=False, env=env)
+        return Popen(args=cmd, shell=False, env=env)
