@@ -388,10 +388,3 @@ class CPropertyEditWidgetDelegate(_PropertyEditWidgetDelegate):
                              user_data=user_data,
                              item_type=item_type,
                              widget=widget)
-
-        # Handle non-editable numeric fields (needs to have text set in super() first)
-        if user_data is not None and is_numeric and isinstance(widget, QLabel):
-            try:
-                widget.setText(f'{widget.text()} {user_data[CChannelData.FieldTrait.UNITS.value]}')
-            except KeyError:
-                pass
