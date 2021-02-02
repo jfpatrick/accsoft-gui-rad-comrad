@@ -16,7 +16,7 @@ from qtpy.QtCore import (Qt, QAbstractTableModel, QObject, QModelIndex, QVariant
                          QPersistentModelIndex)
 from qtpy.QtGui import QFont, QFocusEvent, QShowEvent
 from qtpy.uic import loadUi
-from accwidgets.qt import (BooleanPropertyColumnDelegate, AbstractComboBoxColumnDelegate, TableViewColumnResizer,
+from accwidgets.qt import (BooleanPropertyColumnDelegate, AbstractComboBoxColumnDelegate,
                            AbstractListModel as BaseListModel, AbstractTableModel as BaseTableModel,
                            PersistentEditorTableView)
 from accwidgets._designer_base import get_designer_cursor
@@ -748,10 +748,7 @@ class EnumDetailsView(AbstractTableDetailsView[CEnumRule, CEnumRule.EnumConfig])
 
     def _configure_table(self, rule_prop: CBaseRule.Property):
         super()._configure_table(rule_prop)
-        self.decl_table.horizontalHeader().setResizeMode(0, QHeaderView.Custom)  # Cancel out parent mode
-        self.decl_table.horizontalHeader().setResizeMode(1, QHeaderView.Custom)
-        if getattr(self, '_table_resizer', None) is None:
-            self._table_resizer = TableViewColumnResizer.install_onto(self.decl_table)
+        self.decl_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
 
 class RulesEditorModel(BaseListModel[CBaseRule], QAbstractListModel, JsonModelMixin):

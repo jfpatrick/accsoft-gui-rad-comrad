@@ -1,12 +1,12 @@
 import json
 from dataclasses import dataclass
 from typing import Optional, cast, Dict, Any, List, Type, Callable
-from qtpy.QtWidgets import QComboBox, QAction
+from qtpy.QtWidgets import QComboBox, QAction, QHeaderView
 from qtpy.QtCore import QObject, QModelIndex, Qt
 from qtpy.QtGui import QColor, QPalette
 from pydm.widgets.baseplot_curve_editor import BasePlotCurveItem as PyDMBasePlotCurveItem
 from pydm.widgets.qtplugin_extensions import PyDMExtension
-from accwidgets.qt import (AbstractTableDialog, AbstractTableModel, TableViewColumnResizer,
+from accwidgets.qt import (AbstractTableDialog, AbstractTableModel,
                            AbstractComboBoxColumnDelegate)
 from accwidgets import designer_check
 from accwidgets.graph.designer.designer_extensions import PlotLayerExtension as _PlotLayerExtension, get_designer_cursor
@@ -251,7 +251,7 @@ class CPlottingItemEditorDialog(AbstractTableDialog[PlottingItemRow, CPlottingIt
         self.table.setItemDelegateForColumn(8, PlottingItemStyleColumnDelegate(self.table))
         for i in [0, 1, 2, 3, 5, 7, 8]:  # Skipping spinbox columns here, as they annoyingly highlight contents by default
             self.table.set_persistent_editor_for_column(i)
-        TableViewColumnResizer.install_onto(self.table)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.resize(1200, 400)
         self._on_save = on_save
 

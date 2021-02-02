@@ -2,10 +2,10 @@ import json
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Callable
 from qtpy.QtCore import QModelIndex, QObject
-from qtpy.QtWidgets import QComboBox, QAction
+from qtpy.QtWidgets import QComboBox, QAction, QHeaderView
 from accwidgets import designer_check
 from accwidgets.log_console import LogLevel
-from accwidgets.qt import AbstractTableDialog, AbstractTableModel, TableViewColumnResizer, AbstractComboBoxColumnDelegate
+from accwidgets.qt import AbstractTableDialog, AbstractTableModel, AbstractComboBoxColumnDelegate
 from accwidgets._designer_base import get_designer_cursor, WidgetsTaskMenuExtension
 from comrad import CLogConsole
 
@@ -70,7 +70,7 @@ class CLogConsoleLoggersEditorDialog(AbstractTableDialog[CLogConsoleLoggersEdito
         self.table.setItemDelegateForColumn(1, LogLevelComboBoxDelegate(self.table))
         self.table.set_persistent_editor_for_column(0)
         self.table.set_persistent_editor_for_column(1)
-        TableViewColumnResizer.install_onto(self.table)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.resize(600, 300)
         self._on_save = on_save
 
