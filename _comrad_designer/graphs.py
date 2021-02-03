@@ -5,10 +5,10 @@ from qtpy.QtWidgets import QComboBox, QAction, QHeaderView
 from qtpy.QtCore import QObject, QModelIndex, Qt
 from qtpy.QtGui import QColor, QPalette
 from pydm.widgets.baseplot_curve_editor import BasePlotCurveItem as PyDMBasePlotCurveItem
-from pydm.widgets.qtplugin_extensions import PyDMExtension
 from accwidgets.qt import (AbstractTableDialog, AbstractTableModel,
                            AbstractComboBoxColumnDelegate)
 from accwidgets import designer_check
+from accwidgets._designer_base import WidgetsTaskMenuExtension
 from accwidgets.graph.designer.designer_extensions import PlotLayerExtension as _PlotLayerExtension, get_designer_cursor
 from comrad.widgets.graphs import CPlotWidgetBase, ColumnNames, CItemPropertiesBase, PlottingItemTypes
 from _comrad_designer.common import ColorPropertyColumnDelegate
@@ -251,7 +251,11 @@ class CPlottingItemEditorDialog(AbstractTableDialog[PlottingItemRow, CPlottingIt
         self.table.setItemDelegateForColumn(8, PlottingItemStyleColumnDelegate(self.table))
         for i in [0, 1, 2, 3, 5, 7, 8]:  # Skipping spinbox columns here, as they annoyingly highlight contents by default
             self.table.set_persistent_editor_for_column(i)
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(0, QHeaderView.Interactive)
+        header.setSectionResizeMode(1, QHeaderView.Stretch)
+        header.setSectionResizeMode(2, QHeaderView.Fixed)
         self.resize(1200, 400)
         self._on_save = on_save
 
@@ -259,7 +263,7 @@ class CPlottingItemEditorDialog(AbstractTableDialog[PlottingItemRow, CPlottingIt
         self._on_save(self._table_model.json_data)
 
 
-class CPlottingItemEditorExtension(PyDMExtension):
+class CPlottingItemEditorExtension(WidgetsTaskMenuExtension):
 
     def __init__(self, widget: CPlotWidgetBase):
         """
