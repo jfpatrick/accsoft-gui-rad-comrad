@@ -6,7 +6,7 @@ from itertools import chain
 from pathlib import Path
 from typing import Optional, Union, Iterable, cast, Tuple, Type, List, Dict
 from qtpy.QtWidgets import (QWidget, QMenu, QAction, QMainWindow, QFileDialog, QApplication, QSizePolicy, QMessageBox,
-                            QDockWidget)
+                            QDockWidget, QActionGroup)
 from qtpy.QtCore import QCoreApplication, Qt, Signal, QObject
 from qtpy.QtGui import QCloseEvent, QGuiApplication
 from pydm.pydm_ui import Ui_MainWindow
@@ -98,15 +98,40 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
         dock.console.expanded = False
         self.addDockWidget(Qt.BottomDockWidgetArea, dock)
         self._console_dock = dock
-        self.ui.menuView.addSeparator()
         log_console_action = cast(QAction, dock.toggleViewAction())
-        log_console_action.setText('Show Log Console')
-
+        log_console_action.setText(QCoreApplication.translate('MainWindow', 'Show Log Console'))
         # Insert before "Show status bar"
-        for action in self.ui.menuView.actions():
-            if action.text() == 'Show Status Bar':
-                self.ui.menuView.insertAction(action, log_console_action)
-                break
+        self.ui.menuView.insertAction(self.ui.actionShow_Status_Bar, log_console_action)
+
+        style_menu = QMenu(QCoreApplication.translate('MainWindow', 'Navigation Bar Style'))
+        self._action_navbar_icon = style_menu.addAction(QCoreApplication.translate('MainWindow', 'Icon Only'))
+        self._action_navbar_icon.setCheckable(True)
+        self._action_navbar_icon.setData(Qt.ToolButtonIconOnly)
+        self._action_navbar_text = style_menu.addAction(QCoreApplication.translate('MainWindow', 'Text Only'))
+        self._action_navbar_text.setCheckable(True)
+        self._action_navbar_text.setData(Qt.ToolButtonTextOnly)
+        self._action_navbar_besides = style_menu.addAction(QCoreApplication.translate('MainWindow', 'Text Beside Icon'))
+        self._action_navbar_besides.setCheckable(True)
+        self._action_navbar_besides.setData(Qt.ToolButtonTextBesideIcon)
+        self._action_navbar_under = style_menu.addAction(QCoreApplication.translate('MainWindow', 'Text Under Icon'))
+        self._action_navbar_under.setCheckable(True)
+        self._action_navbar_under.setData(Qt.ToolButtonTextUnderIcon)
+        self._group_navbar = QActionGroup(self)  # Turns separatly checkable actions into a single radio group
+        self._group_navbar.addAction(self._action_navbar_icon)
+        self._group_navbar.addAction(self._action_navbar_text)
+        self._group_navbar.addAction(self._action_navbar_besides)
+        self._group_navbar.addAction(self._action_navbar_under)
+        self._update_navbar_style_menu(self.ui.navbar.toolButtonStyle())
+        style_menu.triggered.connect(self._on_navbar_style_triggered)
+        self.ui.navbar.toolButtonStyleChanged.connect(self._update_navbar_style_menu)
+        # Insert before "Show File Path in Title Bar"
+        # self.ui.menuView.insertAction(self.ui.actionShow_File_Path_in_Title_Bar, style_menu.menuAction())
+        self.ui.menuView.insertMenu(self.ui.actionShow_File_Path_in_Title_Bar, style_menu)
+        self.ui.menuView.insertSeparator(self.ui.actionShow_File_Path_in_Title_Bar)
+        self._style_menu = style_menu
+
+        # Insert before "Show Connections..."
+        self.ui.menuView.insertSeparator(self.ui.actionShow_Connections)
 
     def hide_log_console(self):
         self._console_dock.hide()
@@ -289,6 +314,16 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
             subprocess.call(('open', filename))
         else:
             logger.warning("You are using unsupported operating system. Can't open the file...")
+
+    def _update_navbar_style_menu(self, new_style: Qt.ToolButtonStyle):
+        self._action_navbar_icon.setChecked(new_style == Qt.ToolButtonIconOnly)
+        self._action_navbar_text.setChecked(new_style == Qt.ToolButtonTextOnly)
+        self._action_navbar_besides.setChecked(new_style == Qt.ToolButtonTextBesideIcon)
+        self._action_navbar_under.setChecked(new_style == Qt.ToolButtonTextUnderIcon)
+
+    def _on_navbar_style_triggered(self, action: QAction):
+        new_style = action.data()
+        self.ui.navbar.setToolButtonStyle(new_style)
 
     def _load_toolbar_plugins(self,
                               config: WindowPluginConfigTrie,
