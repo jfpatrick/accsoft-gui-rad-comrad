@@ -48,7 +48,6 @@ from pydm.widgets import (PyDMLabel, PyDMCheckbox, PyDMPushButton,
                           PyDMEmbeddedDisplay, PyDMTemplateRepeater, PyDMEnumComboBox, PyDMLineEdit,
                           PyDMSlider, PyDMSpinbox, PyDMByteIndicator,
                           PyDMScaleIndicator)
-from pydm.widgets.logdisplay import PyDMLogDisplay
 from pydm.widgets.enum_button import PyDMEnumButton
 from accwidgets.graph import ScrollingPlotWidget, CyclicPlotWidget, StaticPlotWidget
 from accwidgets.property_edit import PropertyEdit
@@ -79,7 +78,6 @@ _PyDMSlider = qtplugin_factory(PyDMSlider, group=CWidgetBoxGroup.HIDDEN)
 _PyDMSpinbox = qtplugin_factory(PyDMSpinbox, group=CWidgetBoxGroup.HIDDEN)
 _PyDMByteIndicator = qtplugin_factory(PyDMByteIndicator, group=CWidgetBoxGroup.HIDDEN)
 # _PyDMImageView = qtplugin_factory(PyDMImageView, group=CWidgetBoxGroup.HIDDEN)
-_PyDMLogDisplay = qtplugin_factory(PyDMLogDisplay, group=CWidgetBoxGroup.HIDDEN)
 _PyDMScaleIndicator = qtplugin_factory(PyDMScaleIndicator, group=CWidgetBoxGroup.HIDDEN)
 # _PyDMTabWidget = qtplugin_factory(PyDMTabWidget, group=CWidgetBoxGroup.HIDDEN)
 
