@@ -125,10 +125,27 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
         style_menu.triggered.connect(self._on_navbar_style_triggered)
         self.ui.navbar.toolButtonStyleChanged.connect(self._update_navbar_style_menu)
         # Insert before "Show File Path in Title Bar"
-        # self.ui.menuView.insertAction(self.ui.actionShow_File_Path_in_Title_Bar, style_menu.menuAction())
         self.ui.menuView.insertMenu(self.ui.actionShow_File_Path_in_Title_Bar, style_menu)
-        self.ui.menuView.insertSeparator(self.ui.actionShow_File_Path_in_Title_Bar)
         self._style_menu = style_menu
+
+        pos_menu = QMenu(QCoreApplication.translate('MainWindow', 'Navigation Bar Position'))
+        self._action_navbar_top = pos_menu.addAction(QCoreApplication.translate('MainWindow', 'Top'))
+        self._action_navbar_top.setCheckable(True)
+        self._action_navbar_top.setData(Qt.TopToolBarArea)
+        self._action_navbar_left = pos_menu.addAction(QCoreApplication.translate('MainWindow', 'Left'))
+        self._action_navbar_left.setCheckable(True)
+        self._action_navbar_left.setData(Qt.LeftToolBarArea)
+        self._group_navbar_pos = QActionGroup(self)  # Turns separatly checkable actions into a single radio group
+        self._group_navbar_pos.addAction(self._action_navbar_top)
+        self._group_navbar_pos.addAction(self._action_navbar_left)
+        self._update_navbar_pos_menu(self.toolBarArea(self.ui.navbar))
+        self.ui.navbar.orientationChanged.connect(self._update_navbar_pos_menu_from_orientation)
+        pos_menu.triggered.connect(self._on_navbar_pos_triggered)
+        # Insert before "Show File Path in Title Bar"
+        self.ui.menuView.insertMenu(self.ui.actionShow_File_Path_in_Title_Bar, pos_menu)
+        self._pos_menu = pos_menu
+
+        self.ui.menuView.insertSeparator(self.ui.actionShow_File_Path_in_Title_Bar)
 
         # Insert before "Show Connections..."
         self.ui.menuView.insertSeparator(self.ui.actionShow_Connections)
@@ -324,6 +341,17 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
     def _on_navbar_style_triggered(self, action: QAction):
         new_style = action.data()
         self.ui.navbar.setToolButtonStyle(new_style)
+
+    def _update_navbar_pos_menu(self, new_area: Qt.ToolBarArea):
+        self._action_navbar_top.setChecked(new_area == Qt.TopToolBarArea)
+        self._action_navbar_left.setChecked(new_area == Qt.LeftToolBarArea)
+
+    def _on_navbar_pos_triggered(self, action: QAction):
+        new_pos = action.data()
+        self.addToolBar(new_pos, self.ui.navbar)
+
+    def _update_navbar_pos_menu_from_orientation(self, new_orientation: Qt.Orientation):
+        self._update_navbar_pos_menu(Qt.LeftToolBarArea if new_orientation == Qt.Vertical else Qt.TopToolBarArea)
 
     def _load_toolbar_plugins(self,
                               config: WindowPluginConfigTrie,
