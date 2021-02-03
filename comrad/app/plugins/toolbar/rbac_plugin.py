@@ -1,8 +1,8 @@
 import logging
 from typing import Optional, cast, List
-from qtpy.QtWidgets import (QWidget, QToolButton, QMenu, QMessageBox, QDialog,
+from qtpy.QtWidgets import (QWidget, QToolButton, QMenu, QMessageBox, QDialog, QVBoxLayout,
                             QWidgetAction, QSizePolicy, QHBoxLayout, QAction)
-from qtpy.QtCore import Qt, QSize
+from qtpy.QtCore import Qt, QSize, QObjectCleanupHandler
 from comrad.app.application import CApplication
 from comrad.rbac import CRBACLoginStatus, CRBACState
 from comrad.rbac.rbac_dialog import RbaAuthDialogWidget, RbaExplicitLoginDialog
@@ -10,6 +10,7 @@ from comrad.rbac.role_picker import RbaRolePicker
 from comrad.rbac.token_dialog import RbaTokenDialog
 from comrad.icons import icon
 from comrad.app.plugins.common import CToolbarWidgetPlugin
+from comrad.app._toolbtn import OrientedToolButton
 
 
 logger = logging.getLogger('comrad.app.plugins.toolbar.rbac_plugin')
@@ -27,27 +28,48 @@ class RbaButtonSet(QWidget):
         super().__init__(parent)
         self._app = cast(CApplication, CApplication.instance())
         self._app.rbac.rbac_status_changed.connect(self._status_changed)
-
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(layout)
-        self._auto_btn = RbaAuthButton(app=self._app, parent=self)
-        layout.addWidget(self._auto_btn)
+        toolbar = self._app.main_window.ui.navbar
+        toolbar.orientationChanged.connect(self._set_layout_for_orientation)
+        self._auth_btn = RbaAuthButton(app=self._app, parent=self)
         self._user_btn = RbaUserButton(rbac=self._app.rbac, parent=self)
-        layout.addWidget(self._user_btn)
+
+        self._set_layout_for_orientation(toolbar.orientation())
         self._status_changed(self._app.rbac.status)
 
     def _status_changed(self, new_status: int):
         status = CRBACLoginStatus(new_status)
-        self._auto_btn.decorate(self._app.rbac)
+        self._auth_btn.decorate(self._app.rbac)
         if status == CRBACLoginStatus.LOGGED_OUT:
             self._user_btn.hide()
         else:
             self._user_btn.show()
             self._user_btn.setText(self._app.rbac.user)
 
+    def _set_layout_for_orientation(self, orientation: Qt.Orientation):
+        new_layout_type = QHBoxLayout if orientation == Qt.Horizontal else QVBoxLayout
+        prev_layout = self.layout()
+        if type(prev_layout) == new_layout_type:
+            return
+        if prev_layout is not None:
+            for child in prev_layout.children():  # children of a layout are always items
+                prev_layout.removeItem(child)
 
-class RbaUserButton(QToolButton):
+        new_layout = new_layout_type()
+        new_layout.setContentsMargins(0, 0, 0, 0)
+        new_layout.addWidget(self._auth_btn)
+        new_layout.addWidget(self._user_btn)
+
+        if prev_layout is not None:
+            # You can't directly delete a layout and you can't
+            # replace a layout on a widget which already has one
+            # Found here: https://stackoverflow.com/a/10439207
+            QObjectCleanupHandler().add(prev_layout)
+            prev_layout = None
+
+        self.setLayout(new_layout)
+
+
+class RbaUserButton(OrientedToolButton):
 
     def __init__(self, rbac: CRBACState, parent: Optional[QWidget] = None):
         """
@@ -57,8 +79,9 @@ class RbaUserButton(QToolButton):
             rbac: Handle to the RBAC manager.
             parent: Parent widget to hold this object.
         """
-        super().__init__(parent)
-        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        super().__init__(parent=parent,
+                         horizontal=QSizePolicy.Preferred,
+                         vertical=QSizePolicy.Expanding)
         self.setPopupMode(QToolButton.InstantPopup)
         self.setAutoRaise(True)
         menu = QMenu(self)
@@ -122,7 +145,7 @@ class RbaUserButton(QToolButton):
                                       QMessageBox.Ok)
 
 
-class RbaAuthButton(QToolButton):
+class RbaAuthButton(OrientedToolButton):
 
     def __init__(self, app: CApplication, parent: Optional[QWidget] = None):
         """
@@ -132,8 +155,9 @@ class RbaAuthButton(QToolButton):
             app: Application object holding RBAC handler.
             parent: Parent widget to hold this object.
         """
-        super().__init__(parent)
-        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        super().__init__(parent=parent,
+                         horizontal=QSizePolicy.Preferred,
+                         vertical=QSizePolicy.Expanding)
         self.setIconSize(QSize(24, 24))
         self.setAutoRaise(True)
         self.setPopupMode(QToolButton.InstantPopup)
