@@ -179,9 +179,6 @@ def _run_subcommand(parser: argparse.ArgumentParser):
 
     appearance_group = parser.add_argument_group('Appearance configuration')
 
-    appearance_group.add_argument('--hide-nav-bar',
-                                  action='store_true',
-                                  help='Launch ComRAD with the navigation bar hidden.')
     appearance_group.add_argument('--hide-menu-bar',
                                   action='store_true',
                                   help='Launch ComRAD with the menu bar hidden.')
@@ -191,6 +188,20 @@ def _run_subcommand(parser: argparse.ArgumentParser):
     appearance_group.add_argument('--hide-status-bar',
                                   action='store_true',
                                   help='Launch ComRAD with the status bar hidden.')
+    appearance_group.add_argument('--hide-nav-bar',
+                                  action='store_true',
+                                  help='Launch ComRAD with the navigation bar hidden.')
+    appearance_group.add_argument('--nav-bar-style',
+                                  help='Configure the style of the navigation bar (default: vstack). '
+                                       'Choises: icon (icons only); text (text only); vstack (text under icons); '
+                                       'hstack: (text beside icons).',
+                                  choices=['icon', 'text', 'vstack', 'hstack'],
+                                  default='vstack')
+    appearance_group.add_argument('--nav-bar-position',
+                                  help='Configure the positioning of the navigation bar (default: top).',
+                                  choices=['top', 'left'],
+                                  default='top')
+
     appearance_group.add_argument('--fullscreen',
                                   action='store_true',
                                   help='Launch ComRAD in full screen mode.')
@@ -371,6 +382,8 @@ def _run_comrad(args: argparse.Namespace) -> bool:
                        status_bar_plugin_path=args.status_plugin_path,
                        menu_bar_plugin_path=args.menu_plugin_path,
                        toolbar_order=args.nav_bar_order,
+                       toolbar_style=args.nav_bar_style,
+                       toolbar_position=args.nav_bar_position,
                        window_plugin_config=args.window_plugin_config,
                        plugin_blacklist=args.disable_plugins,
                        plugin_whitelist=args.enable_plugins,

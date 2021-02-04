@@ -5,6 +5,7 @@ import subprocess
 from pathlib import Path
 from typing import Optional, List, Dict, Iterable, Union
 from qtpy.QtWidgets import QMenu, QMessageBox
+from qtpy.QtCore import Qt
 from .main_window import CMainWindow  # This has to be above PyDMApplication to ensure monkey-patching
 from pydm.application import PyDMApplication
 from pydm.utilities import path_info, which
@@ -45,6 +46,8 @@ class CApplication(PyDMApplication):
                  menu_bar_plugin_path: Optional[List[str]] = None,
                  stylesheet_path: Optional[str] = None,
                  toolbar_order: Optional[Iterable[Union[str, CToolbarID]]] = None,
+                 toolbar_style: str = 'vstack',
+                 toolbar_position: str = 'top',
                  window_plugin_config: Optional[List[str]] = None,
                  plugin_whitelist: Optional[Iterable[str]] = None,
                  plugin_blacklist: Optional[Iterable[str]] = None,
@@ -93,6 +96,8 @@ class CApplication(PyDMApplication):
                 can be augmented by ``COMRAD_MENUBAR_PLUGIN_PATH`` environment variable.
             stylesheet_path: Path to the *.qss file styling application and widgets.
             toolbar_order: List of IDs of toolbar items in order in which they must appear left-to-right.
+            toolbar_style: Style of the main navigation bar.
+            toolbar_position: Location of the main navigation bar.
             window_plugin_config: List of specific configurations for the window plugins (parsed by plugins).
             plugin_whitelist: List of plugin IDs that have to be enabled even if they are disabled by default.
             plugin_blacklist: List of plugin IDs that have to be disabled even if they are enabled by default.
@@ -124,6 +129,8 @@ class CApplication(PyDMApplication):
         self.main_window: CMainWindow = self.main_window  # Just to make code completion work
         self._plugins_menu: Optional[QMenu] = None
         self.setWindowIcon(icon('app'))
+        self.main_window.addToolBar(toolbar_area_from_str(toolbar_position), self.main_window.ui.navbar)
+        self.main_window.ui.navbar.setToolButtonStyle(toolbar_style_from_str(toolbar_style))
 
         # Useful for sub-processes
         self._stylesheet_path = stylesheet_path
@@ -134,6 +141,8 @@ class CApplication(PyDMApplication):
         self._plugin_whitelist = plugin_whitelist
         self._plugin_blacklist = plugin_blacklist
         self._perf_mon = perf_mon
+        self._toolbar_style = toolbar_style
+        self._toolbar_position = toolbar_position
 
         order: Optional[List[Union[str, CToolbarID]]] = None
         if toolbar_order is not None:
@@ -187,6 +196,8 @@ class CApplication(PyDMApplication):
                 return
 
         args = [exec_path, 'run']
+        args.extend(['--nav-bar-style', self._toolbar_style])
+        args.extend(['--nav-bar-position', self._toolbar_position])
         if self.hide_nav_bar:
             args.append('--hide-nav-bar')
         if self.hide_menu_bar:
@@ -302,3 +313,23 @@ class CApplication(PyDMApplication):
             key, val = kv_pair
             trie.add_val(key, val)
         return trie
+
+
+def toolbar_area_from_str(input: str) -> Qt.ToolBarArea:
+    if input == 'top':
+        return Qt.TopToolBarArea
+    elif input == 'left':
+        return Qt.LeftToolBarArea
+    raise ValueError(f'Unsupported navbar position: {input}')
+
+
+def toolbar_style_from_str(input: str) -> Qt.ToolButtonStyle:
+    if input == 'icon':
+        return Qt.ToolButtonIconOnly
+    elif input == 'text':
+        return Qt.ToolButtonTextOnly
+    elif input == 'vstack':
+        return Qt.ToolButtonTextUnderIcon
+    elif input == 'hstack':
+        return Qt.ToolButtonTextBesideIcon
+    raise ValueError(f'Unsupported navbar style: {input}')
