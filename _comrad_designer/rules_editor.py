@@ -26,6 +26,7 @@ from comrad.json import CJSONEncoder, CJSONDeserializeError
 from comrad.widgets.mixins import CWidgetRulesMixin, CWidgetRuleMap
 from comrad.data.japc_enum import CEnumValue
 from comrad.generics import GenericMeta, GenericQObjectMeta
+from comrad._selector import PLSSelectorDialog, PLSSelectorConfig
 from _comrad_designer.common import ColorPropertyColumnDelegate, _STYLED_ITEM_DELEGATE_INDEX
 
 
@@ -842,6 +843,19 @@ class CurrentRuleSelectionModel(QItemSelectionModel):
         curr_rule = self.current_rule
         if curr_rule:
             curr_rule.channel = channel
+            if isinstance(channel, CBaseRule.Channel):
+                curr_rule.selector = None
+
+    def set_rule_selector(self, selector: Optional[str]):
+        """
+        Update the selector of the current rule.
+
+        Args:
+            channel: New channel.
+        """
+        curr_rule = self.current_rule
+        if curr_rule:
+            curr_rule.selector = selector
 
     def set_rule_property(self, prop: str):
         """
@@ -880,6 +894,7 @@ class CurrentRuleSelectionModel(QItemSelectionModel):
         if curr_rule:
             new_rule = new_type(name=curr_rule.name,
                                 prop=curr_rule.prop,
+                                selector=curr_rule.selector,
                                 channel=curr_rule.channel)
             self._set_current_rule(new_rule)
 
@@ -940,6 +955,8 @@ class RulesEditor(QDialog):
         self.custom_channel_frame: QFrame = None
         self.custom_channel_edit: QLineEdit = None
         self.custom_channel_search_btn: QPushButton = None
+        self.custom_selector_btn: QPushButton = None
+        self.custom_selector_edit: QLineEdit = None
         self.eval_type_combobox: QComboBox = None
         self.eval_stack_widget: QStackedWidget = None
         self.page_ranges: QWidget = None
@@ -983,6 +1000,8 @@ class RulesEditor(QDialog):
         self.default_channel_checkbox.clicked.connect(self._custom_channel_changed)
         self.custom_channel_edit.textEdited.connect(self._custom_channel_changed)
         self.custom_channel_search_btn.clicked.connect(self._search_channel)
+        self.custom_selector_btn.clicked.connect(self._search_selector)
+        self.custom_selector_edit.textEdited.connect(self._custom_selector_changed)
         self.rules_del_btn.clicked.connect(self._del_rule)
         self.btn_box.button(QDialogButtonBox.Apply).clicked.connect(self._save_changes)
         self.btn_box.rejected.connect(self.close)
@@ -1027,6 +1046,25 @@ class RulesEditor(QDialog):
                                   'Work in progress...',
                                   'In the future, this will allow you to look up channel address from CCDB.',
                                   QMessageBox.Ok)
+
+    def _search_selector(self):
+        curr_rule = self._selection_model.current_rule
+        if not curr_rule:
+            return
+        if curr_rule.selector is None:
+            config = PLSSelectorConfig.no_selector()
+        else:
+            try:
+                machine, group, line = tuple(curr_rule.selector.split('.'))
+                config = PLSSelectorConfig(machine=machine,
+                                           group=group,
+                                           line=line)
+            except ValueError:
+                config = PLSSelectorConfig.no_selector()
+        dialog = PLSSelectorDialog(config=config, parent=self)
+        # dialog.selector_selected.connect(self._custom_selector_changed)
+        dialog.selector_selected.connect(self.custom_selector_edit.setText)
+        dialog.exec_()
 
     def _del_rule(self):
         curr_rule = self._selection_model.current_rule
@@ -1074,6 +1112,9 @@ class RulesEditor(QDialog):
         new_channel = CBaseRule.Channel.DEFAULT if uses_default else self.custom_channel_edit.text()
         self._selection_model.set_rule_channel(new_channel)
 
+    def _custom_selector_changed(self, selector: str):
+        self._selection_model.set_rule_selector(selector or None)
+
     def _set_rule_details(self):
         rule = self._selection_model.current_rule
         rule_exists = rule is not None
@@ -1096,8 +1137,10 @@ class RulesEditor(QDialog):
             self.custom_channel_frame.setHidden(is_default_channel)
             if is_default_channel:
                 self.custom_channel_edit.clear()
+                self.custom_selector_edit.clear()
             else:
                 self.custom_channel_edit.setText(rule.channel)
+                self.custom_selector_edit.setText(rule.selector)
 
             self.base_type_frame.setHidden(False)
             _, __, base_type = self._widget.RULE_PROPERTIES[rule.prop]
