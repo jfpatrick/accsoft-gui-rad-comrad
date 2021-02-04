@@ -7,8 +7,8 @@ from pathlib import Path
 from typing import Optional, Union, Iterable, cast, Tuple, Type, List, Dict
 from qtpy.QtWidgets import (QWidget, QMenu, QAction, QMainWindow, QFileDialog, QApplication, QSizePolicy, QMessageBox,
                             QDockWidget, QActionGroup)
-from qtpy.QtCore import QCoreApplication, Qt, Signal, QObject
-from qtpy.QtGui import QCloseEvent, QGuiApplication
+from qtpy.QtCore import QCoreApplication, Qt, Signal, QObject, QSize, QTimer
+from qtpy.QtGui import QCloseEvent, QGuiApplication, QKeySequence
 from pydm.pydm_ui import Ui_MainWindow
 from pydm.main_window import PyDMMainWindow
 from pydm.data_plugins import is_read_only
@@ -77,6 +77,8 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
         CContextProvider.__init__(self)
         self._stored_plugins: List[CPlugin] = []  # Reference plugins to keep the objects alive
         self._signal_helper = CMainWindowSignalHelper(self)
+        self._icon_factor: float = 1.0
+        self._default_icon_size = self.ui.navbar.iconSize()
         self.contextUpdated = self._signal_helper.contextUpdated
         self._window_context = CContext()
         self._window_context.dataFiltersChanged.connect(self.contextUpdated.emit)
@@ -102,6 +104,21 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
         log_console_action.setText(QCoreApplication.translate('MainWindow', 'Show Log Console'))
         # Insert before "Show status bar"
         self.ui.menuView.insertAction(self.ui.actionShow_Status_Bar, log_console_action)
+
+        # Insert before "Increase Font Size"
+        self.ui.menuView.insertSeparator(self.ui.actionIncrease_Font_Size)
+        act = QAction(QCoreApplication.translate('MainWindow', 'Increase Icon Size'), self)
+        act.triggered.connect(self._increase_icon_size)
+        act.setShortcut(QKeySequence(Qt.CTRL + Qt.SHIFT + Qt.Key_Equal))
+        self.ui.menuView.insertAction(self.ui.actionIncrease_Font_Size, act)
+        act = QAction(QCoreApplication.translate('MainWindow', 'Decrease Icon Size'), self)
+        act.triggered.connect(self._decrease_icon_size)
+        act.setShortcut(QKeySequence(Qt.CTRL + Qt.SHIFT + Qt.Key_Minus))
+        self.ui.menuView.insertAction(self.ui.actionIncrease_Font_Size, act)
+        act = QAction(QCoreApplication.translate('MainWindow', 'Default Icon Size'), self)
+        act.triggered.connect(self._reset_icon_size)
+        self.ui.menuView.insertAction(self.ui.actionIncrease_Font_Size, act)
+        act.setShortcut(QKeySequence(Qt.CTRL + Qt.SHIFT + Qt.Key_0))
 
         style_menu = QMenu(QCoreApplication.translate('MainWindow', 'Navigation Bar Style'))
         self._action_navbar_icon = style_menu.addAction(QCoreApplication.translate('MainWindow', 'Icon Only'))
@@ -275,6 +292,25 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
                                                                   cmd_line_paths=status_bar_plugin_path,
                                                                   whitelist=plugin_whitelist,
                                                                   blacklist=plugin_blacklist) or [])
+
+    def _increase_icon_size(self):
+        self._icon_factor += 0.1
+        self._update_icon_size()
+
+    def _decrease_icon_size(self):
+        if self._icon_factor <= 0.1:
+            return
+        self._icon_factor -= 0.1
+        self._update_icon_size()
+
+    def _reset_icon_size(self):
+        self._icon_factor = 1.0
+        self._update_icon_size()
+
+    def _update_icon_size(self):
+        new_size = QSize(self._default_icon_size.width() * self._icon_factor, self._default_icon_size.height() * self._icon_factor)
+        self.ui.navbar.setIconSize(new_size)
+        QTimer.singleShot(0, self.resizeForNewDisplayWidget)
 
     def _get_or_create_menu(self,
                             name: Union[str, Iterable[str]],
