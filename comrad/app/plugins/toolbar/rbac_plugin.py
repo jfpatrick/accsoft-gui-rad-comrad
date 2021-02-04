@@ -2,7 +2,7 @@ import logging
 from typing import Optional, cast, List
 from qtpy.QtWidgets import (QWidget, QToolButton, QMenu, QMessageBox, QDialog, QVBoxLayout,
                             QWidgetAction, QSizePolicy, QHBoxLayout, QAction)
-from qtpy.QtCore import Qt, QSize, QObjectCleanupHandler
+from qtpy.QtCore import Qt, QObjectCleanupHandler
 from comrad.app.application import CApplication
 from comrad.rbac import CRBACLoginStatus, CRBACState
 from comrad.rbac.rbac_dialog import RbaAuthDialogWidget, RbaExplicitLoginDialog
@@ -158,7 +158,9 @@ class RbaAuthButton(OrientedToolButton):
         super().__init__(parent=parent,
                          horizontal=QSizePolicy.Preferred,
                          vertical=QSizePolicy.Expanding)
-        self.setIconSize(QSize(24, 24))
+        toolbar = cast(CApplication, CApplication.instance()).main_window.ui.navbar
+        self.setIconSize(toolbar.iconSize())
+        toolbar.iconSizeChanged.connect(self.setIconSize)
         self.setAutoRaise(True)
         self.setPopupMode(QToolButton.InstantPopup)
         self._menu = TabFocusPreservingMenu(self)

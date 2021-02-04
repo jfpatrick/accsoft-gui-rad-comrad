@@ -328,6 +328,7 @@ class PLSPluginButton(OrientedToolButton):
         icon_font = IconFont()
         self.setIcon(icon_font.icon('clock-o'))
         self.setIconSize(toolbar.iconSize())  # Needed because gets smaller inside a layout
+        toolbar.iconSizeChanged.connect(self.setIconSize)
         menu = QMenu(self)
         self.setMenu(menu)
         act_user = QAction(icon_font.icon('clock-o'), 'Select PLS user', self)
