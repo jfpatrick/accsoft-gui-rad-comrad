@@ -1,9 +1,12 @@
 import logging
 import operator
+from asyncio import ensure_future, Future
+from copy import copy
 from dataclasses import dataclass, field
 from abc import ABCMeta, abstractmethod
 from typing import Union, Optional, List, Generic, TypeVar
 from qtpy.QtCore import QStringListModel, Signal, QModelIndex, Slot, QObject
+from pyccda import AsyncAPI as CCDA
 from comrad.data.addr import ControlEndpointAddress
 from comrad.generics import GenericQObjectMeta
 
@@ -139,7 +142,7 @@ class AbstractNestedStringListModel(QStringListModel, metaclass=GenericQObjectMe
         return names
 
     def _map_leaf_items(self, item: NestedListSubItem) -> List[str]:
-        names = item.children
+        names = copy(item.children)
         if not self._require_full_selection:
             names.insert(0, '-')
         return names
@@ -167,3 +170,41 @@ class DeviceListModel(AbstractNestedStringListModel):
                 result.field = sub_item.children[self._selected_leaf]
 
         return str(result)
+
+
+_ccda: Optional[CCDA] = None
+
+
+def get_ccda() -> CCDA:
+    global _ccda
+    if _ccda is None:
+        _ccda = CCDA()
+    return _ccda
+
+
+async def _look_up_ccda(device_name: str, searched_prop: Optional[str], searched_field: Optional[str]):
+
+    device_pages = await get_ccda().Device.search('name==*{dev}*'.format(dev=device_name))
+
+    def map_result(dev: CCDA.Device, dev_class: CCDA.DeviceClass) -> NestedListRootItem:
+        dev_obj = NestedListRootItem(name=dev.name)
+
+        for idx, prop in enumerate(sorted(dev_class.device_class_properties, key=operator.attrgetter('name'))):
+            fields = sorted((field.name for field in prop.data_fields))
+            try:
+                selected_field = fields.index(searched_field) if searched_field is not None else -1
+            except ValueError:
+                selected_field = -1
+            child = NestedListSubItem(name=prop.name, children=fields, selected_child=selected_field)
+            if searched_prop is not None and prop.name == searched_prop:
+                dev_obj.selected_child = idx
+            dev_obj.children.append(child)
+
+        return dev_obj
+
+    return [map_result(dev=device, dev_class=await device.device_class())
+            async for device in device_pages]
+
+
+def look_up_ccda(device_name: str, searched_prop: Optional[str], searched_field: Optional[str]) -> Future:
+    return ensure_future(_look_up_ccda(device_name, searched_prop, searched_field))
