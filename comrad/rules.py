@@ -22,7 +22,7 @@ from pydm.data_plugins.plugin import PyDMPlugin, PyDMConnection
 from pydm.utilities import is_qt_designer
 from pydm import config
 from comrad.json import CJSONSerializable, CJSONDeserializeError
-from comrad.data.channel import CChannelData
+from comrad.data.channel import CChannelData, CContext, CChannel
 from comrad.data.japc_enum import CEnumValue
 from .monkey import modify_in_place, MonkeyPatchedClass
 
@@ -31,6 +31,9 @@ logger = logging.getLogger(__name__)
 
 
 AppliedValue = Union[str, bool, float]
+
+
+context_cache: Dict[str, CContext] = {}
 
 
 class Validatable(metaclass=ABCMeta):
@@ -112,7 +115,14 @@ class CBaseRule(CJSONSerializable, Validatable, metaclass=ABCMeta):
                      value because of the bug.
     """
 
-    def __init__(self, name: str, prop: Union['CBaseRule.Property', str], channel: Union[str, Channel]):
+    selector: Optional[str]
+    """Timing selector associated with the :attr:`channel`."""
+
+    def __init__(self,
+                 name: str,
+                 prop: Union['CBaseRule.Property', str],
+                 channel: Union[str, Channel],
+                 selector: Optional[str] = None):
         """
         Rule that can be applied to widgets to change their behavior based on incoming value.
 
@@ -123,10 +133,12 @@ class CBaseRule(CJSONSerializable, Validatable, metaclass=ABCMeta):
                      or :attr:`Channel.NOT_IMPORTANT` if the rule body is responsible for collecting the channel
                      information, e.g. in Python expressions. We never set it to None, to not confuse with absent
                      value because of the bug.
+            selector: Timing selector associated with the ``channel``.
         """
         self.name = name
         self.prop = prop.value if isinstance(prop, CBaseRule.Property) else prop
         self.channel = channel
+        self.selector = selector
 
     def validate(self):
         errors: List[str] = []
@@ -137,6 +149,11 @@ class CBaseRule(CJSONSerializable, Validatable, metaclass=ABCMeta):
             errors.append('{rule_name} is missing property definition'.format(
                 rule_name=f'Rule "{self.name}"' if self.name else 'Some rule',
             ))
+        if self.selector is not None:
+            comps = self.selector.split('.')
+            if len(comps) != 3 or any(not comp for comp in comps):
+                errors.append('{rule_name} has malformed selector (use MACHINE.GROUP.LINE format)'.format(
+                    rule_name=f'Rule "{self.name}"' if self.name else 'Some rule'))
         if errors:
             raise TypeError(';'.join(errors))
 
@@ -233,6 +250,7 @@ class CEnumRule(CBaseRule):
                  name: str,
                  prop: str,
                  channel: Union[str, CBaseRule.Channel] = CBaseRule.Channel.DEFAULT,
+                 selector: Optional[str] = None,
                  config: Optional[Iterable['CEnumRule.EnumConfig']] = None):
         """
         Rule that evaluates property based on a enum [code / meaning / label], given that connected channel produces an
@@ -245,10 +263,11 @@ class CEnumRule(CBaseRule):
                      or :attr:`CBaseRule.Channel.NOT_IMPORTANT` if the rule body is responsible for collecting the
                      channel information, e.g. in Python expressions. We never set it to None, to not confuse with
                      absent value because of the bug.
+            selector: Timing selector associated with the ``channel``.
             config: A list of :class:`~CEnumRule.EnumConfig` objects that define which value should be set to the property
                     when an incoming enum from the channel is equal to the compared value.
         """
-        super().__init__(name=name, prop=prop, channel=channel)
+        super().__init__(name=name, prop=prop, channel=channel, selector=selector)
         if config is None:
             config = []
         self.config: List['CEnumRule.EnumConfig'] = config if isinstance(config, list) else list(config)
@@ -258,6 +277,7 @@ class CEnumRule(CBaseRule):
         logger.debug(f'Unpacking JSON rule: {contents}')
         name: str = contents.get('name', None)
         prop: str = contents.get('prop', None)
+        selector: Optional[str] = contents.get('sel', None)
         channel: Union[str, CBaseRule.Channel] = contents.get('channel', None)
 
         if not isinstance(name, str):
@@ -266,6 +286,8 @@ class CEnumRule(CBaseRule):
             raise CJSONDeserializeError(f'Can\'t parse rule JSON: "prop" is not a string, "{type(prop).__name__}" given.', None, 0)
         if not (isinstance(channel, str)):
             raise CJSONDeserializeError(f'Can\'t parse rule JSON: "channel" is not a string, "{type(channel).__name__}" given.', None, 0)
+        if selector is not None and not (isinstance(selector, str)):
+            raise CJSONDeserializeError(f'Can\'t parse rule JSON: "sel" is not a string, "{type(selector).__name__}" given.', None, 0)
 
         json_config: List[Any] = contents.get('config', [])
 
@@ -284,7 +306,7 @@ class CEnumRule(CBaseRule):
         except ValueError:
             pass
 
-        return cls(name=name, prop=prop, channel=channel, config=config)
+        return cls(name=name, prop=prop, channel=channel, selector=selector, config=config)
 
     def to_json(self):
         return {
@@ -292,6 +314,7 @@ class CEnumRule(CBaseRule):
             'prop': self.prop,
             'type': self.type(),
             'channel': self.channel,
+            'sel': self.selector,
             'config': self.config,
         }
 
@@ -424,6 +447,7 @@ class CNumRangeRule(CBaseRule):
                  name: str,
                  prop: str,
                  channel: Union[str, CBaseRule.Channel] = CBaseRule.Channel.DEFAULT,
+                 selector: Optional[str] = None,
                  ranges: Optional[Iterable['CNumRangeRule.Range']] = None):
         """
         Rule that evaluates property based on a number of ranges, given that connected channel produces a number.
@@ -435,10 +459,11 @@ class CNumRangeRule(CBaseRule):
                      or :attr:`CBaseRule.Channel.NOT_IMPORTANT` if the rule body is responsible for collecting the channel
                      information, e.g. in Python expressions. We never set it to None, to not confuse with absent
                      value because of the bug.
+            selector: Timing selector associated with the ``channel``.
             ranges: A list of numerical ranges that define which value should be set to the property when an incoming
                     number from the channel falls into ranges.
         """
-        super().__init__(name=name, prop=prop, channel=channel)
+        super().__init__(name=name, prop=prop, channel=channel, selector=selector)
         if ranges is None:
             ranges = []
         self.ranges: List['CNumRangeRule.Range'] = ranges if isinstance(ranges, list) else list(ranges)
@@ -448,6 +473,7 @@ class CNumRangeRule(CBaseRule):
         logger.debug(f'Unpacking JSON rule: {contents}')
         name: str = contents.get('name', None)
         prop: str = contents.get('prop', None)
+        selector: Optional[str] = contents.get('sel', None)
         channel: Union[str, CBaseRule.Channel] = contents.get('channel', None)
 
         if not isinstance(name, str):
@@ -456,6 +482,8 @@ class CNumRangeRule(CBaseRule):
             raise CJSONDeserializeError(f'Can\'t parse range JSON: "prop" is not a string, "{type(prop).__name__}" given.', None, 0)
         if not isinstance(channel, str):
             raise CJSONDeserializeError(f'Can\'t parse range JSON: "channel" is not a string, "{type(channel).__name__}" given.', None, 0)
+        if selector is not None and not isinstance(selector, str):
+            raise CJSONDeserializeError(f'Can\'t parse range JSON: "sel" is not a string, "{type(selector).__name__}" given.', None, 0)
 
         json_ranges: List[Any] = contents.get('ranges', None)
 
@@ -475,7 +503,7 @@ class CNumRangeRule(CBaseRule):
         except ValueError:
             pass
 
-        return cls(name=name, prop=prop, channel=channel, ranges=ranges)
+        return cls(name=name, prop=prop, channel=channel, selector=selector, ranges=ranges)
 
     def to_json(self):
         return {
@@ -483,6 +511,7 @@ class CNumRangeRule(CBaseRule):
             'prop': self.prop,
             'type': self.type(),
             'channel': self.channel,
+            'sel': self.selector,
             'ranges': self.ranges,
         }
 
@@ -623,6 +652,7 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
                 else:
                     channels_list = [{
                         'channel': rule.channel,
+                        'selector': rule.selector,
                         'trigger': True,
                     }]
 
@@ -639,7 +669,16 @@ class CRulesEngine(PyDMRulesEngine, MonkeyPatchedClass):
                     conn_cb = functools.partial(self.callback_conn, widget_ref, idx, ch_idx)
                     value_cb = functools.partial(self.callback_value, widget_ref, idx, ch_idx, ch['trigger'])
                     addr = ch['channel']
+                    ctx: Optional[CContext] = None
+                    selector = ch.get('selector', None)
+                    if selector is not None:
+                        try:
+                            ctx = context_cache[selector]
+                        except KeyError:
+                            ctx = CContext(selector=selector)
+                            context_cache[selector] = ctx
                     c = PyDMChannel(address=addr, connection_slot=conn_cb, value_slot=value_cb)
+                    cast(CChannel, c).context = ctx
                     job_unit['channels'].append(c)
                     plugin: PyDMPlugin = plugin_for_address(addr)
                     try:

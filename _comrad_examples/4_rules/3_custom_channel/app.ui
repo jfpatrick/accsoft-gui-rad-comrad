@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>643</width>
+    <height>175</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Simple color rules with custom channels example</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="1">
+    <widget class="CLed" name="CLed">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="rules" stdset="0">
+      <string>[{&quot;name&quot;: &quot;Simple color&quot;, &quot;prop&quot;: &quot;Color&quot;, &quot;type&quot;: 0, &quot;channel&quot;: &quot;DemoDevice/ColorMultiplexed#Demo&quot;, &quot;sel&quot;: &quot;SAMPLE.USER.MD1&quot;, &quot;ranges&quot;: [{&quot;min&quot;: 0.5, &quot;max&quot;: 1.01, &quot;value&quot;: &quot;#ff0000&quot;}]}]</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <layout class="QFormLayout" name="formLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>DemoDevice/Color#Demo:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="CLabel" name="CLabel_2">
+       <property name="precision" stdset="0">
+        <number>2</number>
+       </property>
+       <property name="displayFormat" stdset="0">
+        <enum>PyDMLabel::Decimal</enum>
+       </property>
+       <property name="channel" stdset="0">
+        <string notr="true">DemoDevice/Color#Demo</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="0" column="0">
+    <widget class="CLabel" name="CLabel">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="precision" stdset="0">
+      <number>2</number>
+     </property>
+     <property name="displayFormat" stdset="0">
+      <enum>PyDMLabel::Decimal</enum>
+     </property>
+     <property name="channel" stdset="0">
+      <string notr="true">DemoDevice/Acquisition#Demo</string>
+     </property>
+     <property name="rules" stdset="0">
+      <string>[{&quot;name&quot;: &quot;Simple color&quot;, &quot;prop&quot;: &quot;Color&quot;, &quot;type&quot;: 0, &quot;channel&quot;: &quot;DemoDevice/Color#Demo&quot;, &quot;sel&quot;: null, &quot;ranges&quot;: [{&quot;min&quot;: 0.5, &quot;max&quot;: 1.01, &quot;value&quot;: &quot;#ff0000&quot;}]}]</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="CContextFrame" name="CContextFrame">
+     <property name="selector" stdset="0">
+      <string notr="true">SAMPLE.USER.MD1</string>
+     </property>
+     <layout class="QFormLayout" name="formLayout_2">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;DemoDevice/ColorMultiplexed#Demo:&lt;br/&gt;[SAMPLE.USER.MD1]&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="CLabel" name="CLabel_3">
+        <property name="precision" stdset="0">
+         <number>2</number>
+        </property>
+        <property name="displayFormat" stdset="0">
+         <enum>PyDMLabel::Decimal</enum>
+        </property>
+        <property name="channel" stdset="0">
+         <string notr="true">DemoDevice/ColorMultiplexed#Demo</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PyDMLabel</class>
+   <extends>QLabel</extends>
+   <header>pydm.widgets.label</header>
+  </customwidget>
+  <customwidget>
+   <class>CContextFrame</class>
+   <extends>QFrame</extends>
+   <header>comrad.widgets.containers</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>CLabel</class>
+   <extends>PyDMLabel</extends>
+   <header>comrad.widgets.indicators</header>
+  </customwidget>
+  <customwidget>
+   <class>CLed</class>
+   <extends>QWidget</extends>
+   <header>comrad.widgets.indicators</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
