@@ -65,8 +65,9 @@ def install_logger_level(level: Optional[str]):
     else:
         # This covers both NOTSET (=0), and None (not passed in arguments)
 
-        # Hide PyDM INFO messages that are impossible to silence (only if no log level has been selected by the user)
-        logging.getLogger('pydm').setLevel(logging.WARNING)
+        # Hide 3rd-party INFO messages that are impossible to silence (only if no log level has been selected by the user)
+        for lib in ['pydm', 'qasync']:
+            logging.getLogger(lib).setLevel(logging.WARNING)
 
         # Install it to INFO for the rest of things
         install_logger_level('INFO')
