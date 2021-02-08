@@ -244,29 +244,11 @@
                <number>0</number>
               </property>
               <item>
-               <layout class="QHBoxLayout" name="horizontalLayout">
-                <item>
-                 <widget class="QLineEdit" name="custom_channel_edit">
-                  <property name="placeholderText">
-                   <string>device/property#field</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QPushButton" name="custom_channel_search_btn">
-                  <property name="text">
-                   <string/>
-                  </property>
-                  <property name="icon">
-                   <iconset theme="preferences-system">
-                    <normaloff>../../../../../.designer/backup</normaloff>../../../../../.designer/backup</iconset>
-                  </property>
-                  <property name="autoDefault">
-                   <bool>false</bool>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
+               <widget class="DevicePropertyLineEdit" name="custom_channel_edit" native="true">
+                <property name="focusPolicy">
+                 <enum>Qt::StrongFocus</enum>
+                </property>
+               </widget>
               </item>
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -404,13 +386,19 @@
   <customwidget>
    <class>RangeDetailsView</class>
    <extends>QWidget</extends>
-   <header>_comrad_designer/rules_editor.h</header>
+   <header>_comrad_designer.rules_editor</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>EnumDetailsView</class>
    <extends>QWidget</extends>
-   <header>_comrad_designer/rules_editor.h</header>
+   <header>_comrad_designer.rules_editor</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>DevicePropertyLineEdit</class>
+   <extends>QWidget</extends>
+   <header>_comrad_designer.device_edit</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
@@ -421,6 +409,9 @@
   <tabstop>rule_name_edit</tabstop>
   <tabstop>prop_combobox</tabstop>
   <tabstop>default_channel_checkbox</tabstop>
+  <tabstop>custom_channel_edit</tabstop>
+  <tabstop>custom_selector_edit</tabstop>
+  <tabstop>custom_selector_btn</tabstop>
   <tabstop>eval_type_combobox</tabstop>
  </tabstops>
  <resources/>
