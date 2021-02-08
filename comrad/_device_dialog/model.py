@@ -184,7 +184,7 @@ def get_ccda() -> CCDA:
 
 async def _look_up_ccda(device_name: str, searched_prop: Optional[str], searched_field: Optional[str]):
 
-    device_pages = await get_ccda().Device.search('name==*{dev}*'.format(dev=device_name))
+    device_pages = await get_ccda().Device.search('name=="*{dev}*"'.format(dev=device_name))
 
     def map_result(dev: CCDA.Device, dev_class: CCDA.DeviceClass) -> NestedListRootItem:
         dev_obj = NestedListRootItem(name=dev.name)
