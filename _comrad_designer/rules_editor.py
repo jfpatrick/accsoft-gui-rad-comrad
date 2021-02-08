@@ -1069,7 +1069,7 @@ class RulesEditor(QDialog):
             except ValueError:
                 config = PLSSelectorConfig.no_selector()
         dialog = PLSSelectorDialog(config=config, parent=self)
-        # dialog.selector_selected.connect(self._custom_selector_changed)
+        dialog.selector_selected.connect(self._custom_selector_changed)
         dialog.selector_selected.connect(self.custom_selector_edit.setText)
         dialog.exec_()
 
