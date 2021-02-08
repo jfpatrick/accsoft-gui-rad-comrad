@@ -27,7 +27,9 @@ from comrad.widgets.mixins import CWidgetRulesMixin, CWidgetRuleMap
 from comrad.data.japc_enum import CEnumValue
 from comrad.generics import GenericMeta, GenericQObjectMeta
 from comrad._selector import PLSSelectorDialog, PLSSelectorConfig
+from comrad._device_dialog import DevicePropertyDialog
 from _comrad_designer.common import ColorPropertyColumnDelegate, _STYLED_ITEM_DELEGATE_INDEX
+from _comrad_designer.device_edit import DevicePropertyLineEdit
 
 
 logger = logging.getLogger(__name__)
@@ -953,8 +955,7 @@ class RulesEditor(QDialog):
         self.rule_name_edit: QLineEdit = None
         self.default_channel_checkbox: QCheckBox = None
         self.custom_channel_frame: QFrame = None
-        self.custom_channel_edit: QLineEdit = None
-        self.custom_channel_search_btn: QPushButton = None
+        self.custom_channel_edit: DevicePropertyLineEdit = None  # type: ignore
         self.custom_selector_btn: QPushButton = None
         self.custom_selector_edit: QLineEdit = None
         self.eval_type_combobox: QComboBox = None
@@ -969,10 +970,13 @@ class RulesEditor(QDialog):
 
         loadUi(Path(__file__).parent / 'rules_editor.ui', self)
 
+        # Fix layout, because QWidget placeholder does not have a layout in rules_editor.ui
+        # FIXME: Does not help
+        # self.custom_channel_frame.layout().invalidate()
+
         self.rules_add_btn.setIcon(IconFont().icon('plus'))
         self.rules_del_btn.setIcon(IconFont().icon('minus'))
 
-        self.custom_channel_search_btn.setIcon(IconFont().icon('search'))
         font = QFont('Monospace')
         font.setStyleHint(QFont.TypeWriter)
         self.details_frame.setEnabled(False)
@@ -998,8 +1002,7 @@ class RulesEditor(QDialog):
         self.eval_type_combobox.addItem('Enumerations', CBaseRule.Type.ENUM.value)
 
         self.default_channel_checkbox.clicked.connect(self._custom_channel_changed)
-        self.custom_channel_edit.textEdited.connect(self._custom_channel_changed)
-        self.custom_channel_search_btn.clicked.connect(self._search_channel)
+        self.custom_channel_edit.address_changed.connect(self._custom_channel_changed)
         self.custom_selector_btn.clicked.connect(self._search_selector)
         self.custom_selector_edit.textEdited.connect(self._custom_selector_changed)
         self.rules_del_btn.clicked.connect(self._del_rule)
@@ -1042,10 +1045,14 @@ class RulesEditor(QDialog):
             self._selection_model.select_first()
 
     def _search_channel(self):
-        QMessageBox().information(self,
-                                  'Work in progress...',
-                                  'In the future, this will allow you to look up channel address from CCDB.',
-                                  QMessageBox.Ok)
+        curr_rule = self._selection_model.current_rule
+        if not curr_rule:
+            return
+
+        dialog = DevicePropertyDialog(addr=curr_rule.channel)
+        if dialog.exec_() == QDialog.Accepted:
+            self._selection_model.set_rule_channel(dialog.address or None)
+        self._set_rule_details()  # Update UI
 
     def _search_selector(self):
         curr_rule = self._selection_model.current_rule
@@ -1109,7 +1116,7 @@ class RulesEditor(QDialog):
     def _custom_channel_changed(self):
         uses_default = self.default_channel_checkbox.isChecked()
         self.custom_channel_frame.setHidden(uses_default)
-        new_channel = CBaseRule.Channel.DEFAULT if uses_default else self.custom_channel_edit.text()
+        new_channel = CBaseRule.Channel.DEFAULT if uses_default else self.custom_channel_edit.address
         self._selection_model.set_rule_channel(new_channel)
 
     def _custom_selector_changed(self, selector: str):
@@ -1139,7 +1146,9 @@ class RulesEditor(QDialog):
                 self.custom_channel_edit.clear()
                 self.custom_selector_edit.clear()
             else:
-                self.custom_channel_edit.setText(rule.channel)
+                blocker = QSignalBlocker(self.custom_channel_edit)
+                self.custom_channel_edit.address = rule.channel
+                blocker.unblock()
                 self.custom_selector_edit.setText(rule.selector)
 
             self.base_type_frame.setHidden(False)
