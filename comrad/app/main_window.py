@@ -6,9 +6,9 @@ from itertools import chain
 from pathlib import Path
 from typing import Optional, Union, Iterable, cast, Tuple, Type, List, Dict
 from qtpy.QtWidgets import (QWidget, QMenu, QAction, QMainWindow, QFileDialog, QApplication, QSizePolicy, QMessageBox,
-                            QDockWidget)
-from qtpy.QtCore import QCoreApplication, Qt, Signal, QObject
-from qtpy.QtGui import QCloseEvent, QGuiApplication
+                            QDockWidget, QActionGroup)
+from qtpy.QtCore import QCoreApplication, Qt, Signal, QObject, QSize, QTimer
+from qtpy.QtGui import QCloseEvent, QGuiApplication, QKeySequence
 from pydm.pydm_ui import Ui_MainWindow
 from pydm.main_window import PyDMMainWindow
 from pydm.data_plugins import is_read_only
@@ -77,6 +77,8 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
         CContextProvider.__init__(self)
         self._stored_plugins: List[CPlugin] = []  # Reference plugins to keep the objects alive
         self._signal_helper = CMainWindowSignalHelper(self)
+        self._icon_factor: float = 1.0
+        self._default_icon_size = self.ui.navbar.iconSize()
         self.contextUpdated = self._signal_helper.contextUpdated
         self._window_context = CContext()
         self._window_context.dataFiltersChanged.connect(self.contextUpdated.emit)
@@ -98,15 +100,72 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
         dock.console.expanded = False
         self.addDockWidget(Qt.BottomDockWidgetArea, dock)
         self._console_dock = dock
-        self.ui.menuView.addSeparator()
         log_console_action = cast(QAction, dock.toggleViewAction())
-        log_console_action.setText('Show Log Console')
-
+        log_console_action.setText(QCoreApplication.translate('MainWindow', 'Show Log Console'))
         # Insert before "Show status bar"
-        for action in self.ui.menuView.actions():
-            if action.text() == 'Show Status Bar':
-                self.ui.menuView.insertAction(action, log_console_action)
-                break
+        self.ui.menuView.insertAction(self.ui.actionShow_Status_Bar, log_console_action)
+
+        # Insert before "Increase Font Size"
+        self.ui.menuView.insertSeparator(self.ui.actionIncrease_Font_Size)
+        act = QAction(QCoreApplication.translate('MainWindow', 'Increase Icon Size'), self)
+        act.triggered.connect(self._increase_icon_size)
+        act.setShortcut(QKeySequence(Qt.CTRL + Qt.SHIFT + Qt.Key_Equal))
+        self.ui.menuView.insertAction(self.ui.actionIncrease_Font_Size, act)
+        act = QAction(QCoreApplication.translate('MainWindow', 'Decrease Icon Size'), self)
+        act.triggered.connect(self._decrease_icon_size)
+        act.setShortcut(QKeySequence(Qt.CTRL + Qt.SHIFT + Qt.Key_Minus))
+        self.ui.menuView.insertAction(self.ui.actionIncrease_Font_Size, act)
+        act = QAction(QCoreApplication.translate('MainWindow', 'Default Icon Size'), self)
+        act.triggered.connect(self._reset_icon_size)
+        self.ui.menuView.insertAction(self.ui.actionIncrease_Font_Size, act)
+        act.setShortcut(QKeySequence(Qt.CTRL + Qt.SHIFT + Qt.Key_0))
+
+        style_menu = QMenu(QCoreApplication.translate('MainWindow', 'Navigation Bar Style'))
+        self._action_navbar_icon = style_menu.addAction(QCoreApplication.translate('MainWindow', 'Icon Only'))
+        self._action_navbar_icon.setCheckable(True)
+        self._action_navbar_icon.setData(Qt.ToolButtonIconOnly)
+        self._action_navbar_text = style_menu.addAction(QCoreApplication.translate('MainWindow', 'Text Only'))
+        self._action_navbar_text.setCheckable(True)
+        self._action_navbar_text.setData(Qt.ToolButtonTextOnly)
+        self._action_navbar_besides = style_menu.addAction(QCoreApplication.translate('MainWindow', 'Text Beside Icon'))
+        self._action_navbar_besides.setCheckable(True)
+        self._action_navbar_besides.setData(Qt.ToolButtonTextBesideIcon)
+        self._action_navbar_under = style_menu.addAction(QCoreApplication.translate('MainWindow', 'Text Under Icon'))
+        self._action_navbar_under.setCheckable(True)
+        self._action_navbar_under.setData(Qt.ToolButtonTextUnderIcon)
+        self._group_navbar = QActionGroup(self)  # Turns separatly checkable actions into a single radio group
+        self._group_navbar.addAction(self._action_navbar_icon)
+        self._group_navbar.addAction(self._action_navbar_text)
+        self._group_navbar.addAction(self._action_navbar_besides)
+        self._group_navbar.addAction(self._action_navbar_under)
+        self._update_navbar_style_menu(self.ui.navbar.toolButtonStyle())
+        style_menu.triggered.connect(self._on_navbar_style_triggered)
+        self.ui.navbar.toolButtonStyleChanged.connect(self._update_navbar_style_menu)
+        # Insert before "Show File Path in Title Bar"
+        self.ui.menuView.insertMenu(self.ui.actionShow_File_Path_in_Title_Bar, style_menu)
+        self._style_menu = style_menu
+
+        pos_menu = QMenu(QCoreApplication.translate('MainWindow', 'Navigation Bar Position'))
+        self._action_navbar_top = pos_menu.addAction(QCoreApplication.translate('MainWindow', 'Top'))
+        self._action_navbar_top.setCheckable(True)
+        self._action_navbar_top.setData(Qt.TopToolBarArea)
+        self._action_navbar_left = pos_menu.addAction(QCoreApplication.translate('MainWindow', 'Left'))
+        self._action_navbar_left.setCheckable(True)
+        self._action_navbar_left.setData(Qt.LeftToolBarArea)
+        self._group_navbar_pos = QActionGroup(self)  # Turns separatly checkable actions into a single radio group
+        self._group_navbar_pos.addAction(self._action_navbar_top)
+        self._group_navbar_pos.addAction(self._action_navbar_left)
+        self._update_navbar_pos_menu(self.toolBarArea(self.ui.navbar))
+        self.ui.navbar.orientationChanged.connect(self._update_navbar_pos_menu_from_orientation)
+        pos_menu.triggered.connect(self._on_navbar_pos_triggered)
+        # Insert before "Show File Path in Title Bar"
+        self.ui.menuView.insertMenu(self.ui.actionShow_File_Path_in_Title_Bar, pos_menu)
+        self._pos_menu = pos_menu
+
+        self.ui.menuView.insertSeparator(self.ui.actionShow_File_Path_in_Title_Bar)
+
+        # Insert before "Show Connections..."
+        self.ui.menuView.insertSeparator(self.ui.actionShow_Connections)
 
     def hide_log_console(self):
         self._console_dock.hide()
@@ -234,6 +293,25 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
                                                                   whitelist=plugin_whitelist,
                                                                   blacklist=plugin_blacklist) or [])
 
+    def _increase_icon_size(self):
+        self._icon_factor += 0.1
+        self._update_icon_size()
+
+    def _decrease_icon_size(self):
+        if self._icon_factor <= 0.1:
+            return
+        self._icon_factor -= 0.1
+        self._update_icon_size()
+
+    def _reset_icon_size(self):
+        self._icon_factor = 1.0
+        self._update_icon_size()
+
+    def _update_icon_size(self):
+        new_size = QSize(self._default_icon_size.width() * self._icon_factor, self._default_icon_size.height() * self._icon_factor)
+        self.ui.navbar.setIconSize(new_size)
+        QTimer.singleShot(0, self.resizeForNewDisplayWidget)
+
     def _get_or_create_menu(self,
                             name: Union[str, Iterable[str]],
                             parent: Optional[QMenu] = None,
@@ -289,6 +367,27 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
             subprocess.call(('open', filename))
         else:
             logger.warning("You are using unsupported operating system. Can't open the file...")
+
+    def _update_navbar_style_menu(self, new_style: Qt.ToolButtonStyle):
+        self._action_navbar_icon.setChecked(new_style == Qt.ToolButtonIconOnly)
+        self._action_navbar_text.setChecked(new_style == Qt.ToolButtonTextOnly)
+        self._action_navbar_besides.setChecked(new_style == Qt.ToolButtonTextBesideIcon)
+        self._action_navbar_under.setChecked(new_style == Qt.ToolButtonTextUnderIcon)
+
+    def _on_navbar_style_triggered(self, action: QAction):
+        new_style = action.data()
+        self.ui.navbar.setToolButtonStyle(new_style)
+
+    def _update_navbar_pos_menu(self, new_area: Qt.ToolBarArea):
+        self._action_navbar_top.setChecked(new_area == Qt.TopToolBarArea)
+        self._action_navbar_left.setChecked(new_area == Qt.LeftToolBarArea)
+
+    def _on_navbar_pos_triggered(self, action: QAction):
+        new_pos = action.data()
+        self.addToolBar(new_pos, self.ui.navbar)
+
+    def _update_navbar_pos_menu_from_orientation(self, new_orientation: Qt.Orientation):
+        self._update_navbar_pos_menu(Qt.LeftToolBarArea if new_orientation == Qt.Vertical else Qt.TopToolBarArea)
 
     def _load_toolbar_plugins(self,
                               config: WindowPluginConfigTrie,

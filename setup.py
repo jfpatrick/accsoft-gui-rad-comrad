@@ -19,6 +19,7 @@ requirements = {
         'numpy>=1.16.4,<2',
         'argcomplete>=1.10.0,<2',
         'colorlog>=4.0.2,<5',
+        'qasync>=0.13.0,<1a0',
         'QtPy>=1.7,<2',
         'pyjapc==2.2.0',  # We must keep it pinned to this version, because comrad is obliged to override getParam, which makes it very fragile to changes
         'accwidgets[graph,led,property_edit,timing_bar,log_console]>=1.1.2,<2a0',

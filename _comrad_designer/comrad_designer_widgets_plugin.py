@@ -17,10 +17,15 @@ from qtpy.QtWidgets import QAction, QWidget
 from _comrad_designer.log_config import setup_logging
 setup_logging()
 
+# For operations that use asyncio, we must merge that with Qt, otherwise tasks are never executed
+# (at the time of implementation, Device Property dialog using PyCCDA async API is one of the use cases)
+from _comrad.async_utils import install_asyncio_event_loop
+install_asyncio_event_loop()
+
 # from pydm.widgets.tab_bar_qtplugin import TabWidgetPlugin as PyDMTabWidgetPlugin
 from accwidgets.property_edit.designer.designer_extensions import PropertyFieldExtension
 from accwidgets._designer_base import WidgetsTaskMenuExtension
-from comrad import (CScrollingPlot, CCyclicPlot, CStaticPlot, CValueAggregator, CCommandButton, CScaleIndicator, CLogDisplay,
+from comrad import (CScrollingPlot, CCyclicPlot, CStaticPlot, CValueAggregator, CCommandButton, CScaleIndicator,
                     CEnumComboBox, CSlider, CSpinBox, CLabel, CByteIndicator, CLineEdit, CTemplateRepeater,
                     CEmbeddedDisplay, CShellCommand, CRelatedDisplayButton, CPushButton, CEnumButton, CCheckBox,
                     CPropertyEdit, CLed, CContextFrame, CLogConsole)
@@ -93,7 +98,6 @@ _CLabel = qtplugin_factory(CLabel, group=CWidgetBoxGroup.INDICATORS, extensions=
 _CByteIndicator = qtplugin_factory(CByteIndicator, group=CWidgetBoxGroup.INDICATORS, extensions=_BASE_EXTENSIONS)
 # TODO: Uncomment when useful
 # _CImageView = qtplugin_factory(CImageView, group=CWidgetBoxGroup.INDICATORS, extensions=_BASE_EXTENSIONS)
-_CLogDisplay = qtplugin_factory(CLogDisplay, group=CWidgetBoxGroup.HIDDEN, extensions=_BASE_EXTENSIONS)
 _CLogConsole = qtplugin_factory(CLogConsole,
                                 group=CWidgetBoxGroup.INDICATORS,
                                 icon=icon('LogConsole', file_path=Path(accwidgets.log_console.designer.__file__)),

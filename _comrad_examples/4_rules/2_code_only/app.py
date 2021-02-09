@@ -22,7 +22,6 @@ class DemoDisplay(CDisplay):
                           ranges=[CNumRangeRule.Range(min_val=0.5, max_val=1.01, prop_val='#FF0000')]),
         ]
 
-        self.layout().addWidget(label)
         layout.addWidget(label)
 
         led = CLed()

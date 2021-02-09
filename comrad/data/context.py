@@ -43,6 +43,7 @@ class CContext(QObject):
             selector: Cycle selector that should be applied to the widgets.
             data_filters: Data filters for expert applications that can set FESA data filters when directly working through RDA.
             wildcards: Any macro substitutions that need to be done dynamically at runtime.
+            parent: Owning object.
         """
         super().__init__(parent)
         self._selector = selector or None  # Avoid empty string

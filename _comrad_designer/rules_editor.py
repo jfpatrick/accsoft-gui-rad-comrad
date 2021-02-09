@@ -16,7 +16,7 @@ from qtpy.QtCore import (Qt, QAbstractTableModel, QObject, QModelIndex, QVariant
                          QPersistentModelIndex)
 from qtpy.QtGui import QFont, QFocusEvent, QShowEvent
 from qtpy.uic import loadUi
-from accwidgets.qt import (BooleanPropertyColumnDelegate, AbstractComboBoxColumnDelegate, TableViewColumnResizer,
+from accwidgets.qt import (BooleanPropertyColumnDelegate, AbstractComboBoxColumnDelegate,
                            AbstractListModel as BaseListModel, AbstractTableModel as BaseTableModel,
                            PersistentEditorTableView)
 from accwidgets._designer_base import get_designer_cursor
@@ -26,7 +26,10 @@ from comrad.json import CJSONEncoder, CJSONDeserializeError
 from comrad.widgets.mixins import CWidgetRulesMixin, CWidgetRuleMap
 from comrad.data.japc_enum import CEnumValue
 from comrad.generics import GenericMeta, GenericQObjectMeta
+from comrad._selector import PLSSelectorDialog, PLSSelectorConfig
+from comrad._device_dialog import DevicePropertyDialog
 from _comrad_designer.common import ColorPropertyColumnDelegate, _STYLED_ITEM_DELEGATE_INDEX
+from _comrad_designer.device_edit import DevicePropertyLineEdit
 
 
 logger = logging.getLogger(__name__)
@@ -748,10 +751,7 @@ class EnumDetailsView(AbstractTableDetailsView[CEnumRule, CEnumRule.EnumConfig])
 
     def _configure_table(self, rule_prop: CBaseRule.Property):
         super()._configure_table(rule_prop)
-        self.decl_table.horizontalHeader().setResizeMode(0, QHeaderView.Custom)  # Cancel out parent mode
-        self.decl_table.horizontalHeader().setResizeMode(1, QHeaderView.Custom)
-        if getattr(self, '_table_resizer', None) is None:
-            self._table_resizer = TableViewColumnResizer.install_onto(self.decl_table)
+        self.decl_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
 
 class RulesEditorModel(BaseListModel[CBaseRule], QAbstractListModel, JsonModelMixin):
@@ -845,6 +845,19 @@ class CurrentRuleSelectionModel(QItemSelectionModel):
         curr_rule = self.current_rule
         if curr_rule:
             curr_rule.channel = channel
+            if isinstance(channel, CBaseRule.Channel):
+                curr_rule.selector = None
+
+    def set_rule_selector(self, selector: Optional[str]):
+        """
+        Update the selector of the current rule.
+
+        Args:
+            channel: New channel.
+        """
+        curr_rule = self.current_rule
+        if curr_rule:
+            curr_rule.selector = selector
 
     def set_rule_property(self, prop: str):
         """
@@ -883,6 +896,7 @@ class CurrentRuleSelectionModel(QItemSelectionModel):
         if curr_rule:
             new_rule = new_type(name=curr_rule.name,
                                 prop=curr_rule.prop,
+                                selector=curr_rule.selector,
                                 channel=curr_rule.channel)
             self._set_current_rule(new_rule)
 
@@ -941,8 +955,9 @@ class RulesEditor(QDialog):
         self.rule_name_edit: QLineEdit = None
         self.default_channel_checkbox: QCheckBox = None
         self.custom_channel_frame: QFrame = None
-        self.custom_channel_edit: QLineEdit = None
-        self.custom_channel_search_btn: QPushButton = None
+        self.custom_channel_edit: DevicePropertyLineEdit = None  # type: ignore
+        self.custom_selector_btn: QPushButton = None
+        self.custom_selector_edit: QLineEdit = None
         self.eval_type_combobox: QComboBox = None
         self.eval_stack_widget: QStackedWidget = None
         self.page_ranges: QWidget = None
@@ -955,10 +970,13 @@ class RulesEditor(QDialog):
 
         loadUi(Path(__file__).parent / 'rules_editor.ui', self)
 
+        # Fix layout, because QWidget placeholder does not have a layout in rules_editor.ui
+        # FIXME: Does not help
+        # self.custom_channel_frame.layout().invalidate()
+
         self.rules_add_btn.setIcon(IconFont().icon('plus'))
         self.rules_del_btn.setIcon(IconFont().icon('minus'))
 
-        self.custom_channel_search_btn.setIcon(IconFont().icon('search'))
         font = QFont('Monospace')
         font.setStyleHint(QFont.TypeWriter)
         self.details_frame.setEnabled(False)
@@ -984,8 +1002,9 @@ class RulesEditor(QDialog):
         self.eval_type_combobox.addItem('Enumerations', CBaseRule.Type.ENUM.value)
 
         self.default_channel_checkbox.clicked.connect(self._custom_channel_changed)
-        self.custom_channel_edit.textEdited.connect(self._custom_channel_changed)
-        self.custom_channel_search_btn.clicked.connect(self._search_channel)
+        self.custom_channel_edit.address_changed.connect(self._custom_channel_changed)
+        self.custom_selector_btn.clicked.connect(self._search_selector)
+        self.custom_selector_edit.textEdited.connect(self._custom_selector_changed)
         self.rules_del_btn.clicked.connect(self._del_rule)
         self.btn_box.button(QDialogButtonBox.Apply).clicked.connect(self._save_changes)
         self.btn_box.rejected.connect(self.close)
@@ -1026,10 +1045,33 @@ class RulesEditor(QDialog):
             self._selection_model.select_first()
 
     def _search_channel(self):
-        QMessageBox().information(self,
-                                  'Work in progress...',
-                                  'In the future, this will allow you to look up channel address from CCDB.',
-                                  QMessageBox.Ok)
+        curr_rule = self._selection_model.current_rule
+        if not curr_rule:
+            return
+
+        dialog = DevicePropertyDialog(addr=curr_rule.channel)
+        if dialog.exec_() == QDialog.Accepted:
+            self._selection_model.set_rule_channel(dialog.address or None)
+        self._set_rule_details()  # Update UI
+
+    def _search_selector(self):
+        curr_rule = self._selection_model.current_rule
+        if not curr_rule:
+            return
+        if curr_rule.selector is None:
+            config = PLSSelectorConfig.no_selector()
+        else:
+            try:
+                machine, group, line = tuple(curr_rule.selector.split('.'))
+                config = PLSSelectorConfig(machine=machine,
+                                           group=group,
+                                           line=line)
+            except ValueError:
+                config = PLSSelectorConfig.no_selector()
+        dialog = PLSSelectorDialog(config=config, parent=self)
+        dialog.selector_selected.connect(self._custom_selector_changed)
+        dialog.selector_selected.connect(self.custom_selector_edit.setText)
+        dialog.exec_()
 
     def _del_rule(self):
         curr_rule = self._selection_model.current_rule
@@ -1074,8 +1116,11 @@ class RulesEditor(QDialog):
     def _custom_channel_changed(self):
         uses_default = self.default_channel_checkbox.isChecked()
         self.custom_channel_frame.setHidden(uses_default)
-        new_channel = CBaseRule.Channel.DEFAULT if uses_default else self.custom_channel_edit.text()
+        new_channel = CBaseRule.Channel.DEFAULT if uses_default else self.custom_channel_edit.address
         self._selection_model.set_rule_channel(new_channel)
+
+    def _custom_selector_changed(self, selector: str):
+        self._selection_model.set_rule_selector(selector or None)
 
     def _set_rule_details(self):
         rule = self._selection_model.current_rule
@@ -1099,8 +1144,12 @@ class RulesEditor(QDialog):
             self.custom_channel_frame.setHidden(is_default_channel)
             if is_default_channel:
                 self.custom_channel_edit.clear()
+                self.custom_selector_edit.clear()
             else:
-                self.custom_channel_edit.setText(rule.channel)
+                blocker = QSignalBlocker(self.custom_channel_edit)
+                self.custom_channel_edit.address = rule.channel
+                blocker.unblock()
+                self.custom_selector_edit.setText(rule.selector)
 
             self.base_type_frame.setHidden(False)
             _, __, base_type = self._widget.RULE_PROPERTIES[rule.prop]

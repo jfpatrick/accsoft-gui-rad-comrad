@@ -1,20 +1,20 @@
 import logging
 import os
 from dataclasses import dataclass
-from typing import Optional, List, cast, Tuple, Dict
+from typing import Optional, cast, Tuple, Dict
 from pathlib import Path
-from qtpy.QtWidgets import (QDialog, QWidget, QComboBox, QFrame, QCheckBox, QStackedWidget, QLabel, QToolButton,
+from qtpy.QtWidgets import (QDialog, QWidget, QFrame, QCheckBox, QToolButton,
                             QSpacerItem, QSizePolicy, QMenu, QAction, QHBoxLayout, QRadioButton, QDialogButtonBox,
                             QButtonGroup, QWIDGETSIZE_MAX)
-from qtpy.QtGui import QShowEvent
-from qtpy.QtCore import QStringListModel, Qt, Signal, QTimer
+from qtpy.QtCore import Signal, QTimer
 from qtpy.uic import loadUi
 from pydm.utilities.iconfont import IconFont
-from pyccda import SyncAPI as CCDA, sync_models as CCDATypes
 from accwidgets.timing_bar import TimingBar, TimingBarDomain, TimingBarModel
 from comrad import CApplication
 from comrad.data.pyjapc_patch import CPyJapc
 from comrad.app.plugins.common import CToolbarWidgetPlugin
+from comrad.app._toolbtn import OrientedToolButton
+from comrad._selector import PLSSelectorDialog, PLSSelectorConfig
 
 
 logger = logging.getLogger('comrad.app.plugins.toolbar.pls_plugin')
@@ -49,151 +49,6 @@ def get_telegram_info() -> TelegramInfo:
                             group='USER',
                             line='ALL')
     return TelegramInfo()
-
-
-class PLSSelectorDialog(QDialog):
-
-    STACK_COMPLETE = 0
-    STACK_LOADING = 1
-    STACK_ERROR = 2
-
-    def __init__(self, parent: Optional[QWidget] = None):
-        """
-        Dialog for choosing control system "selector" on the window level.
-
-        Args:
-              parent: Owning widget.
-        """
-        super().__init__(parent)
-
-        self.machine_combo: QComboBox = None
-        self.group_combo: QComboBox = None
-        self.line_combo: QComboBox = None
-        self.chooser_frame: QFrame = None
-        self.no_selector: QCheckBox = None
-        self.stack: QStackedWidget = None
-        self.error: QLabel = None
-
-        loadUi(Path(__file__).parent / 'pls_dialog.ui', self)
-
-        self._original_machine: Optional[str] = None
-        self._original_group: Optional[str] = None
-        self._original_line: Optional[str] = None
-
-        self.main_window = cast(CApplication, CApplication.instance()).main_window
-
-        self.ccda = CCDA()
-        self._data: List[CCDATypes.SelectorDomain] = []
-        self.machine_combo.setModel(QStringListModel())
-        self.group_combo.setModel(QStringListModel())
-        self.line_combo.setModel(QStringListModel())
-
-        tgm_info = get_telegram_info()
-
-        self.no_selector.setChecked(not tgm_info.found_in_context)
-        self._toggle_selector(self.no_selector.checkState())
-
-        self._original_machine = tgm_info.machine
-        self._original_group = tgm_info.group
-        self._original_line = tgm_info.line
-
-        self.no_selector.stateChanged.connect(self._toggle_selector)
-        self.accepted.connect(self._update_window_context)
-
-    def showEvent(self, event: QShowEvent):
-        super().showEvent(event)
-
-        # Have we been shown?
-        if event.spontaneous() or self._data:
-            return
-
-        # Only execute this once after being shown for the first time
-        self.stack.setCurrentIndex(self.STACK_LOADING)
-        try:
-            self._data = list(self.ccda.SelectorDomain.search())
-        except Exception as e:  # noqa: B902
-            err_msg = 'Failed to contact CCDB'
-            logger.error(f'{err_msg}: {e}')
-            self.stack.setCurrentIndex(self.STACK_ERROR)
-            self.error.setText(err_msg)
-            # FIXME: When PyCCDA fixes its exception to abstract it away from urllib3 implementation, we should catch it instead of general one
-            return
-
-        if not self._data:
-            err_msg = 'Empty data received from CCDA. Cannot populate PLS dialog.'
-            logger.debug(err_msg)
-            self.stack.setCurrentIndex(self.STACK_ERROR)
-            self.error.setText(err_msg)
-            return
-
-        self.stack.setCurrentIndex(self.STACK_COMPLETE)
-
-        cast(QStringListModel, self.machine_combo.model()).setStringList([x.name for x in self._data])
-        if self._original_machine is None:
-            machine_idx = 0
-        else:
-            machine_idx = max(0, self.machine_combo.findText(self._original_machine))
-
-        self.machine_combo.setCurrentIndex(machine_idx)
-        self._update_groups_for_machine(machine_idx)
-
-        if self._original_group is None:
-            group_idx = 0
-        else:
-            group_idx = max(0, self.group_combo.findText(self._original_group))
-
-        self.group_combo.setCurrentIndex(group_idx)
-        self._update_lines_for_group(machine_idx=machine_idx, group_idx=group_idx)
-
-        if self._original_line is None:
-            line_idx = 0
-        else:
-            line_idx = max(0, self.line_combo.findText(self._original_line))
-
-        self.line_combo.setCurrentIndex(line_idx)
-
-        self.machine_combo.currentIndexChanged[str].connect(self._machine_updated)
-        self.group_combo.currentIndexChanged[str].connect(self._group_updated)
-
-    def _machine_updated(self, text: str):
-        index = self.machine_combo.findText(text)
-        if index == -1:
-            return
-
-        self._update_groups_for_machine(index)
-        self.group_combo.setCurrentIndex(0)
-
-    def _group_updated(self, text: str):
-        index = self.group_combo.findText(text)
-        if index == -1:
-            return
-
-        self._update_lines_for_group(machine_idx=self.machine_combo.currentIndex(), group_idx=index)
-        self.line_combo.setCurrentIndex(0)
-
-    def _update_groups_for_machine(self, index: int):
-        machine = self._data[index]
-        cast(QStringListModel, self.group_combo.model()).setStringList([x.name for x in machine.selector_groups])
-
-    def _update_lines_for_group(self, machine_idx: int, group_idx: int):
-        machine = self._data[machine_idx]
-        group = machine.selector_groups[group_idx]
-        cast(QStringListModel, self.line_combo.model()).setStringList([x.name for x in group.selector_values])
-
-    def _toggle_selector(self, state: Qt.CheckState):
-        self.chooser_frame.setEnabled(state != Qt.Checked)
-
-    def _update_window_context(self):
-        if self.no_selector.isChecked():
-            self.main_window.window_context.selector = None
-        else:
-            machine = self.machine_combo.currentText()
-            group = self.group_combo.currentText()
-            line = self.line_combo.currentText()
-            if not machine or not group or not line:
-                return
-
-            self.main_window.window_context.selector = f'{machine}.{group}.{line}'
 
 
 @dataclass
@@ -307,7 +162,7 @@ class PLSTimingConfigDialog(QDialog):
         self.timestamp_details.setEnabled(self.chkbx_timestamp.isChecked())
 
 
-class PLSPluginButton(QToolButton):
+class PLSPluginButton(OrientedToolButton):
 
     def __init__(self, parent: 'PLSToolbarWidget'):
         """
@@ -317,8 +172,7 @@ class PLSPluginButton(QToolButton):
             rbac: Handle to the RBAC manager.
             parent: Parent widget to hold this object.
         """
-        super().__init__(parent)
-        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+        super().__init__(horizontal=QSizePolicy.Minimum, vertical=QSizePolicy.Expanding, parent=parent)
         self.setPopupMode(QToolButton.InstantPopup)
         toolbar = cast(CApplication, CApplication.instance()).main_window.ui.navbar
         self.setToolButtonStyle(toolbar.toolButtonStyle())
@@ -328,6 +182,7 @@ class PLSPluginButton(QToolButton):
         icon_font = IconFont()
         self.setIcon(icon_font.icon('clock-o'))
         self.setIconSize(toolbar.iconSize())  # Needed because gets smaller inside a layout
+        toolbar.iconSizeChanged.connect(self.setIconSize)
         menu = QMenu(self)
         self.setMenu(menu)
         act_user = QAction(icon_font.icon('clock-o'), 'Select PLS user', self)
@@ -339,7 +194,13 @@ class PLSPluginButton(QToolButton):
         menu.addAction(act_bar)
 
     def _open_user_selector(self):
-        dialog = PLSSelectorDialog(parent=self)
+        tgm_info = get_telegram_info()
+        config = PLSSelectorConfig(machine=tgm_info.machine,
+                                   group=tgm_info.group,
+                                   line=tgm_info.line,
+                                   enabled=tgm_info.found_in_context)
+        dialog = PLSSelectorDialog(config=config, parent=self)
+        dialog.selector_selected.connect(self._on_timing_selector_updated)
         dialog.exec_()
 
     def _open_bar_config(self):
@@ -351,6 +212,9 @@ class PLSPluginButton(QToolButton):
     def _on_timing_config_updated(self, update: PLSToolbarConfig):
         parent = cast(PLSToolbarWidget, self.parent())
         parent.config = update
+
+    def _on_timing_selector_updated(self, new_selector: str):
+        cast(CApplication, CApplication.instance()).main_window.window_context.selector = new_selector
 
 
 class PLSToolbarWidget(QWidget):

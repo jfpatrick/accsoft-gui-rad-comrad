@@ -75,7 +75,7 @@
            </property>
            <property name="icon">
             <iconset theme="list-add">
-             <normaloff>../../../../.designer/backup</normaloff>../../../../.designer/backup</iconset>
+             <normaloff>../../../../../.designer/backup</normaloff>../../../../../.designer/backup</iconset>
            </property>
            <property name="autoDefault">
             <bool>false</bool>
@@ -89,7 +89,7 @@
            </property>
            <property name="icon">
             <iconset theme="list-remove">
-             <normaloff>../../../../.designer/backup</normaloff>../../../../.designer/backup</iconset>
+             <normaloff>../../../../../.designer/backup</normaloff>../../../../../.designer/backup</iconset>
            </property>
            <property name="autoDefault">
             <bool>false</bool>
@@ -144,78 +144,15 @@
            </property>
           </widget>
          </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="rule_name_edit"/>
+         </item>
          <item row="1" column="0">
           <widget class="QLabel" name="label_3">
            <property name="text">
             <string>Property</string>
            </property>
           </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="label_4">
-           <property name="text">
-            <string>Channel</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QLineEdit" name="rule_name_edit"/>
-         </item>
-         <item row="2" column="1">
-          <layout class="QVBoxLayout" name="verticalLayout_3">
-           <item>
-            <widget class="QCheckBox" name="default_channel_checkbox">
-             <property name="text">
-              <string>Use default channel</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QFrame" name="custom_channel_frame">
-             <property name="frameShape">
-              <enum>QFrame::NoFrame</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Plain</enum>
-             </property>
-             <layout class="QHBoxLayout" name="horizontalLayout">
-              <property name="leftMargin">
-               <number>0</number>
-              </property>
-              <property name="topMargin">
-               <number>0</number>
-              </property>
-              <property name="rightMargin">
-               <number>0</number>
-              </property>
-              <property name="bottomMargin">
-               <number>0</number>
-              </property>
-              <item>
-               <widget class="QLineEdit" name="custom_channel_edit">
-                <property name="placeholderText">
-                 <string>device/property#field</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="custom_channel_search_btn">
-                <property name="text">
-                 <string/>
-                </property>
-                <property name="icon">
-                 <iconset theme="preferences-system">
-                  <normaloff>../../../../.designer/backup</normaloff>../../../../.designer/backup</iconset>
-                </property>
-                <property name="autoDefault">
-                 <bool>false</bool>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
-          </layout>
          </item>
          <item row="1" column="1">
           <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -263,6 +200,80 @@
                  <string>TextLabel</string>
                 </property>
                </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_4">
+           <property name="text">
+            <string>Channel</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <layout class="QVBoxLayout" name="verticalLayout_3">
+           <item>
+            <widget class="QCheckBox" name="default_channel_checkbox">
+             <property name="text">
+              <string>Use default channel</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QFrame" name="custom_channel_frame">
+             <property name="frameShape">
+              <enum>QFrame::NoFrame</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Plain</enum>
+             </property>
+             <layout class="QVBoxLayout" name="_2">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="DevicePropertyLineEdit" name="custom_channel_edit" native="true">
+                <property name="focusPolicy">
+                 <enum>Qt::StrongFocus</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_3">
+                <item>
+                 <widget class="QLabel" name="label_6">
+                  <property name="text">
+                   <string>Selector:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLineEdit" name="custom_selector_edit">
+                  <property name="placeholderText">
+                   <string>No selector</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="custom_selector_btn">
+                  <property name="text">
+                   <string>Choose...</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
               </item>
              </layout>
             </widget>
@@ -375,13 +386,19 @@
   <customwidget>
    <class>RangeDetailsView</class>
    <extends>QWidget</extends>
-   <header>_comrad_designer/rules_editor.h</header>
+   <header>_comrad_designer.rules_editor</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>EnumDetailsView</class>
    <extends>QWidget</extends>
-   <header>_comrad_designer/rules_editor.h</header>
+   <header>_comrad_designer.rules_editor</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>DevicePropertyLineEdit</class>
+   <extends>QWidget</extends>
+   <header>_comrad_designer.device_edit</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
@@ -393,7 +410,8 @@
   <tabstop>prop_combobox</tabstop>
   <tabstop>default_channel_checkbox</tabstop>
   <tabstop>custom_channel_edit</tabstop>
-  <tabstop>custom_channel_search_btn</tabstop>
+  <tabstop>custom_selector_edit</tabstop>
+  <tabstop>custom_selector_btn</tabstop>
   <tabstop>eval_type_combobox</tabstop>
  </tabstops>
  <resources/>
