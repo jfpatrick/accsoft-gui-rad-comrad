@@ -416,7 +416,13 @@ class CPyJapc(PyJapcWrapper, QObject):
                 message = get_cmw_user_message(e)
             else:
                 message = get_java_user_message(e)
-            self.japc_param_error.emit(message, display_popup)
+        except ValueError as e:
+            # Catch PyJapc-level errors, e.g.
+            # "ValueError: Could not get a valueDescriptor. Can not do array dimension checks. Please initialize INCA in the PyJapc() constructor."
+            message = str(e)
+        else:
+            return
+        self.japc_param_error.emit(message, display_popup)
 
     def _setup_jvm(self, log_level: int):
         """Overrides internal PyJapc hook to set any custom JVM flags"""

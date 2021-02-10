@@ -362,14 +362,41 @@ def test_japc_get_set_does_catch_other_java_exception(setParam, getParam, method
     assert blocker.args == ['Test exception', display_popup]
 
 
+@pytest.mark.parametrize('error_type', [ValueError])
+@pytest.mark.parametrize('method,display_popup,value', [
+    ('getParam', False, None),
+    ('setParam', True, 4),
+])
+@mock.patch('comrad.data.pyjapc_patch.PyJapcWrapper.getParam')
+@mock.patch('pyjapc.PyJapc.setParam')
+def test_japc_get_set_does_catch_pyjapc_exception(setParam, getParam, method, display_popup, value, qtbot, error_type):
+
+    def raise_error(parameterName, *args, **__):
+        assert parameterName == 'test_addr'
+        if value is not None:
+            assert args[0] == value  # Test setParam value
+        raise error_type('Test exception')
+
+    getParam.side_effect = raise_error
+    setParam.side_effect = raise_error
+
+    japc = CPyJapc()
+    args = ['test_addr']
+    if value is not None:
+        args.append(value)
+    with qtbot.wait_signal(japc.japc_param_error) as blocker:
+        getattr(japc, method)(*args)
+    assert blocker.args == ['Test exception', display_popup]
+
+
 @pytest.mark.parametrize('method,value', [
     ('getParam', None),
     ('setParam', 4),
 ])
-@pytest.mark.parametrize('error_type', [ValueError, TypeError, RuntimeError, Exception, BaseException])
+@pytest.mark.parametrize('error_type', [TypeError, RuntimeError, Exception, BaseException])
 @mock.patch('comrad.data.pyjapc_patch.PyJapcWrapper.getParam')
 @mock.patch('pyjapc.PyJapc.setParam')
-def test_japc_get_set_does_not_catch_python_exception(setParam, getParam, method, value, qtbot, error_type):
+def test_japc_get_set_does_not_catch_non_pyjapc_exception(setParam, getParam, method, value, qtbot, error_type):
     getParam.side_effect = error_type
     setParam.side_effect = error_type
 
