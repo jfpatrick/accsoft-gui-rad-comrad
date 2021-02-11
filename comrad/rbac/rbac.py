@@ -7,7 +7,7 @@ from enum import IntEnum, auto
 from qtpy.QtCore import Signal, QObject
 from qtpy.QtWidgets import QDialog
 from pyrbac import AuthenticationClient, AuthenticationError, Token
-from comrad._cwm_utils import parse_cmw_error_message
+from comrad._cmw_utils import parse_cmw_error_message
 from comrad.rbac.token import CRBACToken, CRBACRole, _is_rbac_role_critical
 from comrad.rbac.role_picker import RbaRolePicker
 

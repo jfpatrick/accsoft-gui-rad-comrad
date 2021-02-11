@@ -1,6 +1,6 @@
 from typing import Iterator
 from comrad import CEnumValue
-from comrad._cwm_utils import parse_cmw_error_message
+from comrad._cmw_utils import parse_cmw_error_message
 from jpype.types import JException
 
 
