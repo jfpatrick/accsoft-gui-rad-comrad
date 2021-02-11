@@ -42,10 +42,10 @@ def parse_field_trait(field_name: str) -> Union[None, Tuple[CChannelData.FieldTr
     Returns:
         :obj:`True` if the field name corresponds to a trait rather than a regular field.
     """
-    mo = re.match(r'(?P<field>.*)_(?P<modifier>min|max|units)$', field_name)
+    mo = re.match(r'(?P<field>.*)_(?P<modifier>min|max|units|MIN|MAX|UNITS)$', field_name)
     if mo and mo.groups():
         captures = mo.groupdict()
-        trait = CChannelData.FieldTrait(captures['modifier'])
+        trait = CChannelData.FieldTrait(captures['modifier'].lower())
         return trait, captures['field']
     return None
 
