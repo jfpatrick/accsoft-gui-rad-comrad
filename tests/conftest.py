@@ -5,9 +5,10 @@ from unittest import mock
 @pytest.fixture(autouse=True)
 def patch_app_singleton(monkeypatch):
 
-    class FakeApp:
+    class FakeApp(mock.MagicMock):
 
-        def __init__(self):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
             print('Instantiating fake app instance')
             from comrad.rbac import CRBACState, CRBACStartupLoginPolicy
             self.rbac = CRBACState()

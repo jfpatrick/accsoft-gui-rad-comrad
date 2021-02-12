@@ -1,6 +1,9 @@
 import pytest
+from unittest import mock
+from typing import cast
 from qtpy.QtCore import Qt
-from comrad.app.application import toolbar_style_from_str, toolbar_area_from_str
+from qtpy.QtWidgets import QApplication
+from comrad.app.application import toolbar_style_from_str, toolbar_area_from_str, CApplication
 
 
 @pytest.mark.parametrize('input,expected_output', [
@@ -51,3 +54,21 @@ def test_toolbar_area_from_str_succeeds(input, expected_output):
 def test_toolbar_area_from_str_fails(input, expected_error):
     with pytest.raises(ValueError, match=expected_error):
         toolbar_area_from_str(input)
+
+
+@pytest.mark.parametrize('serialized_token,expected_environ', [
+    (None, None),
+    ('abcdef', {'VAR1': 'SMTH', 'RBAC_TOKEN_SERIALIZED': 'abcdef'}),
+])
+@mock.patch('comrad.app.application.os')
+@mock.patch('comrad.app.application.subprocess.Popen')
+@mock.patch('comrad.rbac.rbac.CRBACState.serialized_token', new_callable=mock.PropertyMock)
+def test_serialized_token_is_passed_to_subprocess(token_getter, Popen, os_mock, serialized_token, expected_environ, qtbot):
+    _ = qtbot
+    token_getter.return_value = serialized_token
+    os_mock.environ = {'VAR1': 'SMTH'}
+    app = cast(CApplication, QApplication.instance())
+    print(app.rbac)
+    Popen.assert_not_called()
+    CApplication.new_pydm_process(app, ui_file='test_file.ui')
+    Popen.assert_called_once_with(mock.ANY, env=expected_environ, shell=False)
