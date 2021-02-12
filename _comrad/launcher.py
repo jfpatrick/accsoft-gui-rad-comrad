@@ -10,7 +10,6 @@ from typing import Optional, Tuple, Dict, List, Iterable
 from .comrad_info import COMRAD_DESCRIPTION, COMRAD_VERSION, get_versions_info
 from .log_config import install_logger_level
 from .common import get_japc_support_envs, comrad_asset
-from .async_utils import install_asyncio_event_loop
 
 
 # Allow smooth exit on Ctrl+C
@@ -389,7 +388,7 @@ def _run_comrad(args: argparse.Namespace) -> bool:
                        plugin_blacklist=args.disable_plugins,
                        plugin_whitelist=args.enable_plugins,
                        stylesheet_path=stylesheet)
-    install_asyncio_event_loop(app)
+    # install_asyncio_event_loop(app)
     sys.exit(app.exec_())
     return True
 
