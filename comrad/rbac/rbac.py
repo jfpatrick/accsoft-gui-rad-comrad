@@ -1,6 +1,8 @@
 import logging
 import os
 import functools
+import base64
+import numpy as np
 from pathlib import Path
 from typing import Optional, List, Callable
 from enum import IntEnum, auto
@@ -75,6 +77,27 @@ class CRBACState(QObject):
     @property
     def token(self) -> Optional[CRBACToken]:
         return self._last_pyrbac_token
+
+    @property
+    def serialized_token(self) -> Optional[str]:
+        """
+        Returns Java (source of truth) serialized token. As opposed to pyrbac-based token, which is used to authenticate
+        and then gets converted into Java token, Java is considered the source of truth because it is used by
+        control libraries, e.g. PyJapc.
+
+        Returns:
+            Base64-serialized token string or :obj:`None` if not logged in or Java communication fails.
+        """
+        if self.status == CRBACLoginStatus.LOGGED_OUT:
+            return None
+        import jpype
+        try:
+            cern = jpype.JPackage('cern')
+            token_obj = cern.rbac.util.lookup.RbaTokenLookup.findRbaToken()
+        except BaseException:  # noqa: B902
+            return None
+        else:
+            return base64.b64encode(np.array(token_obj.getEncoded(), dtype=np.uint8)).decode()
 
     def login_by_credentials(self,
                              user: str,

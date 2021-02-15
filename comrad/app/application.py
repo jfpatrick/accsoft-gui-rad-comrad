@@ -196,6 +196,12 @@ class CApplication(PyDMApplication):
                 return
 
         args = [exec_path, 'run']
+        token = self.rbac.serialized_token
+        env: Optional[Dict[str, str]] = None
+        if token:
+            env = {**os.environ,
+                   'RBAC_TOKEN_SERIALIZED': token,
+                   }
         args.extend(['--nav-bar-style', self._toolbar_style])
         args.extend(['--nav-bar-position', self._toolbar_position])
         if self.hide_nav_bar:
@@ -252,7 +258,7 @@ class CApplication(PyDMApplication):
         args.extend(filepath_args)
         if command_line_args is not None:
             args.extend(command_line_args)
-        subprocess.Popen(args, shell=False)
+        subprocess.Popen(args, env=env, shell=False)
 
     def on_control_error(self, message: str, display_popup: bool):
         """Callback to display a message whenever an exception happens in the control system."""

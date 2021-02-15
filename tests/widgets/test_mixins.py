@@ -76,7 +76,7 @@ def test_requesting_mixin_skips_channel_setter(qtbot: QtBot):
     mixin_class = make_mixin_class(CRequestingMixin)
     obj = cast(Union[CRequestingMixin, QWidget], mixin_class(init_channel='test/channel'))
     qtbot.add_widget(obj)
-    with mock.patch.object(obj, 'request_signal', new_callable=mock.PropertyMock()) as request_signal:
+    with mock.patch.object(obj, 'request_signal', new_callable=mock.PropertyMock) as request_signal:
         obj.channel = 'test/channel'  # type: ignore
         request_signal.assert_not_called()
 

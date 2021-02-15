@@ -17,7 +17,7 @@ from comrad.rbac.role_picker import RbaRolePicker
 
 def teardown_function():
     # Clean-up all pyrbac environment variables
-    for var in ['RBAC_PKEY', 'RBAC_ENV', 'RBAC_APPLICATION_NAME']:
+    for var in ['RBAC_PKEY', 'RBAC_ENV', 'RBAC_APPLICATION_NAME', 'RBAC_TOKEN_SERIALIZED']:
         try:
             del os.environ[var]
         except KeyError:
@@ -921,3 +921,43 @@ def test_token_info(src_acc_type, expected_acc_str, src_is_expired, expected_val
     assert token.location.address == '10.10.255.255'
     assert token.location.auth_required == loc_auth_required
     assert token.serial_id == '0xbadf00d'
+
+
+@pytest.mark.parametrize('status', [CRBACLoginStatus.LOGGED_IN_BY_LOCATION, CRBACLoginStatus.LOGGED_IN_BY_CREDENTIALS])
+@pytest.mark.parametrize('token_encoded,expected_result', [
+    ([1, 2, 5, 6, 7], 'AQIFBgc='),
+    ([7, 4, 6, 8, 5, 6, 4, 6, 8, 4, 3], 'BwQGCAUGBAYIBAM='),
+])
+@mock.patch('jpype.JPackage')
+def test_serialized_token_succeeds(JPackage, token_encoded, expected_result, status):
+    JPackage.return_value.rbac.util.lookup.RbaTokenLookup.findRbaToken.return_value.getEncoded.return_value = token_encoded
+    rbac = CRBACState()
+    rbac.status = status
+    assert rbac.serialized_token == expected_result
+
+
+@pytest.mark.parametrize('status', [CRBACLoginStatus.LOGGED_IN_BY_LOCATION, CRBACLoginStatus.LOGGED_IN_BY_CREDENTIALS])
+@pytest.mark.parametrize('exc_type', [ValueError, TypeError, AttributeError])
+@mock.patch('jpype.JPackage')
+def test_serialized_token_returns_on_exception(JPackage, exc_type, status):
+    JPackage.return_value.rbac.util.lookup.RbaTokenLookup.findRbaToken.side_effect = exc_type
+    rbac = CRBACState()
+    rbac.status = status
+    assert rbac.serialized_token is None
+
+
+@pytest.mark.parametrize('status,expect_called', [
+    (CRBACLoginStatus.LOGGED_IN_BY_LOCATION, True),
+    (CRBACLoginStatus.LOGGED_IN_BY_CREDENTIALS, True),
+    (CRBACLoginStatus.LOGGED_OUT, False),
+])
+@mock.patch('jpype.JPackage')
+def test_serialized_token_returns_early_when_logged_out(JPackage, status, expect_called):
+    rbac = CRBACState()
+    rbac.status = status
+    res = rbac.serialized_token
+    if expect_called:
+        JPackage.assert_called_once()
+    else:
+        JPackage.assert_not_called()
+        assert res is None
