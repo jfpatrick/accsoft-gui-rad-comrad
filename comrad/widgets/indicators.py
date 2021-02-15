@@ -1,13 +1,15 @@
 import logging
 import copy
+import json
 import numpy as np
-from typing import List, Union, Optional, cast
+from typing import List, Union, Optional, cast, Dict
 from qtpy.QtWidgets import QWidget
 from qtpy.QtCore import Property
 from qtpy.QtGui import QColor, QPalette, QGuiApplication
 from pydm.widgets.scale import PyDMScaleIndicator
 from pydm.widgets.label import PyDMLabel
 from pydm.widgets.byte import PyDMByteIndicator
+from pydm.utilities import is_qt_designer
 from accwidgets.led import Led
 from comrad.deprecations import deprecated_parent_prop
 from comrad.data.japc_enum import CEnumValue
@@ -209,6 +211,7 @@ class CLed(CColorRulesMixin, CValueTransformerMixin, CInitializedMixin, CHideUnu
         PyDMWidget.__init__(self, init_channel=init_channel)
         self._on_color = Led.Status.color_for_status(Led.Status.ON)
         self._off_color = Led.Status.color_for_status(Led.Status.OFF)
+        self._color_map: Dict[int, QColor] = {}
         self.color = self._off_color
 
     def _get_on_color(self) -> QColor:
@@ -229,9 +232,25 @@ class CLed(CColorRulesMixin, CValueTransformerMixin, CInitializedMixin, CHideUnu
     offColor = Property('QColor', _get_off_color, _set_off_color)
     """Color that is used when incoming boolean value is ``False``."""
 
+    def _get_color_map(self) -> Dict[int, QColor]:
+        if is_qt_designer():
+            return self.__pack_designer_color_map(self._color_map)  # type: ignore  # we want string here for Designer
+        return self._color_map
+
+    def _set_color_map(self, new_val: Dict[int, QColor]):
+        if isinstance(new_val, str):  # Can happen inside the Designer or when initializing from *.ui file
+            new_val = self._unpack_designer_color_map(cast(str, new_val))
+        self._color_map = new_val
+
+    color_map: Dict[int, QColor] = Property(str, fget=_get_color_map, fset=_set_color_map, designable=False)
+    """
+    Color mapping for arbitrary values that can be received by :class:`CLed`, e.g when working with enums.
+    When working with boolean values only, consider :attr:`onColor` and :attr:`offColor`.
+    """
+
     def value_changed(self, packet: CChannelData[Union[int, bool, CEnumValue]]):
         """
-        Callback invoked when the Channel value is changed.
+        Callback invoked when the channel value is changed.
 
         Args:
             packet: The new value from the channel.
@@ -241,20 +260,35 @@ class CLed(CColorRulesMixin, CValueTransformerMixin, CInitializedMixin, CHideUnu
 
         color: Optional[QColor] = None
         status: Optional[Led.Status] = None
-        if isinstance(packet.value, bool):
-            color = self.onColor if packet.value else self.offColor
-        elif isinstance(packet.value, int):
-            try:
-                status = Led.Status(packet.value)
-            except ValueError:
-                pass
-        elif isinstance(packet.value, CEnumValue):
-            try:
-                status = CLed.meaning_to_status(packet.value.meaning)
-            except ValueError:
-                pass
-        elif isinstance(packet.value, QColor):
-            color = packet.value
+        if self._color_map:
+            key: Optional[int]
+            if isinstance(packet.value, CEnumValue):
+                key = packet.value.code
+            elif isinstance(packet.value, int) and not isinstance(packet.value, bool):
+                key = packet.value
+            else:
+                key = None
+            if key is not None:
+                try:
+                    color = self._color_map[key]
+                except KeyError:
+                    pass
+
+        if color is None:
+            if isinstance(packet.value, bool):
+                color = self.onColor if packet.value else self.offColor
+            elif isinstance(packet.value, int):
+                try:
+                    status = Led.Status(packet.value)
+                except ValueError:
+                    pass
+            elif isinstance(packet.value, CEnumValue):
+                try:
+                    status = CLed.meaning_to_status(packet.value.meaning)
+                except ValueError:
+                    pass
+            elif isinstance(packet.value, QColor):
+                color = packet.value
 
         if color is None and status is None:
             return
@@ -306,3 +340,25 @@ class CLed(CColorRulesMixin, CValueTransformerMixin, CInitializedMixin, CHideUnu
             val: The new value of the color."""
         super().set_color(val)
         self.color = self._off_color if val is None else QColor(val)
+
+    @classmethod
+    def _unpack_designer_color_map(cls, input: str) -> Dict[int, QColor]:
+        try:
+            contents = json.loads(input)
+        except json.JSONDecodeError as ex:
+            logger.warning(f'Failed to decode json: {ex!s}')
+            return {}
+
+        if not isinstance(contents, dict):
+            logger.warning('Decoded color map is not a dictionary')
+            return {}
+
+        try:
+            return {int(val): QColor(color) for val, color in contents.items()}
+        except ValueError as ex:
+            logger.warning(f'Failed to parse color map: {ex!s}')
+            return {}
+
+    @classmethod
+    def __pack_designer_color_map(cls, input: Dict[int, QColor]) -> str:
+        return json.dumps({str(val): color.name() for val, color in input.items()})

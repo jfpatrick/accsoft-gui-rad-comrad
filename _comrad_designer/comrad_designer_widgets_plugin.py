@@ -34,6 +34,7 @@ from _comrad_designer.utils import qtplugin_factory, CWidgetBoxGroup
 from _comrad_designer.rules_editor import RulesEditor
 from _comrad_designer.graphs import CPlottingItemEditorExtension, CLayerEditorExtension
 from _comrad_designer.log_console import CLogConsoleLoggersEditorExtension
+from _comrad_designer.led import CLedColorMapDialogExtension
 
 
 class _RulesExtension(WidgetsTaskMenuExtension):
@@ -106,7 +107,7 @@ _CScaleIndicator = qtplugin_factory(CScaleIndicator, group=CWidgetBoxGroup.INDIC
 _CEnumLed = qtplugin_factory(CLed,
                              group=CWidgetBoxGroup.INDICATORS,
                              icon=icon('Led', file_path=Path(accwidgets.led.designer.__file__)),
-                             extensions=_BASE_EXTENSIONS)
+                             extensions=[CLedColorMapDialogExtension, *_BASE_EXTENSIONS])
 
 # Charts
 _CScrollingPlot = qtplugin_factory(CScrollingPlot,
