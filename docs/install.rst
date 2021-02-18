@@ -4,7 +4,7 @@ Installation
 - `Prerequisites`_
 - `Install`_
 
-  * `Using "pip" from CO package index`_
+  * `Using "pip" from Acc-Py package index (preferred)`_
   * `Using "pip" from Gitlab repository`_
   * `Using "pip" from source`_
   * `Installing outside of "Accelerating Python" environment`_
@@ -15,17 +15,21 @@ Installation
 Prerequisites
 -------------
 
-Make sure that you have
-`PyQt activated <https://wikis.cern.ch/display/ACCPY/PyQt+distribution#PyQtdistribution-Activationactivation>`__,
-so you have a proper "pip" version and access to our package index.
+.. note:: All operations should be performed in a terminal, running "bash". While alternative shells, such as "zsh"
+          or "fish", may work, stability is not guaranteed.
+
+Make sure that you have `Acc-Py Base activated <https://wikis.cern.ch/display/ACCPY/Acc-Py+base>`__ for new
+installations (preferred) or
+`PyQt activated <https://wikis.cern.ch/display/ACCPY/PyQt+distribution>`__ for legacy installations,
+so you have a proper "pip" version and access to Acc-Py Python package index.
 
 
 Install
 -------
 
 
-Using "pip" from CO package index
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Using "pip" from Acc-Py package index (preferred)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: bash
 
@@ -62,28 +66,14 @@ Installing outside of "Accelerating Python" environment
 All of the above commands are true without "Accelerating Python" environment, however you need to make
 sure that packages can be installed correctly.
 
-1. Make sure you have an updated version of "pip" (standard pip3 v9.* does not handle installs from git):
+1. Make sure you have an updated version of "pip" (standard CC7 pip3 v9.* does not handle installs from git):
 
    .. code-block:: bash
 
-      pip install -U pip
+      python -m pip install -U pip
 
-2. Ensure that you have access to acc-py Nexus repository, as described in
-   `Getting started with acc-python <https://wikis.cern.ch/display/ACCPY/Getting+started+with+acc-python>`__.
-
-   Namely, you would need to configure "pip" to trust our server, and point to the one of the endpoints, e.g.:
-
-   .. code-block:: bash
-
-      export PIP_TRUSTED_HOST="acc-py-repo.cern.ch"
-      export PIP_INDEX_URL="http://acc-py-repo.cern.ch:8081/repository/vr-py-releases/simple/"
-      # Call your pip install command here
-
-   or specify package index inside pip command:
-
-   .. code-block:: bash
-
-      pip install --trusted-host acc-py-repo.cern.ch ... --index-url http://acc-py-repo.cern.ch:8081/repository/vr-py-releases/simple/
+2. Ensure that you have access to Acc-Py Nexus repository, as described in
+   `Python package index / repository <https://wikis.cern.ch/pages/viewpage.action?pageId=145493385>`__.
 
 
 .. note:: When using ComRAD outside of "Accelerating Python" environment, you will not have
