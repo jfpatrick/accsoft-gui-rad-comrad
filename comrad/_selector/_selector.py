@@ -1,4 +1,6 @@
 import logging
+import operator
+import functools
 from dataclasses import dataclass
 from typing import Optional, List, cast
 from pathlib import Path
@@ -7,6 +9,7 @@ from qtpy.QtGui import QShowEvent
 from qtpy.QtCore import QStringListModel, Qt, Signal
 from qtpy.QtWidgets import QDialog, QWidget, QComboBox, QFrame, QCheckBox, QStackedWidget, QLabel
 from pyccda import SyncAPI as CCDA, sync_models as CCDATypes
+from pyccda.models import SelectorValue, SelectorGroup
 
 
 logger = logging.getLogger(__name__)
@@ -82,7 +85,7 @@ class PLSSelectorDialog(QDialog):
         # Only execute this once after being shown for the first time
         self.stack.setCurrentIndex(self.STACK_LOADING)
         try:
-            self._data = list(self.ccda.SelectorDomain.search())
+            raw_data = list(self.ccda.SelectorDomain.search())
         except Exception as e:  # noqa: B902
             err_msg = 'Failed to contact CCDB'
             logger.error(f'{err_msg}: {e}')
@@ -90,6 +93,31 @@ class PLSSelectorDialog(QDialog):
             self.error.setText(err_msg)
             # FIXME: When PyCCDA fixes its exception to abstract it away from urllib3 implementation, we should catch it instead of general one
             return
+        else:
+            # Sort data alphabetically
+            # 'USER' group should always stay on top, regardless of the alphabetical order
+            # "ALL" user should always stay on top, regardless of the alphabetical order
+
+            def compare_group(lhs: SelectorGroup, rhs: SelectorGroup):
+                if lhs.name == 'USER':
+                    return -1
+                if rhs.name == 'USER':
+                    return 1
+                return (lhs.name > rhs.name) - (lhs.name < rhs.name)
+
+            def compare_line(lhs: SelectorValue, rhs: SelectorValue):
+                if lhs.name == 'ALL':
+                    return -1
+                if rhs.name == 'ALL':
+                    return 1
+                return (lhs.name > rhs.name) - (lhs.name < rhs.name)
+
+            raw_data = sorted(raw_data, key=operator.attrgetter('name'))
+            for domain in raw_data:
+                domain.selector_groups = sorted(domain.selector_groups, key=functools.cmp_to_key(compare_group))
+                for group in domain.selector_groups:
+                    group.selector_values = sorted(group.selector_values, key=functools.cmp_to_key(compare_line))
+            self._data = raw_data
 
         if not self._data:
             err_msg = 'Empty data received from CCDA. Cannot populate PLS dialog.'

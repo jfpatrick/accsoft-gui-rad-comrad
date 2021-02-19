@@ -61,6 +61,7 @@ def test_pls_dialog_does_not_fetch_ccda_on_show_repeatedly(CCDA, qtbot):
 def test_pls_dialog_populates_comboboxes_with_ccda_data(CCDA, qtbot, config):
     CCDA.return_value.SelectorDomain.search.return_value = format_test_data(['TEST.USER.ALL',
                                                                              'TEST.USER.MD1',
+                                                                             'TEST.CUSTOM2.ALL',
                                                                              'TEST.USER.MD2',
                                                                              'TEST.CUSTOM.ALL',
                                                                              'TEST2.USER.ALL'])
@@ -68,15 +69,15 @@ def test_pls_dialog_populates_comboboxes_with_ccda_data(CCDA, qtbot, config):
     qtbot.add_widget(dialog)
     dialog.show()
     assert dialog.machine_combo.model().stringList() == ['TEST', 'TEST2']
-    assert dialog.group_combo.model().stringList() == ['USER', 'CUSTOM']
+    assert dialog.group_combo.model().stringList() == ['USER', 'CUSTOM', 'CUSTOM2']
     assert dialog.line_combo.model().stringList() == ['ALL', 'MD1', 'MD2']
     dialog.group_combo.setCurrentIndex(1)
     assert dialog.machine_combo.model().stringList() == ['TEST', 'TEST2']
-    assert dialog.group_combo.model().stringList() == ['USER', 'CUSTOM']
+    assert dialog.group_combo.model().stringList() == ['USER', 'CUSTOM', 'CUSTOM2']
     assert dialog.line_combo.model().stringList() == ['ALL']
     dialog.group_combo.setCurrentIndex(0)
     assert dialog.machine_combo.model().stringList() == ['TEST', 'TEST2']
-    assert dialog.group_combo.model().stringList() == ['USER', 'CUSTOM']
+    assert dialog.group_combo.model().stringList() == ['USER', 'CUSTOM', 'CUSTOM2']
     assert dialog.line_combo.model().stringList() == ['ALL', 'MD1', 'MD2']
     dialog.machine_combo.setCurrentIndex(1)
     assert dialog.machine_combo.model().stringList() == ['TEST', 'TEST2']
@@ -84,19 +85,19 @@ def test_pls_dialog_populates_comboboxes_with_ccda_data(CCDA, qtbot, config):
     assert dialog.line_combo.model().stringList() == ['ALL']
     dialog.machine_combo.setCurrentIndex(0)
     assert dialog.machine_combo.model().stringList() == ['TEST', 'TEST2']
-    assert dialog.group_combo.model().stringList() == ['USER', 'CUSTOM']
+    assert dialog.group_combo.model().stringList() == ['USER', 'CUSTOM', 'CUSTOM2']
     assert dialog.line_combo.model().stringList() == ['ALL', 'MD1', 'MD2']
     dialog.line_combo.setCurrentIndex(1)
     assert dialog.machine_combo.model().stringList() == ['TEST', 'TEST2']
-    assert dialog.group_combo.model().stringList() == ['USER', 'CUSTOM']
+    assert dialog.group_combo.model().stringList() == ['USER', 'CUSTOM', 'CUSTOM2']
     assert dialog.line_combo.model().stringList() == ['ALL', 'MD1', 'MD2']
     dialog.line_combo.setCurrentIndex(2)
     assert dialog.machine_combo.model().stringList() == ['TEST', 'TEST2']
-    assert dialog.group_combo.model().stringList() == ['USER', 'CUSTOM']
+    assert dialog.group_combo.model().stringList() == ['USER', 'CUSTOM', 'CUSTOM2']
     assert dialog.line_combo.model().stringList() == ['ALL', 'MD1', 'MD2']
     dialog.line_combo.setCurrentIndex(0)
     assert dialog.machine_combo.model().stringList() == ['TEST', 'TEST2']
-    assert dialog.group_combo.model().stringList() == ['USER', 'CUSTOM']
+    assert dialog.group_combo.model().stringList() == ['USER', 'CUSTOM', 'CUSTOM2']
     assert dialog.line_combo.model().stringList() == ['ALL', 'MD1', 'MD2']
 
 
