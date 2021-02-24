@@ -13,7 +13,7 @@ from accwidgets.timing_bar import TimingBar, TimingBarDomain, TimingBarModel
 from comrad import CApplication
 from comrad.data.pyjapc_patch import CPyJapc
 from comrad.app.plugins.common import CToolbarWidgetPlugin
-from comrad.app._toolbtn import OrientedToolButton
+from comrad.app._toolbtn import ToolButton
 from comrad._selector import PLSSelectorDialog, PLSSelectorConfig
 
 
@@ -162,7 +162,7 @@ class PLSTimingConfigDialog(QDialog):
         self.timestamp_details.setEnabled(self.chkbx_timestamp.isChecked())
 
 
-class PLSPluginButton(OrientedToolButton):
+class PLSPluginButton(ToolButton):
 
     def __init__(self, parent: 'PLSToolbarWidget'):
         """
@@ -172,17 +172,14 @@ class PLSPluginButton(OrientedToolButton):
             rbac: Handle to the RBAC manager.
             parent: Parent widget to hold this object.
         """
-        super().__init__(horizontal=QSizePolicy.Minimum, vertical=QSizePolicy.Expanding, parent=parent)
+        super().__init__(horizontal=QSizePolicy.Minimum,
+                         vertical=QSizePolicy.Expanding,
+                         parent=parent)
         self.setPopupMode(QToolButton.InstantPopup)
-        toolbar = cast(CApplication, CApplication.instance()).main_window.ui.navbar
-        self.setToolButtonStyle(toolbar.toolButtonStyle())
-        toolbar.toolButtonStyleChanged.connect(self.setToolButtonStyle)
         self.setAutoRaise(True)
         self.setText('PLS')
         icon_font = IconFont()
         self.setIcon(icon_font.icon('clock-o'))
-        self.setIconSize(toolbar.iconSize())  # Needed because gets smaller inside a layout
-        toolbar.iconSizeChanged.connect(self.setIconSize)
         menu = QMenu(self)
         self.setMenu(menu)
         act_user = QAction(icon_font.icon('clock-o'), 'Select PLS user', self)
