@@ -437,7 +437,7 @@ class CPyJapc(PyJapcWrapper, QObject):
 
         def enum_item_to_obj(enum_item: Any) -> CEnumValue:
             return CEnumValue(code=enum_item.getCode(),
-                              label=enum_item.getString(),
+                              label=enum_item.getSymbol(),
                               meaning=meaning_from_jpype(enum_item.getStandardMeaning()),
                               settable=enum_item.isSettable())
 
