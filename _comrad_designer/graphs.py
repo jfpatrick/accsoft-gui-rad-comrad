@@ -2,7 +2,7 @@ import json
 from dataclasses import dataclass
 from typing import Optional, cast, Dict, Any, List, Type, Callable
 from qtpy.QtWidgets import QComboBox, QAction, QHeaderView, QWidget, QStyledItemDelegate, QStyleOptionViewItem
-from qtpy.QtCore import QObject, QModelIndex, Qt, QPersistentModelIndex, QAbstractTableModel, QLocale
+from qtpy.QtCore import QObject, QModelIndex, Qt, QPersistentModelIndex, QAbstractTableModel, QLocale, QSignalBlocker
 from qtpy.QtGui import QColor, QPalette
 from pydm.widgets.baseplot_curve_editor import BasePlotCurveItem as PyDMBasePlotCurveItem
 from accwidgets.qt import (AbstractTableDialog, AbstractTableModel, _STYLED_ITEM_DELEGATE_INDEX,
@@ -226,7 +226,7 @@ class SymbolStyleColumnDelegate(AbstractComboBoxColumnDelegate):
 
 class ChannelColumnDelegate(QStyledItemDelegate):
     """
-    Table delegate that draws :class:`BooleanButton` widget in the cell.
+    Table delegate that draws :class:`DevicePropertyLineEdit` widget in the cell.
     """
 
     def createEditor(self, parent: QWidget, option: QStyleOptionViewItem, index: QModelIndex) -> QWidget:
@@ -239,7 +239,10 @@ class ChannelColumnDelegate(QStyledItemDelegate):
         if not isinstance(editor, DevicePropertyLineEdit):
             return
 
-        editor.value = bool(index.data())
+        blocker = QSignalBlocker(editor)
+        editor.address = index.data()
+        blocker.unblock()
+
         if getattr(editor, _STYLED_ITEM_DELEGATE_INDEX, None) != index:
             setattr(editor, _STYLED_ITEM_DELEGATE_INDEX, QPersistentModelIndex(index))
 
