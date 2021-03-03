@@ -466,7 +466,7 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
 
         def _add_toolbar_spacer():
             # Add spacer to compress toolbar items when possible
-            spacer = QWidget()
+            spacer = ToolbarSpacer()
             spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
             self.ui.navbar.addWidget(spacer)
 
@@ -674,3 +674,10 @@ class _UiMainWindow(Ui_MainWindow, MonkeyPatchedClass):
 
         nav_toggle = cast(QAction, self.navbar.toggleViewAction())
         nav_toggle.setText(_translate('MainWindow', 'Show Navigation Bar'))
+
+
+class ToolbarSpacer(QWidget):
+    """
+    Special widget type that can be recognized from within QSS, to allow better dark-mode compatibility.
+    """
+    pass
