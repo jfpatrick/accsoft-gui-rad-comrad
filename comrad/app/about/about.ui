@@ -584,6 +584,9 @@
          <property name="dragDropOverwriteMode">
           <bool>false</bool>
          </property>
+         <property name="alternatingRowColors">
+          <bool>true</bool>
+         </property>
          <property name="selectionMode">
           <enum>QAbstractItemView::NoSelection</enum>
          </property>
@@ -638,6 +641,9 @@
          </property>
          <property name="dragDropOverwriteMode">
           <bool>false</bool>
+         </property>
+         <property name="alternatingRowColors">
+          <bool>true</bool>
          </property>
          <property name="selectionMode">
           <enum>QAbstractItemView::NoSelection</enum>
@@ -707,6 +713,9 @@
             </property>
             <property name="defaultDropAction">
              <enum>Qt::IgnoreAction</enum>
+            </property>
+            <property name="alternatingRowColors">
+             <bool>true</bool>
             </property>
             <property name="selectionMode">
              <enum>QAbstractItemView::NoSelection</enum>
