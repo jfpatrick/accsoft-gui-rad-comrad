@@ -397,7 +397,8 @@ def _run_comrad(args: argparse.Namespace) -> bool:
     from pydm.utilities.macro import parse_macro_string
     macros = parse_macro_string(args.macro) if args.macro is not None else None
 
-    stylesheet: Optional[str] = comrad_asset('dark.qss') if args.dark_mode else args.stylesheet
+    stylesheet: Optional[str] = (comrad_asset('dark.qss') if args.dark_mode or os.environ.get('COMRAD_DARK_MODE_ENABLED', False)
+                                 else args.stylesheet)
 
     # TODO: This is a short-term hotfix. We need a more secure solution
     # Work around behavior change in Python 3.7 (https://docs.python.org/3/whatsnew/3.7.html#changes-in-python-behavior),
