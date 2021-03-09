@@ -7,14 +7,10 @@ import argcomplete
 import os
 import sys
 from typing import Optional, Tuple, Dict, List, Iterable
+from accwidgets.qt import exec_app_interruptable
 from .comrad_info import COMRAD_DESCRIPTION, COMRAD_VERSION, get_versions_info
 from .log_config import install_logger_level
 from .common import get_japc_support_envs, comrad_asset
-
-
-# Allow smooth exit on Ctrl+C
-import signal
-signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 
 def run():
@@ -390,7 +386,7 @@ def _run_comrad(args: argparse.Namespace) -> bool:
                        plugin_whitelist=args.enable_plugins,
                        stylesheet_path=stylesheet)
     # install_asyncio_event_loop(app)
-    sys.exit(app.exec_())
+    sys.exit(exec_app_interruptable(app))
     return True
 
 
