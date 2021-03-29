@@ -274,10 +274,10 @@ def _run_subcommand(parser: argparse.ArgumentParser):
                                    "Key of each config value should start with plugins's ID, followed by the "
                                    'configuration key name, e.g. comrad.pls.show_bar=1 will trigger the "show_bar" '
                                    'option on the plugin with ID "comrad.pls". For the bundled comrad plugins, the '
-                                   'following keys are available: comrad.pls.show_bar, comrad.pls.supercycle, '
-                                   'comrad.pls.show_domain, comrad.pls.show_time, comrad.pls.show_start, '
-                                   'comrad.pls.show_user, comrad.pls.show_lsa, comrad.pls.show_tz, '
-                                   'comrad.pls.heartbeat, comrad.pls.microseconds, comrad.pls.utc.',
+                                   'following keys are available: comrad.pls.show_sel, comrad.pls.show_bar, '
+                                   'comrad.pls.supercycle, comrad.pls.show_domain, comrad.pls.show_time, '
+                                   'comrad.pls.show_start, comrad.pls.show_user, comrad.pls.show_lsa, '
+                                   'comrad.pls.show_tz, comrad.pls.heartbeat, comrad.pls.microseconds, comrad.pls.utc.',
                               nargs=argparse.ONE_OR_MORE)
     debug_group = parser.add_argument_group('Debugging')
     _install_debug_arguments(debug_group)

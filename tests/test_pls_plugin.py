@@ -49,46 +49,48 @@ def test_get_telegram_info(app, tgm_var, window_selector, expect_found_in_contex
 
 @pytest.mark.parametrize('input,expected_show_bar,expected_supercycle,expected_show_domain,expected_show_time,'
                          'expected_show_start,expected_show_user,expected_show_lsa,expected_show_tz,'
-                         'expected_microseconds,expected_heartbeat,expected_utc', [
-                             (None, False, True, True, True, True, True, True, False, False, True, False),
-                             ({'show_bar': '1'}, True, True, True, True, True, True, True, False, False, True, False),
-                             ({'supercycle': '1'}, False, True, True, True, True, True, True, False, False, True, False),
-                             ({'show_domain': '1'}, False, True, True, True, True, True, True, False, False, True, False),
-                             ({'show_time': '1'}, False, True, True, True, True, True, True, False, False, True, False),
-                             ({'show_start': '1'}, False, True, True, True, True, True, True, False, False, True, False),
-                             ({'show_user': '1'}, False, True, True, True, True, True, True, False, False, True, False),
-                             ({'show_lsa': '1'}, False, True, True, True, True, True, True, False, False, True, False),
-                             ({'show_tz': '1'}, False, True, True, True, True, True, True, True, False, True, False),
-                             ({'microseconds': '1'}, False, True, True, True, True, True, True, False, True, True, False),
-                             ({'heartbeat': '1'}, False, True, True, True, True, True, True, False, False, True, False),
-                             ({'utc': '1'}, False, True, True, True, True, True, True, False, False, True, True),
-                             ({'show_bar': '0'}, False, True, True, True, True, True, True, False, False, True, False),
-                             ({'supercycle': '0'}, False, False, True, True, True, True, True, False, False, True, False),
-                             ({'show_domain': '0'}, False, True, False, True, True, True, True, False, False, True, False),
-                             ({'show_time': '0'}, False, True, True, False, True, True, True, False, False, True, False),
-                             ({'show_start': '0'}, False, True, True, True, False, True, True, False, False, True, False),
-                             ({'show_user': '0'}, False, True, True, True, True, False, True, False, False, True, False),
-                             ({'show_lsa': '0'}, False, True, True, True, True, True, False, False, False, True, False),
-                             ({'show_tz': '0'}, False, True, True, True, True, True, True, False, False, True, False),
-                             ({'microseconds': '0'}, False, True, True, True, True, True, True, False, False, True, False),
-                             ({'heartbeat': '0'}, False, True, True, True, True, True, True, False, False, False, False),
-                             ({'utc': '0'}, False, True, True, True, True, True, True, False, False, True, False),
-                             ({'show_bar': '1', 'show_lsa': '1'}, True, True, True, True, True, True, True, False, False, True, False),
-                             ({'show_bar': '1', 'show_lsa': '0'}, True, True, True, True, True, True, False, False, False, True, False),
-                             ({'show_bar': '0', 'show_lsa': '1'}, False, True, True, True, True, True, True, False, False, True, False),
-                             ({'show_bar': '0', 'show_lsa': '0'}, False, True, True, True, True, True, False, False, False, True, False),
-                             ({'show_bar': 1, 'show_lsa': 1}, False, True, True, True, True, True, True, False, False, True, False),
-                             ({'show_bar': '1', 'show_lsa': 0}, True, True, True, True, True, True, True, False, False, True, False),
-                             ({'show_bar': 0, 'show_lsa': '0'}, False, True, True, True, True, True, False, False, False, True, False),
-                             ({'show_bar': 0, 'show_lsa': 0}, False, True, True, True, True, True, True, False, False, True, False),
-                             ({'show_bar': '', 'show_lsa': ''}, False, True, True, True, True, True, True, False, False, True, False),
-                             ({'show_bar': 'unused', 'show_lsa': 'unused'}, False, True, True, True, True, True, True, False, False, True, False),
-                             ({'unused': 'unused'}, False, True, True, True, True, True, True, False, False, True, False),
-                             ({'show_bar': '='}, False, True, True, True, True, True, True, False, False, True, False),
+                         'expected_microseconds,expected_heartbeat,expected_utc,expected_sel', [
+                             (None, False, True, True, True, True, True, True, False, False, True, False, True),
+                             ({'show_bar': '1'}, True, True, True, True, True, True, True, False, False, True, False, True),
+                             ({'show_sel': '1'}, False, True, True, True, True, True, True, False, False, True, False, True),
+                             ({'supercycle': '1'}, False, True, True, True, True, True, True, False, False, True, False, True),
+                             ({'show_domain': '1'}, False, True, True, True, True, True, True, False, False, True, False, True),
+                             ({'show_time': '1'}, False, True, True, True, True, True, True, False, False, True, False, True),
+                             ({'show_start': '1'}, False, True, True, True, True, True, True, False, False, True, False, True),
+                             ({'show_user': '1'}, False, True, True, True, True, True, True, False, False, True, False, True),
+                             ({'show_lsa': '1'}, False, True, True, True, True, True, True, False, False, True, False, True),
+                             ({'show_tz': '1'}, False, True, True, True, True, True, True, True, False, True, False, True),
+                             ({'microseconds': '1'}, False, True, True, True, True, True, True, False, True, True, False, True),
+                             ({'heartbeat': '1'}, False, True, True, True, True, True, True, False, False, True, False, True),
+                             ({'utc': '1'}, False, True, True, True, True, True, True, False, False, True, True, True),
+                             ({'show_bar': '0'}, False, True, True, True, True, True, True, False, False, True, False, True),
+                             ({'supercycle': '0'}, False, False, True, True, True, True, True, False, False, True, False, True),
+                             ({'show_domain': '0'}, False, True, False, True, True, True, True, False, False, True, False, True),
+                             ({'show_time': '0'}, False, True, True, False, True, True, True, False, False, True, False, True),
+                             ({'show_start': '0'}, False, True, True, True, False, True, True, False, False, True, False, True),
+                             ({'show_user': '0'}, False, True, True, True, True, False, True, False, False, True, False, True),
+                             ({'show_lsa': '0'}, False, True, True, True, True, True, False, False, False, True, False, True),
+                             ({'show_tz': '0'}, False, True, True, True, True, True, True, False, False, True, False, True),
+                             ({'show_sel': '0'}, False, True, True, True, True, True, True, False, False, True, False, False),
+                             ({'microseconds': '0'}, False, True, True, True, True, True, True, False, False, True, False, True),
+                             ({'heartbeat': '0'}, False, True, True, True, True, True, True, False, False, False, False, True),
+                             ({'utc': '0'}, False, True, True, True, True, True, True, False, False, True, False, True),
+                             ({'show_bar': '1', 'show_lsa': '1'}, True, True, True, True, True, True, True, False, False, True, False, True),
+                             ({'show_bar': '1', 'show_lsa': '0'}, True, True, True, True, True, True, False, False, False, True, False, True),
+                             ({'show_bar': '0', 'show_lsa': '1'}, False, True, True, True, True, True, True, False, False, True, False, True),
+                             ({'show_bar': '0', 'show_lsa': '0'}, False, True, True, True, True, True, False, False, False, True, False, True),
+                             ({'show_bar': 1, 'show_lsa': 1}, False, True, True, True, True, True, True, False, False, True, False, True),
+                             ({'show_bar': '1', 'show_lsa': 0}, True, True, True, True, True, True, True, False, False, True, False, True),
+                             ({'show_bar': 0, 'show_lsa': '0'}, False, True, True, True, True, True, False, False, False, True, False, True),
+                             ({'show_bar': 0, 'show_lsa': 0}, False, True, True, True, True, True, True, False, False, True, False, True),
+                             ({'show_bar': '', 'show_lsa': ''}, False, True, True, True, True, True, True, False, False, True, False, True),
+                             ({'show_bar': 'unused', 'show_lsa': 'unused'}, False, True, True, True, True, True, True, False, False, True, False, True),
+                             ({'unused': 'unused'}, False, True, True, True, True, True, True, False, False, True, False, True),
+                             ({'show_bar': '='}, False, True, True, True, True, True, True, False, False, True, False, True),
                          ])
 def test_config_parse(input, expected_heartbeat, expected_microseconds, expected_show_bar, expected_show_domain,
                       expected_show_lsa, expected_show_start, expected_show_time, expected_show_tz, expected_show_user,
-                      expected_supercycle, expected_utc):
+                      expected_supercycle, expected_utc, expected_sel):
     config = PLSToolbarConfig.parse(input)
     assert config.heartbeat == expected_heartbeat
     assert config.microseconds == expected_microseconds
@@ -101,6 +103,7 @@ def test_config_parse(input, expected_heartbeat, expected_microseconds, expected
     assert config.show_user == expected_show_user
     assert config.supercycle == expected_supercycle
     assert config.utc == expected_utc
+    assert config.show_sel == expected_sel
 
 
 @pytest.mark.parametrize('config,expect_bar_exists,expect_showing_domain,expect_showing_time,expect_showing_start,'
