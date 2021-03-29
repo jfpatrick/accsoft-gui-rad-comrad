@@ -5,7 +5,6 @@ from qtpy.QtCore import Property
 from qtpy.QtWidgets import QWidget
 from qtpy.QtGui import QShowEvent
 from pydm.utilities import is_qt_designer
-from pydm.widgets.logdisplay import PyDMLogDisplay
 # from pydm.widgets.waveformtable import PyDMWaveformTable
 from accwidgets.log_console import (LogConsole, AbstractLogConsoleFormatter, AbstractLogConsoleModel, LogConsoleModel,
                                     LogLevel)
@@ -204,30 +203,3 @@ class CLogConsole(LogConsole):
     @classmethod
     def __pack_designer_levels(cls, input: Dict[str, LogLevel]) -> str:
         return json.dumps({name: level.value for name, level in input.items()})
-
-
-class CLogDisplay(PyDMLogDisplay):
-
-    def __init__(self,
-                 parent: Optional[QWidget] = None,
-                 log_name: Optional[str] = None,
-                 level: int = logging.NOTSET,
-                 **kwargs):
-        """
-        **DEPRECATED! Please use :class:`CLogConsole`.**
-
-        Standard display for log output.
-
-        This widget handles instantiating a ``GuiHandler`` and displaying log
-        messages to a :class:`PyQt5.QtWidgets.QPlainTextEdit`. The level of the log can be changed from
-        inside the widget itself, allowing users to select from any of the levels specified by the widget.
-
-        Args:
-            parent: The parent widget for the log display.
-            log_name: Name of log to display in widget.
-            level: Initial level of log display.
-            **kwargs: Any future extras that need to be passed down to PyDM.
-        """
-        if not is_qt_designer():
-            logger.warning(f'CLogDisplay is deprecated, please use CLogConsole instead.')
-        super().__init__(parent=parent, logname=log_name, level=level, **kwargs)

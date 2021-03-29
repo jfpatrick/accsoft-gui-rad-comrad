@@ -6,7 +6,7 @@ from pytestqt.qtbot import QtBot
 from _pytest.logging import LogCaptureFixture
 from unittest import mock
 from accwidgets.log_console import LogConsoleRecord
-from comrad import CLogConsole, CLogDisplay, LogLevel, LogConsoleModel, AbstractLogConsoleModel
+from comrad import CLogConsole, LogLevel, LogConsoleModel, AbstractLogConsoleModel
 
 
 @pytest.fixture(autouse=True, scope='function')
@@ -17,23 +17,6 @@ def clean_logging():
     yield
     logging.Logger.root.setLevel(orig_level)
     logging.Logger.manager.loggerDict.clear()
-
-
-@pytest.mark.parametrize('is_designer_value,expect_warning', [
-    (True, False),
-    (False, True),
-])
-@mock.patch('comrad.widgets.tables.is_qt_designer')
-def test_clogdisplay_issues_warning_on_creation(is_qt_designer, is_designer_value, expect_warning,
-                                                caplog: LogCaptureFixture, qtbot: QtBot):
-    is_qt_designer.return_value = is_designer_value
-    widget = CLogDisplay()
-    qtbot.add_widget(widget)
-    actual_errors = [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.WARNING and r.module == 'tables']
-    if expect_warning:
-        assert actual_errors == ['CLogDisplay is deprecated, please use CLogConsole instead.']
-    else:
-        assert not actual_errors
 
 
 @pytest.mark.parametrize('loggers,model,expect_raises', [
