@@ -95,8 +95,8 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
             self.ui.actionShow_Navigation_Bar = None
 
         log_console = CLogConsole()
-        dock = LogConsoleDock(allowed_areas=Qt.BottomDockWidgetArea, console=log_console)
-        dock.setFeatures(QDockWidget.DockWidgetClosable)
+        dock = LogConsoleDock(allowed_areas=Qt.BottomDockWidgetArea | Qt.RightDockWidgetArea, console=log_console)
+        dock.setFeatures(QDockWidget.DockWidgetClosable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetMovable)
         dock.console.expanded = False
         self.addDockWidget(Qt.BottomDockWidgetArea, dock)
         self._console_dock = dock
