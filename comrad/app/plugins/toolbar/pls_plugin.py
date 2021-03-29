@@ -61,6 +61,7 @@ class PLSToolbarConfig:
     show_user: bool = True
     show_lsa: bool = True
     show_tz: bool = False
+    show_sel: bool = True
     microseconds: bool = False
     heartbeat: bool = True
     utc: bool = False
@@ -185,6 +186,8 @@ class PLSPluginButton(ToolButton):
         act_user = QAction(icon_font.icon('clock-o'), 'Select PLS user', self)
         act_user.triggered.connect(self._open_user_selector)
         menu.addAction(act_user)
+        self.act_toggle = QAction(self)
+        menu.addAction(self.act_toggle)
         menu.addSeparator()
         act_bar = QAction(icon_font.icon('cog'), 'Configure timing bar', self)
         act_bar.triggered.connect(self._open_bar_config)
@@ -213,6 +216,10 @@ class PLSPluginButton(ToolButton):
     def _on_timing_selector_updated(self, new_selector: str):
         cast(CApplication, CApplication.instance()).main_window.window_context.selector = new_selector
 
+    def set_toggle_action_enable(self, is_already_enabled: bool):
+        self.act_toggle.setIcon(IconFont().icon('eye-slash' if is_already_enabled else 'eye'))
+        self.act_toggle.setText('Hide selector' if is_already_enabled else 'Show selector')
+
 
 class PLSToolbarWidget(QWidget):
 
@@ -236,6 +243,7 @@ class PLSToolbarWidget(QWidget):
         self.setLayout(layout)
         self._update_view_for_config(self._config)
         cast(CApplication, CApplication.instance()).main_window.window_context.selectorChanged.connect(self._on_selector_changed)
+        self._btn.act_toggle.triggered.connect(self._on_selector_toggled)
 
     @property
     def config(self) -> PLSToolbarConfig:
@@ -295,6 +303,24 @@ class PLSToolbarWidget(QWidget):
             bar.showTimeZone = config.show_tz
             bar.indicateHeartbeat = config.heartbeat
             bar.displayedTimeZone = TimingBar.TimeZone.UTC if config.utc else TimingBar.TimeZone.LOCAL
+        app = cast(CApplication, CApplication.instance())
+        self._update_btn_menu(config)
+        if config.show_sel:
+            self._update_btn_text()
+            app.main_window.window_context.selectorChanged.connect(self._update_btn_text)
+        else:
+            app.main_window.window_context.selectorChanged.disconnect(self._update_btn_text)
+            self._btn.setText('PLS')
+
+    def _update_btn_text(self):
+        app = cast(CApplication, CApplication.instance())
+        app_selector = app.main_window.window_context.selector or 'None'
+        self._btn.setText(f'PLS: {app_selector}')
+
+    def _update_btn_menu(self, config: Optional[PLSToolbarConfig] = None):
+        if config is None:
+            config = self._config
+        self._btn.set_toggle_action_enable(config.show_sel)
 
     def _reset_bar_width(self):
         self._largest_known_width = None
@@ -347,6 +373,11 @@ class PLSToolbarWidget(QWidget):
             else:
                 bar.highlightedUser = None
                 bar.model.domain = DEFAULT_DOMAIN
+
+    def _on_selector_toggled(self):
+        config = self._config
+        config.show_sel = not config.show_sel
+        self._update_view_for_config(config)
 
 
 def get_bar_config_for_current_selector() -> Optional[Tuple[TimingBarDomain, Optional[str]]]:
