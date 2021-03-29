@@ -345,12 +345,13 @@ def _run_comrad(args: argparse.Namespace) -> bool:
     macros = parse_macro_string(args.macro) if args.macro is not None else None
 
     try:
-        ccda_endpoint, java_env = _parse_control_env(args)
+        ccda_endpoint, java_env, os_env = _parse_control_env(args)
     except EnvironmentError as e:
         logger.exception(str(e))
         return False
 
     # This has to sit here, because other os.environ settings MUST be before comrad or pydm import
+    os.environ.update(os_env)
     os.environ['PYCCDA_HOST'] = ccda_endpoint
 
     stylesheet: Optional[str] = comrad_asset('dark.qss') if args.dark_mode else args.stylesheet
@@ -396,10 +397,12 @@ def _run_comrad(args: argparse.Namespace) -> bool:
 def _run_designer(args: argparse.Namespace) -> bool:
 
     try:
-        ccda_endpoint, java_env = _parse_control_env(args)
+        ccda_endpoint, java_env, os_env = _parse_control_env(args)
     except EnvironmentError as e:
         logging.getLogger('').exception(str(e))
         return False
+
+    os.environ.update(os_env)
 
     from .designer import run_designer
     run_designer(files=args.files,
@@ -456,7 +459,7 @@ Environment:
     parser._print_message(version_str)
 
 
-def _parse_control_env(args: argparse.Namespace) -> Tuple[str, Dict[str, str]]:
+def _parse_control_env(args: argparse.Namespace) -> Tuple[str, Dict[str, str], Dict[str, str]]:
     from .comrad_info import CCDA_MAP
     cmw_env: str = args.cmw_env
     try:
@@ -466,14 +469,17 @@ def _parse_control_env(args: argparse.Namespace) -> Tuple[str, Dict[str, str]]:
 
     java_env: Optional[List[str]] = args.java_env
     jvm_flags = {}
+    os_env = {}
     if java_env:
         for arg in java_env:
             name, val = tuple(arg.split('='))
+            if name.startswith('rbac.'):
+                raise EnvironmentError(f'RBAC-related JVM flags are forbidden. Use RBAC_* environment variables instead.')
             jvm_flags[name] = val
     if cmw_env not in ['PRO', 'PRO2']:
         if cmw_env.endswith('2'):
             cmw_env = cmw_env[:-1]
         jvm_flags['cmw.directory.env'] = cmw_env
-        jvm_flags['rbac.env'] = cmw_env
+        os_env['RBAC_ENV'] = cmw_env
 
-    return ccda_endpoint, jvm_flags
+    return ccda_endpoint, jvm_flags, os_env
