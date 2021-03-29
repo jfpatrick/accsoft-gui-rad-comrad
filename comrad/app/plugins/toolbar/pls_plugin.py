@@ -61,6 +61,7 @@ class PLSToolbarConfig:
     show_user: bool = True
     show_lsa: bool = True
     show_tz: bool = False
+    show_sel: bool = True
     microseconds: bool = False
     heartbeat: bool = True
     utc: bool = False
@@ -295,6 +296,18 @@ class PLSToolbarWidget(QWidget):
             bar.showTimeZone = config.show_tz
             bar.indicateHeartbeat = config.heartbeat
             bar.displayedTimeZone = TimingBar.TimeZone.UTC if config.utc else TimingBar.TimeZone.LOCAL
+        app = cast(CApplication, CApplication.instance())
+        if config.show_sel:
+            self._update_btn_text()
+            app.main_window.window_context.selectorChanged.connect(self._update_btn_text)
+        else:
+            app.main_window.window_context.selectorChanged.disconnect(self._update_btn_text)
+            self._btn.setText('PLS')
+
+    def _update_btn_text(self):
+        app = cast(CApplication, CApplication.instance())
+        app_selector = app.main_window.window_context.selector or 'None'
+        self._btn.setText(f'PLS: {app_selector}')
 
     def _reset_bar_width(self):
         self._largest_known_width = None
