@@ -148,8 +148,8 @@ class CLogConsole(LogConsole):
     def showEvent(self, event: QShowEvent):
         super().showEvent(event)
 
-        # Since super class initializes model lazily on show event, to allow the loggers to be set up,
-        # we repeat it here, in case we need to fetch the standard blessed loggers of comrad
+        # Allow the loggers to be set up, in case we need to fetch the standard blessed loggers of comrad
+        # that were initialized after the initial model has been created
         if not self._loggers_initialized:
             self.loggers = self._logger_levels  # Either empty dict, or whatever was preset in constructor from existing model
 
