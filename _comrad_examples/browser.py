@@ -3,6 +3,7 @@ ComRAD Examples browser is a tool to browse through sources and run interactive 
 how to use ComRAD ecosystem.
 """
 
+import sys
 import logging
 import types
 import argparse
@@ -14,6 +15,7 @@ from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QShowEvent, QCloseEvent
 from qtpy.QtWidgets import (QMainWindow, QTreeWidgetItem, QTreeWidget, QStackedWidget, QTabWidget, QApplication,
                             QAbstractScrollArea, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit, QFrame)
+from accwidgets.qt import exec_app_interruptable
 from pydm.utilities.iconfont import IconFont
 from comrad.icons import icon
 from comrad.app.about import AboutDialog
@@ -422,10 +424,9 @@ def run_browser(_: argparse.Namespace):
     Args:
         _: parsed command line arguments
     """
-    import sys
     app_args = ['ComRAD examples']
     app_args.extend(sys.argv)
     app = QApplication(app_args)
     app.setWindowIcon(icon('examples'))
     _ = ExamplesWindow()
-    sys.exit(app.exec_())
+    sys.exit(exec_app_interruptable(app))
