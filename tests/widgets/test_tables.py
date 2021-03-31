@@ -6,34 +6,17 @@ from pytestqt.qtbot import QtBot
 from _pytest.logging import LogCaptureFixture
 from unittest import mock
 from accwidgets.log_console import LogConsoleRecord
-from comrad import CLogConsole, CLogDisplay, LogLevel, LogConsoleModel, AbstractLogConsoleModel
+from comrad import CLogConsole, LogLevel, LogConsoleModel, AbstractLogConsoleModel
 
 
 @pytest.fixture(autouse=True, scope='function')
 def clean_logging():
     orig_level = logging.Logger.root.level
-    logging.Logger.manager.loggerDict.clear()
     logging.Logger.root.setLevel(logging.NOTSET)
+    logging.Logger.manager.loggerDict.clear()
     yield
     logging.Logger.root.setLevel(orig_level)
-    logging.Logger.manager.loggerDict.clear()
-
-
-@pytest.mark.parametrize('is_designer_value,expect_warning', [
-    (True, False),
-    (False, True),
-])
-@mock.patch('comrad.widgets.tables.is_qt_designer')
-def test_clogdisplay_issues_warning_on_creation(is_qt_designer, is_designer_value, expect_warning,
-                                                caplog: LogCaptureFixture, qtbot: QtBot):
-    is_qt_designer.return_value = is_designer_value
-    widget = CLogDisplay()
-    qtbot.add_widget(widget)
-    actual_errors = [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.WARNING and r.module == 'tables']
-    if expect_warning:
-        assert actual_errors == ['CLogDisplay is deprecated, please use CLogConsole instead.']
-    else:
-        assert not actual_errors
+    logging.shutdown()
 
 
 @pytest.mark.parametrize('loggers,model,expect_raises', [
@@ -79,22 +62,10 @@ def test_clogconsole_sets_loggers_when_created_with_loggers(input_levels, expect
     assert widget.loggers == expected_levels
 
 
-@pytest.mark.parametrize('input_levels', [
-    ({}, {}),
-    ({'logger1': LogLevel.WARNING}),
-    ({'logger1': LogLevel.INFO}),
-    ({'logger1': LogLevel.INFO, 'logger2': LogLevel.WARNING}),
-])
-def test_clogconsole_creates_does_not_create_model_when_created_with_loggers(input_levels, qtbot: QtBot):
-    widget = CLogConsole(loggers=input_levels)
-    qtbot.add_widget(widget)
-    assert widget.model is None
-
-
 def test_clogconsole_default_loggers_without_model_or_loggers_arg(qtbot: QtBot):
     widget = CLogConsole()
     qtbot.add_widget(widget)
-    assert widget.model is None
+    assert widget.model is not None
     assert widget.loggers == {}
 
 
@@ -207,26 +178,6 @@ def test_clogconsole_loggers_setter_json_unknown_level_error(_, input, qtbot: Qt
     (True, '{"logger1": 20, "logger2": 30}'),
 ])
 @mock.patch('comrad.widgets.tables.is_qt_designer')
-def test_clogconsole_loggers_setter_does_not_create_implicit_model(is_qt_designer, is_designer_value, new_levels, qtbot: QtBot):
-    is_qt_designer.return_value = is_designer_value
-    widget = CLogConsole(model=None)
-    qtbot.add_widget(widget)
-    assert widget.model is None
-    widget.loggers = new_levels
-    assert widget.model is None
-
-
-@pytest.mark.parametrize('is_designer_value,new_levels', [
-    (False, {}),
-    (False, {'logger1': LogLevel.WARNING}),
-    (False, {'logger1': LogLevel.INFO}),
-    (False, {'logger1': LogLevel.INFO, 'logger2': LogLevel.WARNING}),
-    (True, '{}'),
-    (True, '{"logger1": 30}'),
-    (True, '{"logger1": 20}'),
-    (True, '{"logger1": 20, "logger2": 30}'),
-])
-@mock.patch('comrad.widgets.tables.is_qt_designer')
 def test_clogconsole_loggers_setter_cant_derive_from_custom_model(is_qt_designer, is_designer_value, new_levels,
                                                                   qtbot: QtBot, custom_model_class, caplog: LogCaptureFixture):
     is_qt_designer.return_value = is_designer_value
@@ -251,7 +202,7 @@ def test_clogconsole_loggers_setter_cant_derive_from_custom_model(is_qt_designer
 ])
 @mock.patch('comrad.widgets.tables.is_qt_designer')
 def test_clogconsole_loggers_setter_cant_derive_from_model_subclass(is_qt_designer, is_designer_value, new_levels,
-                                                                    qtbot: QtBot, custom_model_class, caplog: LogCaptureFixture):
+                                                                    qtbot: QtBot, caplog: LogCaptureFixture):
     is_qt_designer.return_value = is_designer_value
 
     class ModelSubclass(LogConsoleModel):
@@ -404,14 +355,22 @@ def test_clogconsole_loggers_setter_replaces_existing_model(buf_size, visible_le
     ({'': LogLevel.ERROR, 'logger1': LogLevel.WARNING}, {'root'}),
     ({'logger1': LogLevel.ERROR, 'logger1.sublogger': LogLevel.INFO, 'logger2': LogLevel.WARNING}, {'root'}),
 ])
-def test_clogconsole_detects_existing_loggers_on_show_when_non_were_set(initial_loggers, expected_loggers, qtbot: QtBot):
+@mock.patch('comrad.widgets.tables.CLogConsole.get_python_logger_levels', autospec=True)
+def test_clogconsole_detects_existing_loggers_on_show_when_non_were_set(get_python_logger_levels, initial_loggers, expected_loggers, qtbot: QtBot):
+    gathered_loggers: List[logging.Logger] = [logging.getLogger()]
     for logger_name, level in initial_loggers.items():
-        logging.getLogger(logger_name).setLevel(level.value)
+        logger = logging.getLogger(logger_name)
+        logger.setLevel(level.value)
+        if CLogConsole._default_logger_is_of_interest(logger_name):
+            gathered_loggers.append(logger)
 
     widget = CLogConsole()
     qtbot.add_widget(widget)
+    get_python_logger_levels.return_value = gathered_loggers
+    get_python_logger_levels.assert_not_called()
     with qtbot.wait_exposed(widget):
         widget.show()
+    get_python_logger_levels.assert_called_once()
     assert set(widget.model._handlers.keys()) == expected_loggers
 
 
