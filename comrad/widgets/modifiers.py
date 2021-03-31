@@ -128,6 +128,15 @@ class CValueAggregator(QWidget, CChannelDataProcessingMixin, CInitializedMixin, 
             # in the address. We need to remove it to not confuse the user.
             channel_id = channel_id[1:]
 
+        # Strip away context information from the address, to always have a consistent keys in the dictionary
+        # If we happen to sit inside CContextFrame or have a global selector defined, channel_id can be different here
+        # from what was recorder in self._obsolete_values. Also, the valueTransformation becomes sensitive to the
+        # environment if keys are used to access data.
+        for delim in ['?', '@', '&']:
+            idx = channel_id.find(delim)
+            if idx != -1:
+                channel_id = channel_id[:idx]
+
         super().value_changed(packet)
 
         if self._trigger_type == CValueAggregator.GeneratorTrigger.ANY:
