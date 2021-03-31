@@ -33,6 +33,7 @@ class CApplication(PyDMApplication):
                  default_selector: Optional[str] = None,
                  cmw_env: Optional[str] = None,
                  java_env: Optional[Dict[str, str]] = None,
+                 rbac_token: Optional[str] = None,
                  perf_mon: bool = False,
                  hide_nav_bar: bool = False,
                  hide_menu_bar: bool = False,
@@ -74,6 +75,7 @@ class CApplication(PyDMApplication):
             cmw_env: Original CMW environment. While it is not directly used in this instance, instead relying on
                 ``java_env`` and ``ccda_endpoint``, it will be passed to any child ComRAD processes.
             java_env: JVM flags to be passed to the control system libraries.
+            rbac_token: Base64-serialized RBAC token to automatically obtain authenticated state.
             perf_mon: Whether or not to enable performance monitoring using ``psutil``.
                 When enabled, CPU load information on a per-thread basis is
                 periodically printed to the terminal.
@@ -203,9 +205,7 @@ class CApplication(PyDMApplication):
         token = self.rbac.serialized_token
         env: Optional[Dict[str, str]] = None
         if token:
-            env = {**os.environ,
-                   'RBAC_TOKEN_SERIALIZED': token,
-                   }
+            args.extend(['--rbac-token', token])
         args.extend(['--nav-bar-style', self._toolbar_style])
         args.extend(['--nav-bar-position', self._toolbar_position])
         if self.hide_nav_bar:

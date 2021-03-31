@@ -110,6 +110,11 @@ def _install_controls_arguments(parser: argparse._ActionsContainer):
                              'selector affecting all of its widgets. This selector can be changed via "PLS" toolbar '
                              'item. When omitted, no selector will be used.',
                         default=None)
+    parser.add_argument('--rbac-token',
+                        metavar='abcdef123456',
+                        help='Base64-serialized RBAC token to automatically obtain authenticated state. If provided, '
+                             'this will override default policy of "login by location at startup".',
+                        default=None)
     parser.add_argument('--no-inca',
                         action='store_true',
                         help='Do not use InCA server middleware and connect directly to devices. By default JAPC '
@@ -400,6 +405,11 @@ def _run_designer(args: argparse.Namespace) -> bool:
         return False
 
     os.environ.update(os_env)
+
+    if args.rbac_token is not None:
+        # To be picked up by PyJapc, if activated inside Designer, because CApplication won't exist and will
+        # not automatically propagate it to pyrbac login.
+        os.environ['RBAC_TOKEN_SERIALIZED'] = args.rbac_token
 
     from .designer import run_designer
     run_designer(files=args.files,
