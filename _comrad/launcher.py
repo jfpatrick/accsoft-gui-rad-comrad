@@ -327,23 +327,13 @@ def __designer_subcommand(parser: argparse.ArgumentParser):
 
 
 def _run_comrad(args: argparse.Namespace) -> bool:
+    logger = logging.getLogger('')
 
+    # This has to sit here, because other os.environ settings MUST be before comrad or pydm import
     environment = {
         'PYDM_TOOLS_PATH': comrad_asset('tools'),
         **get_japc_support_envs(args.extra_data_plugin_path),
     }
-
-    for k, v in environment.items():
-        os.environ[k] = v
-
-    logger = logging.getLogger('')
-    logger.debug('Configured additional environment:\n'
-                 '{env_dict}'.format(env_dict='\n'.join([f'{k}={v}' for k, v in environment.items()])))
-
-    # Importing stuff here and not in the beginning of the file to setup the root logger first.
-    from comrad.app.application import CApplication
-    from pydm.utilities.macro import parse_macro_string
-    macros = parse_macro_string(args.macro) if args.macro is not None else None
 
     try:
         ccda_endpoint, java_env, os_env = _parse_control_env(args)
@@ -351,9 +341,19 @@ def _run_comrad(args: argparse.Namespace) -> bool:
         logger.exception(str(e))
         return False
 
-    # This has to sit here, because other os.environ settings MUST be before comrad or pydm import
-    os.environ.update(os_env)
-    os.environ['PYCCDA_HOST'] = ccda_endpoint
+    environment.update(os_env)
+    environment['PYCCDA_HOST'] = ccda_endpoint
+
+    logger.debug('Configured additional environment:\n'
+                 '{env_dict}'.format(env_dict='\n'.join([f'{k}={v}' for k, v in environment.items()])))
+
+    for k, v in environment.items():
+        os.environ[k] = v
+
+    # Importing stuff here and not in the beginning of the file to setup the root logger first.
+    from comrad.app.application import CApplication
+    from pydm.utilities.macro import parse_macro_string
+    macros = parse_macro_string(args.macro) if args.macro is not None else None
 
     stylesheet: Optional[str] = comrad_asset('dark.qss') if args.dark_mode else args.stylesheet
 
