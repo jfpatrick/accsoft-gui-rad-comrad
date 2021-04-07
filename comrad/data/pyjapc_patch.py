@@ -5,10 +5,10 @@ it can be used with ComRAD.
 import jpype
 import logging
 from enum import IntFlag, IntEnum
-from typing import cast, Optional, Callable, Any, Dict, List
+from typing import cast, Optional, Callable, Any, Dict, List, Union
 from qtpy.QtCore import QObject, Signal
 from pyjapc import PyJapc
-from comrad.rbac import CRBACLoginStatus, CRBACStartupLoginPolicy
+from pyrbac import Token
 from comrad.app.application import CApplication
 from comrad.data.jpype_utils import get_cmw_user_message, get_java_user_message, meaning_from_jpype
 from comrad.data.japc_enum import CEnumValue
@@ -266,7 +266,6 @@ class PyJapcWrapper(PyJapc):
 class CPyJapc(PyJapcWrapper, QObject):
 
     japc_status_changed = Signal(bool)
-    japc_login_error = Signal(str, bool)
     japc_param_error = Signal(str, bool)
 
     @classmethod
@@ -305,65 +304,13 @@ class CPyJapc(PyJapcWrapper, QObject):
         QObject.__init__(self)
         self._logged_in: bool = False
         self._use_inca = app.use_inca
-        self._app.rbac.rbac_logout_user.connect(self.rbacLogout)
-        self._app.rbac.rbac_token_changed.connect(self._on_token_changed_from_pyrbac)
-        self.japc_login_error.connect(self._app.rbac.rbac_on_error)
+        self._app.rbac.logout_finished.connect(self.rbacLogout)
+        self._app.rbac.login_succeeded.connect(self._inject_token)
         self.japc_param_error.connect(self._app.on_control_error)
         logger.debug('JAPC is set up and ready!')
 
-        if app.rbac.startup_login_policy == CRBACStartupLoginPolicy.LOGIN_BY_LOCATION:
-            logger.debug('Attempting login by location on the first connection')
-            try:
-                self.login_by_location()
-            except BaseException:  # noqa: B902
-                logger.info('Login by location failed. User will have to manually acquire RBAC token.')
-        elif app.rbac.startup_login_policy == CRBACStartupLoginPolicy.LOGIN_BY_CREDENTIALS:
-            # TODO: Implement presenting a dialog here
-            pass
-
-    def login_by_location(self):
-        logger.debug('Attempting RBAC login by location (via Java RBAC)')
-        self.rbacLogin(on_exception=self._login_err)
-        if self._logged_in:
-            token = self.rbacGetToken()
-            if token:
-                self._app.rbac.user = token.getUser().getName()  # FIXME: This is Java call. We need to abstract it into PyRBAC
-                self._app.rbac.status = CRBACLoginStatus.LOGGED_IN_BY_LOCATION
-
-    @property
-    def logged_in(self):
-        return self._logged_in
-
-    def rbacLogin(self,
-                  username: Optional[str] = None,
-                  password: Optional[str] = None,
-                  loginDialog: bool = False,
-                  readEnv: bool = True,
-                  on_exception: Optional[Callable[[str, bool], None]] = None,
-                  ):
-        if self._logged_in:
-            return
-        logger.debug('Performing RBAC login')
-        try:
-            super().rbacLogin(username=username,
-                              password=password,
-                              loginDialog=loginDialog,
-                              readEnv=readEnv)
-        except jpype.JException as e:
-            # We can't catch concrete exceptions in the 'except' clause directly, because Python
-            # interpreter will complain when used with PAPC, as cern package won't be loaded,
-            # and the exception won't be found. In PAPC scenario, this except block should never be
-            # executed, thus avoiding the error.
-            if isinstance(e, cern.rbac.client.authentication.AuthenticationException):
-                if on_exception is not None:
-                    message = get_cmw_user_message(e)
-                    login_by_location = not username and not password
-                    on_exception(message, login_by_location)
-                self._set_online(False)
-                return
-            else:
-                raise e
-        self._set_online(True)
+        if self._app.rbac.token is not None:
+            self._inject_token(self._app.rbac.token.get_encoded())
 
     def rbacLogout(self):
         if self._logged_in:
@@ -380,28 +327,23 @@ class CPyJapc(PyJapcWrapper, QObject):
             kwargs['checkDims'] = False
         self._expect_japc_error(super().setParam, *args, display_popup=True, **kwargs)
 
-    def _on_token_changed_from_pyrbac(self, pyrbac_token: list, login_status: int):
+    def _inject_token(self, pyrbac_token: Union[Token, bytes]):
         logger.debug('Updating Java-RBAC token with the external token from pyrbac')
-        config = cern.rbac.common.RbacConfiguration.getCurrent()
-        new_token = cern.rbac.common.RbaToken.parseAndValidate(jpype.java.nio.ByteBuffer.wrap(pyrbac_token), config)
-        cern.rbac.util.holder.ClientTierTokenHolder.setRbaToken(new_token)
-
-        actual_token = self.rbacGetToken()
-        if actual_token:
-            self._set_online(login_status != CRBACLoginStatus.LOGGED_OUT)
-            self._app.rbac.user = actual_token.getUser().getName()
-            self._app.rbac.status = CRBACLoginStatus(login_status)
+        buffer: bytes = pyrbac_token.get_encoded() if isinstance(pyrbac_token, Token) else pyrbac_token
+        try:
+            new_token = cern.rbac.common.RbaToken.parseAndValidate(jpype.java.nio.ByteBuffer.wrap(buffer))
+        except Exception as e:  # noqa: B902
+            # Can fail, e.g. with error
+            # cern.rbac.common.TokenFormatException:
+            # Token's signature is invalid - only tokens issued by the RBAC <RBAC_ENV> Server are accepted.
+            logger.error(f'Java refused generated token: {e!s}')
         else:
-            logger.warning('Failed to get a new token from Java')
+            cern.rbac.util.holder.ClientTierTokenHolder.setRbaToken(new_token)
+            self._set_online(logged_in=self.rbacGetToken() is not None)
 
     def _set_online(self, logged_in: bool):
         self._logged_in = logged_in
         self.japc_status_changed.emit(logged_in)
-        if not logged_in:
-            self._app.rbac.status = CRBACLoginStatus.LOGGED_OUT
-
-    def _login_err(self, message: str, login_by_location: bool):
-        self.japc_login_error.emit(message, login_by_location)
 
     def _expect_japc_error(self, fn: Callable, *args, display_popup: bool = False, **kwargs):
         try:

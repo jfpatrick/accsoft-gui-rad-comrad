@@ -11,7 +11,7 @@ from pydm.application import PyDMApplication
 from pydm.utilities import path_info, which
 from pydm.data_plugins import is_read_only
 from comrad.icons import icon
-from comrad.rbac import CRBACState
+from comrad.rbac import CRbaState
 from comrad.app.plugins import CToolbarID
 from .plugins._config import WindowPluginConfigTrie
 
@@ -33,6 +33,7 @@ class CApplication(PyDMApplication):
                  default_selector: Optional[str] = None,
                  cmw_env: Optional[str] = None,
                  java_env: Optional[Dict[str, str]] = None,
+                 rbac_token: Optional[str] = None,
                  perf_mon: bool = False,
                  hide_nav_bar: bool = False,
                  hide_menu_bar: bool = False,
@@ -74,6 +75,7 @@ class CApplication(PyDMApplication):
             cmw_env: Original CMW environment. While it is not directly used in this instance, instead relying on
                 ``java_env`` and ``ccda_endpoint``, it will be passed to any child ComRAD processes.
             java_env: JVM flags to be passed to the control system libraries.
+            rbac_token: Base64-serialized RBAC token to automatically obtain authenticated state.
             perf_mon: Whether or not to enable performance monitoring using ``psutil``.
                 When enabled, CPU load information on a per-thread basis is
                 periodically printed to the terminal.
@@ -106,7 +108,7 @@ class CApplication(PyDMApplication):
         """
         args = [_APP_NAME]
         args.extend(command_line_args or [])
-        self._rbac = CRBACState(rbac_env=cmw_env)  # We must keep it before super because dependant plugins will be initialized in super()
+        self._rbac = CRbaState()  # We must keep it before super because dependant plugins will be initialized in super()
         self._ccda_endpoint = ccda_endpoint
         self._cmw_env = cmw_env
         self._use_inca = use_inca
@@ -131,6 +133,10 @@ class CApplication(PyDMApplication):
         self.setWindowIcon(icon('app'))
         self.main_window.addToolBar(toolbar_area_from_str(toolbar_position), self.main_window.ui.navbar)
         self.main_window.ui.navbar.setToolButtonStyle(toolbar_style_from_str(toolbar_style))
+
+        # Attempting to login at startup after the main window has been initialized, so that we can display
+        # errors in the log console
+        self._rbac.startup_login(rbac_token)
 
         # Useful for sub-processes
         self._stylesheet_path = stylesheet_path
@@ -199,9 +205,7 @@ class CApplication(PyDMApplication):
         token = self.rbac.serialized_token
         env: Optional[Dict[str, str]] = None
         if token:
-            env = {**os.environ,
-                   'RBAC_TOKEN_SERIALIZED': token,
-                   }
+            args.extend(['--rbac-token', token])
         args.extend(['--nav-bar-style', self._toolbar_style])
         args.extend(['--nav-bar-position', self._toolbar_position])
         if self.hide_nav_bar:
@@ -258,6 +262,8 @@ class CApplication(PyDMApplication):
         args.extend(filepath_args)
         if command_line_args is not None:
             args.extend(command_line_args)
+
+        logger.debug(f'Launching subprocess {args} with environment: {env}')
         subprocess.Popen(args, env=env, shell=False)
 
     def on_control_error(self, message: str, display_popup: bool):
@@ -295,7 +301,7 @@ class CApplication(PyDMApplication):
         return self._jvm_flags
 
     @property
-    def rbac(self) -> CRBACState:
+    def rbac(self) -> CRbaState:
         return self._rbac
 
     @property

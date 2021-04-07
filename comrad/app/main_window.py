@@ -68,6 +68,7 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
             hide_status_bar: Hide status bar initially.
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
+        log_console = CLogConsole()  # Initialize as early as possible, to capture as many logs as possible
         self._overridden_members['__init__'](self,
                                              parent=parent,
                                              hide_nav_bar=hide_nav_bar,
@@ -94,7 +95,6 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
             self.ui.actionShow_Navigation_Bar.deleteLater()
             self.ui.actionShow_Navigation_Bar = None
 
-        log_console = CLogConsole()
         dock = LogConsoleDock(allowed_areas=Qt.BottomDockWidgetArea | Qt.RightDockWidgetArea, console=log_console)
         dock.setFeatures(QDockWidget.DockWidgetClosable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetMovable)
         dock.console.expanded = False
