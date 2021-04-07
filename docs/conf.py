@@ -616,6 +616,7 @@ intersphinx_mapping = {
     'numpy': (f'https://numpy.org/doc/{minor_ver(versions.np)}/', None),
     'pyqtgraph': ('https://pyqtgraph.readthedocs.io/en/latest/', None),  # TODO: Change latest to concrete version of pyqtgraph after migrating to 0.11 (cant do right now, as versions there start from 0.11.0
     'pyjapc': (f'https://acc-py.web.cern.ch/gitlab/scripting-tools/pyjapc/docs/v{versions.pyjapc}/', None),
+    'pyrbac': (f'https://acc-py.web.cern.ch/gitlab-mono/acc-co/cmw/cmw-core/docs/pyrbac/master/', None),
     'accwidgets': (f'https://acc-py.web.cern.ch/gitlab/acc-co/accsoft/gui/accsoft-gui-pyqt-widgets/docs/v{versions.widgets}/', None),
 }
 
