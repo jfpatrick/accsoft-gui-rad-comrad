@@ -102,15 +102,18 @@ def process_args(args: argparse.Namespace, parser: argparse.ArgumentParser, use_
 
 def run():
     """Run ComRAD application and parse command-line arguments."""
-    parser, use_lazy_version = create_args_parser()
+    try:
+        parser, use_lazy_version = create_args_parser()
 
-    # If run for auto-completion discovery, execution will stop here
-    argcomplete.autocomplete(parser)
-    args = parser.parse_args()
+        # If run for auto-completion discovery, execution will stop here
+        argcomplete.autocomplete(parser)
+        args = parser.parse_args()
 
-    process_args(args=args,
-                 parser=parser,
-                 use_lazy_version=use_lazy_version)
+        process_args(args=args,
+                     parser=parser,
+                     use_lazy_version=use_lazy_version)
+    except KeyboardInterrupt:
+        pass
 
 
 def _install_help(parser: argparse._ActionsContainer):
