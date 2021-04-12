@@ -27,7 +27,7 @@ requirements = {
         'pydm==1.10.7.post0',
         'JPype1>=0.7,<0.7.2',  # 0.7.2 seems incompatible with pyjapc as of now
         'dataclasses~=0.7;python_version<"3.7"',
-        'pyccda~=0.10.1',
+        'pyCCDA~=0.10.1',
         'pyrbac',  # Exact version is expected to be provided by accwidgets. This stays here because we still have pyrbac imports
     ],
     'test': [
