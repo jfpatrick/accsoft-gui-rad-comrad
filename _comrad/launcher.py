@@ -13,7 +13,7 @@ from accwidgets.qt import exec_app_interruptable
 from .comrad_info import COMRAD_DESCRIPTION, COMRAD_VERSION, get_versions_info
 from .log_config import install_logger_level
 from .common import get_japc_support_envs, comrad_asset
-from .package import package_wheel, make_requirement_safe, Requirement
+from .package import package_wheel, make_requirement_safe, Requirement, parse_maintainer_info
 
 
 def create_args_parser(custom_run_prog: Optional[str] = None) -> Tuple[argparse.ArgumentParser, bool]:
@@ -556,10 +556,15 @@ def _package_subcommand(parser: argparse.ArgumentParser):
                               help='Version of the final product (use PEP-440 compatible version string).')
     result_group.add_argument('--description',
                               help='Summary of the final product.')
-    result_group.add_argument('--maintainer-name',
-                              help='Name of the package maintainer.')
-    result_group.add_argument('--maintainer-email',
-                              help='Email of the package maintainer.')
+    maintainer_group = result_group.add_mutually_exclusive_group()
+    maintainer_group.add_argument('--maintainer',
+                                  help='Name and/or email of the package maintainer. This can be formatted in '
+                                       'either ways: "John Smith <john.smith@cern.ch>"; or "John Smith"; '
+                                       'or john.smith@cern.ch.')
+    maintainer_group.add_argument('--force-phonebook',
+                                  help='Enforce resolution of maintainer info from the phonebook, '
+                                       'overriding any cached maintainer info (only applicable in interactive mode).',
+                                  action='store_true')
     req_group = result_group.add_mutually_exclusive_group()
     req_group.add_argument('--requirements',
                            help='List dependencies of your final product that should be installed with it.',
@@ -593,15 +598,17 @@ def _package_app(args: argparse.Namespace) -> bool:
 
     if args.description:
         enforced_spec_attrs['description'] = args.description
-    if args.maintainer_name:
-        enforced_spec_attrs['maintainer'] = args.maintainer_name
-    if args.maintainer_email:
-        enforced_spec_attrs['maintainer_email'] = args.maintainer_email
+    maintainer_name, maintainer_email = parse_maintainer_info(args.maintainer)
+    if maintainer_name is not None:
+        enforced_spec_attrs['maintainer'] = maintainer_name
+    if maintainer_email is not None:
+        enforced_spec_attrs['maintainer_email'] = maintainer_email
 
     package_wheel(entrypoint=entrypoint,
                   output_path=Path(args.destination),
                   pkg_spec_overloads=enforced_spec_attrs,
                   install_requires=install_requires,
+                  force_phonebook=args.force_phonebook,
                   interactive=args.interactive)
 
     return True

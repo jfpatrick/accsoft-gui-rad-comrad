@@ -2,9 +2,10 @@ import logging
 import shutil
 import subprocess
 import sys
+import re
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Dict, Optional, Set
+from typing import Any, Dict, Optional, Set, Tuple
 from jinja2 import FileSystemLoader, Environment
 from packaging.requirements import Requirement
 from _comrad.comrad_info import COMRAD_VERSION
@@ -19,6 +20,7 @@ def package_wheel(entrypoint: Path,
                   output_path: Path,
                   pkg_spec_overloads: Optional[Dict[str, Any]] = None,
                   install_requires: Optional[Set[Requirement]] = None,
+                  force_phonebook: bool = False,
                   interactive: bool = False):
     """
     Package ComRAD application into a binary wheel.
@@ -29,11 +31,13 @@ def package_wheel(entrypoint: Path,
         pkg_spec_overloads: High-priority overloads that can override any properties of the default spec. This is
                             expected to come from the CLI arguments.
         install_requires: Initial set of requirements that can be supplied via CLI arguments.
+        force_phonebook: Enforce resolution of the maintainer info from phonebook, disregarding cache.
         interactive: Whether create a spec in interactive mode. When :obj:`True`, the user will be asked questions and
                      given choices.
     """
     spec = build_spec(entrypoint=entrypoint,
                       interactive=interactive,
+                      force_phonebook=force_phonebook,
                       pkg_spec_overloads=pkg_spec_overloads,
                       install_requires=install_requires)
 
@@ -50,6 +54,33 @@ def package_wheel(entrypoint: Path,
         for whl in wheel_dir.glob('*.whl'):
             shutil.copy(whl, output_path)
             logger.info(f'Built wheel {(output_path / whl.name)!s}')
+
+
+def parse_maintainer_info(input: Optional[str]) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Parse maintainer info into name-email pair. This logic can recognize the following formats:
+
+    - John Smith <john.smith@domain.com>
+    - John Smith
+    - john.smith@domain.com
+
+    Args:
+        input: Input string as received from the user.
+
+    Returns:
+        Tuple of maintainer name and maintainer email.
+    """
+    if input:
+        mo = re.match(r'^(?P<name>[^<\n]+)(<(?P<email>.+@.+)>)?$', input)
+        if mo and mo.groups():
+            captures = mo.groupdict()
+            if captures['email']:
+                return captures['name'].strip(), captures['email'].strip()
+            elif '@' in captures['name']:
+                return '', captures['name'].strip()  # Treat name as email
+            else:
+                return captures['name'].strip(), ''
+    return None, None
 
 
 def generate_sources(entrypoint: Path, spec: PackageSpec, output_path: Path):

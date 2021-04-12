@@ -1,4 +1,5 @@
 from __future__ import print_function, unicode_literals
+import logging
 import functools
 import questionary
 from dataclasses import dataclass
@@ -20,7 +21,11 @@ from questionary.prompts.common import Separator, merge_styles
 from questionary.constants import (DEFAULT_QUESTION_PREFIX, DEFAULT_STYLE, INDICATOR_SELECTED, INDICATOR_UNSELECTED,
                                    SELECTED_POINTER, DEFAULT_KBI_MESSAGE)
 from questionary.question import Question
+from .phonebook import suggest_maintainer_info
 from .spec import PackageSpec
+
+
+logger = logging.getLogger(__name__)
 
 
 CUSTOM_PROMPT_TYPE = 'comrad_custom_list'
@@ -28,7 +33,18 @@ CUSTOM_PROMPT_TYPE = 'comrad_custom_list'
 
 def confirm_spec_interactive(inferred_spec: PackageSpec,
                              implicitly_disabled_requirements: Set[Requirement],
-                             mandatory: Optional[Set[Requirement]]):
+                             mandatory: Optional[Set[Requirement]],
+                             force_phonebook: bool):
+
+    # Skip resolving user information, if it was already cached
+    if force_phonebook or (inferred_spec.maintainer is None and inferred_spec.maintainer_email is None):
+        suggested_maintainer, suggested_email = suggest_maintainer_info(default_maintainer=inferred_spec.maintainer,
+                                                                        default_email=inferred_spec.maintainer_email,
+                                                                        force=force_phonebook)
+    else:
+        logger.debug('Not contacting phonebook, using maintainer information from cache')
+        suggested_maintainer, suggested_email = inferred_spec.maintainer, inferred_spec.maintainer_email
+
     questionary.print(text='\n'
                            'Input or confirm package details\n'
                            '================================',
@@ -73,12 +89,12 @@ def confirm_spec_interactive(inferred_spec: PackageSpec,
                 'type': 'input',
                 'name': 'maintainer',
                 'message': 'Package maintainer',
-                'default': inferred_spec.maintainer or '',
+                'default': suggested_maintainer or '',
             }, {
                 'type': 'input',
                 'name': 'maintainer_email',
                 'message': "Maintainer's email",
-                'default': inferred_spec.maintainer_email or '',
+                'default': suggested_email or '',
             }],
             style=Style([('qmark', 'fg:#5f819d'),  # token in front of the question
                          ('question', 'bold'),  # question text

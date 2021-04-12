@@ -34,6 +34,7 @@ def make_requirement_safe(input: str, error: str) -> Optional[Requirement]:
 
 def build_spec(entrypoint: Path,
                interactive: bool,
+               force_phonebook: bool,
                pkg_spec_overloads: Optional[Dict[str, Any]] = None,
                install_requires: Optional[Set[Requirement]] = None) -> PackageSpec:
     """
@@ -43,6 +44,7 @@ def build_spec(entrypoint: Path,
         entrypoint: Path to the entrypoint file of the ComRAD application. This has to be either *.py or *.ui file.
         interactive: Whether create a spec in interactive mode. When :obj:`True`, the user will be asked questions and
                      given choices.
+        force_phonebook: Enforce resolution of the maintainer info from phonebook, disregarding cache.
         pkg_spec_overloads: High-priority overloads that can override any properties of the default spec. This is
                             expected to come from the CLI arguments.
         install_requires: Initial set of requirements that can be supplied via CLI arguments.
@@ -67,7 +69,7 @@ def build_spec(entrypoint: Path,
 
     if pkg_spec_overloads:
         # Update with "higher-priority" settings (e.g. coming from CLI args)
-        final_spec.update_from_dict({k: v for k, v in pkg_spec_overloads.items() if v})
+        final_spec.update_from_dict({k: v for k, v in pkg_spec_overloads.items() if v is not None})
 
     # Now compute the requirements list
     resolved_install_requires: Set[Requirement]
@@ -101,6 +103,7 @@ def build_spec(entrypoint: Path,
     if interactive:
         # Finally confirm with the user that everything looks good
         confirm_spec_interactive(final_spec,
+                                 force_phonebook=force_phonebook,
                                  implicitly_disabled_requirements=implicitly_disabled,
                                  mandatory=always_include_requires)
 
