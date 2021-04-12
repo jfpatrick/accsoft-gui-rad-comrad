@@ -27,6 +27,9 @@ allows writing (or getting) multiple fields in an atomic way with a single butto
           placing several widgets (one per field). It will not support all the features that individual widgets
           offer (e.g. widget rules for individual fields).
 
+.. note:: Currently this widget does not contact CCDB for device information, thus fields configuration has to be done
+          by the user.
+
 You can connect it to the control system by setting its :attr:`~comrad.CPropertyEdit.channel` value to the address of
 your device-property.
 
