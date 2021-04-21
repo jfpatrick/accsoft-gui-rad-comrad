@@ -34,7 +34,7 @@ requirements = {
         'pyrbac',  # Exact version is expected to be provided by accwidgets. This stays here because we still have pyrbac imports
         'Jinja2~=2.11',
         'importlib-metadata>=1.7.0,<4.0a0;python_version<"3.8"',
-        'pyxdg~=0.27',
+        'toml~=0.10.2',
         'stdlib-list>=0.8.0,<1a0;python_version<"3.10"',
     ],
     'test': [

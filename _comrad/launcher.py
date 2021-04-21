@@ -13,7 +13,7 @@ from accwidgets.qt import exec_app_interruptable
 from .comrad_info import COMRAD_DESCRIPTION, COMRAD_VERSION, get_versions_info
 from .log_config import install_logger_level
 from .common import get_japc_support_envs, comrad_asset
-from .package import package_wheel, make_requirement_safe, Requirement, parse_maintainer_info
+from .package import generate_pyproject_with_spec, make_requirement_safe, Requirement, parse_maintainer_info
 
 
 def create_args_parser(custom_run_prog: Optional[str] = None) -> Tuple[argparse.ArgumentParser, bool]:
@@ -89,11 +89,13 @@ def create_args_parser(custom_run_prog: Optional[str] = None) -> Tuple[argparse.
     _examples_subcommand(examples_parser)
 
     package_parser = subparsers.add_parser('package',
-                                           help='Package a ComRAD project into a Python package.',
-                                           description='  This command creates a Python package from a ComRAD project.\n'
-                                                       '  Resulting package can be later deployed to operational '
-                                                       '  environment using "acc-py app deploy" command from Acc-Py '
-                                                       '  dev-tools.',
+                                           help='Convert ComRAD project into an installable Python package.',
+                                           description='  This command creates a pip-compatible pyproject.toml file,\n'
+                                                       '  enabling standard tools, such as "pip install" or\n'
+                                                       '  "pip wheel", to be run over the directory, to produce a\n'
+                                                       '  wheel or sdist. Resulting package can be later deployed to\n'
+                                                       '  operational environment using "acc-py app deploy" command\n'
+                                                       '  from Acc-Py dev-tools.',
                                            **common_parser_args)
     _package_subcommand(package_parser)
 
@@ -540,10 +542,6 @@ def _package_subcommand(parser: argparse.ArgumentParser):
                         action='store_false',
                         dest='interactive',
                         default=True)
-    parser.add_argument('-d',
-                        '--destination',
-                        help='Location for generated wheel (*.whl) file. (default: %(default)s)',
-                        default=os.getcwd())
     _install_debug_arguments(parser)
     parser.add_argument('display_file',
                         metavar='FILE',
@@ -604,11 +602,10 @@ def _package_app(args: argparse.Namespace) -> bool:
     if maintainer_email is not None:
         enforced_spec_attrs['maintainer_email'] = maintainer_email
 
-    package_wheel(entrypoint=entrypoint,
-                  output_path=Path(args.destination),
-                  pkg_spec_overloads=enforced_spec_attrs,
-                  install_requires=install_requires,
-                  force_phonebook=args.force_phonebook,
-                  interactive=args.interactive)
+    generate_pyproject_with_spec(entrypoint=entrypoint,
+                                 cli_install_requires=install_requires,
+                                 cli_other_spec_props=enforced_spec_attrs,
+                                 force_phonebook=args.force_phonebook,
+                                 interactive=args.interactive)
 
     return True

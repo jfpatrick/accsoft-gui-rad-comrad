@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Set, Dict, Any, Optional, Union, cast
 from packaging.requirements import Requirement, InvalidRequirement
 from packaging.version import Version, InvalidVersion
@@ -8,6 +9,7 @@ from packaging.version import Version, InvalidVersion
 class PackageSpec:
     name: str
     version: str
+    entrypoint: str
     install_requires: Set[Requirement]
     description: Optional[str] = None
     maintainer: Optional[str] = None
@@ -18,6 +20,8 @@ class PackageSpec:
             raise ValueError(f'name must not be empty')
         if not self.version:
             raise ValueError(f'version must not be empty')
+        if not self.entrypoint:
+            raise ValueError(f'entrypoint must not be empty')
         try:
             _ = Version(self.version)
         except InvalidVersion:
@@ -31,12 +35,19 @@ class PackageSpec:
                 break
         else:
             raise ValueError('"comrad" requirement missing from package spec')
+        entrypoint_path = Path(self.entrypoint)
+        if entrypoint_path.suffix not in ['.py', '.ui']:
+            raise ValueError(f'only *.py and *.ui files are allowed as entrypoints ("{self.entrypoint}" given)')
+        if str(entrypoint_path.parent) != '.':
+            raise ValueError('entrypoint file is expected to be inside the root directory of '
+                             f'the source tree ("{self.entrypoint}" given)')
 
     @classmethod
     def from_dict(cls, input: Dict[str, Any]) -> 'PackageSpec':
         essential_args: Dict[str, Any] = {
             'name': input['name'],
             'version': input['version'],
+            'entrypoint': input['entrypoint'],
         }
         try:
             essential_args['install_requires'] = set(map(Requirement, input['install_requires']))
@@ -56,6 +67,7 @@ class PackageSpec:
         output: Dict[str, Any] = {
             'name': self.name,
             'version': self.version,
+            'entrypoint': self.entrypoint,
             'install_requires': list(map(str, self.install_requires)),
         }
         for key, val in vars(self).items():
@@ -63,14 +75,6 @@ class PackageSpec:
                 output[key] = val
 
         return output
-
-    def update(self, another: 'PackageSpec'):
-        for field_name in vars(self).keys():
-            try:
-                val = getattr(another, field_name)
-            except AttributeError:
-                continue
-            setattr(self, field_name, val)
 
     def update_from_dict(self, input: Dict[str, Any]):
         fields = list(vars(self).keys())

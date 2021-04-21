@@ -118,9 +118,6 @@ def confirm_spec_interactive(inferred_spec: PackageSpec,
     # Reuse the mapping logic that sits in that method
     inferred_spec.update_from_dict(answers)
 
-    questionary.print(text='\n'
-                           'Building...\n'
-                           '================================\n')
 
 @dataclass
 class RequirementItem:

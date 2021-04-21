@@ -6,10 +6,9 @@ import operator
 from pathlib import Path
 from typing import Dict, Optional, Set, Any
 from packaging.requirements import Requirement, InvalidRequirement
-from _comrad.comrad_info import COMRAD_VERSION
 from .importlib_shim import find_distribution_name, importlib_metadata
 from .spec import PackageSpec
-from .spec_cache import read_spec_cache, dump_spec_cache
+from .pyproject import read_pyproject, dump_pyproject, InvalidProjectFileError, COMRAD_PINNED_VERSION, pyproject_dict_to_spec_dict
 from .import_scanning import scan_imports
 from .wizard import confirm_spec_interactive
 
@@ -32,53 +31,77 @@ def make_requirement_safe(input: str, error: str) -> Optional[Requirement]:
         return None
 
 
-def build_spec(entrypoint: Path,
-               interactive: bool,
-               force_phonebook: bool,
-               pkg_spec_overloads: Optional[Dict[str, Any]] = None,
-               install_requires: Optional[Set[Requirement]] = None) -> PackageSpec:
+def generate_pyproject_with_spec(entrypoint: Path,
+                                 interactive: bool,
+                                 force_phonebook: bool,
+                                 cli_other_spec_props: Optional[Dict[str, Any]] = None,
+                                 cli_install_requires: Optional[Set[Requirement]] = None):
     """
-    Creates a proposed specification of the package to build.
+    Creates a proposed specification of the package to build and saves it in PEP-517 compatible pyproject.toml
+    in the same directory, as the ``entrypoint`` file.
 
     Args:
         entrypoint: Path to the entrypoint file of the ComRAD application. This has to be either *.py or *.ui file.
         interactive: Whether create a spec in interactive mode. When :obj:`True`, the user will be asked questions and
                      given choices.
         force_phonebook: Enforce resolution of the maintainer info from phonebook, disregarding cache.
-        pkg_spec_overloads: High-priority overloads that can override any properties of the default spec. This is
-                            expected to come from the CLI arguments.
-        install_requires: Initial set of requirements that can be supplied via CLI arguments.
-
-    Returns:
-        Created specification.
+        cli_install_requires: Initial set of requirements that can be supplied via CLI arguments.
+        cli_other_spec_props: High-priority overloads that can override any properties of the default spec. This is
+                              expected to come from the CLI arguments.
     """
-    _assert_condition(entrypoint.exists() and entrypoint.is_file(), f'Specified file "{entrypoint!s}" is not found')
-    _assert_condition(entrypoint.suffix in ['.ui', '.py'], 'Only Python files (*.py) or Designer files (*.ui) are supported')
+    try:
+        _generate_pyproject_with_spec_unsafe(entrypoint=entrypoint,
+                                             interactive=interactive,
+                                             force_phonebook=force_phonebook,
+                                             cli_install_requires=cli_install_requires,
+                                             cli_other_spec_props=cli_other_spec_props)
+    except AssertionError as e:
+        logger.error(str(e))
+        exit(1)
+
+
+def _generate_pyproject_with_spec_unsafe(entrypoint: Path,
+                                         interactive: bool,
+                                         force_phonebook: bool,
+                                         cli_other_spec_props: Optional[Dict[str, Any]] = None,
+                                         cli_install_requires: Optional[Set[Requirement]] = None):
+    assert entrypoint.exists() and entrypoint.is_file(), f'Specified file "{entrypoint!s}" is not found'
+    assert entrypoint.suffix in ['.ui', '.py'], 'Only Python files (*.py) or Designer files (*.ui) are supported'
     default_spec = PackageSpec(name=entrypoint.stem,
                                version='0.0.1',
+                               entrypoint=entrypoint.name,
                                install_requires=set())
     final_spec = default_spec
 
-    cached_spec: Optional[PackageSpec]
+    cached_spec_dict: Optional[Dict[str, Any]]
     try:
-        cached_spec = read_spec_cache(entrypoint)
-    except FileNotFoundError:
-        cached_spec = None
+        pyproject_dict = read_pyproject(project_root=entrypoint.parent)
+    except InvalidProjectFileError as e:
+        logger.debug(f'Could not retrieve pyproject.toml cache: {e!s}')
+        cached_spec_dict = None
     else:
-        final_spec.update(cached_spec)
+        try:
+            cached_spec_dict = pyproject_dict_to_spec_dict(pyproject_dict)
+        except KeyError as e:
+            logger.debug(f'Could not retrieve pyproject.toml cache: Key error - {e!s}')
+            cached_spec_dict = None
 
-    if pkg_spec_overloads:
+    if cached_spec_dict is not None:
+        final_spec.update_from_dict(cached_spec_dict)
+        final_spec.entrypoint = entrypoint.name
+
+    if cli_other_spec_props:
         # Update with "higher-priority" settings (e.g. coming from CLI args)
-        final_spec.update_from_dict({k: v for k, v in pkg_spec_overloads.items() if v is not None})
+        final_spec.update_from_dict({k: v for k, v in cli_other_spec_props.items() if v is not None})
 
     # Now compute the requirements list
     resolved_install_requires: Set[Requirement]
     implicitly_disabled: Set[Requirement]
     # Additional requirements that ComRAD imposes and which are mandatory.
-    always_include_requires = {Requirement(f'comrad=={COMRAD_VERSION}')}
-    if install_requires:
+    always_include_requires = {Requirement(COMRAD_PINNED_VERSION)}
+    if cli_install_requires:
         # If you get a list of imports from outside, use that (e.g. coming from CLI args)
-        resolved_install_requires = install_requires
+        resolved_install_requires = cli_install_requires
         _inject_mandatory_requirements(resolved_install_requires, always_include_requires)
         implicitly_disabled = set()
     else:
@@ -95,9 +118,12 @@ def build_spec(entrypoint: Path,
         implicitly_disabled = _disable_implicit_requirements(resolved_install_requires, always_include_requires)
 
     logger.debug(f'Found requirements: {resolved_install_requires}')
-    if cached_spec and resolved_install_requires != cached_spec.install_requires:
-        logger.debug(f'Added packages: {resolved_install_requires - cached_spec.install_requires}')
-        logger.debug(f'Removed packages: {cached_spec.install_requires - resolved_install_requires}')
+    if cached_spec_dict:
+        cached_dep_names = set(cached_spec_dict.get('install_requires', []))
+        resolved_dep_names = set(map(str, resolved_install_requires))
+        if resolved_dep_names != cached_dep_names:
+            logger.debug(f'Added packages: {resolved_dep_names - cached_dep_names}')
+            logger.debug(f'Removed packages: {cached_dep_names - resolved_dep_names}')
     final_spec.install_requires = resolved_install_requires
 
     if interactive:
@@ -110,16 +136,9 @@ def build_spec(entrypoint: Path,
     try:
         final_spec.validate()
     except ValueError as e:
-        logger.error(f'Invalid package specification: {e!s}')
-        exit(1)
-    dump_spec_cache(spec=final_spec, entrypoint=entrypoint)
-    return final_spec
-
-
-def _assert_condition(condition: bool, message: str):
-    if not condition:
-        logger.error(message)
-        exit(1)
+        raise AssertionError(f'Invalid package specification: {e!s}')
+    written_file = dump_pyproject(spec=final_spec, project_root=entrypoint.parent)
+    print(f'\nMetadata has been written into {written_file!s}!')
 
 
 def _specialize_requirements_to_currently_installed(requirements: Set[Requirement]):

@@ -2,7 +2,7 @@
 
 import sys
 from pathlib import Path
-from _comrad import launcher
+from comrad_package import runner as comrad_runner
 
 
 _HERE = Path(__file__).parent
@@ -29,6 +29,6 @@ if __name__ == '__main__':
 
     comrad_run_args = sys.argv[1:]
     cli_command = ['run', *comrad_run_args, str(_ENTRYPOINT)]
-    parser, use_lazy_version = launcher.create_args_parser(custom_run_prog=prog)
+    parser, use_lazy_version = comrad_runner.build_cli(custom_run_prog=prog)
     args = parser.parse_args(cli_command)
-    launcher.process_args(args, parser, use_lazy_version)
+    comrad_runner.run_with_args(args, parser, use_lazy_version)
