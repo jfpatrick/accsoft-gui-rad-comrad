@@ -7,6 +7,7 @@ from logging import LogRecord
 from _pytest.logging import LogCaptureFixture
 from unittest import mock
 from pyrbac import Token
+from accwidgets.rbac import RbaButtonModel
 from comrad.rbac import CRbaState, CRbaLoginStatus, CRbaToken, CRbaStartupLoginPolicy
 
 
@@ -140,3 +141,48 @@ def test_authenticates_at_startup(initial_policy, initial_token, expected_args, 
                 meth.assert_called_once_with(**expected_kwargs)
             else:
                 meth.assert_called_once_with(*expected_args, **expected_kwargs)
+
+
+def test_replace_model_disconnects_original_model():
+    rbac = CRbaState()
+    old_model = rbac._model
+    assert old_model.receivers(old_model.login_succeeded) == 2
+    assert old_model.receivers(old_model.login_failed) == 2
+    assert old_model.receivers(old_model.logout_finished) == 2
+    new_model = RbaButtonModel()
+    rbac.replace_model(new_model)
+    assert old_model.receivers(old_model.login_succeeded) == 0
+    assert old_model.receivers(old_model.login_failed) == 0
+    assert old_model.receivers(old_model.logout_finished) == 0
+
+
+def test_replace_model_connects_new_model():
+    rbac = CRbaState()
+    new_model = RbaButtonModel()
+    assert new_model.receivers(new_model.login_succeeded) == 0
+    assert new_model.receivers(new_model.login_failed) == 0
+    assert new_model.receivers(new_model.logout_finished) == 0
+    rbac.replace_model(new_model)
+    assert new_model.receivers(new_model.login_succeeded) == 2
+    assert new_model.receivers(new_model.login_failed) == 2
+    assert new_model.receivers(new_model.logout_finished) == 2
+
+
+@pytest.mark.parametrize('token_exists,expect_copy', [
+    (True, True),
+    (False, False),
+])
+def test_replace_model_copies_token(token_exists, expect_copy):
+    rbac = CRbaState()
+    test_token = mock.MagicMock()
+    if token_exists:
+        rbac._model._token = test_token
+    else:
+        assert rbac._model._token is None
+    new_model = RbaButtonModel()
+    with mock.patch.object(new_model, 'update_token') as update_token:
+        rbac.replace_model(new_model)
+        if expect_copy:
+            update_token.assert_called_once_with(test_token)
+        else:
+            update_token.assert_not_called()

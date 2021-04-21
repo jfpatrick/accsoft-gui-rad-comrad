@@ -13,6 +13,6 @@ class RbaToolbarPlugin(CToolbarWidgetPlugin):
 
     def create_widget(self, _):
         app = cast(CApplication, CApplication.instance())
-        widget = RbaButton(model=app.rbac._model)
-        app.rbac._model.setParent(app.rbac)
+        widget = RbaButton()
+        app.rbac.replace_model(widget.model)
         return widget

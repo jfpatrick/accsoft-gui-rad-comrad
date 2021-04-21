@@ -47,12 +47,7 @@ class CRbaState(QObject):
                  startup_policy: CRbaStartupLoginPolicy = CRbaStartupLoginPolicy.LOGIN_BY_LOCATION):
         super().__init__(parent)
         self._model = RbaButtonModel(parent=self)
-        self._model.login_succeeded.connect(self.login_succeeded)
-        self._model.login_succeeded.connect(self._on_login_succeeded)
-        self._model.login_failed.connect(self.login_failed)
-        self._model.login_failed.connect(self._on_login_failed)
-        self._model.logout_finished.connect(self.logout_finished)
-        self._model.logout_finished.connect(self._on_logout)
+        self._connect_model(self._model)
         self._startup_login_policy = startup_policy
 
     def startup_login(self, serialized_token: Optional[str] = None):
@@ -83,6 +78,31 @@ class CRbaState(QObject):
         if self._model.token is None:
             return None
         return base64.b64encode(self._model.token.get_encoded()).decode()
+
+    def replace_model(self, new_model: RbaButtonModel):
+        if new_model == self._model:
+            return
+        if self.token:
+            new_model.update_token(self.token)
+        self._disconnect_model(self._model)
+        self._connect_model(new_model)
+        self._model = new_model
+
+    def _connect_model(self, model: RbaButtonModel):
+        model.login_succeeded.connect(self.login_succeeded)
+        model.login_succeeded.connect(self._on_login_succeeded)
+        model.login_failed.connect(self.login_failed)
+        model.login_failed.connect(self._on_login_failed)
+        model.logout_finished.connect(self.logout_finished)
+        model.logout_finished.connect(self._on_logout)
+
+    def _disconnect_model(self, model: RbaButtonModel):
+        model.login_succeeded.disconnect(self.login_succeeded)
+        model.login_succeeded.disconnect(self._on_login_succeeded)
+        model.login_failed.disconnect(self.login_failed)
+        model.login_failed.disconnect(self._on_login_failed)
+        model.logout_finished.disconnect(self.logout_finished)
+        model.logout_finished.disconnect(self._on_logout)
 
     def _on_login_succeeded(self, token: Token):
         logger.info(f'RBAC auth successful: {token.get_user_name()}')
