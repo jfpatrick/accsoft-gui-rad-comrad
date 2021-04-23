@@ -54,6 +54,8 @@ extensions = [
     'sphinx.ext.inheritance_diagram',  # Draw inheritance diagrams
     'sphinx.ext.graphviz',  # Needed to draw diagrams produced by plugin above (and also by hand)
     'sphinx.ext.todo',
+    'acc_py_sphinx.theme',  # Enable "acc_py" HTML theme
+    'acc_py_sphinx.utils.autocontent',  # Smarter merge of __init__ and class docstring
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -70,7 +72,7 @@ exclude_patterns: List[str] = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'acc_py'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -84,7 +86,6 @@ html_logo = './img/logo.png'  # Must be png here, as ico won't be rendered by Ch
 html_favicon = '../comrad/icons/app.ico'
 html_css_files = [
     'fix_tables.css',
-    'fix_bullets.css',
     'fix_logo.css',
     'custom_style.css',
 ]
