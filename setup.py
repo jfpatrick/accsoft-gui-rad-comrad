@@ -53,11 +53,12 @@ requirements = {
         'flake8-bugbear==20.1',
     ],
     'doc': [
-        'Sphinx>=2.3.1,<3',
-        'sphinx-rtd-theme>=0.4.3,<0.5',
+        'Sphinx>=3.2.1,<3.3a0',
+        'sphinx-rtd-theme>=0.4.3,<0.5a0',
         'sphinx-autodoc-typehints>=1.10.3,<1.11a0',
         'sphinxcontrib-napoleon2>=1.0,<2',
         'sphobjinv>=2.0,<2.1',
+        'docutils<0.17a0',  # docutils 0.17 broke a lot of thigs. While some were fixed by sphinx-rtd-theme 0.5.2, there are some outstanding issues, with gaps in bullets on the index page
     ],
     'release': [
         'versioneer>=0.15',
