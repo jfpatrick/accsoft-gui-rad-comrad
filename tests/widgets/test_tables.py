@@ -1,9 +1,7 @@
 import pytest
 import logging
-from logging import LogRecord
-from typing import List, cast
+from typing import List
 from pytestqt.qtbot import QtBot
-from _pytest.logging import LogCaptureFixture
 from unittest import mock
 from accwidgets.log_console import LogConsoleRecord
 from comrad import CLogConsole, LogLevel, LogConsoleModel, AbstractLogConsoleModel
@@ -114,17 +112,16 @@ def test_clogconsole_loggers_setter(is_qt_designer, is_designer_value, expected_
     ('', 'Failed to decode json: Expecting value:'),
 ])
 @mock.patch('comrad.widgets.tables.is_qt_designer', return_value=True)
-def test_clogconsole_loggers_setter_json_decode_error(_, input, qtbot: QtBot, expected_warning, caplog: LogCaptureFixture):
-    get_records = lambda: [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.WARNING and r.module == 'tables']
+def test_clogconsole_loggers_setter_json_decode_error(_, input, qtbot: QtBot, expected_warning, log_capture):
     widget = CLogConsole()
     qtbot.add_widget(widget)
-    assert get_records() == []
+    assert log_capture(logging.WARNING, logger_module='tables') == []
     assert widget._logger_levels == {}
     widget.loggers = input
     assert widget._logger_levels == {}
-    warnings = get_records()
-    assert len(warnings) == 1
-    assert warnings[0].startswith(expected_warning)
+    warning_records = log_capture(logging.WARNING, logger_module='tables')
+    assert len(warning_records) == 1
+    assert warning_records[0].startswith(expected_warning)
 
 
 @pytest.mark.parametrize('input,expect_warning', [
@@ -134,16 +131,15 @@ def test_clogconsole_loggers_setter_json_decode_error(_, input, qtbot: QtBot, ex
     ('[{"logger1": 20}]', True),
 ])
 @mock.patch('comrad.widgets.tables.is_qt_designer', return_value=True)
-def test_clogconsole_loggers_setter_json_not_dict_error(_, input, qtbot: QtBot, expect_warning, caplog: LogCaptureFixture):
-    get_records = lambda: [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.WARNING and r.module == 'tables']
+def test_clogconsole_loggers_setter_json_not_dict_error(_, input, qtbot: QtBot, expect_warning, log_capture):
     widget = CLogConsole()
     qtbot.add_widget(widget)
-    assert get_records() == []
+    assert log_capture(logging.WARNING, logger_module='tables') == []
     widget.loggers = input
     if expect_warning:
-        assert get_records() == ['Decoded logger levels is not a dictionary']
+        assert log_capture(logging.WARNING, logger_module='tables') == ['Decoded logger levels is not a dictionary']
     else:
-        assert get_records() == []
+        assert log_capture(logging.WARNING, logger_module='tables') == []
 
 
 @pytest.mark.parametrize('input,expect_raises', [
@@ -179,15 +175,14 @@ def test_clogconsole_loggers_setter_json_unknown_level_error(_, input, qtbot: Qt
 ])
 @mock.patch('comrad.widgets.tables.is_qt_designer')
 def test_clogconsole_loggers_setter_cant_derive_from_custom_model(is_qt_designer, is_designer_value, new_levels,
-                                                                  qtbot: QtBot, custom_model_class, caplog: LogCaptureFixture):
+                                                                  qtbot: QtBot, custom_model_class, log_capture):
     is_qt_designer.return_value = is_designer_value
     model = custom_model_class()
-    get_records = lambda: [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.ERROR and r.module == 'tables']
     widget = CLogConsole(model=model)
     qtbot.add_widget(widget)
-    assert get_records() == []
+    assert log_capture(logging.ERROR, logger_module='tables') == []
     widget.loggers = new_levels
-    assert get_records() == ['Cannot set Python loggers on an unsupported model type "TestModel".']
+    assert log_capture(logging.ERROR, logger_module='tables') == ['Cannot set Python loggers on an unsupported model type "TestModel".']
 
 
 @pytest.mark.parametrize('is_designer_value,new_levels', [
@@ -202,19 +197,18 @@ def test_clogconsole_loggers_setter_cant_derive_from_custom_model(is_qt_designer
 ])
 @mock.patch('comrad.widgets.tables.is_qt_designer')
 def test_clogconsole_loggers_setter_cant_derive_from_model_subclass(is_qt_designer, is_designer_value, new_levels,
-                                                                    qtbot: QtBot, caplog: LogCaptureFixture):
+                                                                    qtbot: QtBot, log_capture):
     is_qt_designer.return_value = is_designer_value
 
     class ModelSubclass(LogConsoleModel):
         pass
 
     model = ModelSubclass()
-    get_records = lambda: [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.ERROR and r.module == 'tables']
     widget = CLogConsole(model=model)
     qtbot.add_widget(widget)
-    assert get_records() == []
+    assert log_capture(logging.ERROR, logger_module='tables') == []
     widget.loggers = new_levels
-    assert get_records() == ['Cannot set Python loggers on an unsupported model type "ModelSubclass".']
+    assert log_capture(logging.ERROR, logger_module='tables') == ['Cannot set Python loggers on an unsupported model type "ModelSubclass".']
 
 
 @pytest.mark.parametrize('buf_size', [0, 1, 1000])

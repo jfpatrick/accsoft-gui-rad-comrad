@@ -1,10 +1,8 @@
 import pytest
 import logging
-from logging import LogRecord
 from pytestqt.qtbot import QtBot
-from _pytest.logging import LogCaptureFixture
 from unittest import mock
-from typing import Type, Union, cast, Dict, Tuple, Any, List
+from typing import Type, Union, cast, Dict, Tuple, Any
 from qtpy.QtWidgets import QWidget
 from pydm.widgets.base import PyDMWidget
 from comrad.widgets.mixins import CRequestingMixin, CWidgetRulesMixin, CColorRulesMixin
@@ -195,7 +193,7 @@ def test_rules_mixin_sets_properties(qtbot: QtBot, mixin_type, prop_name, prop_s
         setter_mock.assert_called_with(expected_prop_value)
 
 
-def test_rules_mixin_skips_eval_for_unknown_prop(qtbot, caplog: LogCaptureFixture):
+def test_rules_mixin_skips_eval_for_unknown_prop(qtbot, log_capture):
     mixin_class = make_mixin_class(CWidgetRulesMixin)
     widget = mixin_class()
     qtbot.add_widget(widget)
@@ -211,7 +209,7 @@ def test_rules_mixin_skips_eval_for_unknown_prop(qtbot, caplog: LogCaptureFixtur
                 setVisible.assert_not_called()
                 setEnabled.assert_not_called()
                 set_opacity.assert_not_called()
-                actual_errors = [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.ERROR]
+                actual_errors = log_capture(logging.ERROR)
                 assert actual_errors == ['Error at Rule: test_name. NonExistingProperty is not part of this widget properties.']
 
 
@@ -220,7 +218,7 @@ def test_rules_mixin_skips_eval_for_unknown_prop(qtbot, caplog: LogCaptureFixtur
     (None, False, ['Error at Rule: test_name. Getter getterNonExistent does not exist on this widget.',
                    "Error at Rule: test_name. Cannot reset property to its initial value, as it's not recorded"]),
 ])
-def test_rules_mixin_does_when_getter_invalid(qtbot, caplog: LogCaptureFixture, rule_value, should_call_setter, expected_errors):
+def test_rules_mixin_does_when_getter_invalid(qtbot, log_capture, rule_value, should_call_setter, expected_errors):
     mixin_class = make_mixin_class(CWidgetRulesMixin)
     mixin_class.RULE_PROPERTIES = {'Visibility': ('getterNonExistent', 'setVisible', bool)}
     widget = mixin_class()
@@ -236,11 +234,10 @@ def test_rules_mixin_does_when_getter_invalid(qtbot, caplog: LogCaptureFixture, 
             setVisible.assert_called_with(rule_value)
         else:
             setVisible.assert_not_called()
-        actual_errors = [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.ERROR]
-        assert actual_errors == expected_errors
+        assert log_capture(logging.ERROR) == expected_errors
 
 
-def test_rules_mixin_skips_eval_for_unknown_setter(qtbot, caplog: LogCaptureFixture):
+def test_rules_mixin_skips_eval_for_unknown_setter(qtbot, log_capture):
     mixin_class = make_mixin_class(CWidgetRulesMixin)
     mixin_class.RULE_PROPERTIES = {'Visibility': ('isVisible', 'setNonExistent', bool)}
     widget = mixin_class()
@@ -253,5 +250,4 @@ def test_rules_mixin_skips_eval_for_unknown_setter(qtbot, caplog: LogCaptureFixt
             'value': None,
         })
         setVisible.assert_not_called()
-        actual_errors = [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.ERROR]
-        assert actual_errors == ['Error at Rule: test_name. Setter setNonExistent does not exist on this widget.']
+        assert log_capture(logging.ERROR) == ['Error at Rule: test_name. Setter setNonExistent does not exist on this widget.']

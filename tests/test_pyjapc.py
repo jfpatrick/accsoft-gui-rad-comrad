@@ -1,10 +1,8 @@
 import pytest
 import logging
-from logging import LogRecord
-from _pytest.logging import LogCaptureFixture
 from pytestqt.qtbot import QtBot
 from unittest import mock
-from typing import cast, List
+from typing import cast
 from pyrbac import Token
 from comrad import CApplication
 from comrad.data.pyjapc_patch import CPyJapc
@@ -206,22 +204,17 @@ def test_rbac_inject_token_notifies_status(qtbot):
 ])
 @mock.patch('comrad.data.pyjapc_patch.cern')
 @mock.patch('pyjapc.PyJapc.rbacGetToken')
-def test_rbac_inject_token_python_exception_caught(rbacGetToken, cern, qtbot, caplog: LogCaptureFixture, error, expected_error):
+def test_rbac_inject_token_python_exception_caught(rbacGetToken, cern, qtbot, log_capture, error, expected_error):
     japc = CPyJapc()
     assert japc._logged_in is False
-
-    def get_records():
-        return [r.getMessage() for r in cast(List[LogRecord], caplog.records) if
-                r.levelno == logging.ERROR and r.name == 'comrad.japc']
-
     token = Token.create_empty_token()
     cern.rbac.common.RbaToken.parseAndValidate.side_effect = error
     cern.rbac.util.holder.ClientTierTokenHolder.setRbaToken.assert_not_called()
     rbacGetToken.assert_not_called()
-    assert get_records() == []
+    assert log_capture(logging.ERROR, 'comrad.japc') == []
     with qtbot.assert_not_emitted(japc.japc_status_changed):
         japc._inject_token(token)
-    assert get_records() == [expected_error]
+    assert log_capture(logging.ERROR, 'comrad.japc') == [expected_error]
     cern.rbac.util.holder.ClientTierTokenHolder.setRbaToken.assert_not_called()
     rbacGetToken.assert_not_called()
     assert japc._logged_in is False
@@ -229,7 +222,7 @@ def test_rbac_inject_token_python_exception_caught(rbacGetToken, cern, qtbot, ca
 
 @mock.patch('comrad.data.pyjapc_patch.cern')
 @mock.patch('pyjapc.PyJapc.rbacGetToken')
-def test_rbac_inject_token_java_exception_caught(rbacGetToken, cern, qtbot, caplog: LogCaptureFixture):
+def test_rbac_inject_token_java_exception_caught(rbacGetToken, cern, qtbot, log_capture):
     japc = CPyJapc()
     assert japc._logged_in is False
 
@@ -241,18 +234,14 @@ def test_rbac_inject_token_java_exception_caught(rbacGetToken, cern, qtbot, capl
         import jpype
         raise jpype.JPackage('cern.rbac.common.TokenFormatException')('Test exception')
 
-    def get_records():
-        return [r.getMessage() for r in cast(List[LogRecord], caplog.records) if
-                r.levelno == logging.ERROR and r.name == 'comrad.japc']
-
     token = Token.create_empty_token()
     cern.rbac.common.RbaToken.parseAndValidate.side_effect = raise_error
     cern.rbac.util.holder.ClientTierTokenHolder.setRbaToken.assert_not_called()
     rbacGetToken.assert_not_called()
-    assert get_records() == []
+    assert log_capture(logging.ERROR, 'comrad.japc') == []
     with qtbot.assert_not_emitted(japc.japc_status_changed):
         japc._inject_token(token)
-    assert get_records() == ['Java refused generated token: cern.rbac.common.TokenFormatException: Test exception']
+    assert log_capture(logging.ERROR, 'comrad.japc') == ['Java refused generated token: cern.rbac.common.TokenFormatException: Test exception']
     cern.rbac.util.holder.ClientTierTokenHolder.setRbaToken.assert_not_called()
     rbacGetToken.assert_not_called()
     assert japc._logged_in is False

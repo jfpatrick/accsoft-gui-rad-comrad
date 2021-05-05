@@ -1,5 +1,9 @@
+import logging
 import pytest
 from unittest import mock
+from logging import LogRecord
+from typing import List, cast, Optional
+from _pytest.logging import LogCaptureFixture
 
 
 @pytest.fixture(autouse=True)
@@ -44,3 +48,25 @@ def patch_app_singleton(monkeypatch):
 
     import qtpy.QtWidgets
     monkeypatch.setattr(qtpy.QtWidgets.QApplication, 'instance', fake_app)
+
+
+@pytest.fixture
+def log_capture(caplog: LogCaptureFixture):
+
+    # Make sure all records are being captured
+    logging.getLogger().setLevel(logging.DEBUG)
+
+    def wrapper(level: int, logger_name: Optional[str] = None, logger_module: Optional[str] = None):
+
+        def satisfies_condition(r: LogRecord) -> bool:
+            if logger_name:
+                return r.name == logger_name
+            elif logger_module:
+                return r.module == logger_module
+            else:
+                return True
+
+        return [r.getMessage() for r in cast(List[LogRecord], caplog.records) if
+                r.levelno == level and satisfies_condition(r)]
+
+    return wrapper

@@ -3,10 +3,8 @@ import logging
 import numpy as np
 from pathlib import Path
 from unittest import mock
-from typing import cast, List
-from logging import LogRecord
+from typing import cast
 from pytestqt.qtbot import QtBot
-from _pytest.logging import LogCaptureFixture
 from qtpy.QtCore import Signal, Slot, QObject
 from comrad.data import japc_plugin
 from comrad.data.japc_plugin import CJapcConnection, CChannelData, SPECIAL_FIELDS, parse_field_trait
@@ -128,12 +126,11 @@ def test_connection_address(add_listener, param_name, selector, filter, expected
     'device/property#field@LHC.USER.ALL',
 ])
 @mock.patch('comrad.data.japc_plugin.CJapcConnection.add_listener')
-def test_connection_fails_with_wrong_parameter_name(add_listener, channel_address, caplog: LogCaptureFixture):
+def test_connection_fails_with_wrong_parameter_name(add_listener, channel_address, log_capture):
     ch = PyDMChannel(address=channel_address)
     _ = CJapcConnection(channel=ch, protocol='rda', address=ch.address)
     add_listener.assert_not_called()
-    actual_warnings = [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.ERROR]
-    assert actual_warnings == [f'Cannot create connection with invalid parameter name format "{channel_address}"!']
+    assert log_capture(logging.ERROR) == [f'Cannot create connection with invalid parameter name format "{channel_address}"!']
 
 
 @pytest.mark.parametrize('selector', [
@@ -141,13 +138,12 @@ def test_connection_fails_with_wrong_parameter_name(add_listener, channel_addres
     'LHS.USER',
 ])
 @mock.patch('comrad.data.japc_plugin.CJapcConnection.add_listener')
-def test_connection_fails_with_wrong_context(add_listener, selector, caplog: LogCaptureFixture):
+def test_connection_fails_with_wrong_context(add_listener, selector, log_capture):
     ch = PyDMChannel(address='device/property')
     cast(CChannel, ch).context = CContext(selector=selector)
     _ = CJapcConnection(channel=ch, protocol='rda', address='/device/property')
     add_listener.assert_not_called()
-    actual_warnings = [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.ERROR]
-    assert actual_warnings == [f'Cannot create connection for address "device/property@{selector}"!']
+    assert log_capture(logging.ERROR) == [f'Cannot create connection for address "device/property@{selector}"!']
 
 
 @pytest.mark.parametrize('connected', [
@@ -206,7 +202,7 @@ def test_meta_field_resolved_on_field_level(meta_field, header_field):
     callback.assert_called_once_with(sig, CChannelData(value=header[header_field], meta_info=header))
 
 
-def test_meta_field_missing_from_incoming_header(caplog: LogCaptureFixture):
+def test_meta_field_missing_from_incoming_header(log_capture):
     ch = PyDMChannel(address='device/property#acqStamp')
     connection = CJapcConnection(channel=ch, protocol='rda', address='/device/property#acqStamp')
     callback = mock.Mock()
@@ -217,10 +213,9 @@ def test_meta_field_missing_from_incoming_header(caplog: LogCaptureFixture):
         'selector': 'test-cycle-name',
     }
     connection._notify_listeners('device/property#acqStamp', 42, header, emitter=callback, callback_signals=[sig])
-    # We have to protect from warnings leaking from dependencies, e.g. cmmnbuild_dep_manager, regarding JVM :(
-    warning_records = [r for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.WARNING and r.name == 'comrad.data_plugins']
-    assert len(warning_records) == 1
-    assert 'Cannot locate meta-field "acqStamp" inside packet header' in warning_records[0].msg
+    warning_messages = log_capture(logging.WARNING, 'comrad.data_plugins')
+    assert len(warning_messages) == 1
+    assert 'Cannot locate meta-field "acqStamp" inside packet header' in warning_messages[0]
     callback.assert_not_called()
 
 
@@ -435,12 +430,12 @@ def test_field_traits_are_not_removed_from_value_dictionary(val, header):
     ('rda://srv/mydevice/myprop#cycleName_MAX', False, 'Cannot write into meta-field "rda://srv/mydevice/myprop#cycleName_MAX". SET operation will be ignored.'),
     ('rda://srv/mydevice/myprop#cycleName_UNITS', False, 'Cannot write into meta-field "rda://srv/mydevice/myprop#cycleName_UNITS". SET operation will be ignored.'),
 ])
-def test_set_of_field_trait_directly_is_ignored(address, expected_error, expect_set_param_called, caplog: LogCaptureFixture):
+def test_set_of_field_trait_directly_is_ignored(address, expected_error, expect_set_param_called, log_capture):
     ch = PyDMChannel(address=address)
     connection = CJapcConnection(channel=ch, protocol='japc', address=address)
     CPyJapc.instance.return_value.setParam.assert_not_called()  # type: ignore
     connection.set(value='test_val')
-    actual_errors = [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.ERROR and r.name == 'comrad.data.japc_plugin']
+    actual_errors = log_capture(logging.ERROR, 'comrad.data.japc_plugin')
     if expect_set_param_called:
         CPyJapc.instance.return_value.setParam.assert_called_once()  # type: ignore
         assert actual_errors == []
@@ -473,12 +468,12 @@ def test_set_of_field_trait_directly_is_ignored(address, expected_error, expect_
     ({'val': 42, 'val2': 'val2', 'val_min': 0.1, 'val2_min': 0.3, 'val_units': 'test'}, {'val': 42, 'val2': 'val2'},
      'Cannot write meta-fields of property "device/property": val_min, val2_min, val_units. They will be excluded from the SET payload.'),
 ])
-def test_property_set_excludes_field_traits_from_payload(input_value, expected_warning, expected_set_value, caplog: LogCaptureFixture):
+def test_property_set_excludes_field_traits_from_payload(input_value, expected_warning, expected_set_value, log_capture):
     ch = PyDMChannel(address='device/property')
     connection = CJapcConnection(channel=ch, protocol='japc', address='/device/property')
     CPyJapc.instance.return_value.setParam.assert_not_called()  # type: ignore
     connection.set(value=input_value)
-    actual_warnings = [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.WARNING and r.name == 'comrad.data.japc_plugin']
+    actual_warnings = log_capture(logging.WARNING, 'comrad.data.japc_plugin')
     if expected_warning:
         assert actual_warnings == [expected_warning]
     else:

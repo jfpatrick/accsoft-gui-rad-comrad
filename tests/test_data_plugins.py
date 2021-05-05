@@ -2,10 +2,8 @@ import pytest
 import logging
 import functools
 import numpy as np
-from typing import cast, Type, Optional, List
-from logging import LogRecord
+from typing import cast, Type, Optional
 from pytestqt.qtbot import QtBot
-from _pytest.logging import LogCaptureFixture
 from unittest import mock
 from qtpy.QtCore import QVariant, QObject, Signal
 from comrad.data import channel
@@ -603,7 +601,7 @@ def test_common_requested_get_fires_back_on_requested_signal(qtbot: QtBot, make_
         request_slot.assert_called_once_with(expected_payload, 'test-uuid')
 
 
-def test_common_failure_to_process_incoming_value(qtbot: QtBot, make_common_conn, caplog: LogCaptureFixture):
+def test_common_failure_to_process_incoming_value(qtbot: QtBot, make_common_conn, log_capture):
     ch = cast(channel.CChannel, channel.PyDMChannel(address='device/property'))
     value_slot = mock.Mock()
     ch.value_slot = value_slot
@@ -615,10 +613,9 @@ def test_common_failure_to_process_incoming_value(qtbot: QtBot, make_common_conn
         with qtbot.wait_signal(conn.new_value_signal, raising=False):
             conn.get(conn._on_async_get)
         # We have to protect from warnings leaking from dependencies, e.g. cmmnbuild_dep_manager, regarding JVM :(
-        warning_records = [r for r in cast(List[LogRecord], caplog.records) if
-                           r.levelno == logging.WARNING and r.name == 'comrad.data_plugins']
+        warning_records = log_capture(logging.WARNING, 'comrad.data_plugins')
         assert len(warning_records) == 1
-        assert warning_records[0].msg.endswith(': Test message')
+        assert warning_records[0].endswith(': Test message')
         value_slot.assert_not_called()
 
 

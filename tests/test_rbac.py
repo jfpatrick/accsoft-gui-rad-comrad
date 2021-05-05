@@ -1,29 +1,18 @@
 import pytest
 import logging
 from copy import copy
-from typing import List, cast
-from logging import LogRecord
-from _pytest.logging import LogCaptureFixture
 from unittest import mock
 from pyrbac import Token
 from accwidgets.rbac import RbaButtonModel
 from comrad.rbac import CRbaState, CRbaLoginStatus, CRbaToken, CRbaStartupLoginPolicy
 
 
-def test_logs_on_successful_login(caplog: LogCaptureFixture, qtbot):
-    # Make sure the log records are not dismissed
-    logging.getLogger().setLevel(logging.NOTSET)
-
+def test_logs_on_successful_login(log_capture, qtbot):
     state = CRbaState()
-
-    def get_logs():
-        return [r.getMessage() for r in cast(List[LogRecord], caplog.records) if
-                r.levelno == logging.INFO and r.name == 'comrad.rbac']
-
-    assert get_logs() == []
+    assert log_capture(logging.INFO, 'comrad.rbac') == []
     with qtbot.wait_signal(state._model.login_succeeded):
         state._model.login_succeeded.emit(Token.create_empty_token())
-    assert get_logs() == ['RBAC auth successful: ']
+    assert log_capture(logging.INFO, 'comrad.rbac') == ['RBAC auth successful: ']
 
 
 @pytest.mark.parametrize('login_method', [
@@ -31,33 +20,20 @@ def test_logs_on_successful_login(caplog: LogCaptureFixture, qtbot):
     CRbaToken.LoginMethod.UNKNOWN,
     CRbaToken.LoginMethod.LOCATION,
 ])
-def test_logs_on_failed_login(caplog: LogCaptureFixture, qtbot, login_method):
+def test_logs_on_failed_login(log_capture, qtbot, login_method):
     state = CRbaState()
-
-    def get_logs():
-        return [r.getMessage() for r in cast(List[LogRecord], caplog.records) if
-                r.levelno == logging.WARNING and r.name == 'comrad.rbac']
-
-    assert get_logs() == []
+    assert log_capture(logging.WARNING, 'comrad.rbac') == []
     with qtbot.wait_signal(state._model.login_failed):
         state._model.login_failed.emit('Test error', login_method.value)
-    assert get_logs() == ['RBAC auth failed: Test error']
+    assert log_capture(logging.WARNING, 'comrad.rbac') == ['RBAC auth failed: Test error']
 
 
-def test_logs_on_logout(caplog: LogCaptureFixture, qtbot):
-    # Make sure the log records are not dismissed
-    logging.getLogger().setLevel(logging.NOTSET)
-
+def test_logs_on_logout(log_capture, qtbot):
     state = CRbaState()
-
-    def get_logs():
-        return [r.getMessage() for r in cast(List[LogRecord], caplog.records) if
-                r.levelno == logging.INFO and r.name == 'comrad.rbac']
-
-    assert get_logs() == []
+    assert log_capture(logging.INFO, 'comrad.rbac') == []
     with qtbot.wait_signal(state._model.logout_finished):
         state._model.logout_finished.emit()
-    assert get_logs() == ['RBAC logout']
+    assert log_capture(logging.INFO, 'comrad.rbac') == ['RBAC logout']
 
 
 @pytest.mark.parametrize('token_encoded,expected_result', [

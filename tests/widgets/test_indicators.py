@@ -3,10 +3,7 @@ import logging
 import functools
 import numpy as np
 from unittest import mock
-from typing import List, cast
-from logging import LogRecord
 from pytestqt.qtbot import QtBot
-from _pytest.logging import LogCaptureFixture
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QColor
 from comrad import CEnumValue, CLabel, CChannelData, CLed
@@ -82,17 +79,16 @@ def test_cled_color_map_setter(is_qt_designer, is_designer_value, expected_value
     ('', 'Failed to decode json: Expecting value:'),
 ])
 @mock.patch('comrad.widgets.indicators.is_qt_designer', return_value=True)
-def test_cled_color_map_setter_json_decode_error(_, input, qtbot: QtBot, expected_warning, caplog: LogCaptureFixture):
-    get_records = lambda: [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.WARNING and r.module == 'indicators']
+def test_cled_color_map_setter_json_decode_error(_, input, qtbot: QtBot, expected_warning, log_capture):
     widget = CLed()
     qtbot.add_widget(widget)
-    assert get_records() == []
+    assert log_capture(logging.WARNING, logger_module='indicators') == []
     assert widget._color_map == {}
     widget.color_map = input
     assert widget._color_map == {}
-    warnings = get_records()
-    assert len(warnings) == 1
-    assert warnings[0].startswith(expected_warning)
+    warning_messages = log_capture(logging.WARNING, logger_module='indicators')
+    assert len(warning_messages) == 1
+    assert warning_messages[0].startswith(expected_warning)
 
 
 @pytest.mark.parametrize('input,expect_warning', [
@@ -102,17 +98,16 @@ def test_cled_color_map_setter_json_decode_error(_, input, qtbot: QtBot, expecte
     ('[{"2": "#ff0000"}]', True),
 ])
 @mock.patch('comrad.widgets.indicators.is_qt_designer', return_value=True)
-def test_cled_color_map_setter_json_not_dict_error(_, input, qtbot: QtBot, expect_warning, caplog: LogCaptureFixture):
-    get_records = lambda: [r.msg for r in cast(List[LogRecord], caplog.records) if
-                           r.levelno == logging.WARNING and r.module == 'indicators']
+def test_cled_color_map_setter_json_not_dict_error(_, input, qtbot: QtBot, expect_warning, log_capture):
     widget = CLed()
     qtbot.add_widget(widget)
-    assert get_records() == []
+    assert log_capture(logging.WARNING, logger_module='indicators') == []
     widget.color_map = input
+    warning_messages = log_capture(logging.WARNING, logger_module='indicators')
     if expect_warning:
-        assert get_records() == ['Decoded color map is not a dictionary']
+        assert warning_messages == ['Decoded color map is not a dictionary']
     else:
-        assert get_records() == []
+        assert warning_messages == []
 
 
 @pytest.mark.parametrize('input,expected_warning', [
@@ -122,13 +117,12 @@ def test_cled_color_map_setter_json_not_dict_error(_, input, qtbot: QtBot, expec
     ('{"0.00005": "#ff0000"}', "Failed to parse color map: invalid literal for int() with base 10: '0.00005'"),
 ])
 @mock.patch('comrad.widgets.indicators.is_qt_designer', return_value=True)
-def test_cled_color_map_setter_json_dict_key_error(_, input, qtbot: QtBot, expected_warning, caplog: LogCaptureFixture):
-    get_records = lambda: [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.WARNING and r.module == 'indicators']
+def test_cled_color_map_setter_json_dict_key_error(_, input, qtbot: QtBot, expected_warning, log_capture):
     widget = CLed()
     qtbot.add_widget(widget)
-    assert get_records() == []
+    assert log_capture(logging.WARNING, logger_module='indicators') == []
     widget.color_map = input
-    assert get_records() == [expected_warning]
+    assert log_capture(logging.WARNING, logger_module='indicators') == [expected_warning]
 
 
 @pytest.mark.parametrize('on_color,off_color', [

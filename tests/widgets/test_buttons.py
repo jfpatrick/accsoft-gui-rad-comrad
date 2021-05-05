@@ -1,10 +1,8 @@
 import pytest
 import logging
 import numpy as np
-from typing import List, cast, Optional, Type
-from logging import LogRecord
+from typing import Optional, Type
 from pytestqt.qtbot import QtBot
-from _pytest.logging import LogCaptureFixture
 from comrad import CPushButton, CChannelData
 
 
@@ -14,15 +12,14 @@ from comrad import CPushButton, CChannelData
     ('password', '', 'test-password', 'password property is disabled in ComRAD (found in unidentified CPushButton)'),
     ('protectedPassword', '', 'test-protected-password', 'protectedPassword property is disabled in ComRAD (found in unidentified CPushButton)'),
 ])
-def test_cpushbutton_pydm_props_disabled(qtbot: QtBot, caplog: LogCaptureFixture, prop_name, return_value, set_value, error_msg):
+def test_cpushbutton_pydm_props_disabled(qtbot: QtBot, log_capture, prop_name, return_value, set_value, error_msg):
     widget = CPushButton()
     qtbot.addWidget(widget)
     assert getattr(widget, prop_name) == return_value
 
     setattr(widget, prop_name, set_value)
 
-    warning_records = [r.msg for r in cast(List[LogRecord], caplog.records) if
-                       r.levelno == logging.WARNING and r.name == 'comrad.widgets.buttons']
+    warning_records = log_capture(logging.WARNING, 'comrad.widgets.buttons')
     assert warning_records == [error_msg]
 
     # Check that value has not changed after the set
@@ -159,7 +156,7 @@ def test_cpushbutton_update_press_value(qtbot, current_channel_value, updated_va
     (10, 'New str value', "'New str value' is not a valid pressValue for '<channel>'."),
     (10.10, 'New str value', "'New str value' is not a valid pressValue for '<channel>'."),
 ])
-def test_cpushbutton_update_press_value_incompatible_update_value(qtbot: QtBot, caplog: LogCaptureFixture,
+def test_cpushbutton_update_press_value_incompatible_update_value(qtbot: QtBot, log_capture,
                                                                   current_channel_value, updated_value,
                                                                   expected_log_error):
     widget = CPushButton()
@@ -179,6 +176,5 @@ def test_cpushbutton_update_press_value_incompatible_update_value(qtbot: QtBot, 
     widget.updatePressValue(updated_value)
 
     # Make sure logging capture the error, and have the correct error message
-    error_records = [r.msg for r in cast(List[LogRecord], caplog.records) if
-                     r.levelno == logging.ERROR and r.name == 'comrad.widgets.buttons']
+    error_records = log_capture(logging.ERROR, 'comrad.widgets.buttons')
     assert error_records == [expected_log_error]

@@ -2,13 +2,10 @@ import pytest
 import json
 import logging
 import numpy as np
-from typing import List, cast
-from logging import LogRecord
 from freezegun import freeze_time
 from datetime import datetime
 from dateutil.tz import tzoffset
 from pytestqt.qtbot import QtBot
-from _pytest.logging import LogCaptureFixture
 from unittest import mock
 from qtpy.QtCore import QObject, Qt
 from qtpy.QtGui import QColor
@@ -157,21 +154,20 @@ def test_pydmchanneldatasource_transforms_value_into_correct_format(input, last_
         assert blocker.args is None
 
 
-def test_cplotwidgetbase_forbids_weird_subclasses(caplog: LogCaptureFixture):
+def test_cplotwidgetbase_forbids_weird_subclasses(log_capture):
 
     class WeirdSubclass(QObject, CPlotWidgetBase):
         pass
 
-    assert len(caplog.records) == 0
+    assert log_capture(logging.WARNING) == []
 
     WeirdSubclass()
 
-    actual_warnings = [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.WARNING]
-    assert actual_warnings == ['CPlotWidgetBase implementation relies on attributes provided by ExPlotWidget. '
-                               'Use CPlotWidgetBase only as base class of classes derived from ExPlotWidget.']
+    assert log_capture(logging.WARNING) == ['CPlotWidgetBase implementation relies on attributes provided by ExPlotWidget. '
+                                            'Use CPlotWidgetBase only as base class of classes derived from ExPlotWidget.']
 
 
-# Amount of options limited to keep a sane number of dynamicly generated test cases (currently ~1.5k for this one alone)
+# Amount of options limited to keep a sane number of dynamically generated test cases (currently ~1.5k for this one alone)
 @pytest.mark.parametrize('data_source', [None, UpdateSource(), 'dev/prop#field'])
 @pytest.mark.parametrize('layer', [None, 'mylayer'])
 @pytest.mark.parametrize('color', [None, QColor(255, 255, 0)])
@@ -615,20 +611,19 @@ def test_clear_items(qtbot, widget_type):
     assert len(widget._items) == 0
 
 
-def test_citempropertiesbase_forbids_weird_subclasses(caplog: LogCaptureFixture):
+def test_citempropertiesbase_forbids_weird_subclasses(log_capture):
 
     class WeirdSubclass(CItemPropertiesBase):
 
         def style_string(self) -> str:
             pass
 
-    assert len(caplog.records) == 0
+    assert log_capture(logging.WARNING) == []
 
     WeirdSubclass(related_base_class=int, related_concrete_class=bool)
 
-    actual_warnings = [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.WARNING]
-    assert actual_warnings == ['WeirdSubclass implementation relies on attributes provided by int. '
-                               'Use int only as base class of classes derived from bool.']
+    assert log_capture(logging.WARNING) == ['WeirdSubclass implementation relies on attributes provided by int. '
+                                            'Use int only as base class of classes derived from bool.']
 
 
 @pytest.mark.parametrize('style,widget_type', [

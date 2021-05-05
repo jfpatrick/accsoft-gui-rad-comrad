@@ -1,9 +1,6 @@
 import pytest
 import logging
 from unittest import mock
-from typing import List, cast
-from logging import LogRecord
-from _pytest.logging import LogCaptureFixture
 from qtpy.QtWidgets import QWidget
 from comrad.deprecations import deprecated_args, deprecated_parent_prop
 from comrad.widgets.mixins import CInitializedMixin
@@ -36,15 +33,13 @@ def deprecated_fn():
         ([1, 2, 3], {'a4': 4}, []),
         ((1, 2, 3, 4), {}, []),
     ])
-def test_fn_arg_deprecations(caplog: LogCaptureFixture, args, kwargs, expected_warnings, deprecated_fn):
+def test_fn_arg_deprecations(log_capture, args, kwargs, expected_warnings, deprecated_fn):
     res1, res2, res3, res4 = deprecated_fn(*args, **kwargs)
     assert res1 == 1
     assert res2 == 2
     assert res3 == 3
     assert res4 == 4
-    # We have to protect from warnings leaking from dependencies, e.g. cmmnbuild_dep_manager, regarding JVM :(
-    actual_warnings = [r.msg for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.WARNING and r.module == 'deprecations']
-    assert actual_warnings == expected_warnings
+    assert log_capture(logging.WARNING, logger_module='deprecations') == expected_warnings
 
 
 def test_fn_arg_deprecation_exc(deprecated_fn):
@@ -87,7 +82,7 @@ def test_prop_deprecation_no_mixin(qtbot, superclasses):
     (None, None, 'test_prop property is disabled in ComRAD (found in unidentified MyWidget)'),
     (None, 'custom_prop', 'custom_prop property is disabled in ComRAD (found in unidentified MyWidget)'),
 ])
-def test_prop_deprecation_displays_warning(qtbot, caplog: LogCaptureFixture, obj_name, custom_prop_name,
+def test_prop_deprecation_displays_warning(qtbot, log_capture, obj_name, custom_prop_name,
                                            in_designer, initialized, should_issue, expected_warning):
     _ = qtbot
     import logging
@@ -110,11 +105,8 @@ def test_prop_deprecation_displays_warning(qtbot, caplog: LogCaptureFixture, obj
 
         obj = MyWidget()
         _ = obj.test_prop
-        # We have to protect from warnings leaking from dependencies, e.g. cmmnbuild_dep_manager, regarding JVM :(
-        warning_records = [r for r in cast(List[LogRecord], caplog.records) if r.levelno == logging.WARNING and r.module == 'deprecations']
+        warning_records = log_capture(logging.WARNING, logger_module='deprecations')
         if should_issue:
-            assert len(warning_records) == 1
-            actual_warning = warning_records[0].msg
-            assert actual_warning == expected_warning
+            assert warning_records == [expected_warning]
         else:
-            assert len(warning_records) == 0
+            assert warning_records == []
