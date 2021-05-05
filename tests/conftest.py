@@ -1,5 +1,9 @@
+import sys
 import logging
 import pytest
+import importlib
+import builtins
+from copy import copy
 from unittest import mock
 from logging import LogRecord
 from typing import List, cast, Optional
@@ -68,5 +72,36 @@ def log_capture(caplog: LogCaptureFixture):
 
         return [r.getMessage() for r in cast(List[LogRecord], caplog.records) if
                 r.levelno == level and satisfies_condition(r)]
+
+    return wrapper
+
+
+@pytest.fixture
+def freeze_modules():
+    orig_modules = copy(sys.modules)
+    try:
+        yield
+    finally:
+        newly_appeared = set(sys.modules.keys()) - set(orig_modules.keys())
+        for mod_name in newly_appeared:
+            sys.modules.pop(mod_name, None)
+        sys.modules.update(orig_modules)
+        importlib.invalidate_caches()
+
+
+@pytest.fixture
+def sim_import_error(monkeypatch):
+    failing_modules = set()
+    _import = builtins.__import__
+
+    def raising_import(name, *args, **kwargs):
+        if name in failing_modules:
+            raise ImportError
+        return _import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, '__import__', raising_import)
+
+    def wrapper(mod_name: str):
+        failing_modules.add(mod_name)
 
     return wrapper
