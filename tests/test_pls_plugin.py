@@ -1,5 +1,4 @@
 import pytest
-import os
 from datetime import datetime
 from pytestqt.qtbot import QtBot
 from typing import List, cast
@@ -9,14 +8,6 @@ from accwidgets.timing_bar._model import TimingUpdate
 from comrad import CApplication
 from comrad.app.plugins.toolbar.pls_plugin import (PLSToolbarConfig, PLSToolbarWidget, TimingBar, TelegramInfo,
                                                    TimingBarDomain, DEFAULT_DOMAIN, get_telegram_info)
-
-
-@pytest.fixture(autouse=True)
-def clean_env():
-    try:
-        del os.environ['PLS_TELEGRAM']
-    except KeyError:
-        pass
 
 
 @pytest.fixture(autouse=True, scope='function')
@@ -37,10 +28,11 @@ def mock_pyjapc():
     ('SPS', 'TEST.USER2.ALL', 'TEST', 'USER2', 'ALL', True),
 ])
 @mock.patch('comrad.CApplication.instance')
-def test_get_telegram_info(app, tgm_var, window_selector, expect_found_in_context, expected_group, expected_line, expected_machine):
+def test_get_telegram_info(app, tgm_var, window_selector, expect_found_in_context, expected_group, expected_line,
+                           expected_machine, monkeypatch):
     app.return_value.main_window.window_context.selector = window_selector
     if tgm_var:
-        os.environ['PLS_TELEGRAM'] = tgm_var
+        monkeypatch.setenv('PLS_TELEGRAM', tgm_var)
     assert get_telegram_info() == TelegramInfo(machine=expected_machine,
                                                group=expected_group,
                                                line=expected_line,
@@ -210,9 +202,10 @@ def test_toolbar_widget_update_view_from_config(config, expect_bar_exists, expec
 @mock.patch('comrad.app.plugins.toolbar.pls_plugin.get_bar_config_for_current_selector')
 @mock.patch('comrad.app.plugins.toolbar.pls_plugin.TimingBarModel')
 @mock.patch('comrad.app.plugins.toolbar.pls_plugin.TimingBar._connect_model')
-def test_toolbar_widget_bar_always_uses_pyjapc_singleton(_, TimingBarModel, get_bar_config_for_current_selector, pls_config, tgm_var, qtbot: QtBot):
+def test_toolbar_widget_bar_always_uses_pyjapc_singleton(_, TimingBarModel, get_bar_config_for_current_selector,
+                                                         pls_config, tgm_var, qtbot: QtBot, monkeypatch):
     if tgm_var:
-        os.environ['PLS_TELEGRAM'] = tgm_var
+        monkeypatch.setenv('PLS_TELEGRAM', tgm_var)
     from comrad.data.pyjapc_patch import CPyJapc
     pyjapc_instance = CPyJapc.instance()
     get_bar_config_for_current_selector.return_value = pls_config
@@ -407,9 +400,9 @@ def test_toolbar_widget_bar_always_uses_pyjapc_singleton(_, TimingBarModel, get_
 ])
 def test_toolbar_widget_update_view_on_selector_change_from_none_selector(qtbot: QtBot, show_bar, selector, expected_domain,
                                                                           expected_highlighted_user, tgm_var, expected_original_domain,
-                                                                          initial_domain, expected_initial_domain):
+                                                                          initial_domain, expected_initial_domain, monkeypatch):
     if tgm_var:
-        os.environ['PLS_TELEGRAM'] = tgm_var
+        monkeypatch.setenv('PLS_TELEGRAM', tgm_var)
     QApplication.instance().main_window.ui.navbar = QToolBar()
     widget = PLSToolbarWidget()
     qtbot.add_widget(widget)
@@ -470,9 +463,10 @@ def test_toolbar_widget_update_view_on_selector_change_from_none_selector(qtbot:
     ('FCT', DEFAULT_DOMAIN, 'PSB.USER.ALL', TimingBarDomain.PSB, None),
 ])
 def test_toolbar_widget_update_view_on_selector_change_to_none_selector(qtbot: QtBot, initial_selector, expected_initial_domain,
-                                                                        expected_initial_user, tgm_var, expected_new_domain):
+                                                                        expected_initial_user, tgm_var, expected_new_domain,
+                                                                        monkeypatch):
     if tgm_var:
-        os.environ['PLS_TELEGRAM'] = tgm_var
+        monkeypatch.setenv('PLS_TELEGRAM', tgm_var)
     QApplication.instance().main_window.ui.navbar = QToolBar()
     widget = PLSToolbarWidget()
     qtbot.add_widget(widget)

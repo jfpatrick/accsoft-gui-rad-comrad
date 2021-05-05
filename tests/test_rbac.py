@@ -1,5 +1,4 @@
 import pytest
-import os
 import logging
 from copy import copy
 from typing import List, cast
@@ -9,15 +8,6 @@ from unittest import mock
 from pyrbac import Token
 from accwidgets.rbac import RbaButtonModel
 from comrad.rbac import CRbaState, CRbaLoginStatus, CRbaToken, CRbaStartupLoginPolicy
-
-
-def teardown_function():
-    # Clean-up all pyrbac environment variables
-    for var in ['RBAC_PKEY', 'RBAC_ENV', 'RBAC_APPLICATION_NAME', 'RBAC_TOKEN_SERIALIZED']:
-        try:
-            del os.environ[var]
-        except KeyError:
-            pass
 
 
 def test_logs_on_successful_login(caplog: LogCaptureFixture, qtbot):
