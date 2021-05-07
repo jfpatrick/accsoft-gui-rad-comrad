@@ -18,7 +18,7 @@ from qtpy.QtGui import QFont, QFocusEvent, QShowEvent
 from qtpy.uic import loadUi
 from accwidgets.qt import (BooleanPropertyColumnDelegate, AbstractComboBoxColumnDelegate,
                            AbstractListModel as BaseListModel, AbstractTableModel as BaseTableModel,
-                           PersistentEditorTableView)
+                           PersistentEditorTableView, ColorPropertyColumnDelegate)
 from accwidgets._designer_base import get_designer_cursor
 from comrad.rules import CBaseRule, CNumRangeRule, CEnumRule, unpack_rules, is_valid_color
 from comrad.qsci import configure_common_qsci, QSCI_INDENTATION
@@ -28,7 +28,7 @@ from comrad.data.japc_enum import CEnumValue
 from comrad.generics import GenericMeta, GenericQObjectMeta
 from comrad._selector import PLSSelectorDialog, PLSSelectorConfig
 from comrad._device_dialog import DevicePropertyDialog
-from _comrad_designer.common import ColorPropertyColumnDelegate, _STYLED_ITEM_DELEGATE_INDEX
+from _comrad_designer.common import _STYLED_ITEM_DELEGATE_INDEX
 from _comrad_designer.device_edit import DevicePropertyLineEdit
 
 
