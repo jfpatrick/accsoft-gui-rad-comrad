@@ -169,4 +169,7 @@ class AboutDialog(QWidget):
 
         import pyjapc
         for dep in pyjapc.__cmmnbuild_deps__:
-            self.cmmn_build_list.addItem(dep)
+            try:
+                self.cmmn_build_list.addItem(dep['product'])
+            except KeyError:
+                continue

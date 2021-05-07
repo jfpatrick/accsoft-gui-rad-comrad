@@ -24,11 +24,11 @@ requirements = {
         'prompt_toolkit>=3.0,<4a0',  # This must be compatible with the 'questionary' version
         'packaging>=20.4,<21a0',
         'QtPy>=1.7,<2',
-        'pyjapc==2.2.0',  # We must keep it pinned to this version, because comrad is obliged to override getParam, which makes it very fragile to changes
+        'pyjapc==2.2.1',  # We must keep it pinned to this version, because comrad is obliged to override getParam, which makes it very fragile to changes
         'accwidgets[graph,led,property_edit,timing_bar,log_console,rbac]>=1.3.2,<2a0',
         'papc>=0.5.1,<0.6',
         'pydm==1.10.7.post0',
-        'JPype1>=0.7,<0.7.2',  # 0.7.2 seems incompatible with pyjapc as of now
+        'JPype1>=1.1.1,<2a0',  # 1.1.1 is confirmed alongside 0.6.3 to be without segfaults. We need > 0.6 for exception format
         'dataclasses~=0.7;python_version<"3.7"',
         'pyCCDA~=0.10.1',
         'pyrbac',  # Exact version is expected to be provided by accwidgets. This stays here because we still have pyrbac imports
