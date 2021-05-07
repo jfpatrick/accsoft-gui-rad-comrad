@@ -6,12 +6,11 @@ from qtpy.QtCore import QObject, QModelIndex, Qt, QPersistentModelIndex, QAbstra
 from qtpy.QtGui import QColor, QPalette
 from pydm.widgets.baseplot_curve_editor import BasePlotCurveItem as PyDMBasePlotCurveItem
 from accwidgets.qt import (AbstractTableDialog, AbstractTableModel, _STYLED_ITEM_DELEGATE_INDEX,
-                           AbstractComboBoxColumnDelegate)
+                           AbstractComboBoxColumnDelegate, ColorPropertyColumnDelegate)
 from accwidgets import designer_check
 from accwidgets._designer_base import WidgetsTaskMenuExtension
 from accwidgets.graph.designer.designer_extensions import PlotLayerExtension as _PlotLayerExtension, get_designer_cursor
 from comrad.widgets.graphs import CPlotWidgetBase, ColumnNames, CItemPropertiesBase, PlottingItemTypes
-from _comrad_designer.common import ColorPropertyColumnDelegate
 from _comrad_designer.device_edit import DevicePropertyLineEdit
 
 
