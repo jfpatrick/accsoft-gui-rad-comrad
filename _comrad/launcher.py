@@ -4,17 +4,29 @@
 import logging
 import argparse
 import argcomplete
+import functools
 import os
 import sys
-from typing import Optional, Tuple, Dict, List, Iterable
+from typing import Optional, Tuple, Dict, List, Iterable, Any, Set
+from pathlib import Path
 from accwidgets.qt import exec_app_interruptable
 from .comrad_info import COMRAD_DESCRIPTION, COMRAD_VERSION, get_versions_info
 from .log_config import install_logger_level
 from .common import get_japc_support_envs, comrad_asset
+from .package import generate_pyproject_with_spec, make_requirement_safe, Requirement, parse_maintainer_info
 
 
-def run():
-    """Run ComRAD application and parse command-line arguments."""
+def create_args_parser(custom_run_prog: Optional[str] = None) -> Tuple[argparse.ArgumentParser, bool]:
+    """
+    Build ComRAD application arguments.
+
+    Args:
+        custom_run_prog: Program name to suply to "run" subcommand, in order to make hlep message reflect
+                         the state of things for packaged applications.
+
+    Returns:
+        Tuple of arguments parser and flag if the lazy version resolution should be done.
+    """
     logo = """
 
    ██████╗ ██████╗ ███╗   ███╗██████╗  █████╗ ██████╗
@@ -24,7 +36,7 @@ def run():
   ╚██████╗╚██████╔╝██║ ╚═╝ ██║██║  ██║██║  ██║██████╔╝
    ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝
     """
-    common_parser_args = {
+    common_parser_args: Dict[str, Any] = {
         'add_help': False,  # Will be added manually (with consistent formatting)
         'formatter_class': argparse.RawDescriptionHelpFormatter,
     }
@@ -49,12 +61,14 @@ def run():
     _install_help(parser)
 
     subparsers = parser.add_subparsers(dest='cmd')
+    app_parser_args = {} if custom_run_prog is None else {'prog': custom_run_prog}
     app_parser = subparsers.add_parser('run',
                                        help='Launch main ComRAD application.',
-                                       description='  This command launch the client application with ComRAD environment.\n'
+                                       description='  This command launches the client application with ComRAD environment.\n'
                                                    '  It is the starting point for runtime applications that have been\n'
                                                    '  developed with ComRAD tools and rely on control system marshalling\n'
                                                    '  logic and other conveniences provided by ComRAD.',
+                                       **app_parser_args,
                                        **common_parser_args)
     _run_subcommand(app_parser)
 
@@ -74,10 +88,21 @@ def run():
                                             **common_parser_args)
     _examples_subcommand(examples_parser)
 
-    # If run for auto-completion discovery, execution will stop here
-    argcomplete.autocomplete(parser)
+    package_parser = subparsers.add_parser('package',
+                                           help='Convert ComRAD project into an installable Python package.',
+                                           description='  This command creates a pip-compatible pyproject.toml file,\n'
+                                                       '  enabling standard tools, such as "pip install" or\n'
+                                                       '  "pip wheel", to be run over the directory, to produce a\n'
+                                                       '  wheel or sdist. Resulting package can be later deployed to\n'
+                                                       '  operational environment using "acc-py app deploy" command\n'
+                                                       '  from Acc-Py dev-tools.',
+                                           **common_parser_args)
+    _package_subcommand(package_parser)
 
-    args = parser.parse_args()
+    return parser, use_lazy_version
+
+
+def process_args(args: argparse.Namespace, parser: argparse.ArgumentParser, use_lazy_version: bool = False):
     if use_lazy_version and args.version:
         _run_version(parser)
         return
@@ -88,12 +113,29 @@ def run():
         from _comrad_examples.browser import run_browser as run_examples_browser
         run_examples_browser(args)
     else:
-        if args.cmd == 'run':
-            _run_comrad(args) or parser.print_usage()
-        elif args.cmd == 'designer':
-            _run_designer(args) or parser.print_usage()
-        else:
-            parser.print_help()
+        if args.cmd == 'run' and _run_comrad(args):
+            return
+        elif args.cmd == 'designer' and _run_designer(args):
+            return
+        elif args.cmd == 'package' and _package_app(args):
+            return
+        parser.print_help()
+
+
+def run():
+    """Run ComRAD application and parse command-line arguments."""
+    try:
+        parser, use_lazy_version = create_args_parser()
+
+        # If run for auto-completion discovery, execution will stop here
+        argcomplete.autocomplete(parser)
+        args = parser.parse_args()
+
+        process_args(args=args,
+                     parser=parser,
+                     use_lazy_version=use_lazy_version)
+    except KeyboardInterrupt:
+        pass
 
 
 def _install_help(parser: argparse._ActionsContainer):
@@ -490,3 +532,80 @@ def _parse_control_env(args: argparse.Namespace) -> Tuple[str, Dict[str, str], D
         os_env['RBAC_ENV'] = cmw_env
 
     return ccda_endpoint, jvm_flags, os_env
+
+
+def _package_subcommand(parser: argparse.ArgumentParser):
+    _install_help(parser)
+
+    parser.add_argument('--no-interactive',
+                        help='Run packaging in a non-interactive mode.',
+                        action='store_false',
+                        dest='interactive',
+                        default=True)
+    _install_debug_arguments(parser)
+    parser.add_argument('display_file',
+                        metavar='FILE',
+                        help='Application entrypoint: Qt Designer (*.ui) or Python (*.py) file.')
+
+    result_group = parser.add_argument_group('Final product details')
+    result_group.add_argument('--name',
+                              help='Name of the final product (must comply to Python package naming conventions).')
+    result_group.add_argument('--version',
+                              help='Version of the final product (use PEP-440 compatible version string).')
+    result_group.add_argument('--description',
+                              help='Summary of the final product.')
+    maintainer_group = result_group.add_mutually_exclusive_group()
+    maintainer_group.add_argument('--maintainer',
+                                  help='Name and/or email of the package maintainer. This can be formatted in '
+                                       'either ways: "John Smith <john.smith@cern.ch>"; or "John Smith"; '
+                                       'or john.smith@cern.ch.')
+    maintainer_group.add_argument('--force-phonebook',
+                                  help='Enforce resolution of maintainer info from the phonebook, '
+                                       'overriding any cached maintainer info (only applicable in interactive mode).',
+                                  action='store_true')
+    req_group = result_group.add_mutually_exclusive_group()
+    req_group.add_argument('--requirements',
+                           help='List dependencies of your final product that should be installed with it.',
+                           action='append',
+                           default=[],
+                           nargs=argparse.ZERO_OR_MORE)
+    req_group.add_argument('--requirements-file',
+                           help='Path to the requirements.txt listing final product dependencies.')
+
+
+def _package_app(args: argparse.Namespace) -> bool:
+    entrypoint = Path(args.display_file)
+
+    reqs: Iterable[str]
+    if args.requirements_file:
+        requirements_file = Path(args.requirements_file)
+        with requirements_file.open('r+t') as f:
+            reqs = filter(lambda r: not r.strip().startswith('#'), f.readlines())
+    elif args.requirements:
+        reqs = args.requirements[0]
+    else:
+        reqs = []
+
+    req_objects = map(functools.partial(make_requirement_safe, error='Requirement will be ignored.'), reqs)
+    install_requires: Optional[Set[Requirement]] = {r for r in req_objects if r is not None} or None
+
+    enforced_spec_attrs = {
+        'name': args.name,
+        'version': args.version,
+    }
+
+    if args.description:
+        enforced_spec_attrs['description'] = args.description
+    maintainer_name, maintainer_email = parse_maintainer_info(args.maintainer)
+    if maintainer_name is not None:
+        enforced_spec_attrs['maintainer'] = maintainer_name
+    if maintainer_email is not None:
+        enforced_spec_attrs['maintainer_email'] = maintainer_email
+
+    generate_pyproject_with_spec(entrypoint=entrypoint,
+                                 cli_install_requires=install_requires,
+                                 cli_other_spec_props=enforced_spec_attrs,
+                                 force_phonebook=args.force_phonebook,
+                                 interactive=args.interactive)
+
+    return True
