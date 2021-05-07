@@ -14,6 +14,7 @@ from pydm import Display as PyDMDisplay, config
 # from pydm.widgets.tab_bar import PyDMTabWidget
 from comrad.data.context import CContext, CContextProvider, find_context_provider, CContextTrackingDelegate
 from comrad.widgets.widget import common_widget_repr
+from comrad._designer_utils import is_inside_designer_canvas
 
 
 logger = logging.getLogger(__name__)
@@ -30,6 +31,15 @@ class CEmbeddedDisplay(PyDMEmbeddedDisplay):
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
         super().__init__(parent=parent, **kwargs)
+
+    def init_for_designer(self):
+        # This overrides PyDM's erroneous setting of the frame, that assumes frame should
+        # be set for everything that is not a PyDM app. However, this becomes misleading
+        # when previewing the form in Qt Designer, as it does not look the same as PyDM runtime.
+        orig_frame = self.frameShape()
+        super().init_for_designer()
+        if not is_inside_designer_canvas(self):
+            self.setFrameShape(orig_frame)
 
 
 class CTemplateRepeater(PyDMTemplateRepeater):
