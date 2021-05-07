@@ -120,7 +120,7 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
         self.ui.menuView.insertAction(self.ui.actionIncrease_Font_Size, act)
         act.setShortcut(QKeySequence(Qt.CTRL + Qt.SHIFT + Qt.Key_0))
 
-        style_menu = QMenu(QCoreApplication.translate('MainWindow', 'Navigation Bar Style'))
+        style_menu = QMenu(QCoreApplication.translate('MainWindow', 'Navigation Bar Style'), self)
         self._action_navbar_icon = style_menu.addAction(QCoreApplication.translate('MainWindow', 'Icon Only'))
         self._action_navbar_icon.setCheckable(True)
         self._action_navbar_icon.setData(Qt.ToolButtonIconOnly)
@@ -145,7 +145,7 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
         self.ui.menuView.insertMenu(self.ui.actionShow_File_Path_in_Title_Bar, style_menu)
         self._style_menu = style_menu
 
-        pos_menu = QMenu(QCoreApplication.translate('MainWindow', 'Navigation Bar Position'))
+        pos_menu = QMenu(QCoreApplication.translate('MainWindow', 'Navigation Bar Position'), self)
         self._action_navbar_top = pos_menu.addAction(QCoreApplication.translate('MainWindow', 'Top'))
         self._action_navbar_top.setCheckable(True)
         self._action_navbar_top.setData(Qt.TopToolBarArea)
@@ -183,6 +183,8 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
     def window_context(self) -> CContext:
         """Global context for the window. All widgets should obey to it, unless it's overridden by a CContextContainer."""
         return self._window_context
+
+    # FIXME: Connection dialog table regularly updates and annoys user interaction
 
     def update_window_title(self):
         """Overridden method to enable ComRAD branding."""
@@ -464,7 +466,7 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
 
         def _add_toolbar_spacer():
             # Add spacer to compress toolbar items when possible
-            spacer = QWidget()
+            spacer = ToolbarSpacer()
             spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
             self.ui.navbar.addWidget(spacer)
 
@@ -672,3 +674,10 @@ class _UiMainWindow(Ui_MainWindow, MonkeyPatchedClass):
 
         nav_toggle = cast(QAction, self.navbar.toggleViewAction())
         nav_toggle.setText(_translate('MainWindow', 'Show Navigation Bar'))
+
+
+class ToolbarSpacer(QWidget):
+    """
+    Special widget type that can be recognized from within QSS, to allow better dark-mode compatibility.
+    """
+    pass
