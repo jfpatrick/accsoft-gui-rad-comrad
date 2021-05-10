@@ -367,3 +367,12 @@ QTextEdit, QPlainTextEdit {
 QDial {
     background-color: black;
 }
+
+QLCDNumber {
+    background-color: rgb(42,42,42);
+    border: 1px solid rgb(100, 100, 100);
+    /* QLCDNumber can't be fully stylized from QSS, because its segments are drawn using palette's dark and light color
+       roles and as per https://forum.qt.io/topic/27690/how-to-change-palette-from-qss-stylesheet, it's not possible
+       to alter palette from QSS.
+     */
+}
