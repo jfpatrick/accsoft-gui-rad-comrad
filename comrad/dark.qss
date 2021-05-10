@@ -4,7 +4,6 @@
   # TODO: Icons have different color (left-right chevrons vs Toolbar PLS, Home, Menu tools. Oh those are disabled. Disabled colors are weird
   # TODO: Tab left border is slightly different from tabwidget left border
   # TODO: QComboBox dropdown menus are a bit ugly
-  # TODO: QDial is not stylized
  */
 
 QDockWidget::close-button, QDockWidget::float-button {
@@ -363,4 +362,8 @@ RbaButton QLabel[qss-role="bg-critical"] { background-color: #ed7669; }
 
 QTextEdit, QPlainTextEdit {
     border: 1px solid rgb(42,42,42);
+}
+
+QDial {
+    background-color: black;
 }
