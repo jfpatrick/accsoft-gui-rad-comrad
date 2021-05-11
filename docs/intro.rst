@@ -21,6 +21,7 @@ Now that you have installed ComRAD as explained in the :doc:`install`, we can st
   * `Using alternative color schemes`_
 
 - `Hot reloading application's UI`_
+- `Releasing the application for operational use`_
 
 
 Workflow
@@ -35,6 +36,7 @@ The typical basic workflow of designing ComRAD applications consists of the foll
 #. Save the form
 #. Open the form inside ComRAD runtime
 #. When needed, modify form in ComRAD Designer and reload it in ComRAD runtime app
+#. Once the application is complete, release it for deployment
 
 .. note:: For alternative workflows, e.g. mixing ComRAD Designer with Python-based GUIs; or excluding
           ComRAD Designer from the loop altogether, please consult the
@@ -315,3 +317,14 @@ refreshing UI in the application with Ctrl+R.
 .. raw:: html
 
    <video style="width: 100%" controls src="_static/hot_reload.mp4"></video>
+
+
+Releasing the application for operational use
+---------------------------------------------
+
+Once the development of the application has reached the milestone, where it can be made available to the users,
+next step is to package the application that it can be easily installed elsewhere. In the packaged application,
+users do not invoke "comrad run", hence they are not obliged to ensure that ComRAD is installed in a proper
+environment. Instead, they would invoke it like any other PyQt application.
+
+.. seealso:: Packaging and deployment is explained in more detail in :doc:`deploy`.

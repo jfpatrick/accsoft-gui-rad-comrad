@@ -9,6 +9,7 @@ Deployment
 - `Installing a wheel or sdist`_
 - `In-depth "comrad package"`_
 
+  * `Implicit launch arguments`_
   * `Enabling phonebook`_
   * `Automatic dependency scanning`_
 
@@ -78,7 +79,7 @@ is equivalent to (if the packaged application was named after its entrypoint fil
 
 User can explore the possibilities with ``python -m my_custom_app -h``, e.g.:
 
-.. code-block::
+.. code-block:: bash
 
    $ python -m my_custom_app -h
    usage: python -m my_custom_app [-m MACRO] [--read-only] [--hide-menu-bar]
@@ -219,6 +220,26 @@ options.
 Beside being smart about detecting dependencies, ComRAD may infer maintainer name from the current OS user, provided
 that :mod:`pyphonebook` is installed in the system. This dependency is optional, and maintainer information will not be
 suggested, if there's any problem with accessing the CERN phonebook.
+
+Implicit launch arguments
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+It is possible to make the application launch by default with selected launch arguments, by entering them into
+"Default launch arguments" answer, in the same way as you would've normally supplied it to "comrad run" command.
+Several launch arguments can be combined simply separating them with spaces.
+
+.. note:: User is still able to override these arguments at launch.
+
+This can be useful for applications that are supposed to work only with the certain control system configuration
+(e.g. by providing selector: ``-s PSB.USER.MD3``) or for applications that want to reconfigure their look and feel.
+
+In addition, an application may bundle extensions, such as ComRAD :doc:`advanced/plugins`. In that case, use ``@bundle``
+keyword when providing a plugin path argument, to signify that this location is relative to your installed application,
+where ``@bundle`` will be resolved to the containing directory of your main application file.
+
+.. code-block::
+
+   --nav-plugin-path @bundle/toolbar_plugins
 
 Enabling phonebook
 ^^^^^^^^^^^^^^^^^^
