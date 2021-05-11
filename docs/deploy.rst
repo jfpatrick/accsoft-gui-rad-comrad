@@ -82,7 +82,8 @@ User can explore the possibilities with ``python -m my_custom_app -h``, e.g.:
 .. code-block:: bash
 
    $ python -m my_custom_app -h
-   usage: python -m my_custom_app [-m MACRO] [--read-only] [--hide-menu-bar]
+   usage: python -m my_custom_app [--use-profile PROFILE_NAME | --save-to-profile PROFILE_NAME]
+                                  [-m MACRO] [--read-only] [--hide-menu-bar]
                                   [--hide-log-console] [--hide-status-bar] [--hide-nav-bar]
                                   [--nav-bar-style {icon,text,vstack,hstack}]
                                   [--nav-bar-position {top,left}] [--fullscreen]
