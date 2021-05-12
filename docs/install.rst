@@ -18,10 +18,8 @@ Prerequisites
 .. note:: All operations should be performed in a terminal, running "bash". While alternative shells, such as "zsh"
           or "fish", may work, stability is not guaranteed.
 
-Make sure that you have `Acc-Py Base activated <https://wikis.cern.ch/display/ACCPY/Acc-Py+base>`__ for new
-installations (preferred) or
-`PyQt activated <https://wikis.cern.ch/display/ACCPY/PyQt+distribution>`__ for legacy installations,
-so you have a proper "pip" version and access to Acc-Py Python package index.
+Make sure that you have `Acc-Py Base activated <https://wikis.cern.ch/display/ACCPY/Acc-Py+base>`__ in order to have a
+considerably modern "pip" version and access to Acc-Py Python package index.
 
 
 Install

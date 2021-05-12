@@ -70,12 +70,8 @@ On top of standard PyQt, our framework offers integration with CERN's control sy
 prefabricated widgets, relevant for CERN use-cases. Integration with the control system is achieved
 via PyJAPC.
 
-.. note:: PyJAPC is the only supported transport library at the moment. PyRDA may come later, but is not
-          planned for the near future. However, PyJAPC is capable of handling both RDA and JAPC messages
-          already now.
-
-.. note:: Like any other PyQt application, RAD framework requires PyQt distribution activated. Refer to
-          `this page <https://wikis.cern.ch/display/ACCPY/PyQt+distribution>`__ to activate it. This is
+.. note:: Like any other PyQt application, RAD framework requires
+          `Acc-Py Base <https://wikis.cern.ch/display/ACCPY/Acc-Py+base>`__ activated. This is
           important for both runtime and design time with Qt Designer, as the later comes bundled in the
           distribution.
 
@@ -89,10 +85,9 @@ Design time
 
 Design of the user interfaces relies on the aforementioned Qt Designer. It is worth noting, that there
 are some tweaks applied to Qt Designer that make it more tailored for the CERN workflow. Therefore, this
-framework is designed to work in tandem with our
-`PyQt distribution <https://wikis.cern.ch/display/ACCPY/PyQt+distribution>`__. Besides that, framework
-brings a set of new widgets, available in Qt Designer's widget list. These widgets are aware of our control
-system, allowing connecting to a device property as simply as defining its adress.
+framework is designed to work in tandem with our `Acc-Py Base <https://wikis.cern.ch/display/ACCPY/Acc-Py+base>`__.
+Besides that, framework brings a set of new widgets, available in Qt Designer's widget list. These widgets are aware
+of our control system, allowing connecting to a device property as simply as defining its address.
 
 .. note:: All RAD displays and windows must be created with a template "Widget". If you choose a different
           type, runtime environment will fail to launch the application.

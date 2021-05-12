@@ -3,9 +3,6 @@ Getting started
 
 Now that you have installed ComRAD as explained in the :doc:`install`, we can start using it.
 
-.. note:: You must always start using PyQt applications with
-   `activating PyQt distribution <https://wikis.cern.ch/display/ACCPY/PyQt+distribution#PyQtdistribution-activation>`__.
-
 
 **Contents:**
 
