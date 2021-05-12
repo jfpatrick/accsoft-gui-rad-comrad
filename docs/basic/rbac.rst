@@ -1,7 +1,7 @@
 RBAC integration
 ================
 
-ComRAD integrates with RBAC similar to Java applications, with reduced capabilities. By default, ComRAD works with
+ComRAD integrates with RBAC for device access. By default, ComRAD works with
 the production RBAC service. If you are willing to switch to an alternative server, refer to :doc:`../advanced/cmw`.
 
 - `Authentication`_
