@@ -423,16 +423,8 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
             logger.debug(f'Instantiating plugin "{plugin_type.plugin_id}"')
             if issubclass(plugin_type, CActionPlugin):
                 action_plugin = cast(CToolbarActionPlugin, plugin_type())
-                item = QAction(self)
-                item.setShortcutContext(Qt.ApplicationShortcut)
-                if action_plugin.shortcut is not None:
-                    item.setShortcut(action_plugin.shortcut)
-                if action_plugin.icon is not None:
-                    item_icon = (self.iconFont.icon(action_plugin.icon)
-                                 if isinstance(action_plugin.icon, str) else action_plugin.icon)
-                    item.setIcon(item_icon)
-                item.triggered.connect(action_plugin.triggered)
-                item.setText(action_plugin.title())
+                item = action_plugin.create_action(None)
+                item.setParent(self)
                 if action_plugin.show_in_menu:
                     toolbar_actions.append(item)
                 stored_plugins.append(action_plugin)

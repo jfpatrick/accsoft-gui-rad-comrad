@@ -10,7 +10,7 @@ class DemoActionPlugin(CToolbarActionPlugin):
 
     plugin_id = 'com.example.demo'
     shortcut = 'Ctrl+Shift+B'
-    icon = 'android'  # Taken form fontawesome map available in PyDM
+    icon = 'android'  # Taken from fontawesome map available in PyDM
 
     def triggered(self):
         logger.info('Action triggered!')

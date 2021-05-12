@@ -4,7 +4,9 @@ import operator
 from typing import Tuple, List, Type
 from unittest import mock
 from pathlib import Path
-from comrad.app.plugins.common import load_plugins_from_path, filter_enabled_plugins, CPlugin
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QIcon
+from comrad.app.plugins.common import load_plugins_from_path, filter_enabled_plugins, CPlugin, CActionPlugin
 from comrad.app.plugins._config import WindowPluginConfigTrie
 
 
@@ -231,3 +233,47 @@ def test_trie_get_flat_config(inputs, key, expected_config):
     for k, v in inputs:
         trie.add_val(key=k, val=v)
     assert trie.get_flat_config(key) == expected_config
+
+
+@pytest.mark.parametrize('config', [None, {}, {'something': 'val'}])
+@pytest.mark.parametrize('orig_title', ['', 'Test title'])
+@pytest.mark.parametrize('orig_icon,expected_font_icon', [
+    (None, None),
+    ('iconname', True),
+    (QIcon(), False),
+])
+@pytest.mark.parametrize('orig_shortcut', [None, 'Ctrl+A'])
+@mock.patch('qtpy.QtWidgets.QAction.setShortcutContext')
+@mock.patch('qtpy.QtWidgets.QAction.setIcon')
+@mock.patch('qtpy.QtWidgets.QAction.setShortcut')
+@mock.patch('comrad.app.plugins.common.IconFont')
+def test_action_plugin_creates_action(IconFont, setShortcut, setIcon, setShortcutContext, config, orig_title,
+                                      orig_icon, orig_shortcut, expected_font_icon):
+
+    class PluginSubclass(CActionPlugin):
+
+        icon = orig_icon
+        shortcut = orig_shortcut
+
+        def title(self):
+            return orig_title
+
+        def triggered(self):
+            pass
+
+    plugin = PluginSubclass()
+    action = plugin.create_action(config)
+    assert action.text() == orig_title
+    if orig_shortcut is None:
+        setShortcut.assert_not_called()
+    else:
+        setShortcut.assert_called_once_with(orig_shortcut)
+    assert action.receivers(action.triggered) == 1
+    setShortcutContext.assert_called_once_with(Qt.ApplicationShortcut)
+    if expected_font_icon is None:
+        setIcon.assert_not_called()
+    elif expected_font_icon is True:
+        setIcon.assert_called_once_with(IconFont.return_value.icon.return_value)
+        IconFont.return_value.icon.assert_called_once_with(orig_icon)
+    else:
+        setIcon.assert_called_once_with(orig_icon)

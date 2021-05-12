@@ -9,6 +9,8 @@ from types import ModuleType
 from enum import Enum, auto, unique
 from qtpy.QtWidgets import QWidget, QAction, QMenu
 from qtpy.QtGui import QIcon
+from qtpy.QtCore import Qt
+from pydm.utilities import IconFont
 
 
 logger = logging.getLogger(__name__)
@@ -62,6 +64,32 @@ class CActionPlugin(CPlugin, metaclass=ABCMeta):
     def title(self) -> str:
         """Title of the action."""
         pass
+
+    def create_action(self, config: Optional[Dict[str, str]]) -> QAction:
+        """
+        Factory method to create the action from the properties defined in this class.
+        Each more concrete implementation (e.g. :class:`CToolbarActionPlugin`) can define its own way of
+        creating action objects.
+
+        Args:
+            config: ATTENTION! This argument is currently not being used. It is left for extensibility in the future,
+                    similar to the approach taken by :meth:`CWidgetPlugin.create_widget`.
+
+        Returns:
+            New action object.
+        """
+        action = QAction()
+        action.setShortcutContext(Qt.ApplicationShortcut)
+        if self.shortcut is not None:
+            action.setShortcut(self.shortcut)
+        if isinstance(self.icon, str):
+            font = IconFont()
+            action.setIcon(font.icon(self.icon))
+        elif isinstance(self.icon, QIcon):
+            action.setIcon(self.icon)
+        action.triggered.connect(self.triggered)
+        action.setText(self.title())
+        return action
 
 
 @unique
