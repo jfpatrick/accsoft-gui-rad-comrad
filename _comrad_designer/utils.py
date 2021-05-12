@@ -54,6 +54,8 @@ def qtplugin_factory(widget_class: Type[QWidget],
     class Plugin(BaseClass):  # type: ignore  # Avoid "Variable "BaseClass" is not valid as a type"
         __doc__ = 'ComRAD Designer plugin for {}'.format(widget_class.__name__)
 
+        CUSTOM_INITIALIZER_METHOD = 'init_for_designer'
+
         def initialize(self, core: QDesignerFormEditorInterface):
             """
             Override parent function to call PyDM Designer hooks, so that is_qt_designer function
