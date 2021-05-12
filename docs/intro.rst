@@ -315,5 +315,3 @@ refreshing UI in the application with Ctrl+R.
 .. raw:: html
 
    <video style="width: 100%" controls src="_static/hot_reload.mp4"></video>
-
-.. warning:: Video will be changed to reflect updated commands
