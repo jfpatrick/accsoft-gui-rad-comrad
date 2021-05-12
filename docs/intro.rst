@@ -267,6 +267,13 @@ For convenience, ComRAD ships with the "Dark mode" predefined scheme to invert t
 
    comrad run --dark-mode my_existing_file.ui
 
+It can be enabled by default via environment variables:
+
+.. code-block:: bash
+
+   export COMRAD_DARK_MODE_ENABLED=1
+   comrad run my_existing_file.ui
+
 .. table::
    :widths: 1 1
 
