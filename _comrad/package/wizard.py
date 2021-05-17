@@ -66,12 +66,12 @@ def confirm_spec_interactive(inferred_spec: PackageSpec,
     try:
         answers = questionary.unsafe_prompt(
             questions=[{
-                'type': 'input',
+                'type': 'text',
                 'name': 'name',
                 'message': 'Package name',
                 'default': inferred_spec.name,
             }, {
-                'type': 'input',
+                'type': 'text',
                 'name': 'version',
                 'message': 'Package version',
                 'default': inferred_spec.version,
@@ -81,17 +81,17 @@ def confirm_spec_interactive(inferred_spec: PackageSpec,
                 'message': 'Runtime dependencies',
                 'choices': suggested_dependencies,
             }, {
-                'type': 'input',
+                'type': 'text',
                 'name': 'description',
                 'message': 'Package description',
                 'default': inferred_spec.description or '',
             }, {
-                'type': 'input',
+                'type': 'text',
                 'name': 'maintainer',
                 'message': 'Package maintainer',
                 'default': suggested_maintainer or '',
             }, {
-                'type': 'input',
+                'type': 'text',
                 'name': 'maintainer_email',
                 'message': "Maintainer's email",
                 'default': suggested_email or '',
