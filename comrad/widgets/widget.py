@@ -84,8 +84,7 @@ class CContextEnabledObject(metaclass=GenericQObjectMeta):
         else:
             new_channels = set(new_ch_addresses)
             old_channels = set(self._channel_ids)
-            zombie_channels = {ch for ch in self._channels if not ch.connected}  # We have to try to reconnect these
-            channels_to_add = new_channels.difference(old_channels).union(zombie_channels)
+            channels_to_add = new_channels.difference(old_channels)
             channels_to_remove = [format_address(ch, self._local_context) for ch in old_channels.difference(new_channels)]
 
         for channel in list(self._channels):  # Avoid iterator change during the mutation inside loop body

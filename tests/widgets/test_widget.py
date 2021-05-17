@@ -3,7 +3,7 @@ import re
 from unittest import mock
 from typing import Type, Union
 from qtpy.QtWidgets import QWidget
-from pydm.widgets.base import PyDMWidget
+from pydm.widgets.base import PyDMWidget, PyDMChannel
 from comrad.widgets.widget import CWidget, CContext
 
 
@@ -67,41 +67,49 @@ def test_create_channel(qtbot, dummy_widget, widget_defined_methods, channel_att
     (None, None, [], [], [], []),
     (None, CContext(), [], [], [], []),
     (CContext(), None, [], [], [], []),
+    (CContext(), CContext(), [], [], [], []),
     (CContext(), CContext(selector='TEST.USER.ALL'), [], [], [], []),
     (None, None, ['rda:///dev/prop'], [], ['rda:///dev/prop'], []),
     (None, CContext(), ['rda:///dev/prop'], [], ['rda:///dev/prop'], []),
     (CContext(), None, ['rda:///dev/prop'], [], ['rda:///dev/prop'], []),
+    (CContext(), CContext(), ['rda:///dev/prop'], [], ['rda:///dev/prop'], []),
     (CContext(), CContext(selector='TEST.USER.ALL'), ['rda:///dev/prop'], [], ['rda:///dev/prop'], []),
     (None, None, ['rda:///dev/prop'], ['rda:///dev/prop'], [], []),
     (None, CContext(), ['rda:///dev/prop'], ['rda:///dev/prop'], ['rda:///dev/prop'], ['rda:///dev/prop']),
     (CContext(), None, ['rda:///dev/prop'], ['rda:///dev/prop'], ['rda:///dev/prop'], ['rda:///dev/prop']),
+    (CContext(), CContext(), ['rda:///dev/prop'], ['rda:///dev/prop'], [], []),
     (CContext(), CContext(selector='TEST.USER.ALL'), ['rda:///dev/prop'], ['rda:///dev/prop'], ['rda:///dev/prop'], ['rda:///dev/prop']),
     (None, None, [], ['rda:///dev/prop'], [], ['rda:///dev/prop']),
     (None, CContext(), [], ['rda:///dev/prop'], [], ['rda:///dev/prop']),
     (CContext(), None, [], ['rda:///dev/prop'], [], ['rda:///dev/prop']),
+    (CContext(), CContext(), [], ['rda:///dev/prop'], [], ['rda:///dev/prop']),
     (CContext(), CContext(selector='TEST.USER.ALL'), [], ['rda:///dev/prop'], [], ['rda:///dev/prop']),
     (None, None, ['rda:///dev/prop'], ['rda:///dev/prop2'], ['rda:///dev/prop'], ['rda:///dev/prop2']),
     (None, CContext(), ['rda:///dev/prop'], ['rda:///dev/prop2'], ['rda:///dev/prop'], ['rda:///dev/prop2']),
     (CContext(), None, ['rda:///dev/prop'], ['rda:///dev/prop2'], ['rda:///dev/prop'], ['rda:///dev/prop2']),
+    (CContext(), CContext(), ['rda:///dev/prop'], ['rda:///dev/prop2'], ['rda:///dev/prop'], ['rda:///dev/prop2']),
     (CContext(), CContext(selector='TEST.USER.ALL'), ['rda:///dev/prop'], ['rda:///dev/prop2'], ['rda:///dev/prop'], ['rda:///dev/prop2']),
     (None, None, ['rda:///dev/prop', 'rda:///dev/prop2'], ['rda:///dev/prop2', 'rda:///dev/prop3'], ['rda:///dev/prop'], ['rda:///dev/prop3']),
     (None, CContext(), ['rda:///dev/prop', 'rda:///dev/prop2'], ['rda:///dev/prop2', 'rda:///dev/prop3'], ['rda:///dev/prop', 'rda:///dev/prop2'], ['rda:///dev/prop2', 'rda:///dev/prop3']),
     (CContext(), None, ['rda:///dev/prop', 'rda:///dev/prop2'], ['rda:///dev/prop2', 'rda:///dev/prop3'], ['rda:///dev/prop', 'rda:///dev/prop2'], ['rda:///dev/prop2', 'rda:///dev/prop3']),
+    (CContext(), CContext(), ['rda:///dev/prop', 'rda:///dev/prop2'], ['rda:///dev/prop2', 'rda:///dev/prop3'], ['rda:///dev/prop'], ['rda:///dev/prop3']),
     (CContext(), CContext(selector='TEST.USER.ALL'), ['rda:///dev/prop', 'rda:///dev/prop2'], ['rda:///dev/prop2', 'rda:///dev/prop3'], ['rda:///dev/prop', 'rda:///dev/prop2'], ['rda:///dev/prop2', 'rda:///dev/prop3']),
     (None, None, ['rda:///dev/prop', 'rda:///dev/prop2'], ['rda:///dev/prop2'], ['rda:///dev/prop'], []),
     (None, CContext(), ['rda:///dev/prop', 'rda:///dev/prop2'], ['rda:///dev/prop2'], ['rda:///dev/prop', 'rda:///dev/prop2'], ['rda:///dev/prop2']),
     (CContext(), None, ['rda:///dev/prop', 'rda:///dev/prop2'], ['rda:///dev/prop2'], ['rda:///dev/prop', 'rda:///dev/prop2'], ['rda:///dev/prop2']),
+    (CContext(), CContext(), ['rda:///dev/prop', 'rda:///dev/prop2'], ['rda:///dev/prop2'], ['rda:///dev/prop'], []),
     (CContext(), CContext(selector='TEST.USER.ALL'), ['rda:///dev/prop', 'rda:///dev/prop2'], ['rda:///dev/prop2'], ['rda:///dev/prop', 'rda:///dev/prop2'], ['rda:///dev/prop2']),
     (None, None, ['rda:///dev/prop'], ['rda:///dev/prop', 'rda:///dev/prop2'], [], ['rda:///dev/prop2']),
     (None, CContext(), ['rda:///dev/prop'], ['rda:///dev/prop', 'rda:///dev/prop2'], ['rda:///dev/prop'], ['rda:///dev/prop', 'rda:///dev/prop2']),
     (CContext(), None, ['rda:///dev/prop'], ['rda:///dev/prop', 'rda:///dev/prop2'], ['rda:///dev/prop'], ['rda:///dev/prop', 'rda:///dev/prop2']),
+    (CContext(), CContext(), ['rda:///dev/prop'], ['rda:///dev/prop', 'rda:///dev/prop2'], [], ['rda:///dev/prop2']),
     (CContext(), CContext(selector='TEST.USER.ALL'), ['rda:///dev/prop'], ['rda:///dev/prop', 'rda:///dev/prop2'], ['rda:///dev/prop'], ['rda:///dev/prop', 'rda:///dev/prop2']),
 ])
 @mock.patch('pydm.widgets.channel.PyDMChannel.connect')
 def test_reconnect_channel_connection(_, qtbot, dummy_widget, old_context, new_context, old_addresses, new_addresses, disconnected, connected):
 
     def create_ch(addr):
-        ch = mock.MagicMock()
+        ch = mock.MagicMock(spec=PyDMChannel)
         ch.address = addr
         return ch
 
