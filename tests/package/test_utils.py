@@ -2,7 +2,8 @@ import logging
 import pytest
 from unittest import mock
 from packaging.requirements import Requirement
-from _comrad.package.utils import parse_maintainer_info, make_requirement_safe, find_comrad_requirements
+from _comrad.package.utils import (parse_maintainer_info, make_requirement_safe, find_comrad_requirements,
+                                   qualified_pkg_name)
 
 
 @pytest.mark.parametrize('input,expected_result', [
@@ -73,3 +74,16 @@ def test_find_comrad_requirements(importlib_metadata, requires, expected_require
     for r in res:
         assert isinstance(r, Requirement)
     assert set(map(str, res)) == expected_requires
+
+
+@pytest.mark.parametrize('input,expected_output', [
+    ('', ''),
+    ('name', 'name'),
+    ('Name1', 'Name1'),
+    ('dash-name', 'dash_name'),
+    ('underline_name', 'underline_name'),
+    ('com-bined_name', 'com_bined_name'),
+    ('punctu,ation', 'punctu,ation'),
+])
+def test_qualified_pkg_name(input, expected_output):
+    assert qualified_pkg_name(input) == expected_output

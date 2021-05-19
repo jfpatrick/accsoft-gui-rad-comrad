@@ -104,7 +104,7 @@ def _generate_sources(source_path: Path, spec: PackageSpec, output_path: Path):
                               'package': spec.to_dict(),
                           })
 
-    qualified_name = spec.name.replace('-', '_')
+    qualified_name = spec.qualified_name
     pkg_subdir = output_path / qualified_name
     print(f'creating package source directory -> {pkg_subdir!s}')
     pkg_subdir.mkdir()

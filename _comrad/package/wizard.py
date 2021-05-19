@@ -3,7 +3,7 @@ import logging
 import functools
 import questionary
 from dataclasses import dataclass
-from typing import List, Optional, Union, Set, cast
+from typing import List, Optional, Union, Set, cast, Callable
 from packaging.requirements import Requirement, InvalidRequirement
 from prompt_toolkit.application import Application
 from prompt_toolkit.key_binding import KeyBindings
@@ -23,6 +23,7 @@ from questionary.constants import (DEFAULT_QUESTION_PREFIX, DEFAULT_STYLE, INDIC
 from questionary.question import Question
 from .phonebook import suggest_maintainer_info
 from .spec import PackageSpec
+from .utils import qualified_pkg_name, make_requirement_safe
 
 
 logger = logging.getLogger(__name__)
@@ -62,6 +63,29 @@ def confirm_spec_interactive(inferred_spec: PackageSpec,
     suggested_dependencies.extend(optional_choices)
     suggested_dependencies.append(Separator('Always included:'))
     suggested_dependencies.extend(mandatory_choices)
+
+    def make_name_filter() -> Callable[[str], str]:
+        question_idx = 0
+
+        def answer_filter(answer: str) -> str:
+            nonlocal question_idx
+            if question_idx == 0:
+                qualified_name = qualified_pkg_name(answer)
+                potential_req = make_requirement_safe(qualified_name, '')
+                if potential_req is not None:
+
+                    def allowed_item(r: Union[RequirementItem, Separator]) -> bool:
+                        if not isinstance(r, RequirementItem):
+                            return True
+                        return r.req.name != cast(Requirement, potential_req).name
+
+                    # Modify in place, because it was already submitted to the questions list by this time
+                    suggested_dependencies[:] = list(filter(allowed_item, suggested_dependencies))
+
+            question_idx += 1
+            return answer
+
+        return answer_filter
 
     try:
         answers = questionary.unsafe_prompt(
@@ -107,6 +131,7 @@ def confirm_spec_interactive(inferred_spec: PackageSpec,
                          ('instruction', ''),  # user instructions for select, rawselect, checkbox
                          ('error', 'fg:#ff0000 bold'),
                          ('hint', 'fg:#6c6c6c')]),
+            filter=make_name_filter(),
         )
     except KeyboardInterrupt:
         print(f'\n'

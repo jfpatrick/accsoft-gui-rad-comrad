@@ -50,6 +50,10 @@ def make_requirement_safe(input: str, error: str) -> Optional[Requirement]:
         return None
 
 
+def qualified_pkg_name(input: str) -> str:
+    return input.replace('-', '_')
+
+
 def find_comrad_requirements() -> Set[Requirement]:
     comrad_pkg = importlib_metadata.distribution('comrad')  # type: ignore
     if comrad_pkg.requires is None:

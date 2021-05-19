@@ -4,7 +4,7 @@ import functools
 import subprocess
 import operator
 from pathlib import Path
-from typing import Dict, Optional, Set, Any
+from typing import Dict, Optional, Set, Any, cast
 from packaging.requirements import Requirement
 from .spec import PackageSpec
 from .utils import make_requirement_safe, find_comrad_requirements
@@ -118,6 +118,14 @@ def _generate_pyproject_with_spec_unsafe(entrypoint: Path,
                                  force_phonebook=force_phonebook,
                                  implicitly_disabled_requirements=implicitly_disabled,
                                  mandatory=always_include_requires)
+        # Qualified name dependency is reduced in the middle of interactive interrogation.
+    else:
+        # Delete package name from the dependencies, even if has been supplied to avoid dependency on itself
+        # which may result in installation troubles
+        potential_req = make_requirement_safe(final_spec.qualified_name, '')
+        if potential_req is not None:
+            final_spec.install_requires.difference_update(filter(lambda r: r.name == cast(Requirement, potential_req).name,
+                                                                 final_spec.install_requires))
 
     try:
         final_spec.validate()
