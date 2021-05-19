@@ -1,4 +1,5 @@
 from __future__ import print_function, unicode_literals
+import re
 import logging
 import functools
 import questionary
@@ -23,7 +24,7 @@ from questionary.constants import (DEFAULT_QUESTION_PREFIX, DEFAULT_STYLE, INDIC
 from questionary.question import Question
 from .phonebook import suggest_maintainer_info
 from .spec import PackageSpec
-from .utils import qualified_pkg_name, make_requirement_safe
+from .utils import qualified_pkg_name, make_requirement_safe, find_comrad_requirements
 
 
 logger = logging.getLogger(__name__)
@@ -64,12 +65,20 @@ def confirm_spec_interactive(inferred_spec: PackageSpec,
     suggested_dependencies.append(Separator('Always included:'))
     suggested_dependencies.extend(mandatory_choices)
 
+    entered_name = inferred_spec.name
+
+    def get_entered_name() -> str:
+        nonlocal entered_name
+        return entered_name
+
     def make_name_filter() -> Callable[[str], str]:
         question_idx = 0
 
         def answer_filter(answer: str) -> str:
             nonlocal question_idx
+            nonlocal entered_name
             if question_idx == 0:
+                entered_name = answer
                 qualified_name = qualified_pkg_name(answer)
                 potential_req = make_requirement_safe(qualified_name, '')
                 if potential_req is not None:
@@ -87,23 +96,30 @@ def confirm_spec_interactive(inferred_spec: PackageSpec,
 
         return answer_filter
 
+    comrad_and_reqs = {r.name.lower() for r in find_comrad_requirements()}
+    comrad_and_reqs.add('comrad')
+
     try:
+        # TODO: Make smart list error message appearance the same as these validations (requires effort of reusing PromptSession from questionary)
         answers = questionary.unsafe_prompt(
             questions=[{
                 'type': 'text',
                 'name': 'name',
                 'message': 'Package name',
+                'validate': functools.partial(validate_name, reserved_names=comrad_and_reqs),
                 'default': inferred_spec.name,
             }, {
                 'type': 'text',
                 'name': 'version',
                 'message': 'Package version',
+                'validate': validate_version,
                 'default': inferred_spec.version,
             }, {
                 'type': CUSTOM_PROMPT_TYPE,
                 'name': 'install_requires',
                 'message': 'Runtime dependencies',
                 'choices': suggested_dependencies,
+                'get_pkg_name': get_entered_name,
             }, {
                 'type': 'text',
                 'name': 'description',
@@ -118,6 +134,7 @@ def confirm_spec_interactive(inferred_spec: PackageSpec,
                 'type': 'text',
                 'name': 'maintainer_email',
                 'message': "Maintainer's email",
+                'validate': validate_email,
                 'default': suggested_email or '',
             }],
             style=Style([('qmark', 'fg:#5f819d'),  # token in front of the question
@@ -159,6 +176,37 @@ def line_sort(choice: RequirementItem) -> str:
     return str(choice.req).lower()
 
 
+def validate_name(name: str, reserved_names: Set[str]) -> Union[bool, str]:
+    if not name:
+        return 'Name cannot be empty'
+    if name.lower() in reserved_names:
+        return f'Name "{name}" is reserved for the underlying system.'
+    try:
+        _ = Requirement(name)
+    except InvalidRequirement:
+        return f'Name "{name}" is invalid. Use the name compatible with PEP-508 format.'
+
+    return True
+
+
+def validate_version(ver: str) -> Union[bool, str]:
+    if not ver:
+        return 'Version cannot be empty.'
+    try:
+        _ = Requirement(f'dummy=={ver}')
+    except InvalidRequirement:
+        return f'Version "{ver}" is invalid. Use the PEP-440 format.'
+
+    return True
+
+
+def validate_email(email: str) -> Union[bool, str]:
+    if email:
+        if not re.fullmatch(r'.+@.+', email):
+            return f'"{email}" does not appear to be an email.'
+    return True
+
+
 class ImplicitRequirementError(Exception):
     pass
 
@@ -167,14 +215,19 @@ class ExistingRequirementError(Exception):
     pass
 
 
+class CircularRequirementError(Exception):
+    pass
+
+
 class ExtensibleInquirerControl(FormattedTextControl):
     # Inspired by questionary.prompts.common.InquirerControl
 
-    def __init__(self, choices: List[Union[RequirementItem, Separator]], **kwargs):
+    def __init__(self, choices: List[Union[RequirementItem, Separator]], pkg_name: str, **kwargs):
         self.pointer_index = -1
         self.selected_options: Set[Requirement] = set()
         self.answered = False
         self.aborting = False
+        self.pkg_name = pkg_name
         self.choices: List[Union[RequirementItem, Separator]] = []
         self._init_choices(choices)
         super().__init__(self._get_choice_tokens, **kwargs)
@@ -183,6 +236,9 @@ class ExtensibleInquirerControl(FormattedTextControl):
 
     def add_choice(self, choice: str):
         req = Requirement(choice)  # Keep this to throw an exception if input is invalid
+
+        if req.name == self.pkg_name:
+            raise CircularRequirementError
 
         for item in self.choices:
             if isinstance(item, Separator):
@@ -281,6 +337,7 @@ class ExtensibleInquirerControl(FormattedTextControl):
 
 def _smart_dependency_list(message: str,
                            choices: List[Union[RequirementItem, Separator]],
+                           get_pkg_name: Callable[[], str],
                            qmark: str = DEFAULT_QUESTION_PREFIX,
                            style: Optional[BaseStyle] = None) -> Question:
     if style:
@@ -295,7 +352,7 @@ def _smart_dependency_list(message: str,
                                                             'jpype1', 'nicejapc', 'pjlsa', 'pybt', 'pyfgc',
                                                             'pylogbook', 'pyphonebook', 'pyrda3', 'stubgenj']))
 
-    ic = ExtensibleInquirerControl(choices)
+    ic = ExtensibleInquirerControl(choices=choices, pkg_name=get_pkg_name())
 
     class IsTypingNewModule(Filter):
 
@@ -419,6 +476,8 @@ def _smart_dependency_list(message: str,
             ic.add_choice(new_item_buffer.text)
         except InvalidRequirement:
             ic.arbitrary_token_error = f'Cannot parse library name "{new_item_buffer.text}", please use PEP-508 format.'
+        except CircularRequirementError:
+            ic.arbitrary_token_error = f'Requirement "{new_item_buffer.text}" makes the app depend on itself.'
         except ExistingRequirementError:
             ic.arbitrary_token_error = f'Requirement "{new_item_buffer.text}" already exists in the list.'
         except ImplicitRequirementError:
