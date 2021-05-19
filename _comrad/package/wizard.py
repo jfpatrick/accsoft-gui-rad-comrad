@@ -136,6 +136,13 @@ def confirm_spec_interactive(inferred_spec: PackageSpec,
                 'message': "Maintainer's email",
                 'validate': validate_email,
                 'default': suggested_email or '',
+            }, {
+                'type': 'text',
+                'name': 'arguments',
+                'message': 'Default launch arguments',
+                'instruction': '(Use @bundle to refer to installed location)',
+                'validate': validate_arguments,
+                'default': inferred_spec.arguments or '',
             }],
             style=Style([('qmark', 'fg:#5f819d'),  # token in front of the question
                          ('question', 'bold'),  # question text
@@ -204,6 +211,16 @@ def validate_email(email: str) -> Union[bool, str]:
     if email:
         if not re.fullmatch(r'.+@.+', email):
             return f'"{email}" does not appear to be an email.'
+    return True
+
+
+def validate_arguments(args: str) -> Union[bool, str]:
+    if args and '--' in args.split():
+        # Because only a single '--' is allowed by the argparse. We have to leave it for the flexibility
+        # of user's options at launch. All default arguments are assumed to be optional and non-positional,
+        # therefore '--' is not really necessary. Even if a list of values is supplied, it will be
+        # terminated by the packaged app in-situ depending on the user input.
+        return f'"--" is forbidden in the default arguments.'
     return True
 
 

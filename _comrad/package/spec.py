@@ -15,6 +15,7 @@ class PackageSpec:
     description: Optional[str] = None
     maintainer: Optional[str] = None
     maintainer_email: Optional[str] = None
+    arguments: Optional[str] = None
 
     def validate(self):
         if not self.name:

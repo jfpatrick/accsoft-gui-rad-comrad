@@ -1,11 +1,12 @@
 # Implementation of PEP-517 compatible backend
 # https://www.python.org/dev/peps/pep-0517/
 import os
+import re
 import shutil
 from contextlib import contextmanager
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Callable
 from jinja2 import FileSystemLoader, Environment
 from _comrad.comrad_info import COMRAD_VERSION
 from _comrad.package.spec import PackageSpec
@@ -145,16 +146,30 @@ def _generate_sources(source_path: Path, spec: PackageSpec, output_path: Path):
                           dest=pkg_subdir / '__main__.py',
                           replacements={
                               'entrypoint': spec.entrypoint,
+                              'fixed_args': (spec.arguments or '').split(),
                               'src_dir': src_dir,
+                          },
+                          filters={
+                              'path_replace': _path_replace,
                           })
 
     print(f'{spec.name}-{spec.version} source tree preparation finished!')
 
 
-def _render_file_template(tmpl_name: str, replacements: Dict[str, Any], dest: Path):
+def _render_file_template(tmpl_name: str,
+                          replacements: Dict[str, Any],
+                          dest: Path,
+                          filters: Optional[Dict[str, Callable]] = None):
     print(f'generating {dest.name} -> {dest!s}')
     loader = FileSystemLoader(searchpath=str(Path(__file__).parent / 'templates'))
     env = Environment(loader=loader, autoescape=True)
+    if filters is not None:
+        env.filters.update(filters)
     tmpl = env.get_template(tmpl_name)
     contents = tmpl.render(tool_version=COMRAD_VERSION, **replacements)
     dest.write_text(contents)
+
+
+def _path_replace(input: str, replace: str) -> str:
+    """Replace arguments that contain paths, where @path will be replaced with the package payload path."""
+    return re.sub(r'^(?P<path>@bundle(?=$|\/))', replace, input.strip())
