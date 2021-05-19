@@ -1,4 +1,5 @@
 import pytest
+from unittest import mock
 from packaging.requirements import Requirement
 from _comrad.package.spec import PackageSpec
 
@@ -243,6 +244,16 @@ def test_update_from_dict(input, expected_description, expected_email, expected_
     assert spec.maintainer == expected_maintainer
     assert spec.maintainer_email == expected_email
     assert spec.description == expected_description
+
+
+@pytest.mark.parametrize('name', ['', 'pkg1', 'package-name'])
+@mock.patch('_comrad.package.spec.qualified_pkg_name', return_value='TEST_VALUE')
+def test_qualified_name(_, name):
+    spec = PackageSpec(name=name,
+                       version='0.0.1',
+                       entrypoint='app.ui',
+                       install_requires=set())
+    assert spec.qualified_name == 'TEST_VALUE'
 
 
 @pytest.mark.parametrize('name1,name2,name_equal', [

@@ -27,8 +27,15 @@ if __name__ == '__main__':
     else:
         prog = None
 
-    comrad_run_args = sys.argv[1:]
-    cli_command = ['run', *comrad_run_args, str(_ENTRYPOINT)]
     parser, use_lazy_version = comrad_runner.build_cli(custom_run_prog=prog)
+
+    user_args = sys.argv[1:]
+    baked_in_args = [
+    {% for arg in fixed_args %}    f'{{ arg|path_replace('{_SRC_DIR!s}') }}',
+    {% endfor %}]
+    # Implicit args come before so that user args can override them
+    comrad_run_args = baked_in_args + user_args
+
+    cli_command = ['run', *comrad_run_args, '--', str(_ENTRYPOINT)]
     args = parser.parse_args(cli_command)
     comrad_runner.run_with_args(args, parser, use_lazy_version)

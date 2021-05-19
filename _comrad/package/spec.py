@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Set, Dict, Any, Optional, Union, cast
 from packaging.requirements import Requirement, InvalidRequirement
 from packaging.version import Version, InvalidVersion
+from .utils import qualified_pkg_name
 
 
 @dataclass(eq=False)
@@ -14,6 +15,7 @@ class PackageSpec:
     description: Optional[str] = None
     maintainer: Optional[str] = None
     maintainer_email: Optional[str] = None
+    arguments: Optional[str] = None
 
     def validate(self):
         if not self.name:
@@ -95,6 +97,10 @@ class PackageSpec:
             pass
         else:
             self.install_requires = set(map(map_req, val))
+
+    @property
+    def qualified_name(self) -> str:
+        return qualified_pkg_name(self.name)
 
     def __eq__(self, other: object):
         # Requirement objects do not have equality, therefore we reimplement this method to compare them by strings

@@ -1,45 +1,11 @@
 import pytest
-import logging
 from pathlib import Path
 from unittest import mock
 from packaging.requirements import Requirement
 from _comrad.package.spec_builder import (_generate_pyproject_with_spec_unsafe, _inject_mandatory_requirements,
-                                          _specialize_requirements_to_currently_installed, _find_comrad_requirements,
+                                          _specialize_requirements_to_currently_installed,
                                           _disable_implicit_requirements, generate_pyproject_with_spec, PackageSpec,
-                                          COMRAD_PINNED_VERSION, InvalidProjectFileError, make_requirement_safe)
-
-
-@pytest.mark.parametrize('import_name,found_dist_name,expected_req', [
-    ('pytest', None, 'pytest'),
-    ('pytest>=0.1', None, 'pytest>=0.1'),
-    ('pytest<3;python_version<"3.7"', None, 'pytest<3; python_version < "3.7"'),
-    ('_comrad', 'comrad', 'comrad'),
-    ('_pytest.logging<0.1', 'pytest', 'pytest'),
-])
-@pytest.mark.parametrize('error', [
-    '',
-    'Test error',
-])
-@mock.patch('_comrad.package.spec_builder.find_distribution_name')
-def test_make_requirement_safe_succeeds(find_distribution_name, import_name, found_dist_name, expected_req, error):
-    find_distribution_name.return_value = found_dist_name
-    res = make_requirement_safe(input=import_name, error=error)
-    assert res is not None
-    assert str(res) == expected_req
-
-
-@pytest.mark.parametrize('import_name,error,expected_warning', [
-    ('???', 'Test error', 'Cannot parse requirement "???". Test error'),
-    ('???', '', 'Cannot parse requirement "???". '),
-    ('pytest[test,not  what it even that ()]', 'Test error', 'Cannot parse requirement "pytest[test,not  what it even that ()]". Test error'),
-    ('pytest[test,not  what it even that ()]', '', 'Cannot parse requirement "pytest[test,not  what it even that ()]". '),
-])
-@mock.patch('_comrad.package.spec_builder.find_distribution_name', return_value=None)
-def test_make_requirement_safe_fails(_, import_name, error, expected_warning, log_capture):
-    assert log_capture(logging.WARNING, '_comrad.package.spec_builder') == []
-    res = make_requirement_safe(input=import_name, error=error)
-    assert res is None
-    assert log_capture(logging.WARNING, '_comrad.package.spec_builder') == [expected_warning]
+                                          COMRAD_PINNED_VERSION, InvalidProjectFileError)
 
 
 @pytest.mark.parametrize(f'freeze_output,initial_reqs,expected_reqs', [
@@ -76,26 +42,6 @@ def test_inject_mandatory_requirements(initial_reqs, mandatory_reqs, expected_re
     mandatory = set(map(Requirement, mandatory_reqs)) if mandatory_reqs is not None else None
     _inject_mandatory_requirements(original=requirements, mandatory=mandatory)
     assert set(map(str, requirements)) == expected_reqs
-
-
-@pytest.mark.parametrize('requires,expected_requires', [
-    (None, set()),
-    ([], set()),
-    (['req1'], {'req1'}),
-    (['qasync<1a0,>=0.13.0',
-      'pytest-mock<2.1,>=2.0; extra == "test"'], {'qasync<1a0,>=0.13.0'}),
-    (['dataclasses~=0.7; python_version < "3.7"',
-      'qasync<1a0,>=0.13.0',
-      'qasync<1a0,>=0.13.0; extra == "all"',
-      'pytest-mock<2.1,>=2.0; extra == "test"'], {'dataclasses~=0.7; python_version < "3.7"', 'qasync<1a0,>=0.13.0'}),
-])
-@mock.patch('_comrad.package.spec_builder.importlib_metadata')
-def test_find_comrad_requirements(importlib_metadata, requires, expected_requires):
-    importlib_metadata.distribution.return_value.requires = requires
-    res = _find_comrad_requirements()
-    for r in res:
-        assert isinstance(r, Requirement)
-    assert set(map(str, res)) == expected_requires
 
 
 @pytest.mark.parametrize('reqs,mandatory_reqs,comrad_reqs,expected_implicit,expected_explicit', [
@@ -394,7 +340,7 @@ def test_find_comrad_requirements(importlib_metadata, requires, expected_require
     ({'req1==0.5', 'req4'}, {'req3', 'req2==0.5'}, {'req1==0.5', 'req2'}, {'req1==0.5'}, {'req4'}),
     ({'req1==0.5', 'req4'}, {'req3', 'req2==0.5'}, {'req1==0.5', 'req2==0.5'}, {'req1==0.5'}, {'req4'}),
 ])
-@mock.patch('_comrad.package.spec_builder._find_comrad_requirements')
+@mock.patch('_comrad.package.spec_builder.find_comrad_requirements')
 def test_disable_implicit_requirements(find_comrad_requirements, reqs, mandatory_reqs, comrad_reqs, expected_explicit, expected_implicit):
     find_comrad_requirements.return_value = set(map(Requirement, comrad_reqs))
     requires = set(map(Requirement, reqs))
