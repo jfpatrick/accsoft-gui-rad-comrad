@@ -5,30 +5,16 @@ import subprocess
 import operator
 from pathlib import Path
 from typing import Dict, Optional, Set, Any
-from packaging.requirements import Requirement, InvalidRequirement
-from .importlib_shim import find_distribution_name, importlib_metadata
+from packaging.requirements import Requirement
 from .spec import PackageSpec
-from .pyproject import read_pyproject, dump_pyproject, InvalidProjectFileError, COMRAD_PINNED_VERSION, pyproject_dict_to_spec_dict
+from .utils import make_requirement_safe, find_comrad_requirements
+from .pyproject import (read_pyproject, dump_pyproject, InvalidProjectFileError, COMRAD_PINNED_VERSION,
+                        pyproject_dict_to_spec_dict)
 from .import_scanning import scan_imports
 from .wizard import confirm_spec_interactive
 
 
 logger = logging.getLogger(__name__)
-
-
-def make_requirement_safe(input: str, error: str) -> Optional[Requirement]:
-    # Not only create a requirement object, but provide a real package name (if can be found) via
-    # importlib_metadata, e.g.
-    # qtpy -> QtPy
-    # jpype -> JPype1
-    dist_name = find_distribution_name(input)
-    if dist_name:
-        input = dist_name
-    try:
-        return Requirement(input)
-    except InvalidRequirement:
-        logger.warning(f'Cannot parse requirement "{input}". {error}')
-        return None
 
 
 def generate_pyproject_with_spec(entrypoint: Path,
@@ -175,7 +161,7 @@ def _disable_implicit_requirements(input: Set[Requirement], mandatory: Optional[
     optional_map = {k: v for k, v in given_reqs_map.items() if k in optional_names}
     implicit_reqs: Set[Requirement] = set()
 
-    comrad_reqs = _find_comrad_requirements()
+    comrad_reqs = find_comrad_requirements()
     for comrad_req in comrad_reqs:
         try:
             original_req = optional_map[comrad_req.name]
@@ -187,10 +173,3 @@ def _disable_implicit_requirements(input: Set[Requirement], mandatory: Optional[
             input.remove(original_req)
 
     return implicit_reqs
-
-
-def _find_comrad_requirements() -> Set[Requirement]:
-    comrad_pkg = importlib_metadata.distribution('comrad')  # type: ignore
-    if comrad_pkg.requires is None:
-        return set()
-    return {Requirement(r) for r in comrad_pkg.requires if ' extra == ' not in r}
