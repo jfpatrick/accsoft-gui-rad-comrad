@@ -34,8 +34,8 @@ of your application UI. Let's call this file ``app.py``:
 
       class MyDisplay(CDisplay):
 
-      def ui_filename(self):
-          return 'app.ui'
+          def ui_filename(self):
+              return 'app.ui'
 
 
 The above example does nothing more than declaring a subclass, and pointing that UI should be generated
@@ -164,12 +164,12 @@ objects.
 
       class MyDisplay(CDisplay, Ui_Form):
 
-      def __init__(self, *args, **kwargs):
-          super().__init__(*args, **kwargs)
-          self.setupUi(self)  # Actually create widgets
+          def __init__(self, *args, **kwargs):
+              super().__init__(*args, **kwargs)
+              self.setupUi(self)  # Actually create widgets
 
-          # Assign custom channel
-          self.my_label.channel = 'myDevice/myProperty#myField'
+              # Assign custom channel
+              self.my_label.channel = 'myDevice/myProperty#myField'
 
 You notice that we are using multiple inheritance now, where ``MyDisplay`` is a subclass of both
 :class:`~comrad.CDisplay` and ``Ui_Form``. While, making our code look nice (with direct access to ``self.my_label``)
@@ -187,12 +187,12 @@ choose the path of composition, where your UI objects are scoped inside another 
 
       class MyDisplay(CDisplay):
 
-      def __init__(self, *args, **kwargs):
-          super().__init__(*args, **kwargs)
-          self.ui = Ui_Form()
-          self.ui.setupUi(self)
+          def __init__(self, *args, **kwargs):
+              super().__init__(*args, **kwargs)
+              self.ui = Ui_Form()
+              self.ui.setupUi(self)
 
-          # Assign custom channel
-          self.ui.my_label.channel = 'myDevice/myProperty#myField'
+              # Assign custom channel
+              self.ui.my_label.channel = 'myDevice/myProperty#myField'
 
 Notice, that now we have to access ``self.ui.my_label`` instead of ``self.my_label``.
