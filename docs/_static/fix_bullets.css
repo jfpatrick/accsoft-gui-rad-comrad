@@ -1,4 +1,0 @@
-div:not(.toctree-wrapper):not(.wy-menu) > ul:not(.current):not(.wy-breadcrumbs) li:first-child,
-div:not(.toctree-wrapper):not(.wy-menu) > ol:not(.current):not(.wy-breadcrumbs) li:first-child {
-    margin-top: -10px !important;
-}

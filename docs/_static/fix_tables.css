@@ -5,3 +5,7 @@
 .wy-table-responsive td, .wy-table-responsive th {
     white-space: normal !important;
 }
+
+.wy-table-responsive {
+    overflow: scroll visible !important;  /* override acc_py_sphinx behavior (needed in API pages) */
+}
