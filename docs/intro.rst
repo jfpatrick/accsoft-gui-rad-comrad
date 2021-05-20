@@ -18,6 +18,7 @@ Now that you have installed ComRAD as explained in the :doc:`install`, we can st
 - `Running the application`_
 
   * `ComRAD main window`_
+  * `Using launch profiles`_
   * `Using alternative color schemes`_
 
 - `Hot reloading application's UI`_
@@ -242,6 +243,35 @@ Various parts of the interface can be shown or hidden via "View" menu in the **M
    :alt: Simple application with timing bar enabled
 
    Simple application with timing bar enabled
+
+
+Using launch profiles
+^^^^^^^^^^^^^^^^^^^^^
+
+ComRAD integrates with argparse-profiles_, which allows its "comrad run" command to save and load a list of
+command arguments from a profile. For example, to save a profile for the first time, you would use ``--save-to-profile``,
+e.g.
+
+.. code-block:: bash
+
+   comrad run --save-to-profile MY_PROFILE -s PSB.USER.ALL --window-plugin-config comrad.pls.show_bar=1 -- my_existing_file.ui
+
+Later, to not type same arguments everytime, you could simply call
+
+.. code-block:: bash
+
+   comrad run --use-profile MY_PROFILE
+
+and this would be equivalent to launching
+
+.. code-block:: bash
+
+   comrad run -s PSB.USER.ALL --window-plugin-config comrad.pls.show_bar=1 -- my_existing_file.ui
+
+.. seealso:: Refer to argparse-profiles_ documentation for the complete guide of managing profiles.
+
+.. _argparse-profiles: https://acc-py.web.cern.ch/gitlab/acc-co/devops/python/incubator/argparse-profiles/docs/stable/
+
 
 Using alternative color schemes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

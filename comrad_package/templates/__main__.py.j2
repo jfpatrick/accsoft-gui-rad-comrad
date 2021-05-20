@@ -23,19 +23,18 @@ if __name__ == '__main__':
     # TODO: Wait for improvement in acc-py-deploy to expose a new env var that tells that it's being run in acc-py app run, and how it's done. Create new if block for that case
     if cmd.endswith('__main__.py'):
         pkg_name = _HERE.name
-        prog = f'python -m {pkg_name}'
     else:
-        prog = None
+        pkg_name = None
 
-    parser, use_lazy_version = comrad_runner.build_cli(custom_run_prog=prog)
+    parser, use_lazy_version = comrad_runner.build_cli(deployed_pkg_name=pkg_name)
 
-    user_args = sys.argv[1:]
     baked_in_args = [
     {% for arg in fixed_args %}    f'{{ arg|path_replace('{_SRC_DIR!s}') }}',
     {% endfor %}]
-    # Implicit args come before so that user args can override them
-    comrad_run_args = baked_in_args + user_args
 
-    cli_command = ['run', *comrad_run_args, '--', str(_ENTRYPOINT)]
-    args = parser.parse_args(cli_command)
+    args = comrad_runner.parse_args(parser=parser,
+                                    args=comrad_runner.DeployedArgs(command='run',
+                                                                    user=sys.argv[1:],
+                                                                    baked_in=baked_in_args,
+                                                                    entrypoint=str(_ENTRYPOINT)))
     comrad_runner.run_with_args(args, parser, use_lazy_version)
