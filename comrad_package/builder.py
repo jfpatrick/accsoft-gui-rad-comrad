@@ -172,4 +172,6 @@ def _render_file_template(tmpl_name: str,
 
 def _path_replace(input: str, replace: str) -> str:
     """Replace arguments that contain paths, where @path will be replaced with the package payload path."""
-    return re.sub(r'^(?P<path>@bundle(?=$|\/))', replace, input.strip())
+    return re.sub(r'^(?P<embedded_flag>--\w+(-\w+)*=)?(?P<path>@bundle(?=$|\/))',
+                  rf'\g<embedded_flag>{replace}',
+                  input.strip())
