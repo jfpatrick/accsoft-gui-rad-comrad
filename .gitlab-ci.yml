@@ -96,3 +96,27 @@ release sdist on tag:
   extends: .acc_py_release_sdist_v2
   image: $ACCPY_PYQT_DOCKER_IMAGE
   stage: Upload Release
+
+anybadge:
+  image: $ACCPY_PYQT_DOCKER_IMAGE
+  stage: Documentation
+  script:
+    - pip install anybadge
+    - pip install .[lint,doc]
+    - mkdir -p badges
+    - BADGE_MYPY_VERSION="$(read -a mypy_output <<< "$(pip list | grep -E mypy[\t\ ])" && echo ${mypy_output[1]})"
+    - BADGE_FLAKE8_VERSION="$(read -a flake8_output <<< "$(pip list | grep -E flake8[\t\ ])" && echo ${flake8_output[1]})"
+    - BADGE_SPHINX_VERSION="$(read -a sphinx_output <<< "$(pip list | grep -E Sphinx[\t\ ])" && echo ${sphinx_output[1]})"
+    - BADGE_COMRAD_VERSION="$(python -c 'import comrad; print(comrad.__version__)' | awk '{split($0,ver,"+");print ver[1]}')"
+    - anybadge -l mypy -v "v${BADGE_MYPY_VERSION}" -f badges/mypy.svg -c olive -o
+    - anybadge -l flake8 -v "v${BADGE_FLAKE8_VERSION}" -f badges/flake8.svg -c olive -o
+    - anybadge -l acc-py-repo -v "comrad v${BADGE_COMRAD_VERSION}" -f badges/repo.svg -c purple -o
+    - anybadge -l documentation -v "sphinx v${BADGE_SPHINX_VERSION}" -f badges/docs.svg -c teal -o
+  artifacts:
+    paths:
+      - badges
+    when: on_success
+    expire_in: 1 day
+  only:
+    refs:
+      - develop
