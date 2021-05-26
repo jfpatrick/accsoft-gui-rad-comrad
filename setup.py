@@ -68,14 +68,8 @@ requirements = {
         'docutils<0.17a0',  # docutils 0.17 broke a lot of thigs. While some were fixed by sphinx-rtd-theme 0.5.2, there are some outstanding issues, with gaps in bullets on the index page
         'acc-py-sphinx>=0.11,<0.12a0',
     ],
-    'release': [
-        'versioneer>=0.15',
-        'setuptools>=40.8.0',
-        'twine>=1.13.0,<1.14',
-        'wheel',
-    ],
 }
-requirements['dev'] = [*requirements['test'], *requirements['lint'], *requirements['doc'], *requirements['release']]
+requirements['dev'] = [*requirements['test'], *requirements['lint'], *requirements['doc']]
 requirements['all'] = [*requirements['prod'], *requirements['dev']]
 
 requires = requirements['prod']

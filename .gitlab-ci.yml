@@ -6,7 +6,9 @@ include:
 stages:
   - Code Quality
   - Unit Tests
-  - Release
+  - Build Wheel
+  - Documentation
+  - Upload Release
 
 variables:
   ACCPY_PYQT_DOCKER_IMAGE: gitlab-registry.cern.ch/acc-co/devops/python/distribution/ci/pyqt:v2020-11rc2
@@ -55,23 +57,13 @@ pytest:
     reports:
       junit: report.xml
 
-twine:
+build wheel:
+  extends: .acc_py_build_wheel
   image: $ACCPY_PYQT_DOCKER_IMAGE
-  stage: Release
-  script:
-    - pip install .[release]
-    - pip install -U setuptools
-    - python setup.py sdist bdist_wheel
-    - python -m twine upload --repository-url http://acc-py-repo:8081/repository/py-release-local/ -u $ACCPY_NEXUS_USER -p $ACCPY_NEXUS_PASSWD dist/*
-  when: manual
-  only:
-    refs:
-      - tags
-    variables:
-      - $ACCPY_NEXUS_USER != null
-      - $ACCPY_NEXUS_PASSWD != null
+  stage: Build Wheel
 
 .sphinx_custom:
+  stage: Documentation
   before_script:
       - *init_sequence
       - yum install -y -q graphviz  # Required to generate inheritance diagrams
@@ -83,7 +75,6 @@ sphinx:
     - .acc_py_build_docs
     - .sphinx_custom
   image: $ACCPY_PYQT_DOCKER_IMAGE
-  stage: Release
   only:
     refs:
       - master
@@ -95,5 +86,13 @@ sphinx on tag:
     - .acc_py_build_docs_on_tag
     - .sphinx_custom
   image: $ACCPY_PYQT_DOCKER_IMAGE
-  stage: Release
 
+release wheel on tag:
+  extends: .acc_py_release_wheel
+  image: $ACCPY_PYQT_DOCKER_IMAGE
+  stage: Upload Release
+
+release sdist on tag:
+  extends: .acc_py_release_sdist_v2
+  image: $ACCPY_PYQT_DOCKER_IMAGE
+  stage: Upload Release
