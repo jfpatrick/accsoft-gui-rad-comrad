@@ -478,6 +478,19 @@ class CPlotWidgetBase(PyDMPrimitiveWidget, metaclass=GenericQObjectMeta):
                                index=index)
         return new_item
 
+    def show_address_tooltip(self, _):
+        # Keep PyDM away from trying to display a channel tooltip, because it may not make sense
+        # (more than single channel in a widget). Plus, without "channels" attribute missing it actually
+        # crashes, because pyqtgraph does not handle missing attribute properly
+        # File "pydm/widgets/base.py", line 141, in eventFilter
+        #     self.show_address_tooltip(event)
+        # File "pydm/widgets/base.py", line 153, in show_address_tooltip
+        #     channels_method = getattr(self, 'channels', None)
+        # File "pyqtgraph/widgets/PlotWidget.py", line 79, in __getattr__
+        #     raise NameError(attr)
+        # NameError instead of AttributeError actually fails the fallback logic of "getattr" call and produces a crash
+        pass
+
     @staticmethod
     def _default_color(index: int) -> str:
         return utilities.colors.default_colors[
