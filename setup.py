@@ -27,7 +27,7 @@ requirements = {
         'pyjapc==2.2.1',  # We must keep it pinned to this version, because comrad is obliged to override getParam, which makes it very fragile to changes
         'accwidgets[graph,led,property_edit,timing_bar,log_console,rbac]>=1.3.2,<2a0',
         'papc>=0.5.1,<0.6',
-        'pydm==1.10.7.post0',
+        'pydm==1.11.1.post0',
         'JPype1>=1.1.1,<2a0',  # 1.1.1 is confirmed alongside 0.6.3 to be without segfaults. We need > 0.6 for exception format
         'dataclasses~=0.7;python_version<"3.7"',
         'pyCCDA~=0.10.1',
