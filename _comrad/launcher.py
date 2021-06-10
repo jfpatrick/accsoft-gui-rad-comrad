@@ -494,7 +494,7 @@ def _run_comrad(args: Namespace) -> bool:
         os.environ[k] = v
 
     # Importing stuff here and not in the beginning of the file to setup the root logger first.
-    from comrad.app.application import CApplication
+    from comrad.app.application import CApplication, CRbaStartupLoginPolicy
     from pydm.utilities.macro import parse_macro_string
     macros = parse_macro_string(args.macro) if args.macro is not None else None
 
@@ -508,6 +508,12 @@ def _run_comrad(args: Namespace) -> bool:
     if sys.version_info.major > 3 or (sys.version_info.major == 3 and sys.version_info.minor >= 7):
         sys.path.append(os.getcwd())
 
+    startup_policy: Optional[CRbaStartupLoginPolicy]
+    try:
+        startup_policy = CRbaStartupLoginPolicy[os.environ.get('COMRAD_STARTUP_LOGIN_POLICY', '')]
+    except KeyError:
+        startup_policy = None
+
     app = CApplication(ui_file=args.display_file,
                        command_line_args=args.display_args,
                        use_inca=not args.no_inca,
@@ -515,6 +521,7 @@ def _run_comrad(args: Namespace) -> bool:
                        cmw_env=args.cmw_env,
                        default_selector=args.selector or None,
                        rbac_token=args.rbac_token,
+                       startup_login_policy=startup_policy,
                        java_env=java_env,
                        perf_mon=args.perf_mon,
                        hide_nav_bar=args.hide_nav_bar,
