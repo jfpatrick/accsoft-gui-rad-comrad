@@ -11,7 +11,7 @@ from pydm.application import PyDMApplication
 from pydm.utilities import path_info, which
 from pydm.data_plugins import is_read_only
 from comrad.icons import icon
-from comrad.rbac import CRbaState
+from comrad.rbac import CRbaState, CRbaStartupLoginPolicy
 from comrad.app.plugins import CToolbarID
 from .plugins._config import WindowPluginConfigTrie
 
@@ -53,6 +53,7 @@ class CApplication(PyDMApplication):
                  plugin_whitelist: Optional[Iterable[str]] = None,
                  plugin_blacklist: Optional[Iterable[str]] = None,
                  data_plugin_paths: Optional[List[str]] = None,
+                 startup_login_policy: Optional[CRbaStartupLoginPolicy] = None,
                  fullscreen: bool = False):
         """
         :class:`CApplication` handles loading ComRAD display files, opening
@@ -104,11 +105,13 @@ class CApplication(PyDMApplication):
             plugin_whitelist: List of plugin IDs that have to be enabled even if they are disabled by default.
             plugin_blacklist: List of plugin IDs that have to be disabled even if they are enabled by default.
             data_plugin_paths: Extra paths to be searched for data plugins.
+            startup_login_policy: Default login policy for RBAC at launch.
             fullscreen: Whether or not to launch PyDM in a full screen mode.
         """
         args = [_APP_NAME]
         args.extend(command_line_args or [])
-        self._rbac = CRbaState()  # We must keep it before super because dependant plugins will be initialized in super()
+        applied_policy = CRbaStartupLoginPolicy.LOGIN_BY_LOCATION if startup_login_policy is None else startup_login_policy
+        self._rbac = CRbaState(startup_policy=applied_policy)  # We must keep it before super because dependant plugins will be initialized in super()
         self._ccda_endpoint = ccda_endpoint
         self._cmw_env = cmw_env
         self._use_inca = use_inca

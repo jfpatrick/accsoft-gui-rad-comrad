@@ -6,6 +6,7 @@ import importlib.util
 import importlib.machinery
 from pathlib import Path
 from typing import List, Optional, cast, Tuple, Dict, Any
+from comrad import CRbaStartupLoginPolicy
 from comrad.app.plugins.toolbar import rbac_plugin
 
 
@@ -190,7 +191,9 @@ def make_cmd(entrypoint: str,
     _disable_implicit_plugin(args, plugin_id=rbac_plugin.RbaToolbarPlugin.plugin_id)
     _append_arg(args, str(file_path))
     logger.debug(f'Launching app with args: {args}')
-    env = dict(os.environ, PYJAPC_SIMULATION_INIT=(japc_generator or ''))
+    env = dict(os.environ,
+               PYJAPC_SIMULATION_INIT=(japc_generator or ''),
+               COMRAD_STARTUP_LOGIN_POLICY=CRbaStartupLoginPolicy.NO_LOGIN.name)
     python_path = env.get('PYTHONPATH', '')
     env['PYTHONPATH'] = f'{_CURR_DIR}:{python_path}'
     return args, env
