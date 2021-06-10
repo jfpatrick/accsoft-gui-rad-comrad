@@ -288,7 +288,7 @@ class ExamplesWindow(QMainWindow):
                                         japc_generator=self._selected_example_japc_generator,
                                         extra_args=self._selected_example_args)
 
-        # FIXME: This hack should be gone when acc-py distro is fixed
+        # FIXME: This hack should be gone when acc-py distro is fixed (or when Py3.6 support is dropped)
         # This is related to PyQt5 failing to load due to libstdc++ incompatibility in Acc-Py
         # Under certain conditions, where another library gets loaded before PyQt5 and triggers
         # loading of libstdc++, also it does not have RPATH setup to point to Acc-Py, it will
