@@ -32,6 +32,12 @@ Authentication during startup
 During the startup, a ComRAD application will try to authenticate by location. In case of success, user will be
 logged in by the time UI renders. In case of failure, user will remain not authenticated.
 
+It is possible to alter login during startup by defining ``COMRAD_STARTUP_LOGIN_POLICY`` environment variable. Accepted
+values are:
+
+* ``LOGIN_BY_LOCATION``: Attempt to login by location. This is default behavior.
+* ``NO_LOGIN``: Do not attempt any login at launch.
+
 If ``--rbac-token`` command line argument was supplied during launch, this token will be parsed and used instead of
 default location login policy. This command line argument is also propagated into subprocesses (e.g. when opening
 new windows using :class:`~comrad.CRelatedDisplayButton`, so that authentication is preserved).

@@ -58,6 +58,7 @@ class CRbaState(QObject):
             self._model.login_by_location(interactively_select_roles=False)
         elif self._startup_login_policy == CRbaStartupLoginPolicy.LOGIN_EXPLICIT:
             # TODO: Implement presenting a dialog here
+            # TODO: When this is done, update possible values in RBAC documentation
             pass
 
     @property
