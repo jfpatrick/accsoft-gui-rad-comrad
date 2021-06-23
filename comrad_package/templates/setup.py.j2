@@ -14,7 +14,7 @@ setup(name='{{ package['name'] }}',
       maintainer_email='{{ package['maintainer_email'] }}',{% endif %}
       packages=find_packages(),
       package_data={'': ['*']},
-      python_requires='>=3.6,<4',
+      python_requires='>=3.7,<3.10',
       platforms=['linux'],
       classifiers=[
           'Programming Language :: Python :: 3',

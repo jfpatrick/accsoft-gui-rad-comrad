@@ -64,11 +64,11 @@ Installing outside of "Accelerating Python" environment
 All of the above commands are true without "Accelerating Python" environment, however you need to make
 sure that packages can be installed correctly.
 
-1. Make sure you have an updated version of "pip" (standard CC7 pip3 v9.* does not handle installs from git):
+1. Make sure that you are running in Python 3.7+ and have pip version 20.3 or greater for proper dependency resolution.
 
-   .. code-block:: bash
-
-      python -m pip install -U pip
+   .. note:: CentOS 7 does not provide Python 3.7 in its repositories, Python 3.6 is the latest supported version. It
+             is highly recommended to use Acc-Py base, as explained in `Prerequisites`_. Alternatively, you can build
+             Python from source, or use another Linux distribution that provides Python 3.7 or newer.
 
 2. Ensure that you have access to Acc-Py Nexus repository, as described in
    `Python package index / repository <https://wikis.cern.ch/pages/viewpage.action?pageId=145493385>`__.

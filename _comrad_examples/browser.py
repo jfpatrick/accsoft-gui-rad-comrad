@@ -291,20 +291,6 @@ class ExamplesWindow(QMainWindow):
                                         japc_generator=self._selected_example_japc_generator,
                                         extra_args=self._selected_example_args)
 
-        # FIXME: This hack should be gone when acc-py distro is fixed (or when Py3.6 support is dropped)
-        # This is related to PyQt5 failing to load due to libstdc++ incompatibility in Acc-Py
-        # Under certain conditions, where another library gets loaded before PyQt5 and triggers
-        # loading of libstdc++, also it does not have RPATH setup to point to Acc-Py, it will
-        # cause older libstdc++ loaded, that breaks due to lack of symbols needed for PyQt5.
-        # In this particular case, it's papc that is loaded from sitecustomize.py that loads
-        # datetime that loads libstdc++ before PyQt5 is loaded.
-        # See https://issues.cern.ch/browse/ACCPY-588 for more details
-        if 'ACC_PY_PREFIX' in cmd_env:
-            logger.debug('Patching environment for Acc-Py libstdc++')
-            import pathlib
-            gcc_libs = str(pathlib.Path(cmd_env['ACC_PY_PREFIX']).absolute() / 'gcc' / 'lib64')
-            cmd_env['LD_LIBRARY_PATH'] = gcc_libs + ':' + cmd_env.get('LD_LIBRARY_PATH', '')
-
         self._kill_running_example_if_needed()
         self._running_example = Popen(args=cmd_args, shell=False, env=cmd_env)
 
