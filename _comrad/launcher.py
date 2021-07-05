@@ -11,12 +11,18 @@ from typing import Optional, Tuple, Dict, List, Iterable, Any, Set, cast
 from argparse import RawDescriptionHelpFormatter, ArgumentParser, Namespace
 from pathlib import Path
 from argcomplete import autocomplete
-from argparse_profiles import ProfileParser
 from accwidgets.qt import exec_app_interruptable
 from .comrad_info import COMRAD_DESCRIPTION, COMRAD_VERSION, get_versions_info
 from .log_config import install_logger_level
 from .common import get_japc_support_envs, comrad_asset
 from .package import generate_pyproject_with_spec, make_requirement_safe, Requirement, parse_maintainer_info
+
+_ARGPARSE_PROFILES_INSTALLED = True
+try:
+    from argparse_profiles import ProfileParser
+except ImportError:
+    from argparse import ArgumentParser as ProfileParser
+    _ARGPARSE_PROFILES_INSTALLED = False
 
 
 def create_args_parser(deployed_pkg_name: Optional[str] = None) -> Tuple[ArgumentParser, bool]:
@@ -279,24 +285,25 @@ def _run_subcommand(parser: _EmptyLoadSaveActionProfileParser, deployed_pkg_name
                                 metavar='FILE',
                                 help='Main client program (can be a Qt Designer or a Python file).')
 
-    launch_group = parser.add_argument_group('Launch configuration')
-    profile_params = launch_group.add_mutually_exclusive_group()
-    parser._argparse_profiles_load_action = profile_params.add_argument('--use-profile',
-                                                                        default=argparse.SUPPRESS,
-                                                                        type=str,
-                                                                        required=False,
-                                                                        action='append',
-                                                                        dest='argparse_profiles_load_action',
-                                                                        help='Name of the profile file to load additional flags from.',
-                                                                        metavar='PROFILE_NAME')
-    parser._argparse_profiles_save_action = profile_params.add_argument('--save-to-profile',
-                                                                        default=argparse.SUPPRESS,
-                                                                        type=str,
-                                                                        required=False,
-                                                                        dest='argparse_profiles_save_action',
-                                                                        help='Name of the profile file to save the current parameters to. '
-                                                                             'Passing this flag will not allow the application to start.',
-                                                                        metavar='PROFILE_NAME')
+    if _ARGPARSE_PROFILES_INSTALLED:
+        launch_group = parser.add_argument_group('Launch configuration')
+        profile_params = launch_group.add_mutually_exclusive_group()
+        parser._argparse_profiles_load_action = profile_params.add_argument('--use-profile',
+                                                                            default=argparse.SUPPRESS,
+                                                                            type=str,
+                                                                            required=False,
+                                                                            action='append',
+                                                                            dest='argparse_profiles_load_action',
+                                                                            help='Name of the profile file to load additional flags from.',
+                                                                            metavar='PROFILE_NAME')
+        parser._argparse_profiles_save_action = profile_params.add_argument('--save-to-profile',
+                                                                            default=argparse.SUPPRESS,
+                                                                            type=str,
+                                                                            required=False,
+                                                                            dest='argparse_profiles_save_action',
+                                                                            help='Name of the profile file to save the current parameters to. '
+                                                                                 'Passing this flag will not allow the application to start.',
+                                                                            metavar='PROFILE_NAME')
 
     display_group = parser.add_argument_group('Display configuration')
     display_group.add_argument('display_args',
