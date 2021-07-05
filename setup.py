@@ -36,7 +36,7 @@ requirements = {
         'importlib-metadata>=1.7.0,<4.0a0;python_version<"3.8"',
         'toml~=0.10.2',
         'stdlib-list>=0.8.0,<1a0;python_version<"3.10"',
-        'argparse-profiles~=0.9',
+        'argparse-profiles~=0.9;python_version>="3.7"',
     ],
     'test': [
         'pytest>=5.0.1,<5.1',
