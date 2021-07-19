@@ -26,6 +26,7 @@ class CPushButton(CChannelDataProcessingMixin, CWidgetRulesMixin, CCustomizedToo
                  label: Optional[str] = None,
                  icon: Optional[QIcon] = None,
                  press_value: Union[str, int, float, None] = None,
+                 release_value: Union[str, int, float, None] = None,
                  relative: bool = False,
                  init_channel: Optional[str] = None,
                  **kwargs):
@@ -47,6 +48,7 @@ class CPushButton(CChannelDataProcessingMixin, CWidgetRulesMixin, CCustomizedToo
             label: String to place on button.
             icon: An icon to display on the button.
             press_value: Value to be sent when the button is clicked.
+            release_value: Alternative to ``press_value`` to send the value on button release.
             relative: Choice to have the button perform a relative put, instead of always setting to an absolute value.
             init_channel: ID of channel to manipulate.
             **kwargs: Any future extras that need to be passed down to PyDM.
@@ -60,6 +62,7 @@ class CPushButton(CChannelDataProcessingMixin, CWidgetRulesMixin, CCustomizedToo
                                 label=label,
                                 icon=icon,
                                 pressValue=press_value,
+                                releaseValue=release_value,
                                 relative=relative,
                                 init_channel=init_channel,
                                 **kwargs)
@@ -81,7 +84,7 @@ class CPushButton(CChannelDataProcessingMixin, CWidgetRulesMixin, CCustomizedToo
         the local conversion logic.
 
         Returns:
-            None if any of the following condition is :obj:`False`:
+            :obj:`None` if any of the following condition is :obj:`False`:
                 #. There's no new value (:attr:`pressValue`) for the widget
                 #. There's no initial or current value for the widget
                 #. The confirmation dialog returns ``No`` as the user's answer to the dialog
@@ -92,23 +95,43 @@ class CPushButton(CChannelDataProcessingMixin, CWidgetRulesMixin, CCustomizedToo
                 #. The value sent to the channel is the sum of the existing value and the :attr:`pressValue`
                    if the :attr:`relative` flag is :obj:`True`, and the channel type is not a :obj:`str`
         """
-        send_value = None
-        if self._pressValue is None or self.value is None:
-            return None
+        self._released = False
+        val = self.__execute_send(self._pressValue)
 
-        if not self.confirm_dialog():
-            return None
+        if self._show_confirm_dialog or self._password_protected:
+            self.__execute_send(self._releaseValue, is_release=True)
 
-        if not self.validate_password():
-            return None
+        return val
 
-        if not self._relative or self.channeltype == str:
-            send_value = self._convert(self._pressValue)
-            self.send_value_signal[self.channeltype].emit(send_value)
-        else:
-            send_value = self.value + self._convert(self._pressValue)
-            self.send_value_signal[self.channeltype].emit(send_value)
-        return send_value
+    @Slot()
+    def sendReleaseValue(self) -> Any:
+        """
+        Send new release value to the channel.
+
+        This function interprets the settings of the :class:`CPushButton` and sends
+        the appropriate value out through the :attr:`send_value_signal`.
+
+        The implementation is copied from :class:`PyDMPushButton` and overridden to take advantage of
+        the local conversion logic.
+
+        Returns:
+            :obj:`None` if any of the following condition is :obj:`False`:
+                #. There's no new value (:attr:`releaseValue`) for the widget
+                #. There's no initial or current value for the widget
+                #. The confirmation dialog returns ``No`` as the user's answer to the dialog
+                #. The password validation dialog returns a validation error
+                #. :attr:`writeWhenRelease` is :obj:`False`
+            Otherwise, return the value sent to the channel:
+                #. The value sent to the channel is the same as the :attr:`pressValue` if the existing
+                   channel type is a :obj:`str`, or the :attr:`relative` flag is :obj:`False`
+                #. The value sent to the channel is the sum of the existing value and the :attr:`pressValue`
+                   if the :attr:`relative` flag is :obj:`True`, and the channel type is not a :obj:`str`
+        """
+        self._released = True
+        if self._show_confirm_dialog or self._password_protected:
+            # This will be handled via our friend sendValue
+            return
+        self.__execute_send(self._releaseValue, is_release=True)
 
     @Slot(int)
     @Slot(float)
@@ -131,6 +154,28 @@ class CPushButton(CChannelDataProcessingMixin, CWidgetRulesMixin, CCustomizedToo
             self.pressValue = self._convert(value)
         except (ValueError, TypeError):
             logger.error(f"'{value}' is not a valid pressValue for '{self.channel}'.")
+
+    @Slot(int)
+    @Slot(float)
+    @Slot(str)
+    def updateReleaseValue(self, value: Union[int, float, str]):
+        """
+        Update the :attr:`releaseValue` of a function by passing a signal to the :class:`CPushButton`.
+
+        This is useful to dynamically change the :attr:`releaseValue` of the button
+        during runtime. This enables the applied value to be linked to the
+        state of a different widget, say a :class:`QLineEdit` or :class:`QSlider`.
+
+        The implementation is copied from :class:`PyDMPushButton` and overridden to take advantage of
+        the local conversion logic.
+
+        Args:
+            value: Incoming value.
+        """
+        try:
+            self.releaseValue = self._convert(value)
+        except (ValueError, TypeError):
+            logger.error(f"'{value}' is not a valid releaseValue for '{self.channel}'.")
 
     def _convert(self, value: Union[int, float, str]) -> Any:
         """
@@ -170,6 +215,42 @@ class CPushButton(CChannelDataProcessingMixin, CWidgetRulesMixin, CCustomizedToo
         pass
 
     protectedPassword = Property(str, __get_protectedPassword, __set_protectedPassword, designable=False)
+
+    def __execute_send(self,
+                       new_value: Union[int, float, str],
+                       skip_confirm: bool = False,
+                       skip_password: bool = False,
+                       is_release: bool = False):
+        """
+
+        Execute the send operation for push and release.
+
+        Args:
+            new_value: Value to send.
+            skip_confirm: Whether or not to skip the confirmation dialog.
+            skip_password: Whether or not to skip the password dialog.
+            is_release: Whether or not this method is being invoked to handle a release event.
+        """
+        send_value = None
+        if new_value is None or self.value is None:
+            return None
+
+        if is_release and not self._write_when_release:
+            return None
+
+        if not skip_confirm and not self.confirm_dialog(is_release=is_release):
+            return None
+
+        if not skip_password and not self.validate_password():
+            return None
+
+        if not self._relative or self.channeltype == str:
+            send_value = self._convert(new_value)
+            self.send_value_signal[self.channeltype].emit(send_value)
+        else:
+            send_value = self.value + self._convert(new_value)
+            self.send_value_signal[self.channeltype].emit(send_value)
+        return send_value
 
 
 class CRelatedDisplayButton(PyDMRelatedDisplayButton):
