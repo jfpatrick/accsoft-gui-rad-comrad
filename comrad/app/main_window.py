@@ -5,10 +5,10 @@ import subprocess
 from itertools import chain
 from pathlib import Path
 from typing import Optional, Union, Iterable, cast, Tuple, Type, List, Dict
-from qtpy.QtWidgets import (QWidget, QMenu, QAction, QMainWindow, QFileDialog, QApplication, QSizePolicy, QMessageBox,
+from qtpy.QtWidgets import (QWidget, QMenu, QAction, QMainWindow, QFileDialog, QApplication, QSizePolicy,
                             QDockWidget, QActionGroup)
 from qtpy.QtCore import QCoreApplication, Qt, Signal, QObject, QSize, QTimer
-from qtpy.QtGui import QCloseEvent, QGuiApplication, QKeySequence
+from qtpy.QtGui import QKeySequence
 from pydm.pydm_ui import Ui_MainWindow
 from pydm.main_window import PyDMMainWindow
 from pydm.data_plugins import is_read_only
@@ -236,26 +236,6 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
                     self.open_file(filename)
             except (IOError, OSError, ValueError, ImportError) as e:
                 self.handle_open_file_error(filename, e)
-
-    def closeEvent(self, event: QCloseEvent):
-        """
-        This augments PyDM's :meth:`~pydm.main_window.PyDMMainWindow.quit_main_window` providing similar confirmation
-        dialog when application is closed in another way than menu click, e.g. Alt+F4 or title bar close button.
-
-        Args:
-            event: Close event.
-        """
-        if [w for w in cast(QGuiApplication, self.app).topLevelWidgets() if isinstance(w, QMainWindow)] == [self]:
-            event.ignore()
-            quit_message = QMessageBox.question(self,
-                                                'Quitting Application',
-                                                'Exit Application?',
-                                                QMessageBox.Yes | QMessageBox.No)
-            if quit_message == QMessageBox.Yes:
-                self._overridden_members['closeEvent'](self, event)
-                event.accept()
-        else:
-            self._overridden_members['closeEvent'](self, event)
 
     def load_window_plugins(self,
                             config: WindowPluginConfigTrie,
