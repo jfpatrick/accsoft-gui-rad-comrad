@@ -24,7 +24,7 @@ requirements = {
         'prompt_toolkit>=3.0,<4a0',  # This must be compatible with the 'questionary' version
         'packaging>=20.4,<21a0',
         'QtPy>=1.7,<2',
-        'pyjapc==2.2.1',  # We must keep it pinned to this version, because comrad is obliged to override getParam, which makes it very fragile to changes
+        'pyjapc==2.2.3',  # We must keep it pinned to this version, because comrad is obliged to override getParam, which makes it very fragile to changes
         'accwidgets[graph,led,property_edit,timing_bar,log_console,rbac]>=1.3.2,<2a0',
         'papc>=0.5.1,<0.6',
         'pydm==1.11.1.post0',
