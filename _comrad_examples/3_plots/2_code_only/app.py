@@ -37,9 +37,9 @@ class PlotDisplay(CDisplay):
         layers will soon be changed as soon as the new API is available.
         """
         # Set scrolling specific properties
-        self.scrolling_plot.fixedXRange = True
         self.scrolling_plot.showTimeProgressLine = False
-        self.scrolling_plot.timeSpan = 60.0
+        self.scrolling_plot.leftTimeBoundaryEnabled = True
+        self.scrolling_plot.leftTimeBoundary = 60.0
         # Set standard plot properties
         self.scrolling_plot.showGridX = True
         self.scrolling_plot.showGridY = True
@@ -66,7 +66,7 @@ class PlotDisplay(CDisplay):
         API for the axis labels and setting the range for additional
         layers will soon be changed as soon as the new API is available.
         """
-        self.sliding_plot.timeSpan = 10.0
+        self.sliding_plot.leftTimeBoundary = 10.0
         self.sliding_plot.add_layer(
             layer_id='layer_0',
         )
