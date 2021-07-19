@@ -54,7 +54,7 @@
      <property name="axisRanges" stdset="0">
       <string>{&quot;x&quot;: [0.0, 10.0], &quot;y&quot;: &quot;auto&quot;, &quot;y_0&quot;: &quot;auto&quot;}</string>
      </property>
-     <property name="leftBoundary" stdset="0">
+     <property name="leftTimeBoundary" stdset="0">
       <double>10.000000000000000</double>
      </property>
      <property name="curves" stdset="0">
