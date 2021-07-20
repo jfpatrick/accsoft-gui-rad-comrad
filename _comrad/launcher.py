@@ -15,7 +15,6 @@ from accwidgets.qt import exec_app_interruptable
 from .comrad_info import COMRAD_DESCRIPTION, COMRAD_VERSION, get_versions_info
 from .log_config import install_logger_level
 from .common import get_japc_support_envs, comrad_asset
-from .package import generate_pyproject_with_spec, make_requirement_safe, Requirement, parse_maintainer_info
 
 _ARGPARSE_PROFILES_INSTALLED = True
 try:
@@ -690,6 +689,7 @@ def _package_subcommand(parser: ArgumentParser):
 
 
 def _package_app(args: Namespace) -> bool:
+    from .package import generate_pyproject_with_spec, make_requirement_safe, Requirement, parse_maintainer_info
     entrypoint = Path(args.display_file)
 
     reqs: Iterable[str]
