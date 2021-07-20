@@ -167,23 +167,49 @@ def test_cplotwidgetbase_forbids_weird_subclasses(log_capture):
                                             'Use CPlotWidgetBase only as base class of classes derived from ExPlotWidget.']
 
 
+@pytest.mark.parametrize('color,line_style,line_width,expected_pen', [
+    (None, None, None, {}),
+    (None, Qt.SolidLine, None, {'style': Qt.SolidLine}),
+    (None, None, 10, {'width': 10}),
+    (None, Qt.SolidLine, 10, {'style': Qt.SolidLine, 'width': 10}),
+    ('r', None, None, {'color': 'r'}),
+    ('r', Qt.SolidLine, None, {'color': 'r', 'style': Qt.SolidLine}),
+    (QColor(255, 255, 0), None, 10, {'color': QColor(255, 255, 0), 'width': 10}),
+    (QColor(255, 255, 0), Qt.SolidLine, 10, {'color': QColor(255, 255, 0), 'style': Qt.SolidLine, 'width': 10}),
+])
+def test_pen_from_options(color, line_width, line_style, expected_pen):
+    pen = CPlotWidgetBase._pen_from_options(color, line_style, line_width)
+    assert pen == expected_pen
+
+
 # Amount of options limited to keep a sane number of dynamically generated test cases (currently ~1.5k for this one alone)
-@pytest.mark.parametrize('data_source', [None, UpdateSource(), 'dev/prop#field'])
+@pytest.mark.parametrize('data_source,expected_method,expected_item', [
+    (None, 'addCurve', 'addCurveResult'),
+    (UpdateSource(), 'addCurve', 'addCurveResult'),
+    ('dev/prop#field', 'add_channel_attached_item', 'channelAttachedResult'),
+])
+@pytest.mark.parametrize('color,line_style,line_width,expected_pen', [
+    (None, None, None, {}),
+    (None, Qt.SolidLine, None, {'style': Qt.SolidLine}),
+    (None, None, 10, {'width': 10}),
+    (None, Qt.SolidLine, 10, {'style': Qt.SolidLine, 'width': 10}),
+    (QColor(255, 255, 0), None, None, {'color': QColor(255, 255, 0)}),
+    (QColor(255, 255, 0), Qt.SolidLine, None, {'color': QColor(255, 255, 0), 'style': Qt.SolidLine}),
+    ('r', Qt.DashLine, 10, {'color': 'r', 'style': Qt.DashLine, 'width': 10}),
+    ('r', None, 10, {'color': 'r', 'width': 10}),
+])
 @pytest.mark.parametrize('layer', [None, 'mylayer'])
-@pytest.mark.parametrize('color', [None, QColor(255, 255, 0)])
 @pytest.mark.parametrize('name', [None, 'custom-name'])
 @pytest.mark.parametrize('symbol', [None, 'o'])
 @pytest.mark.parametrize('symbol_size', [None, 10])
-@pytest.mark.parametrize('line_style', [None, Qt.SolidLine])
-@pytest.mark.parametrize('line_width', [None, 10])
 @pytest.mark.parametrize('widget_type', [
     CScrollingPlot,
     CCyclicPlot,
     CStaticPlot,
 ])
 @mock.patch('comrad.ExPlotWidget.addCurve', return_value='addCurveResult')
-def test_addcurve(addCurve, qtbot, widget_type, data_source, layer, color,
-                  name, symbol, symbol_size, line_style, line_width):
+def test_addcurve(addCurve, qtbot, widget_type, data_source, expected_method, expected_item,
+                  layer, color, name, symbol, symbol_size, line_style, line_width, expected_pen):
     widget = widget_type()
     qtbot.add_widget(widget)
 
@@ -199,8 +225,23 @@ def test_addcurve(addCurve, qtbot, widget_type, data_source, layer, color,
                                symbol_size=symbol_size,
                                line_style=line_style,
                                line_width=line_width)
-        if isinstance(data_source, str):
-            assert item == 'channelAttachedResult'
+        assert item == expected_item
+        if expected_method == 'addCurve':
+            add_channel_attached_item.assert_not_called()
+            optional = {key: value
+                        for key, value in (('name', name), ('pen', expected_pen),
+                                           ('symbol', symbol), ('symbolSize', symbol_size))
+                        if value is not None}
+            addCurve.assert_called_once_with(widget,
+                                             c=None,
+                                             params=None,
+                                             data_source=data_source,
+                                             layer=layer,
+                                             buffer_size=DEFAULT_BUFFER_SIZE,
+                                             **optional)
+
+        elif expected_method == 'add_channel_attached_item':
+            addCurve.assert_not_called()
             add_channel_attached_item.assert_called_once_with(style=PlottingItemTypes.LINE_GRAPH.value,
                                                               channel_address=data_source,
                                                               layer=layer,
@@ -210,19 +251,12 @@ def test_addcurve(addCurve, qtbot, widget_type, data_source, layer, color,
                                                               symbol_size=symbol_size,
                                                               line_style=line_style,
                                                               line_width=line_width)
-            addCurve.assert_not_called()
-        else:
-            assert item == 'addCurveResult'
-            add_channel_attached_item.assert_not_called()
-            addCurve.assert_called_once_with(widget,
-                                             c=None,
-                                             params=None,
-                                             data_source=data_source,
-                                             layer=layer,
-                                             buffer_size=DEFAULT_BUFFER_SIZE)
 
 
-@pytest.mark.parametrize('data_source', [None, UpdateSource(), 'dev/prop#field'])
+@pytest.mark.parametrize('data_source,expected_method,expected_item', [
+    (UpdateSource(), 'addBarGraph', 'addBarGraphResult'),
+    ('dev/prop#field', 'add_channel_attached_item', 'channelAttachedResult'),
+])
 @pytest.mark.parametrize('layer', [None, 'mylayer'])
 @pytest.mark.parametrize('color', [None, QColor(255, 255, 0)])
 @pytest.mark.parametrize('bar_width', [None, 15])
@@ -232,7 +266,8 @@ def test_addcurve(addCurve, qtbot, widget_type, data_source, layer, color,
     CStaticPlot,
 ])
 @mock.patch('comrad.ExPlotWidget.addBarGraph', return_value='addBarGraphResult')
-def test_addbargraph(addBarGraph, qtbot, widget_type, data_source, layer, color, bar_width):
+def test_addbargraph(addBarGraph, qtbot, widget_type, data_source, expected_method,
+                     expected_item, layer, color, bar_width):
     widget = widget_type()
     qtbot.add_widget(widget)
 
@@ -244,34 +279,46 @@ def test_addbargraph(addBarGraph, qtbot, widget_type, data_source, layer, color,
                                   layer=layer,
                                   color=color,
                                   bar_width=bar_width)
-        if isinstance(data_source, str):
-            assert item == 'channelAttachedResult'
+        assert item == expected_item
+        if expected_method == 'add_channel_attached_item':
+            addBarGraph.assert_not_called()
             add_channel_attached_item.assert_called_once_with(style=PlottingItemTypes.BAR_GRAPH.value,
                                                               channel_address=data_source,
                                                               layer=layer,
                                                               color=color,
                                                               line_width=bar_width)
-            addBarGraph.assert_not_called()
-        else:
-            assert item == 'addBarGraphResult'
+        elif expected_method == 'addBarGraph':
             add_channel_attached_item.assert_not_called()
+            optional = {key: value
+                        for key, value in (('pen', color), ('brush', color), ('width', bar_width))
+                        if value is not None}
             addBarGraph.assert_called_once_with(widget,
                                                 data_source=data_source,
                                                 layer=layer,
-                                                buffer_size=DEFAULT_BUFFER_SIZE)
+                                                buffer_size=DEFAULT_BUFFER_SIZE,
+                                                **optional)
 
 
-@pytest.mark.parametrize('data_source', [None, UpdateSource(), 'dev/prop#field'])
+@pytest.mark.parametrize('data_source,expected_method,expected_item', [
+    (None, 'addInjectionBar', 'addInjectionBarResult'),
+    (UpdateSource(), 'addInjectionBar', 'addInjectionBarResult'),
+    ('dev/prop#field', 'add_channel_attached_item', 'channelAttachedResult'),
+])
 @pytest.mark.parametrize('layer', [None, 'mylayer'])
-@pytest.mark.parametrize('color', [None, QColor(255, 255, 0)])
-@pytest.mark.parametrize('line_width', [None, 15])
+@pytest.mark.parametrize('color,line_width,expected_pen', [
+    (None, None, {}),
+    (None, 15, {'width': 15}),
+    (QColor(255, 255, 0), None, {'color': QColor(255, 255, 0)}),
+    (QColor(255, 255, 0), 15, {'color': QColor(255, 255, 0), 'width': 15}),
+])
 @pytest.mark.parametrize('widget_type', [
     CScrollingPlot,
     CCyclicPlot,
     CStaticPlot,
 ])
 @mock.patch('comrad.ExPlotWidget.addInjectionBar', return_value='addInjectionBarResult')
-def test_addinjectionbar(addInjectionBar, qtbot, widget_type, data_source, layer, color, line_width):
+def test_addinjectionbar(addInjectionBar, qtbot, widget_type, data_source, expected_method,
+                         expected_item, layer, color, line_width, expected_pen):
     widget = widget_type()
     qtbot.add_widget(widget)
 
@@ -283,21 +330,24 @@ def test_addinjectionbar(addInjectionBar, qtbot, widget_type, data_source, layer
                                       layer=layer,
                                       color=color,
                                       line_width=line_width)
-        if isinstance(data_source, str):
-            assert item == 'channelAttachedResult'
+        assert item == expected_item
+        if expected_method == 'add_channel_attached_item':
+            addInjectionBar.assert_not_called()
             add_channel_attached_item.assert_called_once_with(style=PlottingItemTypes.INJECTION_BAR_GRAPH.value,
                                                               channel_address=data_source,
                                                               layer=layer,
                                                               color=color,
                                                               line_width=line_width)
-            addInjectionBar.assert_not_called()
-        else:
-            assert item == 'addInjectionBarResult'
+        elif expected_method == 'addInjectionBar':
             add_channel_attached_item.assert_not_called()
+            optional = {key: value
+                        for key, value in (('pen', expected_pen),)
+                        if value is not None}
             addInjectionBar.assert_called_once_with(widget,
                                                     data_source=data_source,
                                                     layer=layer,
-                                                    buffer_size=DEFAULT_BUFFER_SIZE)
+                                                    buffer_size=DEFAULT_BUFFER_SIZE,
+                                                    **optional)
 
 
 @pytest.mark.parametrize('data_source', [UpdateSource(), 'dev/prop#field'])
