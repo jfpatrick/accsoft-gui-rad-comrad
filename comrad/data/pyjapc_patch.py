@@ -30,12 +30,10 @@ def _original_fixed_get_param(self,
                               **kwargs):
     """
     Copy of original PyJapc.getParam that has been patched to fix the faulty behavior and rejected a merge to
-    pyjapc package. Therefore, we have to implement this logic here, overriding everything...
-    but, oh well ¯\_(ツ)_/¯, management approves... (actually PR was even safer to allow backwards compatibility,
-    but since we don't need it here, that code is removed).
-    This should be used with care, because while it replicates the internal logic of PyJapc, it is drastically
-    different from internal logic of PAPC. Thus, when PAPC is injected, this method should never be called.
-    """  # noqa: W605
+    pyjapc package. This should be used with care, because while it replicates the internal logic of PyJapc,
+    it is drastically different from internal logic of PAPC. Thus, when PAPC is injected, this method should
+    never be called.
+    """
     s = self._giveMeSelector(**kwargs)
 
     # Get the (cached) JAPC Parameter or ParameterGroup object
