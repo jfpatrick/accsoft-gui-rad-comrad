@@ -34,6 +34,14 @@ def _original_fixed_get_param(self,
     it is drastically different from internal logic of PAPC. Thus, when PAPC is injected, this method should
     never be called.
     """
+    try:
+        from pyjapc._japc import _INSTANCE_DEFAULT
+    except ImportError:
+        logger.debug('PyJapc protected variable import issue. This might result in unexpected behavior')
+        _INSTANCE_DEFAULT = None
+
+    kwargs['timingSelectorOverride'] = kwargs.get('timingSelectorOverride', _INSTANCE_DEFAULT)
+    kwargs['dataFilterOverride'] = kwargs.get('dataFilterOverride', _INSTANCE_DEFAULT)
     s = self._giveMeSelector(**kwargs)
 
     # Get the (cached) JAPC Parameter or ParameterGroup object
