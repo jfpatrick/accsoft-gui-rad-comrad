@@ -20,6 +20,7 @@ Now that you have installed ComRAD as explained in the :doc:`install`, we can st
   * `ComRAD main window`_
   * `Using launch profiles`_
   * `Using alternative color schemes`_
+  * `Requiring quit confirmation`_
 
 - `Hot reloading application's UI`_
 - `Releasing the application for operational use`_
@@ -322,6 +323,22 @@ It can be enabled by default via environment variables:
           in every situation. Your input is always welcome, and if you want to update the QSS, let us know!
 
 
+Requiring quit confirmation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To avoid accidental closure of the ComRAD application, it is possible to require user's confirmation on quit. This
+functionality is disabled by default but can be activated using environment variable ``COMRAD_CONFIRM_QUIT``:
+
+.. code-block:: bash
+
+   export COMRAD_CONFIRM_QUIT=1
+   comrad run my_existing_file.ui
+
+.. figure:: img/quit_confirm.png
+   :align: center
+   :alt: Quit confirmation dialog
+
+   Quit confirmation dialog
 
 Hot reloading application's UI
 ------------------------------

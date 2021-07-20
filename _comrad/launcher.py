@@ -481,6 +481,7 @@ def _run_comrad(args: Namespace) -> bool:
     # This has to sit here, because other os.environ settings MUST be before comrad or pydm import
     environment = {
         'PYDM_TOOLS_PATH': comrad_asset('tools'),
+        'PYDM_CONFIRM_QUIT': os.environ.get('COMRAD_CONFIRM_QUIT', 'n'),
         **get_japc_support_envs(args.extra_data_plugin_path),
     }
 
