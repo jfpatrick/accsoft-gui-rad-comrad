@@ -310,15 +310,34 @@ class CPlotWidgetBase(PyDMPrimitiveWidget, metaclass=GenericQObjectMeta):
                                                    line_style=line_style,
                                                    line_width=line_width)
             return curve
+
+        optional: Dict[str, Any] = {
+            'pen': self._pen_from_options(color, line_style, line_width),
+        }
+        if symbol is not None:
+            optional['symbol'] = symbol
+        if symbol_size is not None:
+            optional['symbolSize'] = symbol_size
+        if name is not None:
+            optional['name'] = name
         return ExPlotWidget.addCurve(self,
                                      c=c,
                                      params=params,
                                      data_source=data_source,
                                      layer=layer,
-                                     buffer_size=buffer_size)
+                                     buffer_size=buffer_size,
+                                     **optional)
+
+    @staticmethod
+    def _pen_from_options(color: Union[str, QColor, None] = None,
+                          line_style: Optional[Qt.PenStyle] = None,
+                          line_width: Union[float, int, None] = None) -> Dict[str, Any]:
+        return {key: value
+                for key, value in (('color', color), ('style', line_style), ('width', line_width))
+                if value is not None}
 
     def addBarGraph(self,
-                    data_source: Union[str, UpdateSource, None] = None,
+                    data_source: Union[str, UpdateSource],
                     layer: Optional[str] = None,
                     buffer_size: int = DEFAULT_BUFFER_SIZE,
                     color: Union[str, QColor, None] = None,
@@ -327,6 +346,8 @@ class CPlotWidgetBase(PyDMPrimitiveWidget, metaclass=GenericQObjectMeta):
         This function overrides the :class:`~accwdigets.graph.ExPlotItem`'s
         :meth:`~accwidgets.graph.ExPlotItem.addBarGraph` function and extends it
         by giving the option to pass a channel address for feeding data to the graph.
+        Unlike :meth:`~accwidgets.graph.ExPlotItem.addBarGraph` this method does not
+        allow for None `data_source` and does not permit arbitrary kwargs.
         Additionally you can pass stylistic parameters which are the same as
         :class:`CItemsPropertyBase`'s style properties that are supported by the item.
 
@@ -347,10 +368,17 @@ class CPlotWidgetBase(PyDMPrimitiveWidget, metaclass=GenericQObjectMeta):
                                                   layer=layer,
                                                   color=color,
                                                   line_width=bar_width)
+        optional: Dict[str, Any] = {}
+        if color is not None:
+            optional['pen'] = color
+            optional['brush'] = color
+        if bar_width is not None:
+            optional['width'] = bar_width
         return ExPlotWidget.addBarGraph(self,
                                         data_source=data_source,
                                         layer=layer,
-                                        buffer_size=buffer_size)
+                                        buffer_size=buffer_size,
+                                        **optional)
 
     def addInjectionBar(self,
                         data_source: Union[str, UpdateSource],
@@ -382,10 +410,14 @@ class CPlotWidgetBase(PyDMPrimitiveWidget, metaclass=GenericQObjectMeta):
                                                   layer=layer,
                                                   color=color,
                                                   line_width=line_width)
+        optional: Dict[str, Any] = {
+            'pen': self._pen_from_options(color=color, line_width=line_width),
+        }
         return ExPlotWidget.addInjectionBar(self,
                                             data_source=data_source,
                                             layer=layer,
-                                            buffer_size=buffer_size)
+                                            buffer_size=buffer_size,
+                                            **optional)
 
     def addTimestampMarker(self,
                            data_source: Union[str, UpdateSource],
