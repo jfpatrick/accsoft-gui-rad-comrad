@@ -1,12 +1,12 @@
 """Graphs based on the library accwidgets' package graph for comrad"""
 
 import abc
-import collections
 import copy
 import functools
 import json
 import logging
 from collections import OrderedDict
+from collections.abc import Sized
 from enum import Enum
 from typing import cast, Type, Optional, Union, List, Dict, Iterable, Any, Tuple
 
@@ -159,7 +159,7 @@ class PyDMChannelDataSource(UpdateSource, CContextEnabledObject):
         Returns:
              Values as a list or None, if the values have been received before.
         """
-        if value is None or (isinstance(value, collections.Sized) and len(value) == 0):
+        if value is None or (isinstance(value, Sized) and len(value) == 0):
             # logger.info(f'Data {value} could not be properly interpreted and will be dropped.')
             return None
         if self._last_value is not None:
