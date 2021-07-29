@@ -111,7 +111,8 @@ class CApplication(PyDMApplication):
         args = [_APP_NAME]
         args.extend(command_line_args or [])
         applied_policy = CRbaStartupLoginPolicy.LOGIN_BY_LOCATION if startup_login_policy is None else startup_login_policy
-        self._rbac = CRbaState(startup_policy=applied_policy)  # We must keep it before super because dependant plugins will be initialized in super()
+        # We must keep it before super because dependant plugins will be initialized in super()
+        self._rbac = CRbaState(startup_policy=applied_policy, serialized_token=rbac_token)
         self._ccda_endpoint = ccda_endpoint
         self._cmw_env = cmw_env
         self._use_inca = use_inca
@@ -136,10 +137,6 @@ class CApplication(PyDMApplication):
         self.setWindowIcon(icon('app'))
         self.main_window.addToolBar(toolbar_area_from_str(toolbar_position), self.main_window.ui.navbar)
         self.main_window.ui.navbar.setToolButtonStyle(toolbar_style_from_str(toolbar_style))
-
-        # Attempting to login at startup after the main window has been initialized, so that we can display
-        # errors in the log console
-        self._rbac.startup_login(rbac_token)
 
         # Useful for sub-processes
         self._stylesheet_path = stylesheet_path

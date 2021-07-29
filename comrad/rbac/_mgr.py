@@ -44,13 +44,17 @@ class CRbaState(QObject):
     """Fires when the logout has been finished."""
 
     def __init__(self, parent: Optional[QObject] = None,
-                 startup_policy: CRbaStartupLoginPolicy = CRbaStartupLoginPolicy.LOGIN_BY_LOCATION):
+                 startup_policy: CRbaStartupLoginPolicy = CRbaStartupLoginPolicy.LOGIN_BY_LOCATION,
+                 serialized_token: Optional[str] = None):
         super().__init__(parent)
         self._model = RbaButtonModel(parent=self)
         self._connect_model(self._model)
         self._startup_login_policy = startup_policy
+        self._startup_token = serialized_token
 
-    def startup_login(self, serialized_token: Optional[str] = None):
+    def startup_login(self):
+        serialized_token = self._startup_token
+        self._startup_token = None
         if serialized_token is not None:
             self._model.update_token(serialized_token)
         elif self._startup_login_policy == CRbaStartupLoginPolicy.LOGIN_BY_LOCATION:
