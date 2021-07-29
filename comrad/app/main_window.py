@@ -69,6 +69,7 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
         log_console = CLogConsole()  # Initialize as early as possible, to capture as many logs as possible
+        log_console.initialize_loggers()
         # We must attempt initial login before calling super initializer, because that's where the rest of UI
         # initializes, hence devices can get contacted without a proper RBAC token. At the same time, we try
         # to login after log console has been created, so that RBAC logs can be captured. We cannot pass log_console
