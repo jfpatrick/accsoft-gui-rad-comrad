@@ -379,6 +379,22 @@ class CPyJapc(PyJapcWrapper, QObject):
             logger.debug(f'Setting extra JVM flag: {name}={val}')
             jpype.java.lang.System.setProperty(name, str(val))  # type: ignore
 
+        def print_token(token):
+            token_info: str = 'None'
+            if token:
+                user = token.getUser()  # Java call
+                if user:
+                    token_info = user.getName()  # Java call
+                else:
+                    # Happens, e.g. in tests, when passing empty pyrbac token into Java
+                    token_info = 'Unknown user'
+            logger.debug(f'Java received new RBAC token: {token_info}')
+
+        listener = jpype.JProxy('cern.rbac.util.holder.ClientTierRbaTokenChangeListener', {
+            'rbaTokenChanged': print_token,
+        })
+        cern.rbac.util.holder.ClientTierTokenHolder.addRbaTokenChangeListener(listener)
+
     def _convertSimpleValToPy(self, val) -> Any:
         """Overrides internal PyJapc method to emit different data struct for enums."""
         typename = val.getValueType().toString().lower()
