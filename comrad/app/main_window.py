@@ -69,6 +69,13 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
             **kwargs: Any future extras that need to be passed down to PyDM.
         """
         log_console = CLogConsole()  # Initialize as early as possible, to capture as many logs as possible
+        log_console.initialize_loggers()
+        # We must attempt initial login before calling super initializer, because that's where the rest of UI
+        # initializes, hence devices can get contacted without a proper RBAC token. At the same time, we try
+        # to login after log console has been created, so that RBAC logs can be captured. We cannot pass log_console
+        # via DI, because this initializer is called from PyDM, and we have no control over that call and its arguments.
+        self.__rbac_startup_login()
+
         self._overridden_members['__init__'](self,
                                              parent=parent,
                                              hide_nav_bar=hide_nav_bar,
@@ -617,6 +624,12 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
             logger.warning(f'Cannot read configuration for erroneous window plugin ID '
                            f'"{plugin_id}". The plugin will be initialized without configuration.')
         return None
+
+    def __rbac_startup_login(self):
+        # Done here and not in CApplication. See the reason at the caller location of this method
+        from comrad import CApplication  # Import here to avoid circular dependency
+        rbac = cast(CApplication, CApplication.instance()).rbac
+        rbac.startup_login()
 
 
 @modify_in_place

@@ -350,7 +350,7 @@ def test_clogconsole_loggers_setter_replaces_existing_model(buf_size, visible_le
     ({'logger1': LogLevel.ERROR, 'logger1.sublogger': LogLevel.INFO, 'logger2': LogLevel.WARNING}, {'root'}),
 ])
 @mock.patch('comrad.widgets.tables.CLogConsole.get_python_logger_levels', autospec=True)
-def test_clogconsole_detects_existing_loggers_on_show_when_non_were_set(get_python_logger_levels, initial_loggers, expected_loggers, qtbot: QtBot):
+def test_clogconsole_detects_existing_loggers_on_initialize_when_non_were_set(get_python_logger_levels, initial_loggers, expected_loggers, qtbot: QtBot):
     gathered_loggers: List[logging.Logger] = [logging.getLogger()]
     for logger_name, level in initial_loggers.items():
         logger = logging.getLogger(logger_name)
@@ -362,10 +362,19 @@ def test_clogconsole_detects_existing_loggers_on_show_when_non_were_set(get_pyth
     qtbot.add_widget(widget)
     get_python_logger_levels.return_value = gathered_loggers
     get_python_logger_levels.assert_not_called()
-    with qtbot.wait_exposed(widget):
-        widget.show()
+    widget.initialize_loggers()
     get_python_logger_levels.assert_called_once()
     assert set(widget.model._handlers.keys()) == expected_loggers
+
+
+@mock.patch('comrad.widgets.tables.CLogConsole.initialize_loggers', autospec=True)
+def test_clogconsole_calls_initialize_on_show(initialize_loggers, qtbot: QtBot):
+    widget = CLogConsole()
+    qtbot.add_widget(widget)
+    initialize_loggers.assert_not_called()
+    with qtbot.wait_exposed(widget):
+        widget.show()
+    initialize_loggers.assert_called_once()
 
 
 @pytest.mark.parametrize('existing_loggers', [

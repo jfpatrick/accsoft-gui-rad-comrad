@@ -304,9 +304,15 @@ class CPyJapc(PyJapcWrapper, QObject):
         # which fails to read data from private virtual devices.
         # When passing selector, it is important to set incaAcceleratorName, because default 'auto' name
         # will try to infer the accelerator from the selector and will fail, if we are passing None
+        effective_level = logger.getEffectiveLevel()
+        if effective_level == logging.INFO:
+            # INFO output from Java libs is too chatty. Either leave that for DEBUG, or when warning or more critical
+            # is specified (even though by default PyJapc will place WARN logging level internally anyway)
+            effective_level = None
         PyJapcWrapper.__init__(self,
                                selector='',
-                               incaAcceleratorName='' if app.use_inca else None)
+                               incaAcceleratorName='' if app.use_inca else None,
+                               logLevel=effective_level)
         QObject.__init__(self)
         self._logged_in: bool = False
         self._use_inca = app.use_inca
@@ -372,12 +378,38 @@ class CPyJapc(PyJapcWrapper, QObject):
             return
         self.japc_param_error.emit(message, display_popup)
 
-    def _setup_jvm(self, log_level: int):
+    def _setup_jvm(self, log_level: Union[int, str, None]):
         """Overrides internal PyJapc hook to set any custom JVM flags"""
+        # This is a workaround for PyJapc not correctly converting Python log levels into log4j
+        # TODO: This workaround can be removed when PyJapc is fixed and its version is bumped
+        if log_level is not None and isinstance(log_level, int):
+            log_level = logging.getLevelName(log_level)
+            # Adapt to log4j names: https://logging.apache.org/log4j/2.x/manual/customloglevels.html
+            if log_level == 'WARNING':
+                log_level = 'WARN'
+            elif log_level == 'NOTSET':
+                log_level = 'OFF'
+
         super()._setup_jvm(log_level=log_level)
         for name, val in self._app.jvm_flags.items():
             logger.debug(f'Setting extra JVM flag: {name}={val}')
             jpype.java.lang.System.setProperty(name, str(val))  # type: ignore
+
+        def print_token(token):
+            token_info: str = 'None'
+            if token:
+                user = token.getUser()  # Java call
+                if user:
+                    token_info = user.getName()  # Java call
+                else:
+                    # Happens, e.g. in tests, when passing empty pyrbac token into Java
+                    token_info = 'Unknown user'
+            logger.debug(f'Java received new RBAC token: {token_info}')
+
+        listener = jpype.JProxy('cern.rbac.util.holder.ClientTierRbaTokenChangeListener', {
+            'rbaTokenChanged': print_token,
+        })
+        cern.rbac.util.holder.ClientTierTokenHolder.addRbaTokenChangeListener(listener)
 
     def _convertSimpleValToPy(self, val) -> Any:
         """Overrides internal PyJapc method to emit different data struct for enums."""

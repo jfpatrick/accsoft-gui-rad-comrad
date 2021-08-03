@@ -47,7 +47,19 @@ pytest:
   stage: Unit Tests
   script:
     - pip install .[test]
-    - OMP_NUM_THREADS=1 run_headless python -m pytest --random-order --junitxml=report.xml --cov-report html:coverage --cov-report term-missing:skip-covered --cov=comrad --cov=_comrad --cov=_comrad_designer --cov=_comrad_examples -x --color=yes
+    - |
+      OMP_NUM_THREADS=1 run_headless python -m pytest \
+        -p no:faulthandler \
+        --random-order \
+        --junitxml=report.xml \
+        --cov-report html:coverage \
+        --cov-report term-missing:skip-covered \
+        --cov=comrad \
+        --cov=_comrad \
+        --cov=_comrad_designer \
+        --cov=_comrad_examples \
+        -x \
+        --color=yes
   artifacts:
     name: coverage-report
     paths:

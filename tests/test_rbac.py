@@ -90,11 +90,11 @@ def test_authenticates_at_startup(initial_policy, initial_token, expected_args, 
         forbidden_calls = copy(possible_calls)
         forbidden_calls.remove(expected_call)
 
-    state = CRbaState(startup_policy=initial_policy)
+    state = CRbaState(startup_policy=initial_policy, serialized_token=initial_token)
     with mock.patch.multiple(state._model, **{name: mock.DEFAULT for name in possible_calls}):
         for name in possible_calls:
             getattr(state._model, name).assert_not_called()
-        state.startup_login(initial_token)
+        state.startup_login()
         for name in forbidden_calls:
             getattr(state._model, name).assert_not_called()
         if expected_call is not None:
