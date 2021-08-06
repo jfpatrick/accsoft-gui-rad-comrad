@@ -56,6 +56,7 @@ extensions = [
     'sphinx.ext.todo',
     'acc_py_sphinx.theme',  # Enable "acc_py" HTML theme
     'acc_py_sphinx.utils.autocontent',  # Smarter merge of __init__ and class docstring
+    'sphinx_copybutton',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
