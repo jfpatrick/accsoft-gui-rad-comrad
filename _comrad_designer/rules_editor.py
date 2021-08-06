@@ -19,6 +19,7 @@ from qtpy.uic import loadUi
 from accwidgets.qt import (BooleanPropertyColumnDelegate, AbstractComboBoxColumnDelegate,
                            AbstractListModel as BaseListModel, AbstractTableModel as BaseTableModel,
                            PersistentEditorTableView, ColorPropertyColumnDelegate)
+from accwidgets.parameter_selector import ParameterSelectorDialog, ParameterLineEdit
 from comrad.rules import CBaseRule, CNumRangeRule, CEnumRule, unpack_rules, is_valid_color
 from comrad.qsci import configure_common_qsci, QSCI_INDENTATION
 from comrad.json import CJSONEncoder, CJSONDeserializeError
@@ -26,10 +27,8 @@ from comrad.widgets.mixins import CWidgetRulesMixin, CWidgetRuleMap
 from comrad.data.japc_enum import CEnumValue
 from comrad.generics import GenericMeta, GenericQObjectMeta
 from comrad._selector import PLSSelectorDialog, PLSSelectorConfig
-from comrad._device_dialog import DevicePropertyDialog
 from comrad._designer_utils import get_designer_cursor
 from _comrad_designer.common import _STYLED_ITEM_DELEGATE_INDEX
-from _comrad_designer.device_edit import DevicePropertyLineEdit
 
 
 logger = logging.getLogger(__name__)
@@ -955,7 +954,7 @@ class RulesEditor(QDialog):
         self.rule_name_edit: QLineEdit = None
         self.default_channel_checkbox: QCheckBox = None
         self.custom_channel_frame: QFrame = None
-        self.custom_channel_edit: DevicePropertyLineEdit = None  # type: ignore
+        self.custom_channel_edit: ParameterLineEdit = None  # type: ignore
         self.custom_selector_btn: QPushButton = None
         self.custom_selector_edit: QLineEdit = None
         self.eval_type_combobox: QComboBox = None
@@ -1002,7 +1001,7 @@ class RulesEditor(QDialog):
         self.eval_type_combobox.addItem('Enumerations', CBaseRule.Type.ENUM.value)
 
         self.default_channel_checkbox.clicked.connect(self._custom_channel_changed)
-        self.custom_channel_edit.address_changed.connect(self._custom_channel_changed)
+        self.custom_channel_edit.valueChanged.connect(self._custom_channel_changed)
         self.custom_selector_btn.clicked.connect(self._search_selector)
         self.custom_selector_edit.textEdited.connect(self._custom_selector_changed)
         self.rules_del_btn.clicked.connect(self._del_rule)
@@ -1049,9 +1048,9 @@ class RulesEditor(QDialog):
         if not curr_rule:
             return
 
-        dialog = DevicePropertyDialog(addr=curr_rule.channel)
-        if dialog.exec_() == QDialog.Accepted:
-            self._selection_model.set_rule_channel(dialog.address or None)
+        dialog = ParameterSelectorDialog(initial_value=curr_rule.channel, parent=self)
+        if dialog.exec_() == ParameterSelectorDialog.Accepted:
+            self._selection_model.set_rule_channel(dialog.value or None)
         self._set_rule_details()  # Update UI
 
     def _search_selector(self):
@@ -1116,7 +1115,7 @@ class RulesEditor(QDialog):
     def _custom_channel_changed(self):
         uses_default = self.default_channel_checkbox.isChecked()
         self.custom_channel_frame.setHidden(uses_default)
-        new_channel = CBaseRule.Channel.DEFAULT if uses_default else self.custom_channel_edit.address
+        new_channel = CBaseRule.Channel.DEFAULT if uses_default else self.custom_channel_edit.value
         self._selection_model.set_rule_channel(new_channel)
 
     def _custom_selector_changed(self, selector: str):
@@ -1147,7 +1146,7 @@ class RulesEditor(QDialog):
                 self.custom_selector_edit.clear()
             else:
                 blocker = QSignalBlocker(self.custom_channel_edit)
-                self.custom_channel_edit.address = rule.channel
+                self.custom_channel_edit.value = rule.channel
                 blocker.unblock()
                 self.custom_selector_edit.setText(rule.selector)
 
