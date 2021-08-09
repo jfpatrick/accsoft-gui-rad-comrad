@@ -1,18 +1,18 @@
 import json
 from dataclasses import dataclass
 from typing import Optional, cast, Dict, Any, List, Type, Callable
-from qtpy.QtWidgets import QComboBox, QAction, QHeaderView, QWidget, QStyledItemDelegate, QStyleOptionViewItem
-from qtpy.QtCore import QObject, QModelIndex, Qt, QPersistentModelIndex, QAbstractTableModel, QLocale, QSignalBlocker
+from qtpy.QtWidgets import QComboBox, QAction, QHeaderView
+from qtpy.QtCore import QObject, QModelIndex, Qt
 from qtpy.QtGui import QColor, QPalette
 from pydm.widgets.baseplot_curve_editor import BasePlotCurveItem as PyDMBasePlotCurveItem
-from accwidgets.qt import (AbstractTableDialog, AbstractTableModel, _STYLED_ITEM_DELEGATE_INDEX,
-                           AbstractComboBoxColumnDelegate, ColorPropertyColumnDelegate)
+from accwidgets.qt import (AbstractTableDialog, AbstractTableModel, AbstractComboBoxColumnDelegate,
+                           ColorPropertyColumnDelegate)
+from accwidgets.parameter_selector import ParameterLineEditColumnDelegate
 from accwidgets import designer_check
 from accwidgets._designer_base import WidgetsTaskMenuExtension
 from accwidgets.graph.designer.designer_extensions import PlotLayerExtension as _PlotLayerExtension
 from comrad.widgets.graphs import CPlotWidgetBase, ColumnNames, CItemPropertiesBase, PlottingItemTypes
 from comrad._designer_utils import get_designer_cursor
-from _comrad_designer.device_edit import DevicePropertyLineEdit
 
 
 # Set accwidgets flag so that it does not throw warnings because it has a different way to detect
@@ -224,44 +224,6 @@ class SymbolStyleColumnDelegate(AbstractComboBoxColumnDelegate):
         return ''
 
 
-class ChannelColumnDelegate(QStyledItemDelegate):
-    """
-    Table delegate that draws :class:`DevicePropertyLineEdit` widget in the cell.
-    """
-
-    def createEditor(self, parent: QWidget, option: QStyleOptionViewItem, index: QModelIndex) -> QWidget:
-        editor = DevicePropertyLineEdit(parent)
-        editor.address_changed.connect(self._val_changed)
-        setattr(editor, _STYLED_ITEM_DELEGATE_INDEX, QPersistentModelIndex(index))
-        return editor
-
-    def setEditorData(self, editor: DevicePropertyLineEdit, index: QModelIndex):
-        if not isinstance(editor, DevicePropertyLineEdit):
-            return
-
-        blocker = QSignalBlocker(editor)
-        editor.address = index.data()
-        blocker.unblock()
-
-        if getattr(editor, _STYLED_ITEM_DELEGATE_INDEX, None) != index:
-            setattr(editor, _STYLED_ITEM_DELEGATE_INDEX, QPersistentModelIndex(index))
-
-    def setModelData(self, editor: DevicePropertyLineEdit, model: QAbstractTableModel, index: QModelIndex):
-        if not isinstance(editor, DevicePropertyLineEdit):
-            return
-        index.model().setData(index, editor.address)
-
-    def displayText(self, value: Any, locale: QLocale) -> str:
-        # Make sure that transparent button does not expose set label underneath
-        return ''
-
-    def _val_changed(self):
-        editor = self.sender()
-        index: Optional[QPersistentModelIndex] = getattr(editor, _STYLED_ITEM_DELEGATE_INDEX, None)
-        if index and index.isValid():
-            self.setModelData(editor, index.model(), QModelIndex(index))
-
-
 class CPlottingItemEditorDialog(AbstractTableDialog[PlottingItemRow, CPlottingItemModel]):
 
     def __init__(self,
@@ -284,7 +246,7 @@ class CPlottingItemEditorDialog(AbstractTableDialog[PlottingItemRow, CPlottingIt
         palette.setColor(QPalette.HighlightedText, palette.color(QPalette.Text))  # Do not leave text white (on white background)
         self.table.setPalette(palette)
 
-        self.table.setItemDelegateForColumn(0, ChannelColumnDelegate(self.table))
+        self.table.setItemDelegateForColumn(0, ParameterLineEditColumnDelegate(parent=self.table, enable_protocols=True))
         self.table.setItemDelegateForColumn(2, ColorPropertyColumnDelegate(self.table))
         self.table.setItemDelegateForColumn(3, LineStyleColumnDelegate(self.table))
         self.table.setItemDelegateForColumn(5, SymbolStyleColumnDelegate(self.table))

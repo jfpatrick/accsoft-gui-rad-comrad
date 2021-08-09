@@ -244,9 +244,12 @@
                <number>0</number>
               </property>
               <item>
-               <widget class="DevicePropertyLineEdit" name="custom_channel_edit" native="true">
+               <widget class="ParameterLineEdit" name="custom_channel_edit">
                 <property name="focusPolicy">
                  <enum>Qt::StrongFocus</enum>
+                </property>
+                <property name="enableProtocols" stdset="0">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -384,6 +387,11 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>ParameterLineEdit</class>
+   <extends>QWidget</extends>
+   <header>accwidgets.parameter_selector</header>
+  </customwidget>
+  <customwidget>
    <class>RangeDetailsView</class>
    <extends>QWidget</extends>
    <header>_comrad_designer.rules_editor</header>
@@ -393,12 +401,6 @@
    <class>EnumDetailsView</class>
    <extends>QWidget</extends>
    <header>_comrad_designer.rules_editor</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>DevicePropertyLineEdit</class>
-   <extends>QWidget</extends>
-   <header>_comrad_designer.device_edit</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
