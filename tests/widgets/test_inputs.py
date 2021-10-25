@@ -289,42 +289,49 @@ def test_cpropertyeditdelegate_field_traits_affect_spinbox_configuration(qtbot: 
     assert widget.suffix() == expected_units
 
 
-@pytest.mark.parametrize('initial_config,updated_user_data,expected_initial_text,new_val,expected_text', [
-    (CPropertyEditField(field='int', type=CPropertyEdit.ValueType.INTEGER, editable=False), None, '', 4, '4'),
-    (CPropertyEditField(field='float', type=CPropertyEdit.ValueType.REAL, editable=False), None, '', 5.6, '5.6'),
-    (CPropertyEditField(field='float', type=CPropertyEdit.ValueType.STRING, editable=False), None, '', 'test', 'test'),
+@pytest.mark.parametrize('initial_config,updated_user_data,expected_initial_text,new_val,expected_text,expect_warning', [
+    (CPropertyEditField(field='int', type=CPropertyEdit.ValueType.INTEGER, editable=False), None, '', 4, '4', None),
+    (CPropertyEditField(field='float', type=CPropertyEdit.ValueType.REAL, editable=False), None, '', 5.6, '5.6', None),
+    (CPropertyEditField(field='float', type=CPropertyEdit.ValueType.STRING, editable=False), None, '', 'test', 'test', None),
     (CPropertyEditField(field='enum',
                         type=CPropertyEdit.ValueType.ENUM,
                         editable=False,
                         user_data=CPropertyEdit.ValueType.enum_user_data([('none', 0), ('one', 4), ('two', 5)])),
-     None, '', CEnumValue(code=4, label='one', settable=True, meaning=CEnumValue.Meaning.NONE), ''),
-    (CPropertyEditField(field='int', type=CPropertyEdit.ValueType.INTEGER, editable=False), {'units': 'TST'}, '', 4, '4 TST'),
-    (CPropertyEditField(field='float', type=CPropertyEdit.ValueType.REAL, editable=False), {'units': 'TST'}, '', 5.6, '5.6 TST'),
-    (CPropertyEditField(field='float', type=CPropertyEdit.ValueType.STRING, editable=False), {'units': 'TST'}, '', 'test', 'test'),
+     None, '', CEnumValue(code=4, label='one', settable=True, meaning=CEnumValue.Meaning.NONE), '', "Can't set data 4 to QLabel."),
+    (CPropertyEditField(field='int', type=CPropertyEdit.ValueType.INTEGER, editable=False), {'units': 'TST'}, '', 4, '4 TST', None),
+    (CPropertyEditField(field='float', type=CPropertyEdit.ValueType.REAL, editable=False), {'units': 'TST'}, '', 5.6, '5.6 TST', None),
+    (CPropertyEditField(field='float', type=CPropertyEdit.ValueType.STRING, editable=False), {'units': 'TST'}, '', 'test', 'test', None),
     (CPropertyEditField(field='enum',
                         type=CPropertyEdit.ValueType.ENUM,
                         editable=False,
                         user_data=CPropertyEdit.ValueType.enum_user_data([('none', 0), ('one', 4), ('two', 5)])),
-     {'units': 'TST'}, '', CEnumValue(code=4, label='one', settable=True, meaning=CEnumValue.Meaning.NONE), ''),
-    (CPropertyEditField(field='int', type=CPropertyEdit.ValueType.INTEGER, editable=False), {'max': 5}, '', 4, '4'),
-    (CPropertyEditField(field='float', type=CPropertyEdit.ValueType.REAL, editable=False), {'max': 5.5}, '', 5.6, '5.6'),
-    (CPropertyEditField(field='int', type=CPropertyEdit.ValueType.INTEGER, editable=False), {'min': -2}, '', 4, '4'),
-    (CPropertyEditField(field='float', type=CPropertyEdit.ValueType.REAL, editable=False), {'min': -0.2}, '', 5.6, '5.6'),
-    (CPropertyEditField(field='int', type=CPropertyEdit.ValueType.INTEGER, editable=False), {'units': 'TST', 'min': -2}, '', 4, '4 TST'),
-    (CPropertyEditField(field='float', type=CPropertyEdit.ValueType.REAL, editable=False), {'units': 'TST', 'min': -2}, '', 5.6, '5.6 TST'),
-    (CPropertyEditField(field='int', type=CPropertyEdit.ValueType.INTEGER, editable=False), {'units': 'TST', 'max': 5}, '', 4, '4 TST'),
-    (CPropertyEditField(field='float', type=CPropertyEdit.ValueType.REAL, editable=False), {'units': 'TST', 'max': 5.5}, '', 5.6, '5.6 TST'),
-    (CPropertyEditField(field='int', type=CPropertyEdit.ValueType.INTEGER, editable=False), {'min': -2, 'max': 5}, '', 4, '4'),
-    (CPropertyEditField(field='float', type=CPropertyEdit.ValueType.REAL, editable=False), {'min': -0.2, 'max': 5.5}, '', 5.6, '5.6'),
-    (CPropertyEditField(field='int', type=CPropertyEdit.ValueType.INTEGER, editable=True), {'units': 'TST', 'min': -2, 'max': 5}, '', 4, '4 TST'),
-    (CPropertyEditField(field='float', type=CPropertyEdit.ValueType.REAL, editable=False), {'units': 'TST', 'min': -2, 'max': 5.5}, '', 5.6, '5.6 TST'),
+     {'units': 'TST'}, '', CEnumValue(code=4, label='one', settable=True, meaning=CEnumValue.Meaning.NONE), '', "Can't set data 4 to QLabel."),
+    (CPropertyEditField(field='int', type=CPropertyEdit.ValueType.INTEGER, editable=False), {'max': 5}, '', 4, '4', None),
+    (CPropertyEditField(field='float', type=CPropertyEdit.ValueType.REAL, editable=False), {'max': 5.5}, '', 5.6, '5.6', None),
+    (CPropertyEditField(field='int', type=CPropertyEdit.ValueType.INTEGER, editable=False), {'min': -2}, '', 4, '4', None),
+    (CPropertyEditField(field='float', type=CPropertyEdit.ValueType.REAL, editable=False), {'min': -0.2}, '', 5.6, '5.6', None),
+    (CPropertyEditField(field='int', type=CPropertyEdit.ValueType.INTEGER, editable=False), {'units': 'TST', 'min': -2}, '', 4, '4 TST', None),
+    (CPropertyEditField(field='float', type=CPropertyEdit.ValueType.REAL, editable=False), {'units': 'TST', 'min': -2}, '', 5.6, '5.6 TST', None),
+    (CPropertyEditField(field='int', type=CPropertyEdit.ValueType.INTEGER, editable=False), {'units': 'TST', 'max': 5}, '', 4, '4 TST', None),
+    (CPropertyEditField(field='float', type=CPropertyEdit.ValueType.REAL, editable=False), {'units': 'TST', 'max': 5.5}, '', 5.6, '5.6 TST', None),
+    (CPropertyEditField(field='int', type=CPropertyEdit.ValueType.INTEGER, editable=False), {'min': -2, 'max': 5}, '', 4, '4', None),
+    (CPropertyEditField(field='float', type=CPropertyEdit.ValueType.REAL, editable=False), {'min': -0.2, 'max': 5.5}, '', 5.6, '5.6', None),
+    (CPropertyEditField(field='int', type=CPropertyEdit.ValueType.INTEGER, editable=True), {'units': 'TST', 'min': -2, 'max': 5}, '', 4, '4 TST', None),
+    (CPropertyEditField(field='float', type=CPropertyEdit.ValueType.REAL, editable=False), {'units': 'TST', 'min': -2, 'max': 5.5}, '', 5.6, '5.6 TST', None),
 ])
 def test_cpropertyeditdelegate_field_traits_affect_label_configuration(qtbot: QtBot, expected_initial_text, updated_user_data,
-                                                                       expected_text, initial_config, new_val):
+                                                                       expected_text, initial_config, new_val,
+                                                                       expect_warning, recwarn):
     delegate = CPropertyEditWidgetDelegate()
     widget = delegate.widget_for_item(parent=None, config=initial_config)
     qtbot.add_widget(widget)
     assert widget.text() == expected_initial_text
     delegate.widget_map[initial_config.field][1].user_data = updated_user_data
-    delegate.value_updated({initial_config.field: new_val})
+    input = {initial_config.field: new_val}
+    if expect_warning:
+        with pytest.warns(UserWarning, match=expect_warning):
+            delegate.value_updated(input)
+    else:
+        delegate.value_updated(input)
+        assert recwarn.list == [], f"Got unexpected warning {recwarn.pop()}"
     assert widget.text() == expected_text
