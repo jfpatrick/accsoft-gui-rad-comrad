@@ -333,5 +333,5 @@ def test_cpropertyeditdelegate_field_traits_affect_label_configuration(qtbot: Qt
             delegate.value_updated(input)
     else:
         delegate.value_updated(input)
-        assert recwarn.list == [], f"Got unexpected warning {recwarn.pop()}"
+        assert recwarn.list == [], f'Got unexpected warning {recwarn.pop()}'
     assert widget.text() == expected_text

@@ -419,12 +419,12 @@ def test_scan_ui_imports_with_external_referenced_file_warns_if_is_dir(tmp_path:
 
 @pytest.mark.parametrize('relative_loc', [None, '', 'relative_dir', 'relative_dir/relative_subdir'])
 @pytest.mark.parametrize('referenced_file_name,code,expected_warning', [
-    ('test_file.py', 'import', "Indicated file test_file.py inside {ui_file}'s snippetFilename contains invalid Python syntax: invalid syntax (<unknown>, line 1)"),
-    ('test_file.py', 'import .sibling.stuff', "Indicated file test_file.py inside {ui_file}'s snippetFilename contains invalid Python syntax: invalid syntax (<unknown>, line 1)"),
-    ('test_file.py', 'from import stuff', "Indicated file test_file.py inside {ui_file}'s snippetFilename contains invalid Python syntax: invalid syntax (<unknown>, line 1)"),
+    ('test_file.py', 'import', "Indicated file test_file.py inside {ui_file}'s snippetFilename contains invalid Python syntax:"),
+    ('test_file.py', 'import .sibling.stuff', "Indicated file test_file.py inside {ui_file}'s snippetFilename contains invalid Python syntax:"),
+    ('test_file.py', 'from import stuff', "Indicated file test_file.py inside {ui_file}'s snippetFilename contains invalid Python syntax:"),
     ('test_file.py', """from comrad import CDisplay
 
-class MyDisplay(CDisplay):""", "Indicated file test_file.py inside {ui_file}'s snippetFilename contains invalid Python syntax: unexpected EOF while parsing (<unknown>, line 3)"),
+class MyDisplay(CDisplay):""", "Indicated file test_file.py inside {ui_file}'s snippetFilename contains invalid Python syntax:"),
 ])
 def test_scan_ui_imports_with_external_referenced_file_warns_if_cant_be_parsed(tmp_path: Path, relative_loc,
                                                                                referenced_file_name, expected_warning,
@@ -441,7 +441,9 @@ def test_scan_ui_imports_with_external_referenced_file_warns_if_cant_be_parsed(t
     (tmp_path / referenced_file_name).write_text(code)
     assert log_capture(logging.WARNING, '_comrad.package.import_scanning') == []
     actual_pkgs = scan_ui_imports(ui_file, relative_loc=relative_loc)
-    assert log_capture(logging.WARNING, '_comrad.package.import_scanning') == [expected_warning.format(ui_file=str(ui_file))]
+    logs = log_capture(logging.WARNING, '_comrad.package.import_scanning')
+    assert len(logs) == 1
+    assert expected_warning.format(ui_file=str(ui_file)) in logs[0]
     assert actual_pkgs == set()
 
 
