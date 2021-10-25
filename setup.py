@@ -22,10 +22,10 @@ requirements = {
         'qasync>=0.13.0,<1a0',
         'questionary>=1.9,<1.10a0',
         'prompt_toolkit>=3.0,<4a0',  # This must be compatible with the 'questionary' version
-        'packaging>=20.4,<21a0',
-        'QtPy>=1.7,<2',
+        'packaging>=20.4,<22a0',
+        'QtPy>=1.10.0,<2a0',
         'pyjapc>=2.2.1,<=2.3.0',  # We must keep it pinned to this version, because comrad is obliged to override getParam, which makes it very fragile to changes
-        'accwidgets[graph,led,property_edit,timing_bar,log_console,rbac,parameter_selector]>=1.4,<2a0',
+        'accwidgets[graph,led,property_edit,timing_bar,log_console,rbac,parameter_selector]>=1.5,<2a0',
         'papc>=0.5.1,<0.6',
         'pydm==1.11.1.post0',
         'JPype1>=1.1.1,<2a0',  # 1.1.1 is confirmed alongside 0.6.3 to be without segfaults. We need > 0.6 for exception format
