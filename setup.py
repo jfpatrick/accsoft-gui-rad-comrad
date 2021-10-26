@@ -121,6 +121,8 @@ setup(
         'Intended Audience :: Developers',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: Implementation :: CPython',
         'Typing :: Typed',
     ],
@@ -128,6 +130,7 @@ setup(
         '': ['*.ui', '*.ico', '*.png', '*.qss', '*.json', '*.txt', '*.j2'],
     },
     install_requires=requires,
+    python_requires='>=3.6,<3.10',
     entry_points={
         'gui_scripts': [
             'comrad=_comrad.launcher:run',
