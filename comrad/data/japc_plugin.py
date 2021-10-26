@@ -211,7 +211,7 @@ class CJapcConnection(CCommonDataConnection):
             # TODO: Catch more specific Jpype errors here
             logger.exception(f'Unexpected error while subscribing to {self.address}: {e!s}')
 
-    def _on_subscription_exception(self, param_name: str, _: str, exception: Exception):
+    def _on_subscription_exception(self, param_name: str, _: str, exception: Any):
         logger.exception(f'Exception {type(exception).__name__} triggered '  # type: ignore
                          f'on {param_name}: {exception.getMessage()}')
         self._some_subscriptions_failed = True
