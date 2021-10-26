@@ -39,11 +39,11 @@ requirements = {
         'argparse-profiles~=0.9;python_version>="3.7"',
     ],
     'test': [
-        'pytest>=5.0.1,<5.1',
-        'pytest-cov>=2.5.1,<2.6',
+        'pytest>=6.2.5,<7a0',
+        'pytest-cov>=3.0.0,<4a0',
         'pytest-mock>=2.0,<2.1',
-        'pytest-random-order>=1.0.4,<1.1',
-        'pytest-qt>=3.2.2,<4',
+        'pytest-random-order>=1.0.4,<1.1a0',
+        'pytest-qt>=4.0.2,<5a0',
         'freezegun>=0.3.15,<0.4',
     ],
     'lint': [
