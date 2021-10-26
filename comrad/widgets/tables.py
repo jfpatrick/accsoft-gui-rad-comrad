@@ -126,6 +126,7 @@ class CLogConsole(LogConsole):
             logger_objects = self.get_python_logger_levels()
         else:
             for log_name in new_val:
+                # TODO: This is native behavior of logging.getLogger() from Python 3.9. Remove workaround when 3.9 is min version
                 if log_name == 'root' or log_name == 'ROOT':
                     logger_objects.append(logging.getLogger())
                 else:

@@ -319,7 +319,8 @@ def test_clogconsole_loggers_setter_cant_derive_from_model_subclass(is_qt_design
 def test_clogconsole_loggers_setter_replaces_existing_model(buf_size, visible_levels, modifies_loggers, init_loggers,
                                                             init_selected_levels, new_levels, expected_loggers,
                                                             expected_selected_levels, expected_visible_levels, qtbot: QtBot):
-    loggers = None if init_loggers is None else [logging.getLogger(name) for name in init_loggers]
+    init_logger = lambda logger_name: logging.getLogger() if logger_name == 'root' else logging.getLogger(logger_name)
+    loggers = None if init_loggers is None else [init_logger(name) for name in init_loggers]
     init_model = LogConsoleModel(buffer_size=buf_size,
                                  visible_levels=visible_levels,
                                  loggers=loggers,
@@ -353,7 +354,7 @@ def test_clogconsole_loggers_setter_replaces_existing_model(buf_size, visible_le
 def test_clogconsole_detects_existing_loggers_on_initialize_when_non_were_set(get_python_logger_levels, initial_loggers, expected_loggers, qtbot: QtBot):
     gathered_loggers: List[logging.Logger] = [logging.getLogger()]
     for logger_name, level in initial_loggers.items():
-        logger = logging.getLogger(logger_name)
+        logger = logging.getLogger() if logger_name == 'root' else logging.getLogger(logger_name)
         logger.setLevel(level.value)
         if CLogConsole._default_logger_is_of_interest(logger_name):
             gathered_loggers.append(logger)
@@ -410,7 +411,8 @@ def test_clogconsole_calls_initialize_on_show(initialize_loggers, qtbot: QtBot):
 ])
 def test_clogconsole_detects_reuses_set_loggers_on_show_when_set(existing_loggers, initial_levels, expected_loggers, qtbot: QtBot):
     for logger_name, level in existing_loggers.items():
-        logging.getLogger(logger_name).setLevel(level.value)
+        logger = logging.getLogger() if logger_name == 'root' else logging.getLogger(logger_name)
+        logger.setLevel(level.value)
 
     widget = CLogConsole(loggers=initial_levels)
     qtbot.add_widget(widget)
