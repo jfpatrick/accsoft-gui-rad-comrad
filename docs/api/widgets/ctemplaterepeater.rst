@@ -35,7 +35,7 @@ each repeated inner display. Thus, you are driving the amount of displayed copie
 .. note:: Inside ComRAD Designer this widget displays :attr:`~comrad.CTemplateRepeater.countShownInDesigner` amount of
           instances, rather than what it counts from the JSON file. This property has no effect in the runtime.
 
-.. literalinclude:: ../../../_comrad_examples/1_basic/15_template_repeater/data.json
+.. literalinclude:: ../../../_comrad_examples/g1_basic/e15_template_repeater/data.json
     :linenos:
     :caption: Example of the JSON data source file.
 

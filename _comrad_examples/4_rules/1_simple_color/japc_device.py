@@ -1,1 +1,0 @@
-../../1_basic/8_scale_indicator/japc_device.py

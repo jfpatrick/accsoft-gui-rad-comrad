@@ -1,1 +1,0 @@
-../../1_basic/17_property_edit/japc_device.py

@@ -115,7 +115,7 @@ Custom data plugins normally declare 2 classes:
 
 To get a feeling of how it is composed, here's the example of random number generator data plugin:
 
-.. literalinclude:: ../../_comrad_examples/7_data_plugins/1_basic_plugin/random_plugin.py
+.. literalinclude:: ../../_comrad_examples/g7_data_plugins/e1_basic_plugin/random_plugin.py
    :linenos:
 
 

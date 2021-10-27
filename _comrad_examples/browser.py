@@ -173,6 +173,9 @@ class ExamplesWindow(QMainWindow):
             dig = components[0]
         except IndexError:
             return name, None
+        if dig.startswith(('e', 'g')):
+            # Chop off digit prefix (it's needed only for mypy to recognize directories as valid package names)
+            dig = dig[1:]
         if dig.isdigit():
             components.remove(components[0])
         else:

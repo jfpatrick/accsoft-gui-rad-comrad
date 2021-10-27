@@ -1,0 +1,1 @@
+../e13_property_edit_from_code/japc_device.py
