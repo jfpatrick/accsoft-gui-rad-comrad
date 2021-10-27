@@ -17,6 +17,7 @@ variables:
 
 .init_sequence: &init_sequence
 - git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.cern.ch".insteadOf ssh://git@gitlab.cern.ch:7999
+- pip install -U pip
 
 before_script:
   - *init_sequence
