@@ -16,13 +16,15 @@ from enum import IntEnum, IntFlag
 
 class DemoDevice(Device):
     """
-    Demo device that exposes a single writable setting 'Settings#FloatVal'.
+    Demo device that exposes 3 acquisition fields 'Acquisition#IntVal', 'Acquisition#BitEnumVal',
+    and 'Acquisition#BitEnumValNum'.
     """
     frequency = 1
     num_bits = 5
     max_val = 2 ** num_bits
 
-    MyEnum = IntEnum('MyEnum', names=[f'OPTION{idx}' for idx in range(2 ** num_bits)], start=0)
+    names = [f'OPTION{idx}' for idx in range(2 ** num_bits)]
+    MyEnum = IntEnum('MyEnum', names=names, start=0)
     MyBitMask = IntFlag('MyBitMask', names=[f'BIT{idx}' for idx in range(num_bits)])
 
     def __init__(self):

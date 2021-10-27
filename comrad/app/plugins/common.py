@@ -211,8 +211,10 @@ def load_plugins_from_path(locations: Iterable[Path], token: str, base_type: Typ
                     continue
                 temp_name = str(uuid.uuid4())
                 logger.debug(f'Trying to load {name} (as {temp_name})...')
-                spec: importlib.machinery.ModuleSpec = \
+                spec: Optional[importlib.machinery.ModuleSpec] = \
                     importlib.util.spec_from_file_location(name=temp_name, location=root_path / name)
+                if spec is None:
+                    continue
                 mod: ModuleType = importlib.util.module_from_spec(spec)
                 loader = cast(importlib.machinery.SourceFileLoader, spec.loader)
                 try:

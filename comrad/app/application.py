@@ -232,7 +232,7 @@ class CApplication(PyDMApplication):
             args.extend(['--selector', self.main_window.window_context.selector])
         if self.jvm_flags:
             args.append('--java-env')
-            args.extend([f'{key}={flag_val}' for key, flag_val in self.jvm_flags])
+            args.extend([f'{key}={flag_val}' for key, flag_val in self.jvm_flags.items()])
         if self.extra_data_plugin_paths:
             args.append('--extra-data-plugin-path')
             args.extend(self.extra_data_plugin_paths)

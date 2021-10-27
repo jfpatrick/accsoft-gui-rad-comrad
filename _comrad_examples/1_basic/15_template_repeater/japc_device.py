@@ -16,8 +16,8 @@ import random
 
 class DemoDevice(Device):
     """
-    Demo device produces "Tick"/"Tock" string values every second
-    on a 'Acquistion#Demo' field.
+    Demo device produces a randmo integer in range of 1-100 every second
+    on a 'Acquistion#IntVal' field.
     """
     frequency = 1
 
