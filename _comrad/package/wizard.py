@@ -220,7 +220,7 @@ def validate_arguments(args: str) -> Union[bool, str]:
         # of user's options at launch. All default arguments are assumed to be optional and non-positional,
         # therefore '--' is not really necessary. Even if a list of values is supplied, it will be
         # terminated by the packaged app in-situ depending on the user input.
-        return f'"--" is forbidden in the default arguments.'
+        return '"--" is forbidden in the default arguments.'
     return True
 
 

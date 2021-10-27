@@ -185,7 +185,7 @@ class CPlottingItemModel(AbstractTableModel[PlottingItemRow]):
                 restricted_cols = _FORBIDDEN_COLUMNS[item.item_style]
             except KeyError:
                 restricted_cols = []
-            for col in reversed(sorted(restricted_cols)):
+            for col in sorted(restricted_cols, reverse=True):
                 d.pop(col)
             res.append(dict(d))
         return res

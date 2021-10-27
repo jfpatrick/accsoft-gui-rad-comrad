@@ -66,7 +66,7 @@ def _get_common_requires(config_settings: Optional[Dict[str, Any]]):
 
 @contextmanager
 def _prepare_source_tree():
-    print(f'packaging ComRAD app source tree')
+    print('packaging ComRAD app source tree')
     cwd = Path.cwd()
     try:
         pyproject_dict = read_pyproject(project_root=cwd)

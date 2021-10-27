@@ -13,7 +13,7 @@ def suggest_maintainer_info(default_maintainer: Optional[str] = None,
         import pyphonebook as pb
         import ldap
     except ImportError:
-        logger.debug(f'Phonebook not accessible. No maintainer info will be suggested.')
+        logger.debug('Phonebook not accessible. No maintainer info will be suggested.')
     else:
         username = getpass.getuser()
         if username not in _IGNORED_USERNAMES:
@@ -24,9 +24,9 @@ def suggest_maintainer_info(default_maintainer: Optional[str] = None,
                     book = pb.PhoneBook()
                     results = book.search_by_login_name(username)
                 except ldap.TIMEOUT:
-                    logger.debug(f'Failed to contact phonebook in a reasonable time.')
+                    logger.debug('Failed to contact phonebook in a reasonable time.')
                 except ldap.SERVER_DOWN:
-                    logger.debug(f'Failed to contact phonebook server.')
+                    logger.debug('Failed to contact phonebook server.')
                 else:
                     try:
                         record = results[0]

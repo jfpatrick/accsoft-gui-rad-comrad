@@ -116,4 +116,4 @@ class CRbaState(QObject):
         logger.warning(f'RBAC auth failed: {err}')
 
     def _on_logout(self):
-        logger.info(f'RBAC logout')
+        logger.info('RBAC logout')

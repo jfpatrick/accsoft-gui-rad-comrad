@@ -241,7 +241,7 @@ class CMainWindow(PyDMMainWindow, CContextProvider, MonkeyPatchedClass):
                     self.app.new_window(filename)
                 else:
                     self.open_file(filename)
-            except (IOError, OSError, ValueError, ImportError) as e:
+            except (OSError, ValueError, ImportError) as e:  #
                 self.handle_open_file_error(filename, e)
 
     def load_window_plugins(self,
