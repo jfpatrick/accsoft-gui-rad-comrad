@@ -72,8 +72,8 @@ Log console provides a context menu on the right mouse click to:
 Preferences
 ^^^^^^^^^^^
 
-Use can configure the captured logs and the display settings in the "Preferences" dialog accessible from the
-:ref:`widgets/log_console/index:Context menu`.
+User can configure the captured logs and the display settings in the "Preferences" dialog accessible from the
+`Context menu`_.
 
 
 .. figure:: ../../img/logconsole_prefs.png
