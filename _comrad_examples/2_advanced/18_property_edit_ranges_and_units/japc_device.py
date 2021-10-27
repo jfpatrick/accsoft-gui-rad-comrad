@@ -14,7 +14,7 @@ from papc.fieldtype import FieldType
 
 class DemoDevice(Device):
     """
-    Demo device exposes 2 numerical fields in a setting property
+    Demo device exposes 2 numerical fields with metadata in a setting property
     """
 
     def __init__(self):
