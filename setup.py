@@ -47,7 +47,10 @@ requirements = {
         'freezegun>=0.3.15,<0.4',
     ],
     'lint': [
-        'mypy==0.761',
+        'mypy==0.910',
+        'types-freezegun',
+        'types-python-dateutil',
+        'types-toml',
         'flake8>=3.7.8,<3.8',
         'flake8-quotes>=2.1.0,<3',
         'flake8-commas>=2,<3',

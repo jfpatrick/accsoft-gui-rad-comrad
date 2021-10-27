@@ -343,7 +343,8 @@ class CPyJapc(PyJapcWrapper, QObject):
         logger.debug('Updating Java-RBAC token with the external token from pyrbac')
         buffer: bytes = pyrbac_token.get_encoded() if isinstance(pyrbac_token, Token) else pyrbac_token
         try:
-            new_token = cern.rbac.common.RbaToken.parseAndValidate(jpype.java.nio.ByteBuffer.wrap(buffer))
+            java: Any = jpype.java  # type: ignore  # mypy fails all imports from jpype package in Python 3.9
+            new_token = cern.rbac.common.RbaToken.parseAndValidate(java.nio.ByteBuffer.wrap(buffer))
         except Exception as e:  # noqa: B902
             # Can fail, e.g. with error
             # cern.rbac.common.TokenFormatException:
@@ -360,7 +361,7 @@ class CPyJapc(PyJapcWrapper, QObject):
     def _expect_japc_error(self, fn: Callable, *args, display_popup: bool = False, **kwargs):
         try:
             return fn(*args, **kwargs)
-        except jpype.JException as e:
+        except jpype.JException as e:  # type: ignore  # mypy fails all imports from jpype package in Python 3.9
             # We can't catch concrete exceptions in the 'except' clause directly, because Python
             # interpreter will complain when used with PAPC, as cern package won't be loaded,
             # and the exception won't be found. In PAPC scenario, this except block should never be
@@ -406,7 +407,8 @@ class CPyJapc(PyJapcWrapper, QObject):
                     token_info = 'Unknown user'
             logger.debug(f'Java received new RBAC token: {token_info}')
 
-        listener = jpype.JProxy('cern.rbac.util.holder.ClientTierRbaTokenChangeListener', {
+        JProxy: Any = jpype.JProxy  # type: ignore  # mypy fails all imports from jpype package in Python 3.9
+        listener = JProxy('cern.rbac.util.holder.ClientTierRbaTokenChangeListener', {
             'rbaTokenChanged': print_token,
         })
         cern.rbac.util.holder.ClientTierTokenHolder.addRbaTokenChangeListener(listener)
