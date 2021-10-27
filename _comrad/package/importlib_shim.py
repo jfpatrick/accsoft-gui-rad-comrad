@@ -32,7 +32,7 @@ def _backport_find_distribution(module_name: str) -> Optional[str]:
         except ValueError:
             pass
         else:
-            if distribution.files is not None and relative in distribution.files:
+            if distribution.files is not None and relative in map(Path, distribution.files):
                 try:
                     return distribution.metadata['Name']
                 except KeyError:
