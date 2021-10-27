@@ -65,10 +65,9 @@ requirements = {
     ],
     'doc': [
         'Sphinx>=3.5,<4a0',
-        'sphinx-autodoc-typehints>=1.10.3,<1.11a0',
+        'sphinx-autodoc-typehints>=1.12.0,<1.13a0',
         'sphinxcontrib-napoleon2>=1.0,<2a0',
-        'sphobjinv>=2.0,<2.1a0',
-        'docutils<0.17a0',  # docutils 0.17 broke a lot of thigs. While some were fixed by sphinx-rtd-theme 0.5.2, there are some outstanding issues, with gaps in bullets on the index page
+        'sphobjinv>=2.1,<3a0',
         'acc-py-sphinx>=0.11,<0.12a0',
         'sphinx-copybutton>=0.4,<1a0',
     ],

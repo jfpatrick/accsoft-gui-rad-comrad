@@ -56,7 +56,7 @@ class CApplication(PyDMApplication):
                  startup_login_policy: Optional[CRbaStartupLoginPolicy] = None,
                  fullscreen: bool = False):
         """
-        :class:`CApplication` handles loading ComRAD display files, opening
+        This class handles loading ComRAD display files, opening
         new windows, and most importantly, establishing and managing
         connections to channels via data plugins.
 
@@ -90,7 +90,7 @@ class CApplication(PyDMApplication):
             read_only: Whether or not to launch PyDM in a read-only state.
             macros: A dictionary of macro variables to be forwarded to the display class being loaded.
             use_main_window: If "ui_file" is not given, this parameter controls whether or not to
-                create a :class:`~pydm.main_window.PyDMMainWindow` in the initialization (Default is ``True``).
+                create a :class:`~pydm.main_window.PyDMMainWindow` in the initialization (Default is obj:`True`).
             nav_bar_plugin_path: Path(s) to the directory with navigation bar (toolbar) plugins. This path
                 can be augmented by ``COMRAD_TOOLBAR_PLUGIN_PATH`` environment variable.
             status_bar_plugin_path: Path(s) to the directory with status bar plugins. This path
