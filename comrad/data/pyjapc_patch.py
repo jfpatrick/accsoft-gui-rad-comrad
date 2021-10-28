@@ -112,14 +112,9 @@ def _fixed_papc_get_param(self, parameterName, getHeader=False, noPyConversion=F
     #     self._raise_error(NotImplementedError('onException not supported in simulation mode'))
 
     # TODO: we are not mimicking the exceptions raised just yet.
-    from papc.reference import PropertyReference
-    from papc.reference import FieldReference
+    from papc.reference import PropertyReference, FieldReference, ParameterReferenceType
 
-    # Py36 workaround :(
-    from papc.system import _parameter_ref_from_string, ParameterReferenceType
-    PR_from_string = getattr(ParameterReferenceType, 'from_string', _parameter_ref_from_string)
-
-    param_ref = PR_from_string(parameterName)
+    param_ref = ParameterReferenceType.from_string(parameterName)
     result = self.system.get(param_ref, selector)
 
     # We have different behaviour for properties vs fields (for getHeader).
@@ -165,14 +160,9 @@ def _fixed_papc_subscribe_param(self, parameterName, onValueReceived=None, onExc
     # if onException:
     #     self._raise_error(NotImplementedError('onException not supported in simulation mode'))
 
-    from papc.reference import PropertyReference
-    from papc.reference import FieldReference
+    from papc.reference import PropertyReference, FieldReference, ParameterReferenceType
 
-    # Py36 workaround :(
-    from papc.system import _parameter_ref_from_string, ParameterReferenceType
-    PR_from_string = getattr(ParameterReferenceType, 'from_string', _parameter_ref_from_string)
-
-    param_ref = PR_from_string(parameterName)
+    param_ref = ParameterReferenceType.from_string(parameterName)
 
     # Track whether a result has been received yet for this subscription.
     first_result_received = False
