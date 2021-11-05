@@ -19,11 +19,11 @@ class PackageSpec:
 
     def validate(self):
         if not self.name:
-            raise ValueError(f'name must not be empty')
+            raise ValueError('name must not be empty')
         if not self.version:
-            raise ValueError(f'version must not be empty')
+            raise ValueError('version must not be empty')
         if not self.entrypoint:
-            raise ValueError(f'entrypoint must not be empty')
+            raise ValueError('entrypoint must not be empty')
         try:
             _ = Version(self.version)
         except InvalidVersion:

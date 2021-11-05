@@ -68,11 +68,11 @@ def module(basedir: Path, name: str) -> Optional[types.ModuleType]:
         logger.warning(f'Cannot display example from {basedir} - cannot find entry point')
         return None
 
-    spec: Optional[importlib.machinery.ModuleSpec] = importlib.util.spec_from_file_location(name=name, location=config)
+    spec = importlib.util.spec_from_file_location(name=name, location=config)
     if spec is None:
         logger.warning(f'Cannot import example from {basedir} - cannot find module spec')
         return None
-    mod: types.ModuleType = importlib.util.module_from_spec(spec)
+    mod = importlib.util.module_from_spec(spec)
     loader = cast(importlib.machinery.SourceFileLoader, spec.loader)
     try:
         loader.exec_module(mod)

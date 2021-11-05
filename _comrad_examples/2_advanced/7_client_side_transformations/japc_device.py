@@ -1,1 +1,0 @@
-../../1_basic/2_label/japc_device.py

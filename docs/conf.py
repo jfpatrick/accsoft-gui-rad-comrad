@@ -1,3 +1,4 @@
+import pyqtgraph
 from typing import List
 from datetime import datetime
 from qtpy.QtCore import qVersion, PYQT_VERSION_STR
@@ -616,10 +617,10 @@ intersphinx_mapping = {
     'QScintilla': ('https://www.riverbankcomputing.com/static/Docs/QScintilla/', './qsci.inv'),
     'pydm': ('http://slaclab.github.io/pydm/', './pydm.inv'),
     'numpy': (f'https://numpy.org/doc/{minor_ver(versions.np)}/', None),
-    'pyqtgraph': ('https://pyqtgraph.readthedocs.io/en/latest/', None),  # TODO: Change latest to concrete version of pyqtgraph after migrating to 0.11 (cant do right now, as versions there start from 0.11.0
+    'pyqtgraph': (f'https://pyqtgraph.readthedocs.io/en/pyqtgraph-{pyqtgraph.__version__}/', None),
     'pyjapc': (f'https://acc-py.web.cern.ch/gitlab/scripting-tools/pyjapc/docs/v{versions.pyjapc}/', None),
-    'pyrbac': (f'https://acc-py.web.cern.ch/gitlab-mono/acc-co/cmw/cmw-core/docs/pyrbac/master/', None),
-    'pyphonebook': (f'https://acc-py.web.cern.ch/gitlab/szanzott/pyphonebook/docs/stable/', None),
+    'pyrbac': ('https://acc-py.web.cern.ch/gitlab-mono/acc-co/cmw/cmw-core/docs/pyrbac/master/', None),
+    'pyphonebook': ('https://pyphonebook.docs.cern.ch/', None),
     'accwidgets': (f'https://acc-py.web.cern.ch/gitlab/acc-co/accsoft/gui/accsoft-gui-pyqt-widgets/docs/v{versions.widgets}/', None),
 }
 

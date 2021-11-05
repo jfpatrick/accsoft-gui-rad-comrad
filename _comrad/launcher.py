@@ -639,7 +639,7 @@ def _parse_control_env(args: Namespace) -> Tuple[str, Dict[str, str], Dict[str, 
         for arg in java_env:
             name, val = tuple(arg.split('='))
             if name.startswith('rbac.'):
-                raise EnvironmentError(f'RBAC-related JVM flags are forbidden. Use RBAC_* environment variables instead.')
+                raise EnvironmentError('RBAC-related JVM flags are forbidden. Use RBAC_* environment variables instead.')
             jvm_flags[name] = val
     if cmw_env not in ['PRO', 'PRO2']:
         if cmw_env.endswith('2'):

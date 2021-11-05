@@ -79,7 +79,7 @@ def get_versions_info() -> Versions:
     from numpy import __version__ as np_ver
     from pyqtgraph import __version__ as pg_ver
     from pydm import __version__ as pydm_ver
-    from jpype import __version__ as jpype_ver
+    from jpype import __version__ as jpype_ver  # type: ignore  # https://github.com/python/mypy/issues/1741
 
     try:
         # Somehow qtpy imports only Qt version, but not PyQt, so we need to directly access PyQt5

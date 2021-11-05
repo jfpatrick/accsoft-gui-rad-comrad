@@ -30,8 +30,6 @@ def test_validate_name_fails(input, reserved_names, expected_error):
     '0.0',
     '0.0.1',
     '0.0.1a1',
-    'abc',
-    '0.0.',
 ])
 def test_validate_version_succeeds(input):
     assert validate_version(input) is True

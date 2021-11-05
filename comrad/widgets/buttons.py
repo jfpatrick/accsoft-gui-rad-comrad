@@ -89,6 +89,7 @@ class CPushButton(CChannelDataProcessingMixin, CWidgetRulesMixin, CCustomizedToo
                 #. There's no initial or current value for the widget
                 #. The confirmation dialog returns ``No`` as the user's answer to the dialog
                 #. The password validation dialog returns a validation error
+
             Otherwise, return the value sent to the channel:
                 #. The value sent to the channel is the same as the :attr:`pressValue` if the existing
                    channel type is a :obj:`str`, or the :attr:`relative` flag is :obj:`False`
@@ -121,6 +122,7 @@ class CPushButton(CChannelDataProcessingMixin, CWidgetRulesMixin, CCustomizedToo
                 #. The confirmation dialog returns ``No`` as the user's answer to the dialog
                 #. The password validation dialog returns a validation error
                 #. :attr:`writeWhenRelease` is :obj:`False`
+
             Otherwise, return the value sent to the channel:
                 #. The value sent to the channel is the same as the :attr:`pressValue` if the existing
                    channel type is a :obj:`str`, or the :attr:`relative` flag is :obj:`False`

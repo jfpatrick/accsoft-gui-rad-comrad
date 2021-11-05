@@ -17,6 +17,7 @@ variables:
 
 .init_sequence: &init_sequence
 - git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.cern.ch".insteadOf ssh://git@gitlab.cern.ch:7999
+- pip install -U pip
 
 before_script:
   - *init_sequence
@@ -33,8 +34,8 @@ mypy:
   image: $ACCPY_PYQT_DOCKER_IMAGE
   stage: Code Quality
   script:
-    - pip install .[lint]
-    - mypy . tests docs comrad/app comrad/app/plugins/toolbar comrad/data
+    - pip install -e .[lint]
+    - mypy .
 
 qsslint:
   image: $ACCPY_PYQT_DOCKER_IMAGE

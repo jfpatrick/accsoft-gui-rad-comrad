@@ -3,3 +3,21 @@ requires = [
     "setuptools",
     "wheel"
 ]
+
+[tool.mypy]
+namespace_packages = true
+no_implicit_optional = true
+strict_equality = true
+show_error_context = true
+verbosity = 0
+#mypy_path = $PYTHONPATH
+#follow_imports = skip
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "versioneer"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "_comrad._version"
+ignore_errors = true

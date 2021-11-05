@@ -8,7 +8,7 @@ from _comrad.package.spec_builder import (_generate_pyproject_with_spec_unsafe, 
                                           COMRAD_PINNED_VERSION, InvalidProjectFileError)
 
 
-@pytest.mark.parametrize(f'freeze_output,initial_reqs,expected_reqs', [
+@pytest.mark.parametrize('freeze_output,initial_reqs,expected_reqs', [
     ('', set(), set()),
     ('', {'req1'}, {'req1'}),
     ('', {'req1', 'req2>0.3'}, {'req1', 'req2>0.3'}),
