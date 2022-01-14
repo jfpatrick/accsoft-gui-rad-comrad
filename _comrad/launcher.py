@@ -415,6 +415,7 @@ def _run_subcommand(parser: _EmptyLoadSaveActionProfileParser, deployed_pkg_name
                                    ' - Toolbar separator: comrad.sep'
                                    ' - Toolbar empty space: comrad.spacer'
                                    ' - RBAC dialog button: comrad.rbac'
+                                   ' - Screenshot (e-logbook) button: comrad.screenshot'
                                    ' '
                                    'Example usage: --nav-bar-order comrad.home comrad.sep comrad.spacer comrad.rbac',
                               nargs=argparse.ONE_OR_MORE)
@@ -427,7 +428,8 @@ def _run_subcommand(parser: _EmptyLoadSaveActionProfileParser, deployed_pkg_name
                                    'following keys are available: comrad.pls.show_sel, comrad.pls.show_bar, '
                                    'comrad.pls.supercycle, comrad.pls.show_domain, comrad.pls.show_time, '
                                    'comrad.pls.show_start, comrad.pls.show_user, comrad.pls.show_lsa, '
-                                   'comrad.pls.show_tz, comrad.pls.heartbeat, comrad.pls.microseconds, comrad.pls.utc.',
+                                   'comrad.pls.show_tz, comrad.pls.heartbeat, comrad.pls.microseconds, comrad.pls.utc, '
+                                   'comrad.screenshot.activities, comrad.screenshot.server, comrad.screenshot.decor.',
                               nargs=argparse.ONE_OR_MORE)
     debug_group = cast(ArgumentParser, parser.add_argument_group('Debugging'))
     _install_debug_arguments(debug_group)
