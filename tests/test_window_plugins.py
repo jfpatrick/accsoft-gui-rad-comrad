@@ -179,6 +179,29 @@ def test_trie_default_dict_on_init():
     assert trie.root == {'test': {'subtree': {'subsubtree': {}}}}
 
 
+@pytest.mark.parametrize('input,expected_res', [
+    ('val1', 'val1'),
+    ('"val1"', 'val1'),
+    ("'val1'", 'val1'),
+    ('val1,val2', ['val1', 'val2']),
+    ('"val1,val2"', ['"val1', 'val2"']),
+    ("'val1,val2'", ["'val1", "val2'"]),
+    ('"val1","val2"', ['val1', 'val2']),
+    ("'val1','val2'", ['val1', 'val2']),
+    ('"val1 with space,val2"', ['"val1 with space', 'val2"']),
+    ("'val1 with space,val2'", ["'val1 with space", "val2'"]),
+    ('"val1 with space","val2"', ['val1 with space', 'val2']),
+    ("'val1 with space','val2'", ['val1 with space', 'val2']),
+    ('"val1 with space",val2', ['val1 with space', 'val2']),
+    ("'val1 with space',val2", ['val1 with space', 'val2']),
+])
+def test_trie_add_val_processes_value(input, expected_res):
+    trie = WindowPluginConfigTrie()
+    assert trie.root == {}
+    trie.add_val('key', input)
+    assert trie.root == {'key': expected_res}
+
+
 def test_trie_add_val_succeeds_with_proper_hierarchy():
     trie = WindowPluginConfigTrie()
     assert trie.root == {}
