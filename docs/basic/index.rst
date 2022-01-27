@@ -16,3 +16,4 @@ simple application. If you have never used it, consider reviewing :doc:`Getting 
    rbac
    rules
    transform
+   logbook
