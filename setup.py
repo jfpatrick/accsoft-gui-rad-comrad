@@ -29,14 +29,13 @@ requirements = {
         'papc>=0.5.3,<0.6',
         'pydm==1.11.1.post0',
         'JPype1>=1.1.1,<2a0',  # 1.1.1 is confirmed alongside 0.6.3 to be without segfaults. We need > 0.6 for exception format
-        'dataclasses~=0.7;python_version<"3.7"',
         'pyCCDA~=0.10.1',
         'pyrbac',  # Exact version is expected to be provided by accwidgets. This stays here because we still have pyrbac imports
         'Jinja2~=3.0',
         'importlib-metadata>=1.7.0,<4.0a0;python_version<"3.8"',
         'toml~=0.10.2',
         'stdlib-list>=0.8.0,<1a0;python_version<"3.10"',
-        'argparse-profiles~=0.9;python_version>="3.7"',
+        'argparse-profiles~=0.9',
     ],
     'test': [
         'pytest>=6.2.5,<7a0',
@@ -123,7 +122,6 @@ setup(
         'Environment :: X11 Applications :: Qt',
         'Intended Audience :: Developers',
         'Operating System :: POSIX :: Linux',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: Implementation :: CPython',
@@ -133,7 +131,7 @@ setup(
         '': ['*.ui', '*.ico', '*.png', '*.qss', '*.json', '*.txt', '*.j2'],
     },
     install_requires=requires,
-    python_requires='>=3.6,<3.10',
+    python_requires='>=3.7,<3.10',
     entry_points={
         'gui_scripts': [
             'comrad=_comrad.launcher:run',
