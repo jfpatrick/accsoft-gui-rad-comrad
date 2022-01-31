@@ -62,6 +62,7 @@ requirements = {
         'flake8-builtins-unleashed>=1.3.1,<2a0',
         'flake8-blind-except>=0.2.0,<1a0',
         'flake8-bugbear>=21.9.2,<22a0',
+        'pre-commit>=2.17.0,<3a0',
     ],
     'doc': [
         'Sphinx>=3.5,<4a0',

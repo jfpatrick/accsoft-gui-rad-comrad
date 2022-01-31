@@ -60,6 +60,12 @@ subsections):
 pip install -e .[all]
 ```
 
+You may want to benefit from `pre-commit` tool, which is already installed with dependencies above. The only additional
+step to activate it is to run:
+```bash
+pre-commit install
+```
+
 ## Linting
 
 ComRAD is integrated with several linting utilities:
@@ -90,7 +96,7 @@ mypy . tests docs comrad/app comrad/app/plugins/toolbar comrad/data _comrad
 
 For qsslint:
 ```bash
-find . -name "*.qss" | xargs qsslint 
+find . -name "*.qss" | xargs qsslint
 ```
 
 >

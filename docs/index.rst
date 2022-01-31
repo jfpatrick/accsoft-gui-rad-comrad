@@ -120,5 +120,3 @@ handles the connection to the control system and navigation between displays.
 .. |mailing-list| image:: img/mailing-list.png
 
 .. |mattermost| image:: img/mattermost.png
-
-
