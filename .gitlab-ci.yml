@@ -68,18 +68,15 @@ pytest:
   extends: .matrix_job
   stage: Unit Tests
   script:
-    - pip install .[test]
     - |
+      pip install .[test]
+      extra_args=
+      [[ "CURRENT_BASE_IMAGE" == "$ACCPY_IMAGE_CC7_2020_11" ]] && extra_args="--cov-report html:coverage --cov-report term-missing:skip-covered --cov=comrad --cov=_comrad --cov=_comrad_designer --cov=_comrad_examples"
       OMP_NUM_THREADS=1 run_headless python -m pytest \
         -p no:faulthandler \
         --random-order \
         --junitxml=report.xml \
-        --cov-report html:coverage \
-        --cov-report term-missing:skip-covered \
-        --cov=comrad \
-        --cov=_comrad \
-        --cov=_comrad_designer \
-        --cov=_comrad_examples \
+        $extra_args \
         -x \
         --color=yes
   artifacts:
