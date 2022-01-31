@@ -18,4 +18,3 @@ Graphs
 
 .. automodule:: comrad.widgets.graphs
     :members: ColumnNames, PlottingItemTypes
-

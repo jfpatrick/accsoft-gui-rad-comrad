@@ -5,6 +5,3 @@ Delegates
 
     cabstractpropertyeditlayoutdelegate
     cabstractpropertyeditwidgetdelegate
-
-
-
